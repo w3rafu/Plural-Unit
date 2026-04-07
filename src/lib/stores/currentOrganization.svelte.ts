@@ -1,0 +1,182 @@
+/**
+ * currentOrganization — reactive store for the user's organization.
+ *
+ * Responsibilities:
+ *  - Resolve current user's organization membership
+ *  - Expose create, join, accept-invitation actions
+ *  - Load admin-only invitations and member count
+ *  - Expose join code regeneration
+ *
+ * The store listens to Supabase auth changes so it refreshes
+ * when the user logs in/out.
+ */
+
+import type {
+	OrganizationPayload,
+	OrganizationMembership,
+	OrganizationInvitation
+} from '$lib/models/organizationModel';
+import {
+	fetchOwnOrganizationContext,
+	createOrganization,
+	joinOrganizationByCode,
+	acceptInvitation,
+	createInvitation,
+	fetchPendingInvitations,
+	regenerateJoinCode,
+	fetchMemberCount
+} from '$lib/repositories/organizationRepository';
+import { subscribeToAuthStateChange, getAuthenticatedUser } from '$lib/repositories/profileRepository';
+
+const REFRESH_TIMEOUT_MS = 8_000;
+
+class CurrentOrganization {
+	isLoading = $state(false);
+	isMutating = $state(false);
+	hasResolvedMembership = $state(false);
+	organization = $state<OrganizationPayload | null>(null);
+	membership = $state<OrganizationMembership | null>(null);
+	invitations = $state<OrganizationInvitation[]>([]);
+	memberCount = $state<number | null>(null);
+
+	private stopAuth: (() => void) | null = null;
+
+	constructor() {
+		if (typeof window !== 'undefined') {
+			this.stopAuth = subscribeToAuthStateChange((user) => {
+				if (user) void this.refresh(user.id);
+				else this.clear();
+			});
+			void this.init();
+		}
+	}
+
+	get isMember() {
+		return this.organization !== null && this.membership !== null;
+	}
+
+	get isAdmin() {
+		return this.membership?.role === 'admin';
+	}
+
+	private async init() {
+		const user = await getAuthenticatedUser();
+		if (user) await this.refresh(user.id);
+		else this.hasResolvedMembership = true;
+	}
+
+	private clear() {
+		this.organization = null;
+		this.membership = null;
+		this.invitations = [];
+		this.memberCount = null;
+		this.hasResolvedMembership = true;
+	}
+
+	async refresh(userId?: string) {
+		const uid = userId ?? (await getAuthenticatedUser())?.id;
+		if (!uid) { this.clear(); return; }
+
+		this.isLoading = true;
+		try {
+			const ctx = await withTimeout(
+				fetchOwnOrganizationContext(uid),
+				REFRESH_TIMEOUT_MS,
+				'Organization lookup timed out.'
+			);
+			if (ctx) {
+				this.organization = ctx.organization;
+				this.membership = ctx.membership;
+			} else {
+				this.organization = null;
+				this.membership = null;
+			}
+		} finally {
+			this.isLoading = false;
+			this.hasResolvedMembership = true;
+		}
+	}
+
+	async create(name: string) {
+		const user = await getAuthenticatedUser();
+		if (!user) throw new Error('Not logged in.');
+		this.isMutating = true;
+		try {
+			const ctx = await createOrganization(user.id, name);
+			this.organization = ctx.organization;
+			this.membership = ctx.membership;
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async joinByCode(code: string) {
+		const user = await getAuthenticatedUser();
+		if (!user) throw new Error('Not logged in.');
+		this.isMutating = true;
+		try {
+			const ctx = await joinOrganizationByCode(user.id, code);
+			this.organization = ctx.organization;
+			this.membership = ctx.membership;
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async acceptInvite(token: string) {
+		const user = await getAuthenticatedUser();
+		if (!user) throw new Error('Not logged in.');
+		this.isMutating = true;
+		try {
+			const ctx = await acceptInvitation(user.id, token);
+			this.organization = ctx.organization;
+			this.membership = ctx.membership;
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async loadInvitations() {
+		if (!this.organization) return;
+		this.invitations = await fetchPendingInvitations(this.organization.id);
+	}
+
+	async sendInvitation(contact: { email?: string; phone?: string }) {
+		if (!this.organization) throw new Error('No organization.');
+		this.isMutating = true;
+		try {
+			await createInvitation(this.organization.id, contact);
+			await this.loadInvitations();
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async regenerateCode() {
+		if (!this.organization) throw new Error('No organization.');
+		this.isMutating = true;
+		try {
+			const newCode = await regenerateJoinCode(this.organization.id);
+			this.organization = { ...this.organization, join_code: newCode };
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async loadMemberCount() {
+		if (!this.organization) return;
+		this.memberCount = await fetchMemberCount(this.organization.id);
+	}
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const timer = setTimeout(() => reject(new Error(message)), ms);
+		promise.then(
+			(v) => { clearTimeout(timer); resolve(v); },
+			(e) => { clearTimeout(timer); reject(e); }
+		);
+	});
+}
+
+export const currentOrganization = new CurrentOrganization();
