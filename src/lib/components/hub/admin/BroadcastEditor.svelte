@@ -4,6 +4,11 @@
   Rendered by the hub manage page when the `broadcasts` plugin is active.
 -->
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import * as Item from '$lib/components/ui/item';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 
 	let title = $state('');
@@ -32,27 +37,46 @@
 	}
 </script>
 
-<section aria-label="Manage broadcasts">
-	<h3>Broadcasts</h3>
+<Item.Root variant="outline">
+	<Item.Content>
+		<Item.Title>Broadcasts</Item.Title>
+		<form onsubmit={(e) => { e.preventDefault(); submit(); }}>
+			<Field.Group>
+				<Field.Field>
+					<Field.Content>
+						<Field.Label for="broadcast-title">Title</Field.Label>
+						<Field.Description>Keep it short so the broadcast is easy to scan.</Field.Description>
+						<Input id="broadcast-title" type="text" bind:value={title} />
+					</Field.Content>
+				</Field.Field>
+				<Field.Field>
+					<Field.Content>
+						<Field.Label for="broadcast-message">Message</Field.Label>
+						<Textarea id="broadcast-message" bind:value={body} />
+					</Field.Content>
+				</Field.Field>
+			</Field.Group>
+			<Button type="submit">Send broadcast</Button>
+		</form>
 
-	<form onsubmit={(e) => { e.preventDefault(); submit(); }}>
-		<label>Title <input type="text" bind:value={title} /></label>
-		<label>Message <textarea bind:value={body}></textarea></label>
-		<button type="submit">Send broadcast</button>
-	</form>
+		{#if feedback}
+			<p role="alert">{feedback}</p>
+		{/if}
 
-	{#if feedback}
-		<p role="alert">{feedback}</p>
-	{/if}
-
-	{#if currentHub.broadcasts.length > 0}
-		<ul>
-			{#each currentHub.broadcasts as broadcast (broadcast.id)}
-				<li>
-					{broadcast.title}
-					<button onclick={() => remove(broadcast.id)}>Delete</button>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</section>
+		{#if currentHub.broadcasts.length > 0}
+			<Item.Group>
+				{#each currentHub.broadcasts as broadcast (broadcast.id)}
+					<Item.Root variant="muted" size="sm">
+						<Item.Content>
+							<Item.Title>{broadcast.title}</Item.Title>
+							<Item.Description>Broadcast message</Item.Description>
+						</Item.Content>
+						<Item.Actions>
+							<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)}>Delete</Button>
+						</Item.Actions>
+					</Item.Root>
+				{/each}
+			</Item.Group>
+		{/if}
+	</Item.Content>
+</Item.Root>

@@ -7,6 +7,10 @@
   3. Paste an invitation token
 -->
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import { authBoundary } from '$lib/stores/authBoundary.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 </script>
@@ -14,46 +18,58 @@
 <section aria-label="Organization onboarding">
 	<h2>Join or create an organization</h2>
 
-	<fieldset>
-		<legend>How do you want to join?</legend>
-		<label>
-			<input type="radio" name="orgMode" value="create"
-				checked={authBoundary.orgMode === 'create'}
-				onchange={() => authBoundary.setOrgMode('create')} />
-			Create new
-		</label>
-		<label>
-			<input type="radio" name="orgMode" value="join"
-				checked={authBoundary.orgMode === 'join'}
-				onchange={() => authBoundary.setOrgMode('join')} />
-			Use join code
-		</label>
-		<label>
-			<input type="radio" name="orgMode" value="invite"
-				checked={authBoundary.orgMode === 'invite'}
-				onchange={() => authBoundary.setOrgMode('invite')} />
-			Invitation token
-		</label>
-	</fieldset>
+	<Field.Set>
+		<Field.Legend>How do you want to join?</Field.Legend>
+		<RadioGroup.Root bind:value={authBoundary.orgMode} name="orgMode" class="grid gap-2">
+			<Field.Field orientation="horizontal">
+				<RadioGroup.Item id="org-mode-create" value="create" />
+				<Field.Content>
+					<Field.Label for="org-mode-create" class="font-normal">Create new</Field.Label>
+					<Field.Description>Start a new organization and become the admin.</Field.Description>
+				</Field.Content>
+			</Field.Field>
+			<Field.Field orientation="horizontal">
+				<RadioGroup.Item id="org-mode-join" value="join" />
+				<Field.Content>
+					<Field.Label for="org-mode-join" class="font-normal">Use join code</Field.Label>
+					<Field.Description>Join with a short code shared by an admin.</Field.Description>
+				</Field.Content>
+			</Field.Field>
+			<Field.Field orientation="horizontal">
+				<RadioGroup.Item id="org-mode-invite" value="invite" />
+				<Field.Content>
+					<Field.Label for="org-mode-invite" class="font-normal">Invitation token</Field.Label>
+					<Field.Description>Paste the invite token you received.</Field.Description>
+				</Field.Content>
+			</Field.Field>
+		</RadioGroup.Root>
+	</Field.Set>
 
 	{#if authBoundary.orgMode === 'create'}
-		<label>
-			Organization name
-			<input type="text" bind:value={authBoundary.orgName} />
-		</label>
+		<Field.Field>
+			<Field.Content>
+				<Field.Label for="organization-name">Organization name</Field.Label>
+				<Input id="organization-name" type="text" bind:value={authBoundary.orgName} />
+			</Field.Content>
+		</Field.Field>
 	{:else if authBoundary.orgMode === 'join'}
-		<label>
-			Join code
-			<input type="text" bind:value={authBoundary.orgJoinCode} />
-		</label>
+		<Field.Field>
+			<Field.Content>
+				<Field.Label for="join-code">Join code</Field.Label>
+				<Field.Description>Use the code shared by your organization admin.</Field.Description>
+				<Input id="join-code" type="text" bind:value={authBoundary.orgJoinCode} />
+			</Field.Content>
+		</Field.Field>
 	{:else}
-		<label>
-			Invitation token
-			<input type="text" bind:value={authBoundary.orgInviteToken} />
-		</label>
+		<Field.Field>
+			<Field.Content>
+				<Field.Label for="invite-token">Invitation token</Field.Label>
+				<Input id="invite-token" type="text" bind:value={authBoundary.orgInviteToken} />
+			</Field.Content>
+		</Field.Field>
 	{/if}
 
-	<button onclick={() => authBoundary.submitOrganization()} disabled={currentOrganization.isMutating}>
+	<Button onclick={() => authBoundary.submitOrganization()} disabled={currentOrganization.isMutating}>
 		{#if authBoundary.orgMode === 'create'}
 			Create organization
 		{:else if authBoundary.orgMode === 'join'}
@@ -61,7 +77,7 @@
 		{:else}
 			Accept invitation
 		{/if}
-	</button>
+	</Button>
 
 	{#if authBoundary.orgFeedback}
 		<p role="alert">{authBoundary.orgFeedback}</p>

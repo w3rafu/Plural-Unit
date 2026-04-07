@@ -2,7 +2,15 @@
   Organization page — view org details, manage invitations, share join code.
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import * as Item from '$lib/components/ui/item';
+	import PendingInvitationsTable from '$lib/components/organization/PendingInvitationsTable.svelte';
+	import * as Select from '$lib/components/ui/select';
+	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
 	let inviteEmail = $state('');
@@ -48,83 +56,101 @@
 			inviteFeedback = e instanceof Error ? e.message : 'Failed to regenerate code.';
 		}
 	}
+
+	function goHome() {
+		void goto('/');
+	}
 </script>
 
-<main>
-	<h1>Organization</h1>
-	<p><a href="/">← Home</a></p>
+<PageHeader title="Organization" subtitle="Join code, invitations, and membership" backLabel="Home" onBack={goHome} />
 
+<main class="flex flex-col gap-4">
 	{#if !currentOrganization.organization}
 		<p>No organization found.</p>
 	{:else}
-		<section aria-label="Organization details">
-			<p>Name: {currentOrganization.organization.name}</p>
-			<p>Join code: <code>{currentOrganization.organization.join_code}</code></p>
-			{#if currentOrganization.memberCount !== null}
-				<p>Members: {currentOrganization.memberCount}</p>
-			{/if}
-		</section>
+		<Item.Group>
+			<Item.Root variant="outline">
+				<Item.Content>
+					<Item.Title>Organization details</Item.Title>
+					<Item.Description>Name: {currentOrganization.organization.name}</Item.Description>
+					<Item.Description>Join code: <code>{currentOrganization.organization.join_code}</code></Item.Description>
+					{#if currentOrganization.memberCount !== null}
+						<Item.Description>Members: {currentOrganization.memberCount}</Item.Description>
+					{/if}
+				</Item.Content>
+			</Item.Root>
 
-		{#if currentOrganization.isAdmin}
-			<section aria-label="Join code">
-				<h2>Join code</h2>
-				<p>Share this code with people who want to join:</p>
-				<code>{currentOrganization.organization.join_code}</code>
-				<button onclick={regenerateCode} disabled={currentOrganization.isMutating}>
-					Regenerate code
-				</button>
-			</section>
+			{#if currentOrganization.isAdmin}
+				<Item.Root variant="outline">
+					<Item.Content>
+						<Item.Title>Join code</Item.Title>
+						<Item.Description>Share this code with people who want to join:</Item.Description>
+						<Item.Description><code>{currentOrganization.organization.join_code}</code></Item.Description>
+						<Item.Actions>
+							<Button onclick={regenerateCode} disabled={currentOrganization.isMutating}>
+								Regenerate code
+							</Button>
+						</Item.Actions>
+					</Item.Content>
+				</Item.Root>
 
-			<section aria-label="Invite members">
-				<h2>Invite members</h2>
+				<Item.Root variant="outline">
+					<Item.Content>
+						<Item.Title>Invite members</Item.Title>
 
-				<fieldset>
-					<legend>Send via</legend>
-					<label>
-						<input type="radio" name="inviteMethod" value="email"
-							checked={inviteMethod === 'email'}
-							onchange={() => inviteMethod = 'email'} />
-						Email
-					</label>
-					<label>
-						<input type="radio" name="inviteMethod" value="phone"
-							checked={inviteMethod === 'phone'}
-							onchange={() => inviteMethod = 'phone'} />
-						Phone
-					</label>
-				</fieldset>
+						<Field.Field>
+							<Field.Content>
+								<Field.Label for="invite-method">Send via</Field.Label>
+								<Field.Description>Choose how the invitation should be delivered.</Field.Description>
+								<Select.Root type="single" bind:value={inviteMethod} name="inviteMethod">
+									<Select.Trigger id="invite-method">
+										{inviteMethod === 'email' ? 'Email' : 'Phone'}
+									</Select.Trigger>
+									<Select.Content>
+										<Select.Item value="email">Email</Select.Item>
+										<Select.Item value="phone">Phone</Select.Item>
+									</Select.Content>
+								</Select.Root>
+							</Field.Content>
+						</Field.Field>
 
-				{#if inviteMethod === 'email'}
-					<label>
-						Email
-						<input type="email" bind:value={inviteEmail} />
-					</label>
-				{:else}
-					<label>
-						Phone
-						<input type="tel" bind:value={invitePhone} />
-					</label>
+						{#if inviteMethod === 'email'}
+							<Field.Field>
+								<Field.Content>
+									<Field.Label for="invite-email">Email</Field.Label>
+									<Input id="invite-email" type="email" bind:value={inviteEmail} />
+								</Field.Content>
+							</Field.Field>
+						{:else}
+							<Field.Field>
+								<Field.Content>
+									<Field.Label for="invite-phone">Phone</Field.Label>
+									<Input id="invite-phone" type="tel" bind:value={invitePhone} />
+								</Field.Content>
+							</Field.Field>
+						{/if}
+
+						<Item.Actions>
+							<Button onclick={sendInvite} disabled={currentOrganization.isMutating}>
+								Send invitation
+							</Button>
+						</Item.Actions>
+
+						{#if inviteFeedback}
+							<p role="alert">{inviteFeedback}</p>
+						{/if}
+					</Item.Content>
+				</Item.Root>
+
+				{#if currentOrganization.invitations.length > 0}
+					<Item.Root variant="outline">
+						<Item.Content>
+							<Item.Title>Pending invitations</Item.Title>
+							<PendingInvitationsTable invitations={currentOrganization.invitations} />
+						</Item.Content>
+					</Item.Root>
 				{/if}
-
-				<button onclick={sendInvite} disabled={currentOrganization.isMutating}>
-					Send invitation
-				</button>
-
-				{#if inviteFeedback}
-					<p role="alert">{inviteFeedback}</p>
-				{/if}
-			</section>
-
-			{#if currentOrganization.invitations.length > 0}
-				<section aria-label="Pending invitations">
-					<h2>Pending invitations</h2>
-					<ul>
-						{#each currentOrganization.invitations as inv (inv.id)}
-							<li>{inv.email ?? inv.phone} — {inv.status}</li>
-						{/each}
-					</ul>
-				</section>
 			{/if}
-		{/if}
+		</Item.Group>
 	{/if}
 </main>

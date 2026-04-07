@@ -6,7 +6,9 @@
   2. Editor cards for each active plugin
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import PluginActivationCard from '$lib/components/hub/admin/PluginActivationCard.svelte';
@@ -16,11 +18,15 @@
 	onMount(() => {
 		currentHub.load();
 	});
+
+	function goBackToHub() {
+		void goto('/hub');
+	}
 </script>
 
-<main>
-	<h1>Manage Hub</h1>
-	<p><a href="/">← Home</a></p>
+<PageHeader title="Manage hub" subtitle="Admin tools" backLabel="Hub" onBack={goBackToHub} />
+
+<main class="flex flex-col gap-4">
 
 	{#if !currentOrganization.isAdmin}
 		<p>Only admins can manage the hub.</p>

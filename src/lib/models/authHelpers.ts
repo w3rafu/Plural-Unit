@@ -3,11 +3,26 @@
  *
  * This module keeps all auth-related validation and error mapping
  * in one place so components and stores do not duplicate string matching.
+ *
+ * Every validator returns a structured result with:
+ *  - `ok: true` + normalized values on success
+ *  - `ok: false` + `feedback` message + `field` name on failure
+ *
+ * Error mappers turn raw Supabase errors into user-facing messages.
  */
 
 export type AuthChannel = 'phone' | 'email';
 export type AuthStep = 'request_code' | 'verify_code';
 export type OrganizationOnboardingMode = 'create' | 'join' | 'invite';
+export type FeedbackType = 'error' | 'success';
+
+type ValidationFailure<Field extends string> = {
+	ok: false;
+	feedback: string;
+	field: Field;
+};
+
+// ── Basic format checks ──
 
 export function isValidEmail(value: string): boolean {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -17,54 +32,299 @@ export function isValidPhoneNumber(value: string): boolean {
 	return /^\+?[0-9() -]{7,20}$/.test(value.trim());
 }
 
-export function validateLoginInput(channel: AuthChannel, email: string, phone: string) {
-	if (channel === 'email') {
-		if (!email.trim()) return { ok: false as const, field: 'email' as const, feedback: 'Enter your email.' };
-		if (!isValidEmail(email)) return { ok: false as const, field: 'email' as const, feedback: 'Enter a valid email.' };
-	} else {
-		if (!phone.trim()) return { ok: false as const, field: 'phone' as const, feedback: 'Enter your phone number.' };
-		if (!isValidPhoneNumber(phone)) return { ok: false as const, field: 'phone' as const, feedback: 'Enter a valid phone number.' };
+// ── Phone validators ──
+
+export function validatePhoneNumberInput(phoneNumber: string) {
+	const normalized = phoneNumber.trim();
+
+	if (!normalized) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter your phone number.',
+			field: 'phoneNumber'
+		} satisfies ValidationFailure<'phoneNumber'>;
 	}
+
+	if (!isValidPhoneNumber(normalized)) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter a valid phone number.',
+			field: 'phoneNumber'
+		} satisfies ValidationFailure<'phoneNumber'>;
+	}
+
+	return { ok: true as const, normalizedPhoneNumber: normalized };
+}
+
+export function validateOtpCodeInput(otpCode: string) {
+	const normalized = otpCode.trim();
+
+	if (!normalized) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter the verification code.',
+			field: 'otpCode'
+		} satisfies ValidationFailure<'otpCode'>;
+	}
+
+	if (!/^[0-9]{6}$/.test(normalized)) {
+		return {
+			ok: false as const,
+			feedback: 'Verification codes must be 6 digits.',
+			field: 'otpCode'
+		} satisfies ValidationFailure<'otpCode'>;
+	}
+
+	return { ok: true as const, normalizedOtpCode: normalized };
+}
+
+// ── Email login validator ──
+
+export function validateLoginInput(input: { email: string; password: string }) {
+	const normalizedEmail = input.email.trim();
+
+	if (!normalizedEmail) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter your email.',
+			field: 'email'
+		} satisfies ValidationFailure<'email'>;
+	}
+
+	if (!isValidEmail(normalizedEmail)) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter a valid email address.',
+			field: 'email'
+		} satisfies ValidationFailure<'email'>;
+	}
+
+	if (!input.password) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter your password.',
+			field: 'password'
+		} satisfies ValidationFailure<'password'>;
+	}
+
+	return { ok: true as const, normalizedEmail };
+}
+
+// ── Registration validator ──
+
+export function validateRegistrationInput(input: {
+	email: string;
+	password: string;
+	confirmPassword: string;
+}) {
+	const loginResult = validateLoginInput({ email: input.email, password: input.password });
+	if (!loginResult.ok) return loginResult;
+
+	if (input.password.length < 8) {
+		return {
+			ok: false as const,
+			feedback: 'Password must be at least 8 characters.',
+			field: 'password'
+		} satisfies ValidationFailure<'password'>;
+	}
+
+	if (input.password !== input.confirmPassword) {
+		return {
+			ok: false as const,
+			feedback: 'Passwords do not match.',
+			field: 'confirmPassword'
+		} satisfies ValidationFailure<'confirmPassword'>;
+	}
+
+	return loginResult;
+}
+
+// ── Password recovery validators ──
+
+export function validatePasswordResetEmail(email: string) {
+	const normalizedEmail = email.trim();
+
+	if (!normalizedEmail) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter your email.',
+			field: 'email'
+		} satisfies ValidationFailure<'email'>;
+	}
+
+	if (!isValidEmail(normalizedEmail)) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter a valid email address.',
+			field: 'email'
+		} satisfies ValidationFailure<'email'>;
+	}
+
+	return { ok: true as const, normalizedEmail };
+}
+
+export function validateNewPassword(input: { password: string; confirmPassword: string }) {
+	if (!input.password) {
+		return {
+			ok: false as const,
+			feedback: 'Please enter a new password.',
+			field: 'password'
+		} satisfies ValidationFailure<'password'>;
+	}
+
+	if (input.password.length < 8) {
+		return {
+			ok: false as const,
+			feedback: 'Password must be at least 8 characters.',
+			field: 'password'
+		} satisfies ValidationFailure<'password'>;
+	}
+
+	if (input.password !== input.confirmPassword) {
+		return {
+			ok: false as const,
+			feedback: 'Passwords do not match.',
+			field: 'confirmPassword'
+		} satisfies ValidationFailure<'confirmPassword'>;
+	}
+
 	return { ok: true as const };
 }
 
-export function validateOtpCode(code: string) {
-	const trimmed = code.trim();
-	if (!trimmed) return { ok: false as const, feedback: 'Enter the verification code.' };
-	if (trimmed.length < 6) return { ok: false as const, feedback: 'The code should be 6 digits.' };
-	return { ok: true as const };
-}
+// ── Name onboarding validator ──
 
 export function validateOnboardingName(name: string) {
-	const trimmed = name.trim();
-	if (!trimmed) return { ok: false as const, feedback: 'Enter your name.' };
-	if (trimmed.length < 2) return { ok: false as const, feedback: 'Name must be at least 2 characters.' };
-	return { ok: true as const };
-}
+	const normalizedName = name.trim();
 
-export function validateOrganizationInput(mode: OrganizationOnboardingMode, fields: { name: string; joinCode: string; inviteToken: string }) {
-	if (mode === 'create') {
-		if (!fields.name.trim()) return { ok: false as const, field: 'name' as const, feedback: 'Enter an organization name.' };
-	} else if (mode === 'join') {
-		if (!fields.joinCode.trim()) return { ok: false as const, field: 'joinCode' as const, feedback: 'Enter a join code.' };
-	} else {
-		if (!fields.inviteToken.trim()) return { ok: false as const, field: 'inviteToken' as const, feedback: 'Paste the invitation token.' };
+	if (!normalizedName) {
+		return {
+			ok: false as const,
+			feedback: 'Please choose a name to continue.',
+			field: 'name'
+		} satisfies ValidationFailure<'name'>;
 	}
-	return { ok: true as const };
+
+	return { ok: true as const, normalizedName };
 }
 
-export function mapAuthErrorMessage(error: unknown): string {
-	const message = typeof error === 'object' && error && 'message' in error
-		? String(error.message) : 'Authentication failed.';
+// ── Organization onboarding validator ──
+
+export function validateOrganizationInput(
+	mode: OrganizationOnboardingMode,
+	fields: { name: string; joinCode: string; inviteToken: string }
+) {
+	if (mode === 'create') {
+		const normalized = fields.name.trim();
+		if (!normalized) {
+			return {
+				ok: false as const,
+				feedback: 'Enter an organization name.',
+				field: 'name'
+			} satisfies ValidationFailure<'name'>;
+		}
+		return { ok: true as const, action: 'create' as const, normalizedValue: normalized };
+	}
+
+	if (mode === 'join') {
+		const normalized = fields.joinCode.trim().toUpperCase();
+		if (!normalized) {
+			return {
+				ok: false as const,
+				feedback: 'Enter a valid join code.',
+				field: 'joinCode'
+			} satisfies ValidationFailure<'joinCode'>;
+		}
+		return { ok: true as const, action: 'join' as const, normalizedValue: normalized };
+	}
+
+	const normalized = fields.inviteToken.trim().toLowerCase();
+	if (!normalized) {
+		return {
+			ok: false as const,
+			feedback: 'Enter a valid invitation token.',
+			field: 'inviteToken'
+		} satisfies ValidationFailure<'inviteToken'>;
+	}
+	return { ok: true as const, action: 'invite' as const, normalizedValue: normalized };
+}
+
+// ── Error mappers ──
+
+export function mapLoginErrorMessage(error: unknown): string {
+	const message =
+		typeof error === 'object' && error && 'message' in error
+			? String(error.message)
+			: 'Login failed.';
 
 	if (message.toLowerCase().includes('invalid login credentials'))
 		return 'Invalid credentials.';
-	if (message.toLowerCase().includes('token has expired') || message.toLowerCase().includes('otp expired'))
-		return 'The code has expired. Request a new one.';
+	if (
+		message.toLowerCase().includes('token has expired') ||
+		message.toLowerCase().includes('otp expired')
+	)
+		return 'That verification code has expired. Request a new code.';
 	if (message.toLowerCase().includes('email not confirmed'))
-		return 'Please confirm your email first.';
+		return 'Please confirm your email before logging in.';
 	if (message.toLowerCase().includes('sms'))
 		return 'Could not send the text message. Check the phone number.';
+
+	return message;
+}
+
+export function mapRegistrationErrorMessage(error: unknown): string {
+	const message =
+		typeof error === 'object' && error && 'message' in error
+			? String(error.message)
+			: 'Registration failed.';
+	const normalized = message.toLowerCase();
+
+	if (normalized.includes('already registered') || normalized.includes('already been registered'))
+		return 'That email is already registered.';
+	if (normalized.includes('password') && normalized.includes('least'))
+		return 'Choose a stronger password.';
+	if (normalized.includes('password') && normalized.includes('weak'))
+		return 'Choose a stronger password.';
+
+	return message;
+}
+
+export function mapPasswordResetErrorMessage(error: unknown): string {
+	const message =
+		typeof error === 'object' && error && 'message' in error
+			? String(error.message)
+			: 'Password reset failed.';
+	const normalized = message.toLowerCase();
+
+	if (
+		normalized.includes('rate limit') ||
+		normalized.includes('too many') ||
+		normalized.includes('once every') ||
+		normalized.includes('security purposes')
+	)
+		return 'A reset email was already sent. Wait 60 seconds before requesting another.';
+	if (normalized.includes('user not found'))
+		return 'No account found for that email.';
+	if (normalized.includes('same password') || normalized.includes('different from the old'))
+		return 'New password must be different from the old one.';
+
+	return message;
+}
+
+export function mapOrganizationErrorMessage(error: unknown): string {
+	const message =
+		typeof error === 'object' && error && 'message' in error
+			? String(error.message)
+			: 'Organization setup failed.';
+	const normalized = message.toLowerCase();
+
+	if (normalized.includes('already belongs to an organization'))
+		return 'Your account is already linked to an organization.';
+	if (normalized.includes('organization code is invalid'))
+		return 'That organization code was not recognized.';
+	if (normalized.includes('invitation token is invalid'))
+		return 'That invitation token was not recognized.';
+	if (normalized.includes('invitation has expired'))
+		return 'That invitation has expired.';
 
 	return message;
 }

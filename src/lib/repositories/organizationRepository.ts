@@ -102,19 +102,46 @@ export async function createInvitation(
 	organizationId: string,
 	contact: { email?: string; phone?: string }
 ): Promise<OrganizationInvitation> {
+	const payload = buildInvitationPayload(organizationId, contact);
+
 	const { data, error } = await getSupabaseClient()
 		.from('organization_invitations')
-		.insert({
-			organization_id: organizationId,
-			email: contact.email ?? null,
-			phone: contact.phone ?? null,
-			status: 'pending'
-		})
+		.insert(payload)
 		.select()
 		.single();
 
-	if (error) throw error;
+	if (error) {
+		if (isUniqueInvitationViolation(error)) {
+			throw new Error('An invitation is already pending for that contact.');
+		}
+		throw error;
+	}
 	return data as OrganizationInvitation;
+}
+
+function buildInvitationPayload(
+	organizationId: string,
+	contact: { email?: string; phone?: string }
+) {
+	const email = contact.email?.trim() ?? '';
+	const phone = contact.phone?.trim() ?? '';
+	const hasEmail = email.length > 0;
+	const hasPhone = phone.length > 0;
+
+	if (hasEmail === hasPhone) {
+		throw new Error('Provide exactly one email or phone number.');
+	}
+
+	return {
+		organization_id: organizationId,
+		email: hasEmail ? email : null,
+		phone: hasPhone ? phone : null,
+		status: 'pending'
+	};
+}
+
+function isUniqueInvitationViolation(error: { code?: string; status?: number; message?: string }) {
+	return error.code === '23505' || error.status === 409 || error.message?.includes('duplicate key value');
 }
 
 export async function fetchPendingInvitations(

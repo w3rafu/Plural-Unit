@@ -9,8 +9,11 @@
   the page is a loop over active plugins, not a hardcoded list.
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
+	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { getActivePluginsForMember } from '$lib/stores/pluginRegistry';
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
@@ -20,11 +23,18 @@
 	});
 
 	const activePlugins = $derived(getActivePluginsForMember(currentHub.plugins));
+	const hubActions = $derived.by(() =>
+		currentOrganization.isAdmin ? [{ id: 'hub-manage', label: 'Manage hub', href: '/hub/manage' }] : []
+	);
+
+	function goHome() {
+		void goto('/');
+	}
 </script>
 
-<main>
-	<h1>Hub</h1>
-	<p><a href="/">← Home</a></p>
+<PageHeader title="Hub" subtitle="Member modules" backLabel=" " onBack={goHome} actions={hubActions} />
+
+<main class="flex flex-col gap-4">
 
 	{#if currentHub.isLoading}
 		<p>Loading hub...</p>

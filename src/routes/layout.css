@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+html {
+	min-height: 100%;
+	font-family: 'Inter Variable', sans-serif;
+
+}
+
+body {
+	min-height: 100vh;
+	margin: 0;
+    /*
+	background:
+		radial-gradient(circle at top, rgb(255 255 255 / 0.72), transparent 24%),
+		linear-gradient(180deg, rgb(244 241 236) 0%, rgb(236 233 228) 100%);
+    */
+    background-color: var(--color-stone-200);
+
+}
+
+:global(body > div) {
+	min-height: 100vh;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+
+
+a {
+	color: var(--color-stone-800);
+	text-decoration: underline;
+	font-weight: 600;
+}
