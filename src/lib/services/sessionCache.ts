@@ -14,17 +14,19 @@ import type { UserDetails } from '$lib/models/userModel';
 export const SESSION_CACHE_KEY = 'currentUser';
 
 type CachedSession = {
-	details: Pick<UserDetails, 'id' | 'name'>;
+	details: Pick<UserDetails, 'id' | 'name' | 'avatar_url'>;
 };
 
 export function serializeCachedSession(details: UserDetails): string {
 	const cached: CachedSession = {
-		details: { id: details.id, name: details.name }
+		details: { id: details.id, name: details.name, avatar_url: details.avatar_url }
 	};
 	return JSON.stringify(cached);
 }
 
-export function readCachedSession(raw: string | null): Pick<UserDetails, 'id' | 'name'> | null {
+export function readCachedSession(
+	raw: string | null
+): Pick<UserDetails, 'id' | 'name' | 'avatar_url'> | null {
 	if (!raw) return null;
 	try {
 		const parsed: CachedSession = JSON.parse(raw);

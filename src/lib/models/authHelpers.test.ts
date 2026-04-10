@@ -54,6 +54,11 @@ describe('validateLoginInput', () => {
 		expect(result.ok).toBe(true);
 		if (result.ok) expect(result.normalizedEmail).toBe('a@b.co');
 	});
+	it('normalizes email casing', () => {
+		const result = validateLoginInput({ email: 'User@Example.COM', password: 'secret' });
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.normalizedEmail).toBe('user@example.com');
+	});
 });
 
 describe('validateRegistrationInput', () => {
@@ -181,6 +186,11 @@ describe('validatePasswordResetEmail', () => {
 		const result = validatePasswordResetEmail(' a@b.co ');
 		expect(result.ok).toBe(true);
 		if (result.ok) expect(result.normalizedEmail).toBe('a@b.co');
+	});
+	it('normalizes reset email casing', () => {
+		const result = validatePasswordResetEmail('User@Example.COM');
+		expect(result.ok).toBe(true);
+		if (result.ok) expect(result.normalizedEmail).toBe('user@example.com');
 	});
 });
 

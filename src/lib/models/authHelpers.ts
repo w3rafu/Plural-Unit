@@ -81,7 +81,7 @@ export function validateOtpCodeInput(otpCode: string) {
 // ── Email login validator ──
 
 export function validateLoginInput(input: { email: string; password: string }) {
-	const normalizedEmail = input.email.trim();
+	const normalizedEmail = input.email.trim().toLowerCase();
 
 	if (!normalizedEmail) {
 		return {
@@ -142,7 +142,7 @@ export function validateRegistrationInput(input: {
 // ── Password recovery validators ──
 
 export function validatePasswordResetEmail(email: string) {
-	const normalizedEmail = email.trim();
+	const normalizedEmail = email.trim().toLowerCase();
 
 	if (!normalizedEmail) {
 		return {

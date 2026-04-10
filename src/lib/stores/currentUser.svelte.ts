@@ -26,6 +26,8 @@ import {
 	signOut,
 	subscribeToAuthStateChange,
 	upsertOwnProfile,
+	uploadProfileAvatar as uploadOwnProfileAvatar,
+	deleteProfileAvatar,
 	type EmailChangeResult,
 	type RegistrationResult
 } from '$lib/repositories/profileRepository';
@@ -41,6 +43,7 @@ import {
 class CurrentUser {
 	isLoggedIn = $state(false);
 	isLoggingIn = $state(false);
+	hasResolvedSession = $state(false);
 	details = $state<UserDetails>(INITIAL_DETAILS);
 
 	private stopAuth: (() => void) | null = null;
@@ -63,6 +66,7 @@ class CurrentUser {
 
 	private syncFromAuthUser(id: string, email: string) {
 		this.isLoggedIn = true;
+		this.hasResolvedSession = true;
 		this.details = { ...this.details, id, email };
 		this.saveSession();
 	}
@@ -70,6 +74,7 @@ class CurrentUser {
 	private handleSignedOut() {
 		this.isLoggedIn = false;
 		this.isLoggingIn = false;
+		this.hasResolvedSession = true;
 		this.details = INITIAL_DETAILS;
 		if (typeof window !== 'undefined') {
 			localStorage.removeItem(SESSION_CACHE_KEY);
@@ -99,6 +104,8 @@ class CurrentUser {
 			if (user) {
 				this.syncFromAuthUser(user.id, user.email ?? '');
 				await this.loadProfile(user.id);
+			} else {
+				this.hasResolvedSession = true;
 			}
 		} catch (error) {
 			if (shouldHandleAsSignedOut(error)) {
@@ -111,6 +118,7 @@ class CurrentUser {
 				return;
 			}
 			console.error('Failed to restore session:', error);
+			this.hasResolvedSession = true;
 		}
 	}
 
@@ -200,7 +208,7 @@ class CurrentUser {
 		}
 	}
 
-	async updateProfileDetails(updates: Pick<UserDetails, 'name' | 'phone_number'>) {
+	async updateProfileDetails(updates: Pick<UserDetails, 'name' | 'phone_number' | 'avatar_url'>) {
 		this.isLoggingIn = true;
 		try {
 			await upsertOwnProfile(this.details.id, updates);
@@ -212,7 +220,43 @@ class CurrentUser {
 	}
 
 	async updateName(name: string) {
-		await this.updateProfileDetails({ name, phone_number: this.details.phone_number });
+		await this.updateProfileDetails({
+			name,
+			phone_number: this.details.phone_number,
+			avatar_url: this.details.avatar_url
+		});
+	}
+
+	async uploadProfileAvatar(file: File) {
+		if (!this.details.id) {
+			throw new Error('No authenticated user.');
+		}
+
+		this.isLoggingIn = true;
+		try {
+			const avatarUrl = await uploadOwnProfileAvatar(this.details.id, file);
+			this.details = { ...this.details, avatar_url: avatarUrl };
+			this.saveSession();
+			return avatarUrl;
+		} finally {
+			this.isLoggingIn = false;
+		}
+	}
+
+	async removeProfileAvatar() {
+		if (!this.details.id) {
+			throw new Error('No authenticated user.');
+		}
+
+		this.isLoggingIn = true;
+		try {
+			await deleteProfileAvatar(this.details.id);
+			this.details = { ...this.details, avatar_url: '' };
+			this.saveSession();
+			return '';
+		} finally {
+			this.isLoggingIn = false;
+		}
 	}
 
 	async logout() {

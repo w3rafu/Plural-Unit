@@ -8,14 +8,30 @@ import {
 
 describe('serializeCachedSession / readCachedSession', () => {
 	it('round-trips id and name', () => {
-		const details = { id: 'abc', name: 'Jo', email: 'a@b.co', phone_number: '' };
+		const details = {
+			id: 'abc',
+			name: 'Jo',
+			email: 'a@b.co',
+			phone_number: '',
+			avatar_url: 'https://cdn.example/avatar.png'
+		};
 		const raw = serializeCachedSession(details);
 		const restored = readCachedSession(raw);
-		expect(restored).toEqual({ id: 'abc', name: 'Jo' });
+		expect(restored).toEqual({
+			id: 'abc',
+			name: 'Jo',
+			avatar_url: 'https://cdn.example/avatar.png'
+		});
 	});
 
 	it('excludes email and phone from cache', () => {
-		const details = { id: 'abc', name: 'Jo', email: 'secret@x.co', phone_number: '+1555' };
+		const details = {
+			id: 'abc',
+			name: 'Jo',
+			email: 'secret@x.co',
+			phone_number: '+1555',
+			avatar_url: 'https://cdn.example/avatar.png'
+		};
 		const raw = serializeCachedSession(details);
 		const parsed = JSON.parse(raw);
 		expect(parsed.details).not.toHaveProperty('email');
@@ -31,7 +47,9 @@ describe('serializeCachedSession / readCachedSession', () => {
 	});
 
 	it('returns null for empty id', () => {
-		expect(readCachedSession(JSON.stringify({ details: { id: '', name: '' } }))).toBeNull();
+		expect(
+			readCachedSession(JSON.stringify({ details: { id: '', name: '', avatar_url: '' } }))
+		).toBeNull();
 	});
 });
 

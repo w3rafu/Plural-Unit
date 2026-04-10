@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import * as Item from '$lib/components/ui/item';
@@ -44,13 +45,33 @@
 			feedback = e instanceof Error ? e.message : 'Failed to delete.';
 		}
 	}
+
+	function formatDateTime(value: string) {
+		return new Intl.DateTimeFormat(undefined, {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric',
+			hour: 'numeric',
+			minute: '2-digit'
+		}).format(new Date(value));
+	}
 </script>
 
-<Item.Root variant="outline">
-	<Item.Content>
-		<Item.Title>Events</Item.Title>
-		<form onsubmit={(e) => { e.preventDefault(); submit(); }}>
-			<Field.Group>
+<Card.Root class="border-border/70 bg-card/80">
+	<Card.Header class="gap-2 border-b border-border/70">
+		<Card.Title class="text-lg font-semibold tracking-tight">Events</Card.Title>
+		<Card.Description>Publish the next gathering members need to plan around.</Card.Description>
+	</Card.Header>
+
+	<Card.Content class="space-y-6">
+		<form
+			class="space-y-5"
+			onsubmit={(e) => {
+				e.preventDefault();
+				submit();
+			}}
+		>
+			<Field.Group class="gap-4">
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="event-title">Title</Field.Label>
@@ -67,37 +88,69 @@
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="event-starts-at">Starts at</Field.Label>
+						<Field.Description>Choose the local date and time members should see.</Field.Description>
 						<Input id="event-starts-at" type="datetime-local" bind:value={startsAt} />
 					</Field.Content>
 				</Field.Field>
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="event-location">Location</Field.Label>
+						<Field.Description>Optional place or room name.</Field.Description>
 						<Input id="event-location" type="text" bind:value={location} />
 					</Field.Content>
 				</Field.Field>
 			</Field.Group>
-			<Button type="submit">Create event</Button>
+			<div class="flex justify-start">
+				<Button type="submit">Create event</Button>
+			</div>
 		</form>
 
 		{#if feedback}
-			<p role="alert">{feedback}</p>
+			<p
+				role="alert"
+				class="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+			>
+				{feedback}
+			</p>
 		{/if}
 
-		{#if currentHub.events.length > 0}
+		<div class="space-y-3">
+			<div class="space-y-1">
+				<h3 class="text-sm font-semibold tracking-tight text-foreground">Published events</h3>
+				<p class="text-sm text-muted-foreground">
+					{currentHub.events.length === 0
+						? 'No events are live yet.'
+						: `${currentHub.events.length} event${currentHub.events.length === 1 ? '' : 's'} currently published.`}
+				</p>
+			</div>
+
+		{#if currentHub.events.length === 0}
+			<Card.Root size="sm" class="border-dashed border-border/70 bg-muted/20">
+				<Card.Content>
+					<p class="text-sm text-muted-foreground">Publish your first event when you are ready.</p>
+				</Card.Content>
+			</Card.Root>
+		{:else}
 			<Item.Group>
 				{#each currentHub.events as event (event.id)}
 					<Item.Root variant="muted" size="sm">
 						<Item.Content>
 							<Item.Title>{event.title}</Item.Title>
-							<Item.Description>{new Date(event.starts_at).toLocaleString()}</Item.Description>
+							<Item.Description>{event.description || 'More details will appear here soon.'}</Item.Description>
+							<p class="text-sm text-muted-foreground">{formatDateTime(event.starts_at)}</p>
+							{#if event.location}
+								<p class="text-sm text-muted-foreground">{event.location}</p>
+							{/if}
 						</Item.Content>
 						<Item.Actions>
-							<Button variant="destructive" size="sm" onclick={() => remove(event.id)}>Delete</Button>
+							<Button variant="destructive" size="sm" onclick={() => remove(event.id)}>
+								Delete
+							</Button>
 						</Item.Actions>
 					</Item.Root>
 				{/each}
 			</Item.Group>
 		{/if}
-	</Item.Content>
-</Item.Root>
+		</div>
+	</Card.Content>
+</Card.Root>

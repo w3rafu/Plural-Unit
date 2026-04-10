@@ -15,10 +15,10 @@
 	const badgeClass = $derived(
 		cn(
 			'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
-			variant === 'default' && 'border-transparent bg-stone-900 text-stone-50',
-			variant === 'secondary' && 'border-transparent bg-stone-100 text-stone-900',
-			variant === 'outline' && 'text-foreground',
-			variant === 'destructive' && 'border-transparent bg-red-600 text-stone-50',
+			variant === 'default' && 'border-transparent bg-primary text-primary-foreground',
+			variant === 'secondary' && 'border-transparent bg-secondary text-secondary-foreground',
+			variant === 'outline' && 'border-border bg-background text-foreground',
+			variant === 'destructive' && 'border-transparent bg-destructive text-white',
 			className
 		)
 	);

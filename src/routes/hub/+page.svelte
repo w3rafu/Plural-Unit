@@ -10,7 +10,9 @@
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import * as Card from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import HubOverviewCard from '$lib/components/hub/member/HubOverviewCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -18,28 +20,49 @@
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
 
-	onMount(() => {
-		currentHub.load();
+	let loadedHubOrgId = $state('');
+
+	$effect(() => {
+		const organizationId = currentOrganization.organization?.id ?? '';
+
+		if (!organizationId || loadedHubOrgId === organizationId) {
+			return;
+		}
+
+		loadedHubOrgId = organizationId;
+		void currentHub.load();
 	});
 
 	const activePlugins = $derived(getActivePluginsForMember(currentHub.plugins));
-	const hubActions = $derived.by(() =>
-		currentOrganization.isAdmin ? [{ id: 'hub-manage', label: 'Manage hub', href: '/hub/manage' }] : []
-	);
 
 	function goHome() {
 		void goto('/');
 	}
 </script>
 
-<PageHeader title="Hub" subtitle="Member modules" backLabel=" " onBack={goHome} actions={hubActions} />
+<PageHeader title="Hub" subtitle="Member modules" backLabel=" " onBack={goHome} />
 
 <main class="flex flex-col gap-4">
+	<HubOverviewCard />
 
 	{#if currentHub.isLoading}
-		<p>Loading hub...</p>
+		<Card.Root size="sm" class="border-border/70 bg-card/70">
+			<Card.Content>
+				<p class="text-sm text-muted-foreground">Loading the hub...</p>
+			</Card.Content>
+		</Card.Root>
 	{:else if activePlugins.length === 0}
-		<p>The hub is getting ready. No sections are active yet.</p>
+		<Card.Root class="border-dashed border-border/70 bg-muted/20">
+			<Card.Header>
+				<Card.Title class="text-lg font-semibold tracking-tight">The hub is ready for setup</Card.Title>
+				<Card.Description>No sections are live yet.</Card.Description>
+			</Card.Header>
+			{#if currentOrganization.isAdmin}
+				<Card.Content class="pt-0">
+					<Button href="/hub/manage" variant="outline" size="sm">Open hub manage</Button>
+				</Card.Content>
+			{/if}
+		</Card.Root>
 	{:else}
 		{#each activePlugins as plugin (plugin.key)}
 			{#if plugin.key === 'broadcasts'}

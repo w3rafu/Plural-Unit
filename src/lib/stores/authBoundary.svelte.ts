@@ -35,7 +35,7 @@ export type LoginFieldName = 'email' | 'password' | 'confirmPassword' | 'phoneNu
 
 class AuthBoundary {
 	// Login state
-	authChannel = $state<AuthChannel>('email');
+	authChannel = $state<AuthChannel>('phone');
 	authStep = $state<AuthStep>('request_code');
 	authMode = $state<'login' | 'register' | 'forgot_password' | 'reset_password'>('login');
 	email = $state('');
@@ -304,9 +304,14 @@ class AuthBoundary {
 
 	setAuthChannel(channel: AuthChannel) {
 		this.authChannel = channel;
+		this.authStep = 'request_code';
+		this.otpCode = '';
+		this.resetEmailSent = false;
+		if (this.authMode !== 'reset_password') {
+			this.authMode = 'login';
+		}
 		this.clearFieldErrors();
 		this.setFeedback('');
-		this.authStep = 'request_code';
 	}
 
 	setAuthMode(mode: 'login' | 'register' | 'forgot_password' | 'reset_password') {

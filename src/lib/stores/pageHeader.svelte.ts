@@ -14,6 +14,7 @@ export type PageHeaderConfig = {
 	title: string;
 	subtitle?: string;
 	avatarText?: string;
+	avatarImageUrl?: string;
 	backLabel?: string;
 	onBack?: (() => void) | null;
 	actions?: PageHeaderAction[];
@@ -26,7 +27,7 @@ export type PageHeaderConfigInput = Omit<PageHeaderConfig, 'preset'> & {
 export const DEFAULT_HEADER: Readonly<PageHeaderConfig> = {
 	preset: 'brand',
 	title: 'Plural Unit',
-	subtitle: 'Wireframe app shell',
+	subtitle: 'Logistic hub for organized communities',
 	actions: []
 };
 
@@ -61,13 +62,16 @@ export function buildPageHeaderConfig(config: PageHeaderConfigInput): PageHeader
 
 class PageHeaderStore {
 	config = $state<PageHeaderConfig>(DEFAULT_HEADER);
+	hasRegisteredHeader = $state(false);
 
 	set(config: PageHeaderConfigInput) {
 		this.config = buildPageHeaderConfig(config);
+		this.hasRegisteredHeader = true;
 	}
 
 	reset() {
 		this.config = DEFAULT_HEADER;
+		this.hasRegisteredHeader = false;
 	}
 }
 

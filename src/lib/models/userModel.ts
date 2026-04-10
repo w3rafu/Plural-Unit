@@ -9,11 +9,13 @@ export type UserDetails = {
 	name: string;
 	email: string;
 	phone_number: string;
+	avatar_url: string;
 };
 
 export const INITIAL_DETAILS: UserDetails = {
 	id: '',
 	name: '',
 	email: '',
-	phone_number: ''
+	phone_number: '',
+	avatar_url: ''
 };

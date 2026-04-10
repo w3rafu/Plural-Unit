@@ -34,20 +34,20 @@
 
 	const buttonClass = $derived(
 		cn(
-			'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50',
+			'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
 			variant === 'default' &&
-				'bg-stone-900 text-stone-50 shadow hover:bg-stone-800',
+				'bg-primary text-primary-foreground shadow-[0_10px_22px_rgba(24,24,27,0.12)] hover:-translate-y-px hover:bg-primary/95',
 			variant === 'destructive' &&
-				'bg-red-600 text-stone-50 shadow-sm hover:bg-red-700',
+				'bg-destructive text-white shadow-[0_10px_22px_rgba(127,29,29,0.14)] hover:-translate-y-px hover:bg-destructive/92',
 			variant === 'outline' &&
-				'border border-stone-300 bg-transparent shadow-sm hover:bg-stone-100 hover:text-stone-900',
+				'border border-input/90 bg-background/88 shadow-[0_1px_2px_rgba(15,23,42,0.05)] hover:-translate-y-px hover:bg-accent/85 hover:text-accent-foreground',
 			variant === 'secondary' &&
-				'bg-stone-100 text-stone-900 shadow-sm hover:bg-stone-200',
-			variant === 'ghost' && 'hover:bg-stone-100 hover:text-stone-900',
-			variant === 'link' && 'h-auto px-0 text-stone-900 underline-offset-4 hover:underline',
+				'bg-secondary text-secondary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:bg-secondary/88',
+			variant === 'ghost' && 'hover:bg-accent/80 hover:text-accent-foreground',
+			variant === 'link' && 'h-auto px-0 text-foreground underline-offset-4 hover:underline',
 			size === 'default' && 'h-10 px-4 py-2',
-			size === 'sm' && 'h-9 rounded-md px-3',
-			size === 'lg' && 'h-11 rounded-md px-8',
+			size === 'sm' && 'h-9 rounded-lg px-3',
+			size === 'lg' && 'h-11 rounded-lg px-8',
 			size === 'icon' && 'h-10 w-10 p-0',
 			size === 'icon-sm' && 'h-9 w-9 p-0',
 			className

@@ -8,6 +8,7 @@
 		title,
 		subtitle = '',
 		avatarText = '',
+		avatarImageUrl = '',
 		backLabel = '',
 		onBack = null as (() => void) | null,
 		actions = [] as PageHeaderAction[]
@@ -19,6 +20,7 @@
 			title,
 			subtitle,
 			avatarText,
+			avatarImageUrl,
 			backLabel,
 			onBack,
 			actions

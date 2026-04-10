@@ -11,6 +11,8 @@ import { getSupabaseClient } from '$lib/supabaseClient';
 import type { UserDetails } from '$lib/models/userModel';
 import { withRetry } from '$lib/services/retry';
 
+const PROFILE_AVATAR_BUCKET = 'profile-avatars';
+
 export type RegistrationResult = {
 	user: SupabaseUser | null;
 	requiresEmailConfirmation: boolean;
@@ -25,12 +27,57 @@ function normalizeEmail(email: string) {
 	return email.trim().toLowerCase();
 }
 
+function buildVersionedPublicUrl(publicUrl: string, version: number | string = Date.now()) {
+	const separator = publicUrl.includes('?') ? '&' : '?';
+	return `${publicUrl}${separator}v=${version}`;
+}
+
+function getAvatarExtension(file: File) {
+	const extensionFromName = file.name.includes('.') ? file.name.split('.').pop() : '';
+	if (extensionFromName) {
+		return extensionFromName.toLowerCase();
+	}
+
+	if (file.type === 'image/png') return 'png';
+	if (file.type === 'image/webp') return 'webp';
+	return 'jpg';
+}
+
+async function removeExistingAvatarFiles(userId: string) {
+	const { data, error } = await withRetry(() =>
+		getSupabaseClient().storage.from(PROFILE_AVATAR_BUCKET).list(userId, {
+			limit: 100,
+			offset: 0
+		})
+	);
+
+	if (error) {
+		throw error;
+	}
+
+	const pathsToRemove = (data ?? [])
+		.filter((entry) => entry.name)
+		.map((entry) => `${userId}/${entry.name}`);
+
+	if (pathsToRemove.length === 0) {
+		return;
+	}
+
+	const { error: removeError } = await withRetry(() =>
+		getSupabaseClient().storage.from(PROFILE_AVATAR_BUCKET).remove(pathsToRemove)
+	);
+
+	if (removeError) {
+		throw removeError;
+	}
+}
+
 // ── Auth ──
 
 export async function signInWithPassword(email: string, password: string): Promise<SupabaseUser> {
 	return withRetry(async () => {
 		const { data, error } = await getSupabaseClient().auth.signInWithPassword({
-			email: email.trim(),
+			email: normalizeEmail(email),
 			password
 		});
 		if (error || !data.user) throw error ?? new Error('Could not resolve authenticated user.');
@@ -44,7 +91,7 @@ export async function signUpWithPassword(
 ): Promise<RegistrationResult> {
 	return withRetry(async () => {
 		const { data, error } = await getSupabaseClient().auth.signUp({
-			email: email.trim(),
+			email: normalizeEmail(email),
 			password
 		});
 		if (error) throw error;
@@ -79,7 +126,7 @@ export async function verifyPhoneOtp(phone: string, token: string): Promise<Supa
 }
 
 export async function requestPasswordReset(email: string) {
-	const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email.trim());
+	const { error } = await getSupabaseClient().auth.resetPasswordForEmail(normalizeEmail(email));
 	if (error) throw error;
 }
 
@@ -144,7 +191,7 @@ export async function fetchOwnProfile(userId: string): Promise<Partial<UserDetai
 	return withRetry(async () => {
 		const { data, error } = await getSupabaseClient()
 			.from('profiles')
-			.select('id, name, email, phone_number')
+			.select('id, name, email, phone_number, avatar_url')
 			.eq('id', userId)
 			.maybeSingle();
 
@@ -161,4 +208,33 @@ export async function upsertOwnProfile(userId: string, updates: Partial<UserDeta
 
 		if (error) throw error;
 	});
+}
+
+export async function uploadProfileAvatar(userId: string, file: File): Promise<string> {
+	const extension = getAvatarExtension(file);
+	const path = `${userId}/avatar.${extension}`;
+
+	await removeExistingAvatarFiles(userId);
+
+	const { error: uploadError } = await withRetry(() =>
+		getSupabaseClient().storage.from(PROFILE_AVATAR_BUCKET).upload(path, file, {
+			upsert: true,
+			contentType: file.type || 'application/octet-stream'
+		})
+	);
+
+	if (uploadError) {
+		throw uploadError;
+	}
+
+	const { data } = getSupabaseClient().storage.from(PROFILE_AVATAR_BUCKET).getPublicUrl(path);
+	if (!data.publicUrl) {
+		throw new Error('Could not generate public avatar URL.');
+	}
+
+	return buildVersionedPublicUrl(data.publicUrl);
+}
+
+export async function deleteProfileAvatar(userId: string) {
+	await removeExistingAvatarFiles(userId);
 }
