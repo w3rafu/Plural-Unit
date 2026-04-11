@@ -23,24 +23,39 @@
 		return formatShortDate(createdAt) || '—';
 	});
 
-	const overviewStats = $derived.by(() => [
-		{
-			label: 'Organization',
-			value: currentOrganization.organization?.name ?? 'No organization yet'
-		},
-		{
-			label: 'Role',
-			value: currentOrganization.membership?.role ?? '—'
-		},
-		{
-			label: 'Joined',
-			value: joinedLabel
-		},
-		{
-			label: 'Created',
-			value: createdLabel
+	const overviewStats = $derived.by(() => {
+		const base = [
+			{
+				label: 'Organization',
+				value: currentOrganization.organization?.name ?? 'No organization yet'
+			},
+			{
+				label: 'Role',
+				value: currentOrganization.membership?.role ?? '—'
+			},
+			{
+				label: 'Joined',
+				value: joinedLabel
+			},
+			{
+				label: 'Created',
+				value: createdLabel
+			}
+		];
+
+		const membersValue =
+			currentOrganization.memberCount === null ? '—' : String(currentOrganization.memberCount);
+
+		if (currentOrganization.isAdmin) {
+			return [
+				...base,
+				{ label: 'Members', value: membersValue },
+				{ label: 'Pending invites', value: String(currentOrganization.invitations.length) }
+			];
 		}
-	]);
+
+		return [...base, { label: 'Members', value: membersValue }];
+	});
 </script>
 
 <Card.Root class="border-border/70 bg-card/80">
@@ -50,7 +65,7 @@
 	</Card.Header>
 
 	<Card.Content class="space-y-5">
-		<div class="grid gap-3 sm:grid-cols-2">
+		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 			{#each overviewStats as stat (stat.label)}
 				<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
 					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">

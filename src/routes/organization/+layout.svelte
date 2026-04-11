@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import OrganizationSummaryCard from '$lib/components/organization/OrganizationSummaryCard.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
@@ -88,8 +87,6 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<OrganizationSummaryCard />
-
 		<Card.Root class="border-border/70 bg-card/80">
 			<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="space-y-1">
