@@ -1,7 +1,9 @@
+/** Serialize a value into a stable JSON string for dirty-checking. */
 export function createDirtySnapshot(value: unknown): string {
 	return JSON.stringify(value);
 }
 
+/** Build a human-readable "leave without saving?" prompt from section labels. */
 export function buildUnsavedChangesPrompt(labels: string[]): string {
 	const uniqueLabels = [...new Set(labels.map((label) => label.trim()).filter(Boolean))];
 

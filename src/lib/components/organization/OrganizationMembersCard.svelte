@@ -7,9 +7,23 @@
 	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
-	import { computeAvatarInitials } from '$lib/components/profile/avatarUploadModel';
 	import type { OrganizationMember } from '$lib/models/organizationModel';
 	import { toast } from '$lib/stores/toast.svelte';
+	import {
+		type PendingMemberAction,
+		formatJoinedVia,
+		formatJoinedAt,
+		formatContact,
+		getMemberInitials,
+		isLastAdmin,
+		wouldDemoteLastAdmin,
+		getConfirmationTitle,
+		getConfirmationDescription,
+		getConfirmationDetails,
+		getConfirmationLabel,
+		getConfirmationBusyLabel,
+		getConfirmationVariant
+	} from '$lib/models/memberManagementHelpers';
 
 	const organizationMembers = $derived(currentOrganization.members);
 
@@ -18,47 +32,7 @@
 	);
 	let roleDrafts = $state<Record<string, OrganizationMember['role']>>({});
 	let confirmationOpen = $state(false);
-	let pendingAction = $state<
-		| {
-				type: 'role';
-				member: OrganizationMember;
-				nextRole: OrganizationMember['role'];
-		  }
-		| {
-				type: 'remove';
-				member: OrganizationMember;
-		  }
-		| null
-	>(null);
-
-	function formatJoinedVia(member: OrganizationMember) {
-		switch (member.joined_via) {
-			case 'created':
-				return 'Created organization';
-			case 'invitation':
-				return 'Invited';
-			case 'code':
-				return 'Joined by code';
-			default:
-				return member.joined_via;
-		}
-	}
-
-	function formatJoinedAt(value: string) {
-		return new Date(value).toLocaleDateString([], {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		});
-	}
-
-	function formatContact(member: OrganizationMember) {
-		return member.email || member.phone_number || 'No contact added';
-	}
-
-	function getMemberInitials(member: OrganizationMember) {
-		return computeAvatarInitials(member.name, member.email, member.phone_number, 'Member');
-	}
+	let pendingAction = $state<PendingMemberAction>(null);
 
 	function getDraftRole(member: OrganizationMember) {
 		return roleDrafts[member.profile_id] ?? member.role;
@@ -68,38 +42,23 @@
 		roleDrafts = { ...roleDrafts, [member.profile_id]: role };
 	}
 
-	function isLastAdmin(member: OrganizationMember) {
-		return member.role === 'admin' && adminCount === 1;
-	}
-
-	function wouldDemoteLastAdmin(member: OrganizationMember) {
-		return member.role === 'admin' && getDraftRole(member) === 'member' && adminCount === 1;
-	}
-
 	function openRoleConfirmation(member: OrganizationMember) {
 		const nextRole = getDraftRole(member);
 
-		if (nextRole === member.role || wouldDemoteLastAdmin(member)) {
+		if (nextRole === member.role || wouldDemoteLastAdmin(member, nextRole, adminCount)) {
 			return;
 		}
 
-		pendingAction = {
-			type: 'role',
-			member,
-			nextRole
-		};
+		pendingAction = { type: 'role', member, nextRole };
 		confirmationOpen = true;
 	}
 
 	function openRemoveConfirmation(member: OrganizationMember) {
-		if (isLastAdmin(member)) {
+		if (isLastAdmin(member, adminCount)) {
 			return;
 		}
 
-		pendingAction = {
-			type: 'remove',
-			member
-		};
+		pendingAction = { type: 'remove', member };
 		confirmationOpen = true;
 	}
 
@@ -107,84 +66,18 @@
 		pendingAction = null;
 	}
 
-	const confirmationTitle = $derived.by(() => {
-		if (!pendingAction) return '';
-
-		if (pendingAction.type === 'role') {
-			return pendingAction.nextRole === 'admin' ? 'Promote to admin?' : 'Change member role?';
-		}
-
-		return 'Remove member?';
-	});
-
-	const confirmationDescription = $derived.by(() => {
-		if (!pendingAction) return '';
-
-		const memberName = pendingAction.member.name || 'This member';
-
-		if (pendingAction.type === 'role') {
-			return pendingAction.nextRole === 'admin'
-				? `${memberName} will gain access to organization admin tools.`
-				: `${memberName} will stay in the organization, but admin tools will be removed.`;
-		}
-
-		return `${memberName} will lose access to this organization and its hub content.`;
-	});
-
-	const confirmationDetails = $derived.by(() => {
-		if (!pendingAction) return [];
-
-		const memberName = pendingAction.member.name || 'This member';
-
-		if (pendingAction.type === 'role') {
-			const details = [
-				`Current role: ${pendingAction.member.role}`,
-				`New role: ${pendingAction.nextRole}`
-			];
-
-			if (
-				pendingAction.nextRole === 'member' &&
-				pendingAction.member.profile_id === currentUser.details.id
-			) {
-				details.push('This will remove your own admin access after the change is applied.');
-			}
-
-			if (pendingAction.nextRole === 'admin') {
-				details.push(`${memberName} will be able to manage join codes, invitations, and members.`);
-			}
-
-			return details;
-		}
-
-		const details = [
-			`Organization: ${currentOrganization.organization?.name ?? 'Current organization'}`,
-			'This action removes membership immediately.'
-		];
-
-		if (pendingAction.member.profile_id === currentUser.details.id) {
-			details.push('You are removing your own membership from this organization.');
-		}
-
-		return details;
-	});
-
-	const confirmationLabel = $derived.by(() => {
-		if (!pendingAction) return 'Confirm';
-		return pendingAction.type === 'role'
-			? pendingAction.nextRole === 'admin'
-				? 'Promote to admin'
-				: 'Save role change'
-			: 'Remove member';
-	});
-
-	const confirmationBusyLabel = $derived.by(() => {
-		if (!pendingAction) return 'Working...';
-		return pendingAction.type === 'role' ? 'Saving...' : 'Removing...';
-	});
-
-	const confirmationVariant = $derived.by(() =>
-		pendingAction?.type === 'remove' ? 'destructive' : 'default'
+	const confirmationTitle = $derived(getConfirmationTitle(pendingAction));
+	const confirmationDescription = $derived(getConfirmationDescription(pendingAction));
+	const confirmationDetails = $derived(
+		getConfirmationDetails(
+			pendingAction,
+			currentUser.details.id,
+			currentOrganization.organization?.name ?? 'Current organization'
+		)
 	);
+	const confirmationLabel = $derived(getConfirmationLabel(pendingAction));
+	const confirmationBusyLabel = $derived(getConfirmationBusyLabel(pendingAction));
+	const confirmationVariant = $derived(getConfirmationVariant(pendingAction));
 
 	async function confirmAction() {
 		if (!pendingAction) {
@@ -382,8 +275,8 @@
 												type="button"
 												variant="outline"
 												size="sm"
-												disabled={currentOrganization.isMutating || getDraftRole(member) === member.role || wouldDemoteLastAdmin(member)}
-												title={wouldDemoteLastAdmin(member) ? 'Keep at least one admin in the organization.' : undefined}
+										disabled={currentOrganization.isMutating || getDraftRole(member) === member.role || wouldDemoteLastAdmin(member, getDraftRole(member), adminCount)}
+										title={wouldDemoteLastAdmin(member, getDraftRole(member), adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 												aria-label={`Update role for ${member.name || formatContact(member)}`}
 												onclick={() => openRoleConfirmation(member)}
 											>
@@ -394,8 +287,8 @@
 												type="button"
 												variant="destructive"
 												size="sm"
-												disabled={currentOrganization.isMutating || isLastAdmin(member)}
-												title={isLastAdmin(member) ? 'Keep at least one admin in the organization.' : undefined}
+										disabled={currentOrganization.isMutating || isLastAdmin(member, adminCount)}
+										title={isLastAdmin(member, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 												aria-label={`Remove ${member.name || formatContact(member)} from the organization`}
 												onclick={() => openRemoveConfirmation(member)}
 											>

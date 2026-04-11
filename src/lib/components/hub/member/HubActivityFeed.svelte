@@ -4,7 +4,8 @@
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
-	const activityItems = $derived(currentHub.activityFeed.slice(0, 5));
+	const MAX_VISIBLE_ACTIVITY_ITEMS = 5;
+	const activityItems = $derived(currentHub.activityFeed.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS));
 </script>
 
 <Card.Root class="border-border/70 bg-card/80">

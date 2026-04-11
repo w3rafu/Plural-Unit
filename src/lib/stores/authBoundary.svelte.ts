@@ -118,6 +118,19 @@ class AuthBoundary {
 		this.loginFeedbackType = type;
 	}
 
+	/** Start a submit attempt. Returns false if already submitting. */
+	private beginSubmit(): boolean {
+		if (this.isAuthSubmitting) return false;
+		this.isAuthSubmitting = true;
+		this.clearFieldErrors();
+		this.setFeedback('');
+		return true;
+	}
+
+	private endSubmit() {
+		this.isAuthSubmitting = false;
+	}
+
 	private stripAuthHashFromUrl() {
 		if (typeof window === 'undefined' || !window.location.hash) return;
 		window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
@@ -160,15 +173,12 @@ class AuthBoundary {
 	// ── Login actions ──
 
 	async onEmailLoginSubmit() {
-		if (this.isAuthSubmitting) return;
-		this.isAuthSubmitting = true;
-		this.clearFieldErrors();
-		this.setFeedback('');
+		if (!this.beginSubmit()) return;
 
 		const v = validateLoginInput({ email: this.email, password: this.password });
 		if (!v.ok) {
 			this.setFieldError(v.field as LoginFieldName, v.feedback);
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 			return;
 		}
 
@@ -177,15 +187,12 @@ class AuthBoundary {
 		} catch (e) {
 			this.setFeedback(mapLoginErrorMessage(e));
 		} finally {
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 		}
 	}
 
 	async onEmailRegisterSubmit() {
-		if (this.isAuthSubmitting) return;
-		this.isAuthSubmitting = true;
-		this.clearFieldErrors();
-		this.setFeedback('');
+		if (!this.beginSubmit()) return;
 
 		const v = validateRegistrationInput({
 			email: this.email,
@@ -194,7 +201,7 @@ class AuthBoundary {
 		});
 		if (!v.ok) {
 			this.setFieldError(v.field as LoginFieldName, v.feedback);
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 			return;
 		}
 
@@ -206,20 +213,17 @@ class AuthBoundary {
 		} catch (e) {
 			this.setFeedback(mapRegistrationErrorMessage(e));
 		} finally {
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 		}
 	}
 
 	async onRequestCodeSubmit() {
-		if (this.isAuthSubmitting) return;
-		this.isAuthSubmitting = true;
-		this.clearFieldErrors();
-		this.setFeedback('');
+		if (!this.beginSubmit()) return;
 
 		const v = validatePhoneNumberInput(this.phone);
 		if (!v.ok) {
 			this.setFieldError('phoneNumber', v.feedback);
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 			return;
 		}
 
@@ -229,20 +233,17 @@ class AuthBoundary {
 		} catch (e) {
 			this.setFeedback(mapLoginErrorMessage(e));
 		} finally {
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 		}
 	}
 
 	async onVerifyCodeSubmit() {
-		if (this.isAuthSubmitting) return;
-		this.isAuthSubmitting = true;
-		this.clearFieldErrors();
-		this.setFeedback('');
+		if (!this.beginSubmit()) return;
 
 		const v = validateOtpCodeInput(this.otpCode);
 		if (!v.ok) {
 			this.setFieldError('otpCode', v.feedback);
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 			return;
 		}
 
@@ -251,7 +252,7 @@ class AuthBoundary {
 		} catch (e) {
 			this.setFeedback(mapLoginErrorMessage(e));
 		} finally {
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 		}
 	}
 
@@ -268,16 +269,13 @@ class AuthBoundary {
 	// ── Password recovery ──
 
 	async onForgotPasswordSubmit() {
-		if (this.resetEmailSent || this.isAuthSubmitting) return;
-		this.isAuthSubmitting = true;
-
-		this.clearFieldErrors();
-		this.setFeedback('');
+		if (this.resetEmailSent) return;
+		if (!this.beginSubmit()) return;
 
 		const v = validatePasswordResetEmail(this.email);
 		if (!v.ok) {
 			this.setFieldError('email', v.feedback);
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 			return;
 		}
 
@@ -289,15 +287,12 @@ class AuthBoundary {
 		} catch (e) {
 			this.setFeedback(mapPasswordResetErrorMessage(e));
 		} finally {
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 		}
 	}
 
 	async onResetPasswordSubmit() {
-		if (this.isAuthSubmitting) return;
-		this.isAuthSubmitting = true;
-		this.clearFieldErrors();
-		this.setFeedback('');
+		if (!this.beginSubmit()) return;
 
 		const v = validateNewPassword({
 			password: this.password,
@@ -305,7 +300,7 @@ class AuthBoundary {
 		});
 		if (!v.ok) {
 			this.setFieldError(v.field as LoginFieldName, v.feedback);
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 			return;
 		}
 
@@ -321,7 +316,7 @@ class AuthBoundary {
 		} catch (e) {
 			this.setFeedback(mapPasswordResetErrorMessage(e));
 		} finally {
-			this.isAuthSubmitting = false;
+			this.endSubmit();
 		}
 	}
 

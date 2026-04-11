@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+	import { formatShortDate } from '$lib/utils/dateFormat';
 
 	const joinedLabel = $derived.by(() => {
 		switch (currentOrganization.membership?.joined_via) {
@@ -19,11 +20,7 @@
 		const createdAt = currentOrganization.organization?.created_at;
 		if (!createdAt) return '—';
 
-		return new Date(createdAt).toLocaleDateString([], {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		});
+		return formatShortDate(createdAt) || '—';
 	});
 
 	const overviewStats = $derived.by(() => [

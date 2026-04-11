@@ -12,6 +12,7 @@ export type UserDetails = {
 	avatar_url: string;
 };
 
+/** Empty placeholder used before the real profile is loaded from Supabase. */
 export const INITIAL_DETAILS: UserDetails = {
 	id: '',
 	name: '',

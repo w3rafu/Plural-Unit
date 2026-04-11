@@ -7,6 +7,7 @@
  */
 
 import { getSupabaseClient } from '$lib/supabaseClient';
+import { throwRepositoryError } from '$lib/services/repositoryError';
 import type {
 	OrganizationPayload,
 	OrganizationMembership,
@@ -17,11 +18,13 @@ import type {
 
 // ── Context lookup ──
 
+/** Organization + membership context returned from lookup queries. */
 export type OrganizationContext = {
 	organization: OrganizationPayload;
 	membership: OrganizationMembership;
 };
 
+/** Fetch the calling user's organization and membership in one round-trip. */
 export async function fetchOwnOrganizationContext(
 	userId: string
 ): Promise<OrganizationContext | null> {
@@ -31,9 +34,10 @@ export async function fetchOwnOrganizationContext(
 		.eq('profile_id', userId)
 		.maybeSingle();
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not load organization context.');
 	if (!data || !data.organizations) return null;
 
+	// Supabase types this to-one FK join as an array; at runtime it is a single object.
 	const org = data.organizations as unknown as OrganizationPayload;
 	return {
 		organization: org,
@@ -48,6 +52,7 @@ export async function fetchOwnOrganizationContext(
 
 // ── Create ──
 
+/** Create a new organization with the given user as its first admin. */
 export async function createOrganization(
 	userId: string,
 	name: string
@@ -56,7 +61,7 @@ export async function createOrganization(
 		p_name: name,
 		p_creator_id: userId
 	});
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not create the organization.');
 
 	// Re-fetch the full context after creation.
 	const ctx = await fetchOwnOrganizationContext(userId);
@@ -66,6 +71,7 @@ export async function createOrganization(
 
 // ── Join by code ──
 
+/** Join an existing organization using a shareable join code. */
 export async function joinOrganizationByCode(
 	userId: string,
 	joinCode: string
@@ -74,7 +80,7 @@ export async function joinOrganizationByCode(
 		p_profile_id: userId,
 		p_join_code: joinCode
 	});
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not join the organization by code.');
 
 	const ctx = await fetchOwnOrganizationContext(userId);
 	if (!ctx) throw new Error('Joined but context could not be loaded.');
@@ -83,6 +89,7 @@ export async function joinOrganizationByCode(
 
 // ── Accept invitation ──
 
+/** Accept a pending invitation by its unique token. */
 export async function acceptInvitation(
 	userId: string,
 	token: string
@@ -91,7 +98,7 @@ export async function acceptInvitation(
 		p_profile_id: userId,
 		p_token: token
 	});
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not accept the invitation.');
 
 	const ctx = await fetchOwnOrganizationContext(userId);
 	if (!ctx) throw new Error('Invitation accepted but context could not be loaded.');
@@ -100,6 +107,7 @@ export async function acceptInvitation(
 
 // ── Invitations (admin) ──
 
+/** Insert a new pending invitation for the given email or phone number. */
 export async function createInvitation(
 	organizationId: string,
 	contact: { email?: string; phone?: string }
@@ -116,7 +124,7 @@ export async function createInvitation(
 		if (isUniqueInvitationViolation(error)) {
 			throw new Error('An invitation is already pending for that contact.');
 		}
-		throw error;
+		throwRepositoryError(error, 'Could not create the invitation.');
 	}
 	return data as OrganizationInvitation;
 }
@@ -146,6 +154,7 @@ function isUniqueInvitationViolation(error: { code?: string; status?: number; me
 	return error.code === '23505' || error.status === 409 || error.message?.includes('duplicate key value');
 }
 
+/** Return all pending (not yet accepted or revoked) invitations for an organization. */
 export async function fetchPendingInvitations(
 	organizationId: string
 ): Promise<OrganizationInvitation[]> {
@@ -156,48 +165,53 @@ export async function fetchPendingInvitations(
 		.eq('status', 'pending')
 		.order('created_at', { ascending: false });
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not load pending invitations.');
 	return (data ?? []) as OrganizationInvitation[];
 }
 
+/** Generate a fresh token for an existing pending invitation. */
 export async function resendInvitation(invitationId: string) {
 	const { error } = await getSupabaseClient().rpc('resend_organization_invitation', {
 		p_invitation_id: invitationId
 	});
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not resend the invitation.');
 }
 
+/** Mark a pending invitation as revoked so it can no longer be used. */
 export async function revokeInvitation(invitationId: string) {
 	const { error } = await getSupabaseClient().rpc('revoke_organization_invitation', {
 		p_invitation_id: invitationId
 	});
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not revoke the invitation.');
 }
 
 // ── Join code (admin) ──
 
+/** Replace the organization's join code with a new random value. */
 export async function regenerateJoinCode(organizationId: string): Promise<string> {
 	const { data, error } = await getSupabaseClient().rpc('regenerate_organization_join_code', {
 		p_organization_id: organizationId
 	});
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not regenerate the join code.');
 	return data as string;
 }
 
 // ── Member count ──
 
+/** Count how many members belong to the organization (exact). */
 export async function fetchMemberCount(organizationId: string): Promise<number> {
 	const { count, error } = await getSupabaseClient()
 		.from('organization_memberships')
 		.select('*', { count: 'exact', head: true })
 		.eq('organization_id', organizationId);
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not load the member count.');
 	return count ?? 0;
 }
 
+/** Fetch all members with their profile info via the get_organization_members RPC. */
 export async function fetchOrganizationMembers(
 	organizationId: string
 ): Promise<OrganizationMember[]> {
@@ -205,10 +219,11 @@ export async function fetchOrganizationMembers(
 		p_organization_id: organizationId
 	});
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not load organization members.');
 	return (data ?? []) as OrganizationMember[];
 }
 
+/** Change a member's role (admin ↔ member) within the organization. */
 export async function setOrganizationMemberRole(
 	organizationId: string,
 	profileId: string,
@@ -220,14 +235,15 @@ export async function setOrganizationMemberRole(
 		p_role: role
 	});
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not update the member role.');
 }
 
+/** Remove a member from the organization entirely. */
 export async function removeOrganizationMember(organizationId: string, profileId: string) {
 	const { error } = await getSupabaseClient().rpc('remove_organization_member', {
 		p_organization_id: organizationId,
 		p_profile_id: profileId
 	});
 
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not remove the member.');
 }

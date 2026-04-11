@@ -13,18 +13,21 @@
 	import { toast } from '$lib/stores/toast.svelte';
 	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { onDestroy } from 'svelte';
+	import {
+		type PendingInviteAction,
+		getInviteConfirmationTitle,
+		getInviteConfirmationDescription,
+		getInviteConfirmationDetails,
+		getInviteConfirmationLabel,
+		getInviteConfirmationBusyLabel,
+		getInviteConfirmationVariant
+	} from '$lib/models/invitationHelpers';
 
 	let inviteEmail = $state('');
 	let invitePhone = $state('');
 	let inviteMethod = $state<'email' | 'phone'>('email');
 	let confirmationOpen = $state(false);
-	let pendingInviteAction = $state<
-		| {
-				type: 'resend' | 'revoke';
-				invitation: OrganizationInvitation;
-		  }
-		| null
-	>(null);
+	let pendingInviteAction = $state<PendingInviteAction>(null);
 	const UNSAVED_CHANGES_KEY = 'organization-access';
 	const initialInviteSnapshot = createDirtySnapshot({
 		method: 'email',
@@ -91,18 +94,12 @@
 	}
 
 	function openResendConfirmation(invitation: OrganizationInvitation) {
-		pendingInviteAction = {
-			type: 'resend',
-			invitation
-		};
+		pendingInviteAction = { type: 'resend', invitation };
 		confirmationOpen = true;
 	}
 
 	function openRevokeConfirmation(invitation: OrganizationInvitation) {
-		pendingInviteAction = {
-			type: 'revoke',
-			invitation
-		};
+		pendingInviteAction = { type: 'revoke', invitation };
 		confirmationOpen = true;
 	}
 
@@ -110,57 +107,12 @@
 		pendingInviteAction = null;
 	}
 
-	const confirmationTitle = $derived.by(() => {
-		if (!pendingInviteAction) return '';
-		return pendingInviteAction.type === 'resend' ? 'Resend invitation?' : 'Revoke invitation?';
-	});
-
-	const confirmationDescription = $derived.by(() => {
-		if (!pendingInviteAction) return '';
-
-		const recipient =
-			pendingInviteAction.invitation.email ?? pendingInviteAction.invitation.phone ?? 'this invite';
-
-		return pendingInviteAction.type === 'resend'
-			? `A new invitation token will be generated for ${recipient}.`
-			: `${recipient} will no longer be able to use this pending invitation.`;
-	});
-
-	const confirmationDetails = $derived.by(() => {
-		if (!pendingInviteAction) return [];
-
-		const invitation = pendingInviteAction.invitation;
-		const recipient = invitation.email ?? invitation.phone ?? 'Unknown recipient';
-		const channel = invitation.email ? 'Email' : 'Phone';
-
-		if (pendingInviteAction.type === 'resend') {
-			return [
-				`Recipient: ${recipient}`,
-				`Delivery channel: ${channel}`,
-				'The original pending invite will be refreshed with a new token and timestamp.'
-			];
-		}
-
-		return [
-			`Recipient: ${recipient}`,
-			`Delivery channel: ${channel}`,
-			'This action keeps the record for admins, but the invite will no longer be active.'
-		];
-	});
-
-	const confirmationLabel = $derived.by(() => {
-		if (!pendingInviteAction) return 'Confirm';
-		return pendingInviteAction.type === 'resend' ? 'Resend invitation' : 'Revoke invitation';
-	});
-
-	const confirmationBusyLabel = $derived.by(() => {
-		if (!pendingInviteAction) return 'Working...';
-		return pendingInviteAction.type === 'resend' ? 'Resending...' : 'Revoking...';
-	});
-
-	const confirmationVariant = $derived.by(() =>
-		pendingInviteAction?.type === 'revoke' ? 'destructive' : 'default'
-	);
+	const confirmationTitle = $derived(getInviteConfirmationTitle(pendingInviteAction));
+	const confirmationDescription = $derived(getInviteConfirmationDescription(pendingInviteAction));
+	const confirmationDetails = $derived(getInviteConfirmationDetails(pendingInviteAction));
+	const confirmationLabel = $derived(getInviteConfirmationLabel(pendingInviteAction));
+	const confirmationBusyLabel = $derived(getInviteConfirmationBusyLabel(pendingInviteAction));
+	const confirmationVariant = $derived(getInviteConfirmationVariant(pendingInviteAction));
 
 	async function confirmInviteAction() {
 		if (!pendingInviteAction) {

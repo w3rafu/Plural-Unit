@@ -1,5 +1,7 @@
 import type { BroadcastRow, EventRow } from '$lib/repositories/hubRepository';
+import { formatShortDateTime } from '$lib/utils/dateFormat';
 
+/** Unified notification item combining broadcasts and events for the hub feed. */
 export type HubNotificationItem = {
 	id: string;
 	kind: 'broadcast' | 'event';
@@ -14,16 +16,12 @@ function formatEventMeta(event: EventRow) {
 	const startsAt = new Date(event.starts_at);
 	const startsText = Number.isNaN(startsAt.getTime())
 		? 'Schedule pending'
-		: startsAt.toLocaleString([], {
-			month: 'short',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		});
+		: formatShortDateTime(event.starts_at);
 
 	return event.location.trim() ? `${startsText} · ${event.location.trim()}` : startsText;
 }
 
+/** Merge broadcasts and events into a single sorted notification list. */
 export function buildHubNotifications(input: {
 	broadcasts: BroadcastRow[];
 	events: EventRow[];
@@ -33,12 +31,7 @@ export function buildHubNotifications(input: {
 		kind: 'broadcast' as const,
 		title: broadcast.title.trim() || 'Broadcast',
 		summary: broadcast.body.trim(),
-		meta: new Date(broadcast.created_at).toLocaleString([], {
-			month: 'short',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		}),
+		meta: formatShortDateTime(broadcast.created_at),
 		occurredAt: broadcast.created_at,
 		label: 'Broadcast'
 	}));

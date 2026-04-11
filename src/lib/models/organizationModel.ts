@@ -11,6 +11,7 @@ export type OrganizationPayload = {
 	created_at: string;
 };
 
+/** The user's link to an organization: role and how they joined. */
 export type OrganizationMembership = {
 	organization_id: string;
 	profile_id: string;
@@ -18,6 +19,7 @@ export type OrganizationMembership = {
 	joined_via: 'created' | 'invitation' | 'code';
 };
 
+/** A pending or resolved invitation record visible to admins. */
 export type OrganizationInvitation = {
 	id: string;
 	organization_id: string;
@@ -27,6 +29,7 @@ export type OrganizationInvitation = {
 	created_at: string;
 };
 
+/** Denormalized member row returned by the get_organization_members RPC. */
 export type OrganizationMember = {
 	profile_id: string;
 	name: string;
@@ -38,6 +41,7 @@ export type OrganizationMember = {
 	joined_at: string;
 };
 
+/** Convenience alias for the role union used in member management. */
 export type OrganizationMemberRole = OrganizationMember['role'];
 
 /**

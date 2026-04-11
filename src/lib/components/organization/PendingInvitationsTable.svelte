@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
 	import type { OrganizationInvitation } from '$lib/models/organizationModel';
+	import { formatShortDateTime } from '$lib/utils/dateFormat';
 
 	type Props = {
 		invitations: OrganizationInvitation[];
@@ -38,12 +39,7 @@
 
 	function formatSentAt(value: string | null | undefined) {
 		if (!value) return '—';
-		return new Date(value).toLocaleString([], {
-			month: 'short',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		});
+		return formatShortDateTime(value) || '—';
 	}
 </script>
 

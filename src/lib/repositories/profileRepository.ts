@@ -8,6 +8,7 @@
 
 import type { AuthChangeEvent, User as SupabaseUser } from '@supabase/supabase-js';
 import { getSupabaseClient } from '$lib/supabaseClient';
+import { throwRepositoryError } from '$lib/services/repositoryError';
 import type { UserDetails } from '$lib/models/userModel';
 import { withRetry } from '$lib/services/retry';
 
@@ -44,16 +45,18 @@ function getAvatarExtension(file: File) {
 	return 'jpg';
 }
 
+const AVATAR_LIST_PAGE_SIZE = 100;
+
 async function removeExistingAvatarFiles(userId: string) {
 	const { data, error } = await withRetry(() =>
 		getSupabaseClient().storage.from(PROFILE_AVATAR_BUCKET).list(userId, {
-			limit: 100,
+			limit: AVATAR_LIST_PAGE_SIZE,
 			offset: 0
 		})
 	);
 
 	if (error) {
-		throw error;
+		throwRepositoryError(error, 'Could not list existing avatar files.');
 	}
 
 	const pathsToRemove = (data ?? [])
@@ -69,7 +72,7 @@ async function removeExistingAvatarFiles(userId: string) {
 	);
 
 	if (removeError) {
-		throw removeError;
+		throwRepositoryError(removeError, 'Could not remove existing avatar files.');
 	}
 }
 
@@ -104,7 +107,8 @@ export async function signInWithPassword(email: string, password: string): Promi
 			}),
 			'Sign-in timed out. Check your internet connection and try again.'
 		);
-		if (error || !data.user) throw error ?? new Error('Could not resolve authenticated user.');
+		if (error) throwRepositoryError(error, 'Could not sign in.');
+		if (!data.user) throw new Error('Could not resolve authenticated user.');
 		return data.user;
 	});
 }
@@ -121,7 +125,7 @@ export async function signUpWithPassword(
 			}),
 			'Registration timed out. Check your internet connection and try again.'
 		);
-		if (error) throw error;
+		if (error) throwRepositoryError(error, 'Could not create the account.');
 
 		return {
 			user: data.user ?? null,
@@ -139,7 +143,7 @@ export async function requestPhoneOtp(phone: string) {
 			}),
 			'Code request timed out. Check your internet connection and try again.'
 		);
-		if (error) throw error;
+		if (error) throwRepositoryError(error, 'Could not request the verification code.');
 	});
 }
 
@@ -153,7 +157,8 @@ export async function verifyPhoneOtp(phone: string, token: string): Promise<Supa
 			}),
 			'Verification timed out. Check your internet connection and try again.'
 		);
-		if (error || !data.user) throw error ?? new Error('Could not verify the SMS code.');
+		if (error) throwRepositoryError(error, 'Could not verify the SMS code.');
+		if (!data.user) throw new Error('Could not verify the SMS code.');
 		return data.user;
 	});
 }
@@ -163,7 +168,7 @@ export async function requestPasswordReset(email: string) {
 		getSupabaseClient().auth.resetPasswordForEmail(normalizeEmail(email)),
 		'Password reset request timed out. Check your internet connection and try again.'
 	);
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not send the password reset email.');
 }
 
 export async function updatePassword(newPassword: string) {
@@ -171,7 +176,7 @@ export async function updatePassword(newPassword: string) {
 		getSupabaseClient().auth.updateUser({ password: newPassword }),
 		'Password update timed out. Check your internet connection and try again.'
 	);
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not update the password.');
 }
 
 export async function requestEmailChange(nextEmail: string): Promise<EmailChangeResult> {
@@ -198,7 +203,7 @@ export async function requestEmailChange(nextEmail: string): Promise<EmailChange
 		}),
 		'Email update timed out. Check your internet connection and try again.'
 	);
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not update the email address.');
 
 	return {
 		changed: true,
@@ -211,7 +216,7 @@ export async function signOut() {
 		getSupabaseClient().auth.signOut(),
 		'Sign-out timed out. Check your internet connection and try again.'
 	);
-	if (error) throw error;
+	if (error) throwRepositoryError(error, 'Could not sign out.');
 }
 
 export async function getAuthenticatedUser(): Promise<SupabaseUser | null> {
@@ -243,7 +248,7 @@ export async function fetchOwnProfile(userId: string): Promise<Partial<UserDetai
 			.eq('id', userId)
 			.maybeSingle();
 
-		if (error) throw error;
+		if (error) throwRepositoryError(error, 'Could not load your profile.');
 		return data;
 	});
 }
@@ -254,7 +259,7 @@ export async function upsertOwnProfile(userId: string, updates: Partial<UserDeta
 			.from('profiles')
 			.upsert({ id: userId, ...updates }, { onConflict: 'id' });
 
-		if (error) throw error;
+		if (error) throwRepositoryError(error, 'Could not save your profile.');
 	});
 }
 
@@ -272,7 +277,7 @@ export async function uploadProfileAvatar(userId: string, file: File): Promise<s
 	);
 
 	if (uploadError) {
-		throw uploadError;
+		throwRepositoryError(uploadError, 'Could not upload the avatar image.');
 	}
 
 	const { data } = getSupabaseClient().storage.from(PROFILE_AVATAR_BUCKET).getPublicUrl(path);
