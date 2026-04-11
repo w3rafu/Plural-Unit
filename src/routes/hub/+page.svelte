@@ -66,12 +66,14 @@
 			{/if}
 		</Card.Root>
 	{:else}
-		{#each activePlugins as plugin (plugin.key)}
-			{#if plugin.key === 'broadcasts'}
-				<BroadcastsSection />
-			{:else if plugin.key === 'events'}
-				<EventsSection />
-			{/if}
-		{/each}
+		<div class="card-grid">
+			{#each activePlugins as plugin (plugin.key)}
+				{#if plugin.key === 'broadcasts'}
+					<BroadcastsSection />
+				{:else if plugin.key === 'events'}
+					<EventsSection />
+				{/if}
+			{/each}
+		</div>
 	{/if}
 </main>

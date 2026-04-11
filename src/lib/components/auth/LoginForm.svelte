@@ -25,7 +25,7 @@
 	);
 </script>
 
-<section aria-label="Login" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
+<section aria-label="Login" class="card-grid">
 	<Card.Root class="border-border/70 bg-card/80">
 		<Card.Header class="gap-3 border-b border-border/70">
 			<div class="space-y-1">

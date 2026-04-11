@@ -13,7 +13,7 @@
 		</Card.Header>
 	</Card.Root>
 {:else}
-	<div class="space-y-4">
+	<div class="card-grid">
 		{#if currentHub.plugins.broadcasts}
 			<BroadcastEditor />
 		{/if}
