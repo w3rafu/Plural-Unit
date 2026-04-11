@@ -14,6 +14,7 @@
 	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
+	import { formatEventDateTime } from '$lib/utils/dateFormat';
 
 	let title = $state('');
 	let description = $state('');
@@ -73,15 +74,6 @@
 		}
 	}
 
-	function formatDateTime(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		}).format(new Date(value));
-	}
 </script>
 
 <Card.Root class="border-border/70 bg-card/80">
@@ -164,7 +156,7 @@
 						<Item.Content>
 							<Item.Title>{event.title}</Item.Title>
 							<Item.Description>{event.description || 'More details will appear here soon.'}</Item.Description>
-							<p class="text-sm text-muted-foreground">{formatDateTime(event.starts_at)}</p>
+							<p class="text-sm text-muted-foreground">{formatEventDateTime(event.starts_at)}</p>
 							{#if event.location}
 								<p class="text-sm text-muted-foreground">{event.location}</p>
 							{/if}

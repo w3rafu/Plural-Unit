@@ -7,16 +7,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { PLUGIN_REGISTRY } from '$lib/stores/pluginRegistry';
-
-	function formatEventDate(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		}).format(new Date(value));
-	}
+	import { formatEventDateTime } from '$lib/utils/dateFormat';
 </script>
 
 <section aria-label="Events" class="space-y-3">
@@ -43,7 +34,7 @@
 							</p>
 						</div>
 						<div class="space-y-1 text-sm text-muted-foreground">
-							<p>{formatEventDate(event.starts_at)}</p>
+							<p>{formatEventDateTime(event.starts_at)}</p>
 							{#if event.location}
 								<p>{event.location}</p>
 							{/if}

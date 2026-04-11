@@ -25,15 +25,18 @@ export type EmailChangeResult = {
 	requiresConfirmation: boolean;
 };
 
+/** Trim whitespace and lowercase an email for consistent comparison and storage. */
 function normalizeEmail(email: string) {
 	return email.trim().toLowerCase();
 }
 
+/** Append a cache-busting `v=` parameter so CDN/browser caches pick up the new file. */
 function buildVersionedPublicUrl(publicUrl: string, version: number | string = Date.now()) {
 	const separator = publicUrl.includes('?') ? '&' : '?';
 	return `${publicUrl}${separator}v=${version}`;
 }
 
+/** Derive a file extension from the filename or MIME type, defaulting to `jpg`. */
 function getAvatarExtension(file: File) {
 	const extensionFromName = file.name.includes('.') ? file.name.split('.').pop() : '';
 	if (extensionFromName) {
@@ -76,6 +79,7 @@ async function removeExistingAvatarFiles(userId: string) {
 	}
 }
 
+/** Race a promise against a timer; rejects with `message` if `ms` elapses first. */
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
 		const timer = setTimeout(() => reject(new Error(message)), ms);
@@ -92,6 +96,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 	});
 }
 
+/** Shorthand for `withTimeout` using the project-wide auth timeout (10 s). */
 function withAuthTimeout<T>(operation: Promise<T>, message: string): Promise<T> {
 	return withTimeout(operation, AUTH_TIMEOUT_MS, message);
 }

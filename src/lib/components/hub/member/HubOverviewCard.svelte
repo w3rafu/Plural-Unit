@@ -4,20 +4,11 @@
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { getActivePluginsForMember } from '$lib/stores/pluginRegistry';
+	import { formatShortDateTime } from '$lib/utils/dateFormat';
 
 	const activePlugins = $derived(getActivePluginsForMember(currentHub.plugins));
 	const nextEvent = $derived(currentHub.events[0] ?? null);
 	const latestBroadcast = $derived(currentHub.broadcasts[0] ?? null);
-
-	function formatEventDate(value: string) {
-		const date = new Date(value);
-		return new Intl.DateTimeFormat(undefined, {
-			month: 'short',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		}).format(date);
-	}
 </script>
 
 <Card.Root class="border-border/70 bg-card/80">
@@ -49,7 +40,7 @@
 				{nextEvent ? nextEvent.title : 'No event scheduled yet'}
 			</p>
 			{#if nextEvent}
-				<p class="mt-1 text-sm text-muted-foreground">{formatEventDate(nextEvent.starts_at)}</p>
+				<p class="mt-1 text-sm text-muted-foreground">{formatShortDateTime(nextEvent.starts_at)}</p>
 			{/if}
 		</div>
 

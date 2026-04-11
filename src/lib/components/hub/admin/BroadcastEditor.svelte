@@ -14,6 +14,7 @@
 	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
+	import { formatShortDate } from '$lib/utils/dateFormat';
 
 	let title = $state('');
 	let body = $state('');
@@ -57,13 +58,6 @@
 		}
 	}
 
-	function formatDate(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		}).format(new Date(value));
-	}
 </script>
 
 <Card.Root class="border-border/70 bg-card/80">
@@ -133,7 +127,7 @@
 							<Item.Title>{broadcast.title}</Item.Title>
 							<Item.Description>{broadcast.body}</Item.Description>
 							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-								{formatDate(broadcast.created_at)}
+								{formatShortDate(broadcast.created_at)}
 							</p>
 						</Item.Content>
 						<Item.Actions>

@@ -7,14 +7,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { PLUGIN_REGISTRY } from '$lib/stores/pluginRegistry';
-
-	function formatDate(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		}).format(new Date(value));
-	}
+	import { formatShortDate } from '$lib/utils/dateFormat';
 </script>
 
 <section aria-label="Broadcasts" class="space-y-3">
@@ -39,7 +32,7 @@
 							<p class="text-sm leading-6 text-muted-foreground">{broadcast.body}</p>
 						</div>
 						<time class="text-xs uppercase tracking-[0.12em] text-muted-foreground" datetime={broadcast.created_at}>
-							{formatDate(broadcast.created_at)}
+							{formatShortDate(broadcast.created_at)}
 						</time>
 					</Card.Content>
 				</Card.Root>
