@@ -24,7 +24,7 @@
 	}
 </script>
 
-<PageHeader title="Profile" subtitle="Member details and security" backLabel="Home" onBack={goHome} />
+<PageHeader title="Profile" subtitle="Member details and security" backLabel="Hub" onBack={goHome} />
 
 <main class="flex flex-col gap-4">
 	<ProfileSection />

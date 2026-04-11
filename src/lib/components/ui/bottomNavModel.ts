@@ -1,4 +1,4 @@
-export type BottomNavTabId = 'home' | 'hub' | 'messages' | 'organization' | 'profile';
+export type BottomNavTabId = 'hub' | 'messages' | 'organization' | 'profile';
 
 export type BottomNavTabDefinition = {
 	id: BottomNavTabId;
@@ -18,16 +18,10 @@ function isPathPrefix(pathname: string, prefix: string) {
 export function getBottomNavTabs(): BottomNavTabDefinition[] {
 	return [
 		{
-			id: 'home',
-			label: 'Home',
-			href: '/',
-			ownsPath: (pathname) => isExactPath(pathname, '/')
-		},
-		{
 			id: 'hub',
 			label: 'Hub',
-			href: '/hub',
-			ownsPath: (pathname) => isPathPrefix(pathname, '/hub')
+			href: '/',
+			ownsPath: (pathname) => isExactPath(pathname, '/') || isPathPrefix(pathname, '/hub')
 		},
 		{
 			id: 'messages',

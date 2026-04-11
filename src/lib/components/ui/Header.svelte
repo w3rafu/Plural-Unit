@@ -77,7 +77,7 @@
 						{/if}
 					</Button>
 				{:else if showBrandMark}
-					<a href="/" class="shell-header__brand-mark" aria-label="Go to home">
+					<a href="/" class="shell-header__brand-mark" aria-label="Go to hub">
 						<img src="/logo-white.png" alt="CommunionLink logo" class="shell-header__brand-image" />
 					</a>
 				{/if}

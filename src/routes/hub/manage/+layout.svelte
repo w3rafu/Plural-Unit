@@ -34,7 +34,7 @@
 	}
 
 	function goBackToHub() {
-		void goto('/hub');
+		void goto('/');
 	}
 </script>
 

@@ -77,7 +77,7 @@
 	}
 </script>
 
-<PageHeader title="Organization" subtitle="Join code, invitations, and membership" backLabel="Home" onBack={goHome} />
+<PageHeader title="Organization" subtitle="Join code, invitations, and membership" backLabel="Hub" onBack={goHome} />
 
 <main class="flex flex-col gap-4">
 	{#if !currentOrganization.organization}

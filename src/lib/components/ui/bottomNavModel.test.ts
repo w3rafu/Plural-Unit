@@ -2,9 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { getActiveBottomNavTab, getBottomNavTabs } from './bottomNavModel';
 
 describe('bottomNavModel', () => {
-	it('defines the minimal plural unit tab set', () => {
+	it('defines the plural unit tab set', () => {
 		expect(getBottomNavTabs().map((tab) => tab.id)).toEqual([
-			'home',
 			'hub',
 			'messages',
 			'organization',
@@ -13,9 +12,9 @@ describe('bottomNavModel', () => {
 	});
 
 	it('maps existing routes to their active tabs', () => {
-		expect(getActiveBottomNavTab('/')).toBe('home');
-		expect(getActiveBottomNavTab('/hub')).toBe('hub');
+		expect(getActiveBottomNavTab('/')).toBe('hub');
 		expect(getActiveBottomNavTab('/hub/manage')).toBe('hub');
+		expect(getActiveBottomNavTab('/hub/manage/sections')).toBe('hub');
 		expect(getActiveBottomNavTab('/organization')).toBe('organization');
 		expect(getActiveBottomNavTab('/profile')).toBe('profile');
 		expect(getActiveBottomNavTab('/messages')).toBe('messages');
