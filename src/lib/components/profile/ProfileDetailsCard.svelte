@@ -4,6 +4,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
+	import ProfileAvatarSection from '$lib/components/profile/ProfileAvatarSection.svelte';
 	import {
 		computeAvatarInitials,
 		createAvatarPreview,
@@ -27,7 +28,6 @@
 
 	let detailsFieldError = $state('');
 	let avatarFieldError = $state('');
-	let avatarInput = $state<HTMLInputElement | null>(null);
 
 	const activeAvatarUrl = $derived(avatarPreviewUrl || (removeAvatar ? '' : currentUser.details.avatar_url));
 	const avatarPreviewInitials = $derived(
@@ -111,9 +111,6 @@
 		if (avatarPreviewUrl) {
 			clearAvatarPreview();
 			removeAvatar = false;
-			if (avatarInput) {
-				avatarInput.value = '';
-			}
 			return;
 		}
 
@@ -169,9 +166,6 @@
 			clearAvatarPreview();
 			selectedAvatarFile = null;
 			removeAvatar = false;
-			if (avatarInput) {
-				avatarInput.value = '';
-			}
 
 			toast({
 				title: 'Profile updated',
@@ -203,74 +197,17 @@
 			}}
 		>
 			<Field.Group class="gap-5">
-				<div class="rounded-xl border border-border/70 bg-muted/25 p-4">
-					<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<div class="flex items-center gap-4">
-							{#if activeAvatarUrl}
-								<img
-									src={activeAvatarUrl}
-									alt="Profile preview"
-									class="size-20 rounded-full border border-border/70 object-cover shadow-sm"
-								/>
-							{:else}
-								<div
-									class="flex size-20 items-center justify-center rounded-full border border-border/70 bg-muted text-xl font-semibold tracking-tight text-foreground"
-									aria-hidden="true"
-								>
-									{avatarPreviewInitials}
-								</div>
-							{/if}
-
-							<div class="space-y-1">
-								<p class="text-sm font-medium text-foreground">Profile photo</p>
-								<p class="text-sm text-muted-foreground">
-									{#if removeAvatar}
-										Photo will be removed when you save.
-									{:else if avatarPreviewUrl}
-										New photo selected.
-									{:else if currentUser.details.avatar_url}
-										Your current profile photo is ready.
-									{:else}
-										Upload a photo or keep the monogram fallback.
-									{/if}
-								</p>
-							</div>
-						</div>
-
-						<div class="flex flex-wrap gap-2">
-							<Button
-								type="button"
-								variant="outline"
-								onclick={() => avatarInput?.click()}
-								disabled={currentUser.isLoggingIn}
-							>
-								Upload photo
-							</Button>
-							{#if avatarPreviewUrl || currentUser.details.avatar_url}
-								<Button
-									type="button"
-									variant="ghost"
-									onclick={removeSelectedAvatar}
-									disabled={currentUser.isLoggingIn}
-								>
-									Remove
-								</Button>
-							{/if}
-						</div>
-					</div>
-
-					<input
-						bind:this={avatarInput}
-						class="sr-only"
-						type="file"
-						accept="image/png,image/jpeg,image/webp"
-						onchange={onAvatarFileChange}
-					/>
-
-					{#if avatarFieldError}
-						<p class="mt-4 text-sm text-destructive" role="alert">{avatarFieldError}</p>
-					{/if}
-				</div>
+				<ProfileAvatarSection
+					{activeAvatarUrl}
+					initials={avatarPreviewInitials}
+					previewUrl={avatarPreviewUrl}
+					hasStoredAvatar={!!currentUser.details.avatar_url}
+					isSubmitting={currentUser.isLoggingIn}
+					fieldError={avatarFieldError}
+					willRemove={removeAvatar}
+					onFileChange={onAvatarFileChange}
+					onRemove={removeSelectedAvatar}
+				/>
 
 				<Field.Field>
 					<Field.Content>

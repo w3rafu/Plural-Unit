@@ -1,20 +1,16 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
+	import MemberRow from './MemberRow.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import type { OrganizationMember } from '$lib/models/organizationModel';
 	import { toast } from '$lib/stores/toast.svelte';
 	import {
 		type PendingMemberAction,
-		formatJoinedVia,
-		formatJoinedAt,
 		formatContact,
-		getMemberInitials,
 		isLastAdmin,
 		wouldDemoteLastAdmin,
 		getConfirmationTitle,
@@ -217,86 +213,15 @@
 							</Table.Row>
 						{:else if organizationMembers.length > 0}
 							{#each organizationMembers as member (member.profile_id)}
-								<Table.Row class="border-border/70">
-									<Table.Cell class="whitespace-normal">
-										<div class="flex items-center gap-3">
-											{#if member.avatar_url}
-												<img
-													src={member.avatar_url}
-													alt={`${member.name || 'Member'} profile`}
-													class="size-10 rounded-full border border-border/70 object-cover shadow-sm"
-												/>
-											{:else}
-												<div
-													class="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-semibold tracking-tight text-foreground"
-													aria-hidden="true"
-												>
-													{getMemberInitials(member)}
-												</div>
-											{/if}
-
-											<div class="space-y-1">
-												<p class="font-medium text-foreground">{member.name || 'Unnamed member'}</p>
-												<p class="text-xs text-muted-foreground">{formatContact(member)}</p>
-											</div>
-										</div>
-									</Table.Cell>
-									<Table.Cell>
-										<Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-											{member.role}
-										</Badge>
-									</Table.Cell>
-									<Table.Cell class="text-sm text-muted-foreground">{formatJoinedVia(member)}</Table.Cell>
-									<Table.Cell class="text-right text-sm text-muted-foreground">
-										{formatJoinedAt(member.joined_at)}
-									</Table.Cell>
-									<Table.Cell class="text-right">
-										<div class="flex flex-wrap justify-end gap-2">
-											<Select.Root
-												type="single"
-												value={getDraftRole(member)}
-												onValueChange={(value: string) =>
-													setDraftRole(member, value as OrganizationMember['role'])}
-												name={`member-role-${member.profile_id}`}
-											>
-												<Select.Trigger
-													class="w-28"
-													aria-label={`Role for ${member.name || formatContact(member)}`}
-												>
-													{getDraftRole(member)}
-												</Select.Trigger>
-												<Select.Content>
-													<Select.Item value="admin">admin</Select.Item>
-													<Select.Item value="member">member</Select.Item>
-												</Select.Content>
-											</Select.Root>
-
-											<Button
-												type="button"
-												variant="outline"
-												size="sm"
-										disabled={currentOrganization.isMutating || getDraftRole(member) === member.role || wouldDemoteLastAdmin(member, getDraftRole(member), adminCount)}
-										title={wouldDemoteLastAdmin(member, getDraftRole(member), adminCount) ? 'Keep at least one admin in the organization.' : undefined}
-												aria-label={`Update role for ${member.name || formatContact(member)}`}
-												onclick={() => openRoleConfirmation(member)}
-											>
-												Update
-											</Button>
-
-											<Button
-												type="button"
-												variant="destructive"
-												size="sm"
-										disabled={currentOrganization.isMutating || isLastAdmin(member, adminCount)}
-										title={isLastAdmin(member, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
-												aria-label={`Remove ${member.name || formatContact(member)} from the organization`}
-												onclick={() => openRemoveConfirmation(member)}
-											>
-												Remove
-											</Button>
-										</div>
-									</Table.Cell>
-								</Table.Row>
+								<MemberRow
+									{member}
+									{adminCount}
+									draftRole={getDraftRole(member)}
+									isMutating={currentOrganization.isMutating}
+									onDraftRoleChange={(role) => setDraftRole(member, role)}
+									onRoleConfirm={() => openRoleConfirmation(member)}
+									onRemove={() => openRemoveConfirmation(member)}
+								/>
 							{/each}
 						{:else}
 							<Table.Row class="border-0 hover:bg-transparent">

@@ -39,12 +39,23 @@ import {
 	shouldResetCachedBrowserSession,
 	clearCachedBrowserSession
 } from '$lib/services/sessionCache';
+import { currentOrganization } from './currentOrganization.svelte';
+import { currentHub } from './currentHub.svelte';
 
 class CurrentUser {
 	isLoggedIn = $state(false);
 	isLoggingIn = $state(false);
 	hasResolvedSession = $state(false);
 	details = $state<UserDetails>(INITIAL_DETAILS);
+	lastError = $state<Error | null>(null);
+
+	clearError() {
+		this.lastError = null;
+	}
+
+	private captureError(error: unknown) {
+		this.lastError = error instanceof Error ? error : new Error(String(error));
+	}
 
 	private stopAuth: (() => void) | null = null;
 
@@ -117,7 +128,7 @@ class CurrentUser {
 				this.handleSignedOut();
 				return;
 			}
-			console.error('Failed to restore session:', error);
+			this.captureError(error);
 			this.hasResolvedSession = true;
 		}
 	}
@@ -135,13 +146,14 @@ class CurrentUser {
 				this.handleSignedOut();
 				return;
 			}
-			console.error('Failed to load profile:', error);
+			this.captureError(error);
 		}
 	}
 
 	// ── Public auth actions ──
 
 	async loginWithEmail(email: string, password: string) {
+		this.lastError = null;
 		this.isLoggingIn = true;
 		try {
 			const user = await signInWithPassword(email, password);
@@ -153,6 +165,7 @@ class CurrentUser {
 	}
 
 	async registerWithEmail(email: string, password: string): Promise<RegistrationResult> {
+		this.lastError = null;
 		this.isLoggingIn = true;
 		try {
 			const result = await signUpWithPassword(email, password);
@@ -167,6 +180,7 @@ class CurrentUser {
 	}
 
 	async requestPhoneCode(phone: string) {
+		this.lastError = null;
 		this.isLoggingIn = true;
 		try {
 			await requestPhoneOtp(phone);
@@ -176,6 +190,7 @@ class CurrentUser {
 	}
 
 	async verifyPhoneCode(phone: string, code: string) {
+		this.lastError = null;
 		this.isLoggingIn = true;
 		try {
 			const user = await verifyPhoneOtp(phone, code);
@@ -260,12 +275,15 @@ class CurrentUser {
 	}
 
 	async logout() {
+		this.lastError = null;
 		try {
 			await signOut();
 		} catch (error) {
-			console.error('Failed to sign out:', error);
+			this.captureError(error);
 		}
 		this.handleSignedOut();
+		currentOrganization.reset();
+		currentHub.reset();
 	}
 }
 

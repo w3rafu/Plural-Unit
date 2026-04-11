@@ -6,6 +6,16 @@ No new features — this release makes the existing surface more robust and easi
 
 ---
 
+## Pre-work (completed)
+
+### Responsive card-grid layout
+
+Global `.card-grid` CSS Grid utility in `layout.css`. Uses `auto-fit` with `minmax(20rem, 1fr)` — cards flow as a row and wrap naturally from 3 → 2 → 1 columns as the viewport narrows. `align-items: start` keeps natural card heights. `.card-grid-wide` modifier spans all columns.
+
+Applied to: `LoginForm.svelte`, `hub/+page.svelte` (plugin sections), `hub/manage/content/+page.svelte`.
+
+---
+
 ## Slices
 
 ### a · Store error state

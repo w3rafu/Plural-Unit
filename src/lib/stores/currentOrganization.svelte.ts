@@ -46,6 +46,15 @@ class CurrentOrganization {
 	members = $state<OrganizationMember[]>([]);
 	memberCount = $state<number | null>(null);
 	isLoadingMembers = $state(false);
+	lastError = $state<Error | null>(null);
+
+	clearError() {
+		this.lastError = null;
+	}
+
+	private captureError(error: unknown) {
+		this.lastError = error instanceof Error ? error : new Error(String(error));
+	}
 
 	private stopAuth: (() => void) | null = null;
 
@@ -83,10 +92,17 @@ class CurrentOrganization {
 		this.hasResolvedMembership = true;
 	}
 
+	/** Clear all state. Called on logout. */
+	reset() {
+		this.lastError = null;
+		this.clear();
+	}
+
 	async refresh(userId?: string) {
 		const uid = userId ?? (await getAuthenticatedUser())?.id;
 		if (!uid) { this.clear(); return; }
 
+		this.lastError = null;
 		this.isLoading = true;
 		try {
 			const previousOrganizationId = this.organization?.id ?? '';
@@ -110,6 +126,9 @@ class CurrentOrganization {
 				this.members = [];
 				this.memberCount = null;
 			}
+		} catch (error) {
+			this.captureError(error);
+			throw error;
 		} finally {
 			this.isLoading = false;
 			this.hasResolvedMembership = true;

@@ -35,6 +35,15 @@ class CurrentHub {
 	plugins = $state<PluginStateMap>({ broadcasts: false, events: false });
 	broadcasts = $state<BroadcastRow[]>([]);
 	events = $state<EventRow[]>([]);
+	lastError = $state<Error | null>(null);
+
+	clearError() {
+		this.lastError = null;
+	}
+
+	private captureError(error: unknown) {
+		this.lastError = error instanceof Error ? error : new Error(String(error));
+	}
 
 	get orgId(): string | null {
 		return currentOrganization.organization?.id ?? null;
@@ -47,8 +56,18 @@ class CurrentHub {
 		});
 	}
 
+	/** Clear all state. Called on logout. */
+	reset() {
+		this.lastError = null;
+		this.isLoading = false;
+		this.plugins = { broadcasts: false, events: false };
+		this.broadcasts = [];
+		this.events = [];
+	}
+
 	async load() {
 		if (!this.orgId) return;
+		this.lastError = null;
 		this.isLoading = true;
 		try {
 			const rows = await fetchActivePlugins(this.orgId);
@@ -61,6 +80,9 @@ class CurrentHub {
 			]);
 			this.broadcasts = broadcasts;
 			this.events = events;
+		} catch (error) {
+			this.captureError(error);
+			throw error;
 		} finally {
 			this.isLoading = false;
 		}
