@@ -8,6 +8,7 @@ import {
 	validateOtpCodeInput,
 	validatePasswordResetEmail,
 	validateNewPassword,
+	readAuthFlowLocationState,
 	validateOnboardingName,
 	validateOrganizationInput,
 	mapLoginErrorMessage,
@@ -150,7 +151,7 @@ describe('validateOrganizationInput', () => {
 
 describe('mapLoginErrorMessage', () => {
 	it('maps invalid credentials', () => {
-		expect(mapLoginErrorMessage({ message: 'Invalid login credentials' })).toContain('Invalid');
+		expect(mapLoginErrorMessage({ message: 'Invalid login credentials' })).toContain("couldn't match");
 	});
 	it('maps expired OTP', () => {
 		expect(mapLoginErrorMessage({ message: 'Token has expired' })).toContain('expired');
@@ -215,6 +216,33 @@ describe('validateNewPassword', () => {
 	});
 });
 
+describe('readAuthFlowLocationState', () => {
+	it('detects recovery state from hash parameters', () => {
+		const result = readAuthFlowLocationState({
+			search: '',
+			hash: '#access_token=abc&type=recovery'
+		});
+		expect(result.isPasswordRecovery).toBe(true);
+		expect(result.errorMessage).toBe('');
+	});
+
+	it('detects recovery state from search parameters', () => {
+		const result = readAuthFlowLocationState({
+			search: '?type=recovery',
+			hash: ''
+		});
+		expect(result.isPasswordRecovery).toBe(true);
+	});
+
+	it('reads auth error descriptions when present', () => {
+		const result = readAuthFlowLocationState({
+			search: '',
+			hash: '#error_description=Link+expired'
+		});
+		expect(result.errorMessage).toBe('Link expired');
+	});
+});
+
 describe('mapPasswordResetErrorMessage', () => {
 	it('maps rate limit', () => {
 		expect(mapPasswordResetErrorMessage({ message: 'Rate limit exceeded' })).toContain('already sent');
@@ -223,7 +251,7 @@ describe('mapPasswordResetErrorMessage', () => {
 		expect(mapPasswordResetErrorMessage({ message: 'For security purposes, you can only request this once every 60 seconds' })).toContain('already sent');
 	});
 	it('maps user not found', () => {
-		expect(mapPasswordResetErrorMessage({ message: 'User not found' })).toContain('No account');
+		expect(mapPasswordResetErrorMessage({ message: 'User not found' })).toContain('could not start recovery');
 	});
 	it('passes through unknown errors', () => {
 		expect(mapPasswordResetErrorMessage({ message: 'Something else' })).toBe('Something else');

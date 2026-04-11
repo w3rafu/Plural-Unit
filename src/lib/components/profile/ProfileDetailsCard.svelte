@@ -10,15 +10,20 @@
 		revokeAvatarPreview,
 		validateAvatarFile
 	} from '$lib/components/profile/avatarUploadModel';
+	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
+	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { mapLoginErrorMessage, validateOnboardingName, validatePhoneNumberInput } from '$lib/models/authHelpers';
 	import { toast } from '$lib/stores/toast.svelte';
+
+	const UNSAVED_CHANGES_KEY = 'profile-details';
 
 	let name = $state(currentUser.details.name);
 	let phoneNumber = $state(currentUser.details.phone_number);
 	let selectedAvatarFile = $state<File | null>(null);
 	let avatarPreviewUrl = $state('');
 	let removeAvatar = $state(false);
+	let hasEditedDetails = $state(false);
 
 	let detailsFieldError = $state('');
 	let avatarFieldError = $state('');
@@ -28,6 +33,38 @@
 	const avatarPreviewInitials = $derived(
 		computeAvatarInitials(name, currentUser.details.name, currentUser.details.email, phoneNumber)
 	);
+	const initialDetailsSnapshot = $derived.by(() =>
+		createDirtySnapshot({
+			name: currentUser.details.name.trim(),
+			phoneNumber: currentUser.details.phone_number.trim(),
+			avatarState: currentUser.details.avatar_url ? 'stored-avatar' : 'no-avatar'
+		})
+	);
+	const currentDetailsSnapshot = $derived.by(() =>
+		createDirtySnapshot({
+			name: name.trim(),
+			phoneNumber: phoneNumber.trim(),
+			avatarState: selectedAvatarFile
+				? `${selectedAvatarFile.name}:${selectedAvatarFile.size}:${selectedAvatarFile.lastModified}`
+				: removeAvatar
+					? 'remove-avatar'
+					: currentUser.details.avatar_url
+						? 'stored-avatar'
+						: 'no-avatar'
+		})
+	);
+	const isProfileDetailsDirty = $derived(currentDetailsSnapshot !== initialDetailsSnapshot);
+
+	$effect(() => {
+		unsavedChanges.set(UNSAVED_CHANGES_KEY, 'profile details', isProfileDetailsDirty);
+	});
+
+	$effect(() => {
+		if (!hasEditedDetails && !selectedAvatarFile && !removeAvatar) {
+			name = currentUser.details.name;
+			phoneNumber = currentUser.details.phone_number;
+		}
+	});
 
 	function clearAvatarPreview() {
 		revokeAvatarPreview(avatarPreviewUrl);
@@ -36,6 +73,7 @@
 
 	onDestroy(() => {
 		revokeAvatarPreview(avatarPreviewUrl);
+		unsavedChanges.clear(UNSAVED_CHANGES_KEY);
 	});
 
 	function onAvatarFileChange(event: Event) {
@@ -44,6 +82,7 @@
 
 		avatarFieldError = '';
 		selectedAvatarFile = null;
+		hasEditedDetails = true;
 
 		if (!file) {
 			clearAvatarPreview();
@@ -67,6 +106,7 @@
 	function removeSelectedAvatar() {
 		avatarFieldError = '';
 		selectedAvatarFile = null;
+		hasEditedDetails = true;
 
 		if (avatarPreviewUrl) {
 			clearAvatarPreview();
@@ -125,6 +165,7 @@
 
 			name = currentUser.details.name;
 			phoneNumber = currentUser.details.phone_number;
+			hasEditedDetails = false;
 			clearAvatarPreview();
 			selectedAvatarFile = null;
 			removeAvatar = false;
@@ -235,7 +276,14 @@
 					<Field.Content>
 						<Field.Label for="profile-name">Name</Field.Label>
 						<Field.Description>Use the name other members should see around the app.</Field.Description>
-						<Input id="profile-name" type="text" bind:value={name} />
+						<Input
+							id="profile-name"
+							type="text"
+							bind:value={name}
+							oninput={() => {
+								hasEditedDetails = true;
+							}}
+						/>
 					</Field.Content>
 				</Field.Field>
 
@@ -243,7 +291,14 @@
 					<Field.Content>
 						<Field.Label for="profile-phone">Phone</Field.Label>
 						<Field.Description>Add the number connected to your account.</Field.Description>
-						<Input id="profile-phone" type="tel" bind:value={phoneNumber} />
+						<Input
+							id="profile-phone"
+							type="tel"
+							bind:value={phoneNumber}
+							oninput={() => {
+								hasEditedDetails = true;
+							}}
+						/>
 					</Field.Content>
 				</Field.Field>
 

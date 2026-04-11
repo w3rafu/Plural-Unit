@@ -14,7 +14,8 @@
 import type {
 	OrganizationPayload,
 	OrganizationMembership,
-	OrganizationInvitation
+	OrganizationInvitation,
+	OrganizationMember
 } from '$lib/models/organizationModel';
 import {
 	fetchOwnOrganizationContext,
@@ -24,7 +25,8 @@ import {
 	createInvitation,
 	fetchPendingInvitations,
 	regenerateJoinCode,
-	fetchMemberCount
+	fetchMemberCount,
+	fetchOrganizationMembers
 } from '$lib/repositories/organizationRepository';
 import { subscribeToAuthStateChange, getAuthenticatedUser } from '$lib/repositories/profileRepository';
 
@@ -37,13 +39,15 @@ class CurrentOrganization {
 	organization = $state<OrganizationPayload | null>(null);
 	membership = $state<OrganizationMembership | null>(null);
 	invitations = $state<OrganizationInvitation[]>([]);
+	members = $state<OrganizationMember[]>([]);
 	memberCount = $state<number | null>(null);
+	isLoadingMembers = $state(false);
 
 	private stopAuth: (() => void) | null = null;
 
 	constructor() {
 		if (typeof window !== 'undefined') {
-			this.stopAuth = subscribeToAuthStateChange((user) => {
+			this.stopAuth = subscribeToAuthStateChange((_event, user) => {
 				if (user) void this.refresh(user.id);
 				else this.clear();
 			});
@@ -69,7 +73,9 @@ class CurrentOrganization {
 		this.organization = null;
 		this.membership = null;
 		this.invitations = [];
+		this.members = [];
 		this.memberCount = null;
+		this.isLoadingMembers = false;
 		this.hasResolvedMembership = true;
 	}
 
@@ -79,17 +85,26 @@ class CurrentOrganization {
 
 		this.isLoading = true;
 		try {
+			const previousOrganizationId = this.organization?.id ?? '';
 			const ctx = await withTimeout(
 				fetchOwnOrganizationContext(uid),
 				REFRESH_TIMEOUT_MS,
 				'Organization lookup timed out.'
 			);
 			if (ctx) {
+				if (previousOrganizationId !== ctx.organization.id) {
+					this.invitations = [];
+					this.members = [];
+					this.memberCount = null;
+				}
 				this.organization = ctx.organization;
 				this.membership = ctx.membership;
 			} else {
 				this.organization = null;
 				this.membership = null;
+				this.invitations = [];
+				this.members = [];
+				this.memberCount = null;
 			}
 		} finally {
 			this.isLoading = false;
@@ -166,6 +181,20 @@ class CurrentOrganization {
 	async loadMemberCount() {
 		if (!this.organization) return;
 		this.memberCount = await fetchMemberCount(this.organization.id);
+	}
+
+	async loadMembers() {
+		if (!this.organization || !this.isAdmin) {
+			this.members = [];
+			return;
+		}
+
+		this.isLoadingMembers = true;
+		try {
+			this.members = await fetchOrganizationMembers(this.organization.id);
+		} finally {
+			this.isLoadingMembers = false;
+		}
 	}
 }
 

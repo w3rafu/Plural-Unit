@@ -19,7 +19,7 @@
 	let { children } = $props();
 </script>
 
-{#if !currentUser.isLoggedIn}
+{#if !currentUser.isLoggedIn || authBoundary.isPasswordRecovery}
 	<LoginForm />
 {:else}
 	{@render children()}

@@ -5,6 +5,7 @@
 	import Header from '$lib/components/ui/Header.svelte';
 	import BottomNav from '$lib/components/ui/BottomNav.svelte';
 	import Toaster from '$lib/components/ui/Toaster.svelte';
+	import UnsavedChangesGuard from '$lib/components/ui/UnsavedChangesGuard.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { pageHeader } from '$lib/stores/pageHeader.svelte';
 
@@ -16,6 +17,7 @@
 </script>
 
 <ModeWatcher defaultMode="dark" themeColors={{ dark: '#09090b', light: '#fafafa' }} />
+<UnsavedChangesGuard />
 
 <!--
   Root layout — wraps every page with the AuthGate.

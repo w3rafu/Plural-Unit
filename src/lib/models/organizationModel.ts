@@ -27,6 +27,17 @@ export type OrganizationInvitation = {
 	created_at: string;
 };
 
+export type OrganizationMember = {
+	profile_id: string;
+	name: string;
+	email: string;
+	phone_number: string;
+	avatar_url: string;
+	role: 'admin' | 'member';
+	joined_via: 'created' | 'invitation' | 'code';
+	joined_at: string;
+};
+
 /**
  * Normalize a join code to uppercase, trimmed.
  */

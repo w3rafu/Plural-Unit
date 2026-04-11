@@ -4,11 +4,14 @@
   Rendered by the hub manage page when the `events` plugin is active.
 -->
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import * as Item from '$lib/components/ui/item';
+	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
+	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 
@@ -17,6 +20,30 @@
 	let startsAt = $state('');
 	let location = $state('');
 	let feedback = $state('');
+	const UNSAVED_CHANGES_KEY = 'hub-event-editor';
+	const initialEventSnapshot = createDirtySnapshot({
+		title: '',
+		description: '',
+		startsAt: '',
+		location: ''
+	});
+	const currentEventSnapshot = $derived.by(() =>
+		createDirtySnapshot({
+			title: title.trim(),
+			description: description.trim(),
+			startsAt,
+			location: location.trim()
+		})
+	);
+	const isEventDirty = $derived(currentEventSnapshot !== initialEventSnapshot);
+
+	$effect(() => {
+		unsavedChanges.set(UNSAVED_CHANGES_KEY, 'event draft', isEventDirty);
+	});
+
+	onDestroy(() => {
+		unsavedChanges.clear(UNSAVED_CHANGES_KEY);
+	});
 
 	async function submit() {
 		feedback = '';

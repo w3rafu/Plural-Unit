@@ -17,6 +17,7 @@ import {
 	type AuthStep,
 	type FeedbackType,
 	type OrganizationOnboardingMode,
+	readAuthFlowLocationState,
 	validateLoginInput,
 	validateRegistrationInput,
 	validatePhoneNumberInput,
@@ -30,6 +31,7 @@ import {
 	mapPasswordResetErrorMessage,
 	mapOrganizationErrorMessage
 } from '$lib/models/authHelpers';
+import { subscribeToAuthStateChange } from '$lib/repositories/profileRepository';
 
 export type LoginFieldName = 'email' | 'password' | 'confirmPassword' | 'phoneNumber' | 'otpCode';
 
@@ -65,6 +67,23 @@ class AuthBoundary {
 	orgJoinCode = $state('');
 	orgInviteToken = $state('');
 	orgFeedback = $state('');
+	private stopAuth: (() => void) | null = null;
+
+	constructor() {
+		if (typeof window !== 'undefined') {
+			this.syncAuthModeFromLocation();
+			this.stopAuth = subscribeToAuthStateChange((event) => {
+				if (event === 'PASSWORD_RECOVERY') {
+					this.enterPasswordRecoveryMode();
+					return;
+				}
+
+				if (event === 'SIGNED_OUT' && this.authMode === 'reset_password') {
+					this.authMode = 'login';
+				}
+			});
+		}
+	}
 
 	// Derived gates — components check these instead of re-solving logic.
 	needsNameOnboarding = $derived(
@@ -76,6 +95,7 @@ class AuthBoundary {
 		currentOrganization.hasResolvedMembership &&
 		!currentOrganization.isMember
 	);
+	isPasswordRecovery = $derived(this.authMode === 'reset_password');
 
 	// ── Private helpers ──
 
@@ -96,6 +116,45 @@ class AuthBoundary {
 	private setFeedback(message: string, type: FeedbackType = 'error') {
 		this.loginFeedback = message;
 		this.loginFeedbackType = type;
+	}
+
+	private stripAuthHashFromUrl() {
+		if (typeof window === 'undefined' || !window.location.hash) return;
+		window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+	}
+
+	private enterPasswordRecoveryMode() {
+		this.authChannel = 'email';
+		this.authMode = 'reset_password';
+		this.authStep = 'request_code';
+		this.otpCode = '';
+		this.password = '';
+		this.confirmPassword = '';
+		this.resetEmailSent = false;
+		this.clearFieldErrors();
+		this.setFeedback('Choose a new password to finish recovering your account.', 'success');
+		this.stripAuthHashFromUrl();
+	}
+
+	private syncAuthModeFromLocation() {
+		if (typeof window === 'undefined') return;
+
+		const locationState = readAuthFlowLocationState({
+			search: window.location.search,
+			hash: window.location.hash
+		});
+
+		if (locationState.errorMessage) {
+			this.authChannel = 'email';
+			this.authMode = 'login';
+			this.setFeedback(locationState.errorMessage);
+			this.stripAuthHashFromUrl();
+			return;
+		}
+
+		if (locationState.isPasswordRecovery) {
+			this.enterPasswordRecoveryMode();
+		}
 	}
 
 	// ── Login actions ──
@@ -225,7 +284,8 @@ class AuthBoundary {
 		try {
 			await currentUser.requestPasswordResetEmail(v.normalizedEmail);
 			this.resetEmailSent = true;
-			this.setFeedback('Check your email for a password reset link.', 'success');
+			this.email = v.normalizedEmail;
+			this.setFeedback('If that email is connected to an account, a reset link is on the way.', 'success');
 		} catch (e) {
 			this.setFeedback(mapPasswordResetErrorMessage(e));
 		} finally {
@@ -251,10 +311,13 @@ class AuthBoundary {
 
 		try {
 			await currentUser.setNewPassword(this.password);
-			this.setFeedback('Password updated. You can now sign in.', 'success');
-			this.authMode = 'login';
+			const recoveryEmail = this.email.trim().toLowerCase();
 			this.password = '';
 			this.confirmPassword = '';
+			this.authMode = 'login';
+			await currentUser.logout();
+			this.email = recoveryEmail;
+			this.setFeedback('Password updated. Sign in with your new password.', 'success');
 		} catch (e) {
 			this.setFeedback(mapPasswordResetErrorMessage(e));
 		} finally {
@@ -317,6 +380,10 @@ class AuthBoundary {
 	setAuthMode(mode: 'login' | 'register' | 'forgot_password' | 'reset_password') {
 		this.authMode = mode;
 		this.resetEmailSent = false;
+		if (mode !== 'reset_password') {
+			this.password = '';
+			this.confirmPassword = '';
+		}
 		this.clearFieldErrors();
 		this.setFeedback('');
 	}

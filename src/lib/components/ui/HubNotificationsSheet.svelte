@@ -5,7 +5,6 @@
 	import * as Item from '$lib/components/ui/item';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
-	import { buildHubNotifications } from '$lib/models/hubNotifications';
 
 	let {
 		triggerLabel = 'Alerts',
@@ -19,12 +18,7 @@
 	let loadError = $state('');
 	let hasLoadedOnce = $state(false);
 
-	const notifications = $derived(
-		buildHubNotifications({
-			broadcasts: currentHub.broadcasts,
-			events: currentHub.events
-		})
-	);
+	const notifications = $derived(currentHub.activityFeed);
 
 	async function handleOpenChange(nextOpen: boolean) {
 		open = nextOpen;

@@ -16,6 +16,11 @@ export type AuthStep = 'request_code' | 'verify_code';
 export type OrganizationOnboardingMode = 'create' | 'join' | 'invite';
 export type FeedbackType = 'error' | 'success';
 
+export type AuthFlowLocationState = {
+	isPasswordRecovery: boolean;
+	errorMessage: string;
+};
+
 type ValidationFailure<Field extends string> = {
 	ok: false;
 	feedback: string;
@@ -191,6 +196,27 @@ export function validateNewPassword(input: { password: string; confirmPassword: 
 	return { ok: true as const };
 }
 
+export function readAuthFlowLocationState(input: {
+	search: string;
+	hash: string;
+}): AuthFlowLocationState {
+	const searchParams = new URLSearchParams(input.search);
+	const hashParams = new URLSearchParams(input.hash.startsWith('#') ? input.hash.slice(1) : input.hash);
+
+	const allParams = new URLSearchParams();
+	for (const [key, value] of searchParams.entries()) {
+		allParams.set(key, value);
+	}
+	for (const [key, value] of hashParams.entries()) {
+		allParams.set(key, value);
+	}
+
+	return {
+		isPasswordRecovery: allParams.get('type') === 'recovery',
+		errorMessage: allParams.get('error_description') ?? ''
+	};
+}
+
 // ── Name onboarding validator ──
 
 export function validateOnboardingName(name: string) {
@@ -257,16 +283,18 @@ export function mapLoginErrorMessage(error: unknown): string {
 			: 'Login failed.';
 
 	if (message.toLowerCase().includes('invalid login credentials'))
-		return 'Invalid credentials.';
+		return "We couldn't match that email and password. Check for typos, reset your password, or register if this is your first time here.";
 	if (
 		message.toLowerCase().includes('token has expired') ||
 		message.toLowerCase().includes('otp expired')
 	)
 		return 'That verification code has expired. Request a new code.';
 	if (message.toLowerCase().includes('email not confirmed'))
-		return 'Please confirm your email before logging in.';
+		return 'Check your inbox for the confirmation email, then try signing in again.';
+	if (message.toLowerCase().includes('rate limit') || message.toLowerCase().includes('too many'))
+		return 'Too many attempts were made just now. Wait a moment, then try again.';
 	if (message.toLowerCase().includes('sms'))
-		return 'Could not send the text message. Check the phone number.';
+		return 'Could not send the text message. Check the phone number and try again.';
 
 	return message;
 }
@@ -303,7 +331,7 @@ export function mapPasswordResetErrorMessage(error: unknown): string {
 	)
 		return 'A reset email was already sent. Wait 60 seconds before requesting another.';
 	if (normalized.includes('user not found'))
-		return 'No account found for that email.';
+		return 'We could not start recovery for that email. Double-check it or try signing in another way.';
 	if (normalized.includes('same password') || normalized.includes('different from the old'))
 		return 'New password must be different from the old one.';
 

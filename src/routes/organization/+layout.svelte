@@ -12,6 +12,20 @@
 	const organizationPath = $derived(page.url.pathname);
 	let loadedMemberCountOrgId = $state('');
 	let loadedInvitationsOrgId = $state('');
+	let loadedMembersOrgId = $state('');
+
+	$effect(() => {
+		if (!currentOrganization.organization) {
+			loadedMemberCountOrgId = '';
+			loadedInvitationsOrgId = '';
+			loadedMembersOrgId = '';
+		}
+
+		if (!currentOrganization.isAdmin) {
+			loadedInvitationsOrgId = '';
+			loadedMembersOrgId = '';
+		}
+	});
 
 	$effect(() => {
 		const organizationId = currentOrganization.organization?.id ?? '';
@@ -35,6 +49,20 @@
 
 		loadedInvitationsOrgId = organizationId;
 		void currentOrganization.loadInvitations();
+	});
+
+	$effect(() => {
+		const organizationId =
+			currentOrganization.isAdmin && organizationPath === '/organization/members'
+				? (currentOrganization.organization?.id ?? '')
+				: '';
+
+		if (!organizationId || loadedMembersOrgId === organizationId) {
+			return;
+		}
+
+		loadedMembersOrgId = organizationId;
+		void currentOrganization.loadMembers();
 	});
 
 	function isActiveOrganizationSubroute(pathname: string) {
@@ -66,7 +94,9 @@
 			<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-foreground">Choose a section</p>
-					<p class="text-sm text-muted-foreground">Switch between organization overview and access tools.</p>
+					<p class="text-sm text-muted-foreground">
+						Switch between overview, access tools, and member visibility.
+					</p>
 				</div>
 
 				<ButtonGroup.Root class="w-full sm:w-auto">
@@ -86,6 +116,16 @@
 					>
 						Access
 					</Button>
+					{#if currentOrganization.isAdmin}
+						<Button
+							type="button"
+							variant={isActiveOrganizationSubroute('/organization/members') ? 'default' : 'outline'}
+							class="w-full sm:w-auto"
+							onclick={() => goToOrganizationSubroute('/organization/members')}
+						>
+							Members
+						</Button>
+					{/if}
 				</ButtonGroup.Root>
 			</Card.Content>
 		</Card.Root>

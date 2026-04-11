@@ -13,6 +13,16 @@
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import { authBoundary } from '$lib/stores/authBoundary.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
+
+	const feedbackToneClass = $derived.by(() =>
+		authBoundary.loginFeedbackType === 'success'
+			? 'border-border/70 bg-muted/30 text-foreground'
+			: 'border-destructive/20 bg-destructive/10 text-destructive'
+	);
+
+	const feedbackLabel = $derived.by(() =>
+		authBoundary.loginFeedbackType === 'success' ? 'Success' : 'Could not continue'
+	);
 </script>
 
 <section aria-label="Login" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
@@ -59,7 +69,9 @@
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); authBoundary.onForgotPasswordSubmit(); }}>
 				<div class="space-y-1">
 					<h2 class="text-lg font-semibold tracking-tight text-foreground">Reset password</h2>
-					<p class="text-sm text-muted-foreground">Enter your email and we’ll send a reset link.</p>
+					<p class="text-sm text-muted-foreground">
+						Enter your email and we’ll send a reset link if this account is available for password sign-in.
+					</p>
 				</div>
 				<Field.Group>
 					<Field.Field>
@@ -86,7 +98,9 @@
 			<form class="space-y-4" onsubmit={(e) => { e.preventDefault(); authBoundary.onResetPasswordSubmit(); }}>
 				<div class="space-y-1">
 					<h2 class="text-lg font-semibold tracking-tight text-foreground">Choose a new password</h2>
-					<p class="text-sm text-muted-foreground">Pick something long and hard to guess.</p>
+					<p class="text-sm text-muted-foreground">
+						You’re in recovery mode now. Pick a password you can use the next time you sign in.
+					</p>
 				</div>
 				<Field.Group class="space-y-4">
 					<Field.Field>
@@ -123,7 +137,7 @@
 					<p class="text-sm text-muted-foreground">
 						{authBoundary.authMode === 'register'
 							? 'Set up an email and password for your account.'
-							: 'Use the email and password connected to this account.'}
+							: 'Use the email and password connected to this account, or reset access if you are stuck.'}
 					</p>
 				</div>
 				<Field.Group class="space-y-4">
@@ -177,6 +191,11 @@
 						</Button>
 					{/if}
 				</div>
+				{#if authBoundary.authMode === 'login'}
+					<p class="text-sm leading-6 text-muted-foreground">
+						If email sign-in still fails, double-check the address, reset your password, or switch to phone if that is how this account was originally set up.
+					</p>
+				{/if}
 			</form>
 		{/if}
 	{:else}
@@ -234,13 +253,14 @@
 	{/if}
 
 	{#if authBoundary.loginFeedback}
-		<p
+		<div
 			role="alert"
 			data-feedback-type={authBoundary.loginFeedbackType}
-			class="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
+			class={`rounded-xl border px-4 py-3 ${feedbackToneClass}`}
 		>
-			{authBoundary.loginFeedback}
-		</p>
+			<p class="text-xs font-medium uppercase tracking-[0.14em] opacity-80">{feedbackLabel}</p>
+			<p class="mt-1 text-sm leading-6">{authBoundary.loginFeedback}</p>
+		</div>
 	{/if}
 		</Card.Content>
 	</Card.Root>

@@ -16,6 +16,7 @@ import {
 	type PluginStateMap,
 	buildPluginStateMap
 } from './pluginRegistry';
+import { buildHubNotifications } from '$lib/models/hubNotifications';
 import type { BroadcastRow, EventRow } from '$lib/repositories/hubRepository';
 import {
 	fetchBroadcasts,
@@ -37,6 +38,13 @@ class CurrentHub {
 
 	get orgId(): string | null {
 		return currentOrganization.organization?.id ?? null;
+	}
+
+	get activityFeed() {
+		return buildHubNotifications({
+			broadcasts: this.broadcasts,
+			events: this.events
+		});
 	}
 
 	async load() {

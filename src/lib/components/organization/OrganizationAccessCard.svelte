@@ -6,12 +6,37 @@
 	import { Input } from '$lib/components/ui/input';
 	import PendingInvitationsTable from '$lib/components/organization/PendingInvitationsTable.svelte';
 	import * as Select from '$lib/components/ui/select';
+	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
+	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
+	import { onDestroy } from 'svelte';
 
 	let inviteEmail = $state('');
 	let invitePhone = $state('');
 	let inviteMethod = $state<'email' | 'phone'>('email');
+	const UNSAVED_CHANGES_KEY = 'organization-access';
+	const initialInviteSnapshot = createDirtySnapshot({
+		method: 'email',
+		email: '',
+		phone: ''
+	});
+	const currentInviteSnapshot = $derived.by(() =>
+		createDirtySnapshot({
+			method: inviteMethod,
+			email: inviteEmail.trim(),
+			phone: invitePhone.trim()
+		})
+	);
+	const isInviteDirty = $derived(currentInviteSnapshot !== initialInviteSnapshot);
+
+	$effect(() => {
+		unsavedChanges.set(UNSAVED_CHANGES_KEY, 'organization access', isInviteDirty);
+	});
+
+	onDestroy(() => {
+		unsavedChanges.clear(UNSAVED_CHANGES_KEY);
+	});
 
 	async function sendInvite() {
 		const contact = inviteMethod === 'email'

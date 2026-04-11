@@ -1,8 +1,8 @@
 # Plural Unit
 
-A minimal, unstyled SvelteKit app that demonstrates the core orchestration patterns from CommunionLink: auth, organizations, invitations, and a registry-driven plugin hub.
+A lightweight SvelteKit app that demonstrates the core orchestration patterns from CommunionLink: auth, organizations, invitations, and a registry-driven plugin hub.
 
-**No colors. No decorations. Just a wireframe with working logic.**
+The app now uses a restrained shadcn-style UI with shared light/dark theme tokens, while still keeping the product intentionally simple.
 
 ---
 
@@ -30,15 +30,25 @@ supabase db push          # if using Supabase CLI
 
 ---
 
+## Planning Docs
+
+These are the best starting points for junior developers:
+
+- [docs/roadmap-0.1.3.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3.md)
+- [docs/roadmap-0.1.3-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3-checklist.md)
+- [docs/ui-guardrails.md](/Users/rafa/Desktop/plural-unit/docs/ui-guardrails.md)
+
+---
+
 ## Architecture overview
 
-The app has four layers. Every file belongs to exactly one layer, and layers only depend downward.
+The app has six layers. Every file belongs to exactly one layer, and layers only depend downward.
 
 ```
 ┌─────────────────────────────┐
 │  Routes (pages/composition) │  src/routes/
 ├─────────────────────────────┤
-│  Components (wireframe UI)  │  src/lib/components/
+│  Components (app UI)        │  src/lib/components/
 ├─────────────────────────────┤
 │  Stores (reactive state)    │  src/lib/stores/
 ├─────────────────────────────┤
@@ -80,29 +90,56 @@ src/
         LoginForm.svelte        ← Dual-channel login form
         NameOnboarding.svelte   ← Name collection modal
         OrganizationOnboarding.svelte ← Create/join/invite org
+      profile/
+        ProfileSection.svelte        ← Profile summary card
+        ProfileDetailsCard.svelte    ← Profile details editor
+        ProfileSecurityCard.svelte   ← Security editor
+      organization/
+        OrganizationSummaryCard.svelte ← Org summary header card
+        OrganizationOverviewCard.svelte ← Org overview content
+        OrganizationAccessCard.svelte   ← Join code + invitations
       hub/
         member/
-          BroadcastsSection.svelte ← Member broadcast list
-          EventsSection.svelte     ← Member event list
+          HubOverviewCard.svelte     ← Member hub summary
+          HubActivityFeed.svelte     ← Mixed recent activity feed
+          BroadcastsSection.svelte   ← Member broadcast list
+          EventsSection.svelte       ← Member event list
         admin/
+          HubManageSummaryCard.svelte ← Admin hub summary
           PluginActivationCard.svelte ← Toggle plugins on/off
           BroadcastEditor.svelte      ← Create/delete broadcasts
           EventEditor.svelte          ← Create/delete events
+      ui/
+        Header.svelte                ← Shared header shell
+        BottomNav.svelte             ← Shared bottom navigation
+        Toaster.svelte               ← Shared toast outlet
+        UnsavedChangesGuard.svelte   ← Global unsaved-work navigation guard
   routes/
     +layout.svelte              ← Wraps all pages with AuthGate
-    +page.svelte                ← Home (profile + nav)
+    +page.svelte                ← Home/account overview
     hub/
       +page.svelte              ← Hub coordinator (registry-driven)
       manage/
-        +page.svelte            ← Admin hub management
+        +layout.svelte          ← Hub manage shell + tabs
+        sections/+page.svelte   ← Plugin setup
+        content/+page.svelte    ← Broadcast/event editors
     organization/
-      +page.svelte              ← Org details + invitations
+      +layout.svelte            ← Organization shell + tabs
+      overview/+page.svelte     ← Organization overview
+      access/+page.svelte       ← Join code + invites
+      members/+page.svelte      ← Member visibility for admins
+    profile/
+      +layout.svelte            ← Profile shell + tabs
+      details/+page.svelte      ← Profile details
+      security/+page.svelte     ← Security settings
 supabase/
   migrations/
     001_create_profiles.sql
     002_create_organizations.sql
     003_create_invitations.sql
     004_create_hub_tables.sql
+    006_add_profile_avatar_support.sql
+    007_add_get_organization_members.sql
 ```
 
 ---

@@ -4,17 +4,37 @@
   Rendered by the hub manage page when the `broadcasts` plugin is active.
 -->
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import * as Item from '$lib/components/ui/item';
+	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
+	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 
 	let title = $state('');
 	let body = $state('');
 	let feedback = $state('');
+	const UNSAVED_CHANGES_KEY = 'hub-broadcast-editor';
+	const initialBroadcastSnapshot = createDirtySnapshot({ title: '', body: '' });
+	const currentBroadcastSnapshot = $derived.by(() =>
+		createDirtySnapshot({
+			title: title.trim(),
+			body: body.trim()
+		})
+	);
+	const isBroadcastDirty = $derived(currentBroadcastSnapshot !== initialBroadcastSnapshot);
+
+	$effect(() => {
+		unsavedChanges.set(UNSAVED_CHANGES_KEY, 'broadcast draft', isBroadcastDirty);
+	});
+
+	onDestroy(() => {
+		unsavedChanges.clear(UNSAVED_CHANGES_KEY);
+	});
 
 	async function submit() {
 		feedback = '';

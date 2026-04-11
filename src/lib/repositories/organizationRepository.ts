@@ -10,7 +10,8 @@ import { getSupabaseClient } from '$lib/supabaseClient';
 import type {
 	OrganizationPayload,
 	OrganizationMembership,
-	OrganizationInvitation
+	OrganizationInvitation,
+	OrganizationMember
 } from '$lib/models/organizationModel';
 
 // ── Context lookup ──
@@ -178,4 +179,15 @@ export async function fetchMemberCount(organizationId: string): Promise<number> 
 
 	if (error) throw error;
 	return count ?? 0;
+}
+
+export async function fetchOrganizationMembers(
+	organizationId: string
+): Promise<OrganizationMember[]> {
+	const { data, error } = await getSupabaseClient().rpc('get_organization_members', {
+		p_organization_id: organizationId
+	});
+
+	if (error) throw error;
+	return (data ?? []) as OrganizationMember[];
 }

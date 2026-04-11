@@ -50,7 +50,7 @@ class CurrentUser {
 
 	constructor() {
 		if (typeof window !== 'undefined') {
-			this.stopAuth = subscribeToAuthStateChange((user) => {
+			this.stopAuth = subscribeToAuthStateChange((_event, user) => {
 				if (user) {
 					this.syncFromAuthUser(user.id, user.email ?? '');
 					void this.loadProfile(user.id);

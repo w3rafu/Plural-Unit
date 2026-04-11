@@ -6,7 +6,7 @@
  * of touching Supabase directly.
  */
 
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { AuthChangeEvent, User as SupabaseUser } from '@supabase/supabase-js';
 import { getSupabaseClient } from '$lib/supabaseClient';
 import type { UserDetails } from '$lib/models/userModel';
 import { withRetry } from '$lib/services/retry';
@@ -177,10 +177,10 @@ export async function getAuthenticatedUser(): Promise<SupabaseUser | null> {
 }
 
 export function subscribeToAuthStateChange(
-	callback: (user: SupabaseUser | null) => void
+	callback: (event: AuthChangeEvent, user: SupabaseUser | null) => void
 ): () => void {
-	const { data } = getSupabaseClient().auth.onAuthStateChange((_event, session) => {
-		callback(session?.user ?? null);
+	const { data } = getSupabaseClient().auth.onAuthStateChange((event, session) => {
+		callback(event, session?.user ?? null);
 	});
 	return () => data.subscription.unsubscribe();
 }

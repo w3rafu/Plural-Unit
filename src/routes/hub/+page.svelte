@@ -13,6 +13,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import HubOverviewCard from '$lib/components/hub/member/HubOverviewCard.svelte';
+	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -44,6 +45,7 @@
 
 <main class="flex flex-col gap-4">
 	<HubOverviewCard />
+	<HubActivityFeed />
 
 	{#if currentHub.isLoading}
 		<Card.Root size="sm" class="border-border/70 bg-card/70">
