@@ -38,6 +38,8 @@ export type OrganizationMember = {
 	joined_at: string;
 };
 
+export type OrganizationMemberRole = OrganizationMember['role'];
+
 /**
  * Normalize a join code to uppercase, trimmed.
  */

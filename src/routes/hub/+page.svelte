@@ -21,7 +21,7 @@
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
 
-	let loadedHubOrgId = $state('');
+	let loadedHubOrgId = '';
 
 	$effect(() => {
 		const organizationId = currentOrganization.organization?.id ?? '';

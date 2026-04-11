@@ -34,6 +34,8 @@ supabase db push          # if using Supabase CLI
 
 These are the best starting points for junior developers:
 
+- [docs/roadmap-0.1.4.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.4.md)
+- [docs/roadmap-0.1.4-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.4-checklist.md)
 - [docs/roadmap-0.1.3.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3.md)
 - [docs/roadmap-0.1.3-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3-checklist.md)
 - [docs/ui-guardrails.md](/Users/rafa/Desktop/plural-unit/docs/ui-guardrails.md)

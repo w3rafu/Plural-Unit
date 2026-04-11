@@ -10,9 +10,9 @@
 
 	let { children } = $props();
 	const organizationPath = $derived(page.url.pathname);
-	let loadedMemberCountOrgId = $state('');
-	let loadedInvitationsOrgId = $state('');
-	let loadedMembersOrgId = $state('');
+	let loadedMemberCountOrgId = '';
+	let loadedInvitationsOrgId = '';
+	let loadedMembersOrgId = '';
 
 	$effect(() => {
 		if (!currentOrganization.organization) {
@@ -99,34 +99,48 @@
 					</p>
 				</div>
 
-				<ButtonGroup.Root class="w-full sm:w-auto">
-					<Button
-						type="button"
-						variant={isActiveOrganizationSubroute('/organization/overview') ? 'default' : 'outline'}
-						class="w-full sm:w-auto"
-						onclick={() => goToOrganizationSubroute('/organization/overview')}
-					>
-						Overview
-					</Button>
-					<Button
-						type="button"
-						variant={isActiveOrganizationSubroute('/organization/access') ? 'default' : 'outline'}
-						class="w-full sm:w-auto"
-						onclick={() => goToOrganizationSubroute('/organization/access')}
-					>
-						Access
-					</Button>
-					{#if currentOrganization.isAdmin}
+				<nav aria-label="Organization sections" class="w-full sm:w-auto">
+					<ButtonGroup.Root class="w-full sm:w-auto">
 						<Button
-							type="button"
-							variant={isActiveOrganizationSubroute('/organization/members') ? 'default' : 'outline'}
+							href="/organization/overview"
+							variant={isActiveOrganizationSubroute('/organization/overview') ? 'default' : 'outline'}
 							class="w-full sm:w-auto"
-							onclick={() => goToOrganizationSubroute('/organization/members')}
+							aria-current={isActiveOrganizationSubroute('/organization/overview') ? 'page' : undefined}
+							onclick={(event) => {
+								event.preventDefault();
+								goToOrganizationSubroute('/organization/overview');
+							}}
 						>
-							Members
+							Overview
 						</Button>
-					{/if}
-				</ButtonGroup.Root>
+						<Button
+							href="/organization/access"
+							variant={isActiveOrganizationSubroute('/organization/access') ? 'default' : 'outline'}
+							class="w-full sm:w-auto"
+							aria-current={isActiveOrganizationSubroute('/organization/access') ? 'page' : undefined}
+							onclick={(event) => {
+								event.preventDefault();
+								goToOrganizationSubroute('/organization/access');
+							}}
+						>
+							Access
+						</Button>
+						{#if currentOrganization.isAdmin}
+							<Button
+								href="/organization/members"
+								variant={isActiveOrganizationSubroute('/organization/members') ? 'default' : 'outline'}
+								class="w-full sm:w-auto"
+								aria-current={isActiveOrganizationSubroute('/organization/members') ? 'page' : undefined}
+								onclick={(event) => {
+									event.preventDefault();
+									goToOrganizationSubroute('/organization/members');
+								}}
+							>
+								Members
+							</Button>
+						{/if}
+					</ButtonGroup.Root>
+				</nav>
 			</Card.Content>
 		</Card.Root>
 

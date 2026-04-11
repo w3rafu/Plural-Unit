@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import { buildUnsavedChangesPrompt } from '$lib/models/unsavedChanges';
 
 type UnsavedChangesEntry = {
@@ -21,28 +22,44 @@ class UnsavedChangesStore {
 	}
 
 	set(key: string, label: string, isDirty: boolean) {
-		if (!isDirty) {
-			this.clear(key);
-			return;
-		}
+		untrack(() => {
+			if (!isDirty) {
+				this.clear(key);
+				return;
+			}
 
-		const nextEntry = { key, label };
-		const existingIndex = this.entries.findIndex((entry) => entry.key === key);
+			const nextEntry = { key, label };
+			const existingIndex = this.entries.findIndex((entry) => entry.key === key);
 
-		if (existingIndex === -1) {
-			this.entries = [...this.entries, nextEntry];
-			return;
-		}
+			if (existingIndex === -1) {
+				this.entries = [...this.entries, nextEntry];
+				return;
+			}
 
-		this.entries = this.entries.map((entry, index) => (index === existingIndex ? nextEntry : entry));
+			const existingEntry = this.entries[existingIndex];
+			if (existingEntry?.label === label) {
+				return;
+			}
+
+			this.entries = this.entries.map((entry, index) => (index === existingIndex ? nextEntry : entry));
+		});
 	}
 
 	clear(key: string) {
-		this.entries = this.entries.filter((entry) => entry.key !== key);
+		untrack(() => {
+			const nextEntries = this.entries.filter((entry) => entry.key !== key);
+			if (nextEntries.length !== this.entries.length) {
+				this.entries = nextEntries;
+			}
+		});
 	}
 
 	clearAll() {
-		this.entries = [];
+		untrack(() => {
+			if (this.entries.length > 0) {
+				this.entries = [];
+			}
+		});
 	}
 }
 

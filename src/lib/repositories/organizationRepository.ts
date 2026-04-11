@@ -11,7 +11,8 @@ import type {
 	OrganizationPayload,
 	OrganizationMembership,
 	OrganizationInvitation,
-	OrganizationMember
+	OrganizationMember,
+	OrganizationMemberRole
 } from '$lib/models/organizationModel';
 
 // ── Context lookup ──
@@ -159,6 +160,22 @@ export async function fetchPendingInvitations(
 	return (data ?? []) as OrganizationInvitation[];
 }
 
+export async function resendInvitation(invitationId: string) {
+	const { error } = await getSupabaseClient().rpc('resend_organization_invitation', {
+		p_invitation_id: invitationId
+	});
+
+	if (error) throw error;
+}
+
+export async function revokeInvitation(invitationId: string) {
+	const { error } = await getSupabaseClient().rpc('revoke_organization_invitation', {
+		p_invitation_id: invitationId
+	});
+
+	if (error) throw error;
+}
+
 // ── Join code (admin) ──
 
 export async function regenerateJoinCode(organizationId: string): Promise<string> {
@@ -190,4 +207,27 @@ export async function fetchOrganizationMembers(
 
 	if (error) throw error;
 	return (data ?? []) as OrganizationMember[];
+}
+
+export async function setOrganizationMemberRole(
+	organizationId: string,
+	profileId: string,
+	role: OrganizationMemberRole
+) {
+	const { error } = await getSupabaseClient().rpc('set_organization_member_role', {
+		p_organization_id: organizationId,
+		p_profile_id: profileId,
+		p_role: role
+	});
+
+	if (error) throw error;
+}
+
+export async function removeOrganizationMember(organizationId: string, profileId: string) {
+	const { error } = await getSupabaseClient().rpc('remove_organization_member', {
+		p_organization_id: organizationId,
+		p_profile_id: profileId
+	});
+
+	if (error) throw error;
 }

@@ -24,9 +24,13 @@ import {
 	acceptInvitation,
 	createInvitation,
 	fetchPendingInvitations,
+	resendInvitation,
+	revokeInvitation,
 	regenerateJoinCode,
 	fetchMemberCount,
-	fetchOrganizationMembers
+	fetchOrganizationMembers,
+	setOrganizationMemberRole,
+	removeOrganizationMember
 } from '$lib/repositories/organizationRepository';
 import { subscribeToAuthStateChange, getAuthenticatedUser } from '$lib/repositories/profileRepository';
 
@@ -167,6 +171,28 @@ class CurrentOrganization {
 		}
 	}
 
+	async resendPendingInvitation(invitationId: string) {
+		if (!this.organization || !this.isAdmin) throw new Error('No organization.');
+		this.isMutating = true;
+		try {
+			await resendInvitation(invitationId);
+			await this.loadInvitations();
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async revokePendingInvitation(invitationId: string) {
+		if (!this.organization || !this.isAdmin) throw new Error('No organization.');
+		this.isMutating = true;
+		try {
+			await revokeInvitation(invitationId);
+			await this.loadInvitations();
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
 	async regenerateCode() {
 		if (!this.organization) throw new Error('No organization.');
 		this.isMutating = true;
@@ -194,6 +220,35 @@ class CurrentOrganization {
 			this.members = await fetchOrganizationMembers(this.organization.id);
 		} finally {
 			this.isLoadingMembers = false;
+		}
+	}
+
+	async updateMemberRole(profileId: string, role: 'admin' | 'member') {
+		if (!this.organization) throw new Error('No organization.');
+		this.isMutating = true;
+		try {
+			await setOrganizationMemberRole(this.organization.id, profileId, role);
+			await this.refresh();
+			if (this.isAdmin) {
+				await this.loadMembers();
+			}
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async removeMember(profileId: string) {
+		if (!this.organization) throw new Error('No organization.');
+		this.isMutating = true;
+		try {
+			await removeOrganizationMember(this.organization.id, profileId);
+			await this.refresh();
+			if (this.isAdmin) {
+				await this.loadMembers();
+			}
+			await this.loadMemberCount();
+		} finally {
+			this.isMutating = false;
 		}
 	}
 }

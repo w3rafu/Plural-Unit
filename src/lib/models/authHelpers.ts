@@ -281,19 +281,29 @@ export function mapLoginErrorMessage(error: unknown): string {
 		typeof error === 'object' && error && 'message' in error
 			? String(error.message)
 			: 'Login failed.';
+	const normalized = message.toLowerCase();
 
-	if (message.toLowerCase().includes('invalid login credentials'))
+	if (
+		normalized.includes('load failed') ||
+		normalized.includes('failed to fetch') ||
+		normalized.includes('network request failed') ||
+		normalized.includes('network connection was lost') ||
+		normalized.includes('access control') ||
+		normalized.includes('timed out')
+	)
+		return 'We could not reach Supabase to sign you in. Check your internet connection, confirm the project is online, and try again.';
+	if (normalized.includes('invalid login credentials'))
 		return "We couldn't match that email and password. Check for typos, reset your password, or register if this is your first time here.";
 	if (
-		message.toLowerCase().includes('token has expired') ||
-		message.toLowerCase().includes('otp expired')
+		normalized.includes('token has expired') ||
+		normalized.includes('otp expired')
 	)
 		return 'That verification code has expired. Request a new code.';
-	if (message.toLowerCase().includes('email not confirmed'))
+	if (normalized.includes('email not confirmed'))
 		return 'Check your inbox for the confirmation email, then try signing in again.';
-	if (message.toLowerCase().includes('rate limit') || message.toLowerCase().includes('too many'))
+	if (normalized.includes('rate limit') || normalized.includes('too many'))
 		return 'Too many attempts were made just now. Wait a moment, then try again.';
-	if (message.toLowerCase().includes('sms'))
+	if (normalized.includes('sms'))
 		return 'Could not send the text message. Check the phone number and try again.';
 
 	return message;
@@ -306,6 +316,15 @@ export function mapRegistrationErrorMessage(error: unknown): string {
 			: 'Registration failed.';
 	const normalized = message.toLowerCase();
 
+	if (
+		normalized.includes('load failed') ||
+		normalized.includes('failed to fetch') ||
+		normalized.includes('network request failed') ||
+		normalized.includes('network connection was lost') ||
+		normalized.includes('access control') ||
+		normalized.includes('timed out')
+	)
+		return 'We could not reach Supabase to create the account. Check your internet connection and try again.';
 	if (normalized.includes('already registered') || normalized.includes('already been registered'))
 		return 'That email is already registered.';
 	if (normalized.includes('password') && normalized.includes('least'))
@@ -323,6 +342,15 @@ export function mapPasswordResetErrorMessage(error: unknown): string {
 			: 'Password reset failed.';
 	const normalized = message.toLowerCase();
 
+	if (
+		normalized.includes('load failed') ||
+		normalized.includes('failed to fetch') ||
+		normalized.includes('network request failed') ||
+		normalized.includes('network connection was lost') ||
+		normalized.includes('access control') ||
+		normalized.includes('timed out')
+	)
+		return 'We could not reach Supabase to complete recovery. Check your internet connection and try again.';
 	if (
 		normalized.includes('rate limit') ||
 		normalized.includes('too many') ||

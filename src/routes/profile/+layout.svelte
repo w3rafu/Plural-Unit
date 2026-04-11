@@ -36,24 +36,34 @@
 				<p class="text-sm text-muted-foreground">Switch between profile details and security settings.</p>
 			</div>
 
-			<ButtonGroup.Root class="w-full sm:w-auto">
-				<Button
-					type="button"
-					variant={isActiveProfileSubroute('/profile/details') ? 'default' : 'outline'}
-					class="w-full sm:w-auto"
-					onclick={() => goToProfileSubroute('/profile/details')}
-				>
-					Details
-				</Button>
-				<Button
-					type="button"
-					variant={isActiveProfileSubroute('/profile/security') ? 'default' : 'outline'}
-					class="w-full sm:w-auto"
-					onclick={() => goToProfileSubroute('/profile/security')}
-				>
-					Security
-				</Button>
-			</ButtonGroup.Root>
+			<nav aria-label="Profile sections" class="w-full sm:w-auto">
+				<ButtonGroup.Root class="w-full sm:w-auto">
+					<Button
+						href="/profile/details"
+						variant={isActiveProfileSubroute('/profile/details') ? 'default' : 'outline'}
+						class="w-full sm:w-auto"
+						aria-current={isActiveProfileSubroute('/profile/details') ? 'page' : undefined}
+						onclick={(event) => {
+							event.preventDefault();
+							goToProfileSubroute('/profile/details');
+						}}
+					>
+						Details
+					</Button>
+					<Button
+						href="/profile/security"
+						variant={isActiveProfileSubroute('/profile/security') ? 'default' : 'outline'}
+						class="w-full sm:w-auto"
+						aria-current={isActiveProfileSubroute('/profile/security') ? 'page' : undefined}
+						onclick={(event) => {
+							event.preventDefault();
+							goToProfileSubroute('/profile/security');
+						}}
+					>
+						Security
+					</Button>
+				</ButtonGroup.Root>
+			</nav>
 		</Card.Content>
 	</Card.Root>
 

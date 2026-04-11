@@ -5,8 +5,10 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import PendingInvitationsTable from '$lib/components/organization/PendingInvitationsTable.svelte';
+	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
+	import type { OrganizationInvitation } from '$lib/models/organizationModel';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
@@ -15,6 +17,14 @@
 	let inviteEmail = $state('');
 	let invitePhone = $state('');
 	let inviteMethod = $state<'email' | 'phone'>('email');
+	let confirmationOpen = $state(false);
+	let pendingInviteAction = $state<
+		| {
+				type: 'resend' | 'revoke';
+				invitation: OrganizationInvitation;
+		  }
+		| null
+	>(null);
 	const UNSAVED_CHANGES_KEY = 'organization-access';
 	const initialInviteSnapshot = createDirtySnapshot({
 		method: 'email',
@@ -80,6 +90,123 @@
 		}
 	}
 
+	function openResendConfirmation(invitation: OrganizationInvitation) {
+		pendingInviteAction = {
+			type: 'resend',
+			invitation
+		};
+		confirmationOpen = true;
+	}
+
+	function openRevokeConfirmation(invitation: OrganizationInvitation) {
+		pendingInviteAction = {
+			type: 'revoke',
+			invitation
+		};
+		confirmationOpen = true;
+	}
+
+	function closeConfirmation() {
+		pendingInviteAction = null;
+	}
+
+	const confirmationTitle = $derived.by(() => {
+		if (!pendingInviteAction) return '';
+		return pendingInviteAction.type === 'resend' ? 'Resend invitation?' : 'Revoke invitation?';
+	});
+
+	const confirmationDescription = $derived.by(() => {
+		if (!pendingInviteAction) return '';
+
+		const recipient =
+			pendingInviteAction.invitation.email ?? pendingInviteAction.invitation.phone ?? 'this invite';
+
+		return pendingInviteAction.type === 'resend'
+			? `A new invitation token will be generated for ${recipient}.`
+			: `${recipient} will no longer be able to use this pending invitation.`;
+	});
+
+	const confirmationDetails = $derived.by(() => {
+		if (!pendingInviteAction) return [];
+
+		const invitation = pendingInviteAction.invitation;
+		const recipient = invitation.email ?? invitation.phone ?? 'Unknown recipient';
+		const channel = invitation.email ? 'Email' : 'Phone';
+
+		if (pendingInviteAction.type === 'resend') {
+			return [
+				`Recipient: ${recipient}`,
+				`Delivery channel: ${channel}`,
+				'The original pending invite will be refreshed with a new token and timestamp.'
+			];
+		}
+
+		return [
+			`Recipient: ${recipient}`,
+			`Delivery channel: ${channel}`,
+			'This action keeps the record for admins, but the invite will no longer be active.'
+		];
+	});
+
+	const confirmationLabel = $derived.by(() => {
+		if (!pendingInviteAction) return 'Confirm';
+		return pendingInviteAction.type === 'resend' ? 'Resend invitation' : 'Revoke invitation';
+	});
+
+	const confirmationBusyLabel = $derived.by(() => {
+		if (!pendingInviteAction) return 'Working...';
+		return pendingInviteAction.type === 'resend' ? 'Resending...' : 'Revoking...';
+	});
+
+	const confirmationVariant = $derived.by(() =>
+		pendingInviteAction?.type === 'revoke' ? 'destructive' : 'default'
+	);
+
+	async function confirmInviteAction() {
+		if (!pendingInviteAction) {
+			return;
+		}
+
+		const invitation = pendingInviteAction.invitation;
+		const recipient = invitation.email ?? invitation.phone ?? 'this invite';
+
+		if (pendingInviteAction.type === 'resend') {
+			try {
+				await currentOrganization.resendPendingInvitation(invitation.id);
+				confirmationOpen = false;
+				toast({
+					title: 'Invitation refreshed',
+					description: `A new invite token was generated for ${recipient}.`,
+					variant: 'success'
+				});
+			} catch (error) {
+				toast({
+					title: 'Could not resend invitation',
+					description: error instanceof Error ? error.message : 'Failed to resend the invitation.',
+					variant: 'error'
+				});
+			}
+
+			return;
+		}
+
+		try {
+			await currentOrganization.revokePendingInvitation(invitation.id);
+			confirmationOpen = false;
+			toast({
+				title: 'Invitation revoked',
+				description: `The invitation for ${recipient} is no longer active.`,
+				variant: 'success'
+			});
+		} catch (error) {
+			toast({
+				title: 'Could not revoke invitation',
+				description: error instanceof Error ? error.message : 'Failed to revoke the invitation.',
+				variant: 'error'
+			});
+		}
+	}
+
 	async function copyJoinCode() {
 		const joinCode = currentOrganization.organization?.join_code;
 		if (!joinCode) return;
@@ -117,6 +244,19 @@
 		}
 	}
 </script>
+
+<ConfirmActionSheet
+	bind:open={confirmationOpen}
+	title={confirmationTitle}
+	description={confirmationDescription}
+	details={confirmationDetails}
+	confirmLabel={confirmationLabel}
+	confirmBusyLabel={confirmationBusyLabel}
+	confirmVariant={confirmationVariant}
+	isSubmitting={currentOrganization.isMutating}
+	onConfirm={confirmInviteAction}
+	onCancel={closeConfirmation}
+/>
 
 {#if currentOrganization.isAdmin}
 	<div class="flex flex-col gap-4">
@@ -220,7 +360,12 @@
 
 			<Card.Content>
 				{#if currentOrganization.invitations.length > 0}
-					<PendingInvitationsTable invitations={currentOrganization.invitations} />
+					<PendingInvitationsTable
+						invitations={currentOrganization.invitations}
+						isBusy={currentOrganization.isMutating}
+						onResend={openResendConfirmation}
+						onRevoke={openRevokeConfirmation}
+					/>
 				{:else}
 					<div class="rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-5">
 						<p class="text-sm text-muted-foreground">

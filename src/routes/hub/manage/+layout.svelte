@@ -10,7 +10,7 @@
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
 	let { children } = $props();
-	let loadedHubOrgId = $state('');
+	let loadedHubOrgId = '';
 
 	const managePath = $derived(page.url.pathname);
 
@@ -63,24 +63,34 @@
 					<p class="text-sm text-muted-foreground">Switch between section setup and content editors.</p>
 				</div>
 
-				<ButtonGroup.Root class="w-full sm:w-auto">
-					<Button
-						type="button"
-						variant={isActiveManageSubroute('/hub/manage/sections') ? 'default' : 'outline'}
-						class="w-full sm:w-auto"
-						onclick={() => goToManageSubroute('/hub/manage/sections')}
-					>
-						Sections
-					</Button>
-					<Button
-						type="button"
-						variant={isActiveManageSubroute('/hub/manage/content') ? 'default' : 'outline'}
-						class="w-full sm:w-auto"
-						onclick={() => goToManageSubroute('/hub/manage/content')}
-					>
-						Content
-					</Button>
-				</ButtonGroup.Root>
+				<nav aria-label="Hub manage sections" class="w-full sm:w-auto">
+					<ButtonGroup.Root class="w-full sm:w-auto">
+						<Button
+							href="/hub/manage/sections"
+							variant={isActiveManageSubroute('/hub/manage/sections') ? 'default' : 'outline'}
+							class="w-full sm:w-auto"
+							aria-current={isActiveManageSubroute('/hub/manage/sections') ? 'page' : undefined}
+							onclick={(event) => {
+								event.preventDefault();
+								goToManageSubroute('/hub/manage/sections');
+							}}
+						>
+							Sections
+						</Button>
+						<Button
+							href="/hub/manage/content"
+							variant={isActiveManageSubroute('/hub/manage/content') ? 'default' : 'outline'}
+							class="w-full sm:w-auto"
+							aria-current={isActiveManageSubroute('/hub/manage/content') ? 'page' : undefined}
+							onclick={(event) => {
+								event.preventDefault();
+								goToManageSubroute('/hub/manage/content');
+							}}
+						>
+							Content
+						</Button>
+					</ButtonGroup.Root>
+				</nav>
 			</Card.Content>
 		</Card.Root>
 

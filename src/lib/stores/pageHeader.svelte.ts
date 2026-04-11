@@ -1,3 +1,5 @@
+import { untrack } from 'svelte';
+
 export type PageHeaderAction = {
 	id: string;
 	label: string;
@@ -60,18 +62,71 @@ export function buildPageHeaderConfig(config: PageHeaderConfigInput): PageHeader
 	};
 }
 
+function hasSameActions(
+	left: PageHeaderAction[] | undefined,
+	right: PageHeaderAction[] | undefined
+): boolean {
+	const leftActions = left ?? [];
+	const rightActions = right ?? [];
+
+	if (leftActions.length !== rightActions.length) {
+		return false;
+	}
+
+	return leftActions.every((action, index) => {
+		const other = rightActions[index];
+		return (
+			action.id === other?.id &&
+			action.label === other?.label &&
+			action.ariaLabel === other?.ariaLabel &&
+			action.href === other?.href &&
+			action.onClick === other?.onClick &&
+			action.disabled === other?.disabled
+		);
+	});
+}
+
+function hasSameConfig(left: PageHeaderConfig, right: PageHeaderConfig): boolean {
+	return (
+		left.preset === right.preset &&
+		left.title === right.title &&
+		left.subtitle === right.subtitle &&
+		left.avatarText === right.avatarText &&
+		left.avatarImageUrl === right.avatarImageUrl &&
+		left.backLabel === right.backLabel &&
+		left.onBack === right.onBack &&
+		hasSameActions(left.actions, right.actions)
+	);
+}
+
 class PageHeaderStore {
 	config = $state<PageHeaderConfig>(DEFAULT_HEADER);
 	hasRegisteredHeader = $state(false);
 
 	set(config: PageHeaderConfigInput) {
-		this.config = buildPageHeaderConfig(config);
-		this.hasRegisteredHeader = true;
+		const nextConfig = buildPageHeaderConfig(config);
+
+		untrack(() => {
+			if (!hasSameConfig(this.config, nextConfig)) {
+				this.config = nextConfig;
+			}
+
+			if (!this.hasRegisteredHeader) {
+				this.hasRegisteredHeader = true;
+			}
+		});
 	}
 
 	reset() {
-		this.config = DEFAULT_HEADER;
-		this.hasRegisteredHeader = false;
+		untrack(() => {
+			if (!hasSameConfig(this.config, DEFAULT_HEADER)) {
+				this.config = DEFAULT_HEADER;
+			}
+
+			if (this.hasRegisteredHeader) {
+				this.hasRegisteredHeader = false;
+			}
+		});
 	}
 }
 

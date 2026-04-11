@@ -12,6 +12,7 @@ import type { UserDetails } from '$lib/models/userModel';
 import { withRetry } from '$lib/services/retry';
 
 const PROFILE_AVATAR_BUCKET = 'profile-avatars';
+const AUTH_TIMEOUT_MS = 10_000;
 
 export type RegistrationResult = {
 	user: SupabaseUser | null;
@@ -72,14 +73,37 @@ async function removeExistingAvatarFiles(userId: string) {
 	}
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const timer = setTimeout(() => reject(new Error(message)), ms);
+		promise.then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(error) => {
+				clearTimeout(timer);
+				reject(error);
+			}
+		);
+	});
+}
+
+function withAuthTimeout<T>(operation: Promise<T>, message: string): Promise<T> {
+	return withTimeout(operation, AUTH_TIMEOUT_MS, message);
+}
+
 // ── Auth ──
 
 export async function signInWithPassword(email: string, password: string): Promise<SupabaseUser> {
 	return withRetry(async () => {
-		const { data, error } = await getSupabaseClient().auth.signInWithPassword({
-			email: normalizeEmail(email),
-			password
-		});
+		const { data, error } = await withAuthTimeout(
+			getSupabaseClient().auth.signInWithPassword({
+				email: normalizeEmail(email),
+				password
+			}),
+			'Sign-in timed out. Check your internet connection and try again.'
+		);
 		if (error || !data.user) throw error ?? new Error('Could not resolve authenticated user.');
 		return data.user;
 	});
@@ -90,10 +114,13 @@ export async function signUpWithPassword(
 	password: string
 ): Promise<RegistrationResult> {
 	return withRetry(async () => {
-		const { data, error } = await getSupabaseClient().auth.signUp({
-			email: normalizeEmail(email),
-			password
-		});
+		const { data, error } = await withAuthTimeout(
+			getSupabaseClient().auth.signUp({
+				email: normalizeEmail(email),
+				password
+			}),
+			'Registration timed out. Check your internet connection and try again.'
+		);
 		if (error) throw error;
 
 		return {
@@ -105,33 +132,45 @@ export async function signUpWithPassword(
 
 export async function requestPhoneOtp(phone: string) {
 	return withRetry(async () => {
-		const { error } = await getSupabaseClient().auth.signInWithOtp({
-			phone: phone.trim(),
-			options: { shouldCreateUser: true }
-		});
+		const { error } = await withAuthTimeout(
+			getSupabaseClient().auth.signInWithOtp({
+				phone: phone.trim(),
+				options: { shouldCreateUser: true }
+			}),
+			'Code request timed out. Check your internet connection and try again.'
+		);
 		if (error) throw error;
 	});
 }
 
 export async function verifyPhoneOtp(phone: string, token: string): Promise<SupabaseUser> {
 	return withRetry(async () => {
-		const { data, error } = await getSupabaseClient().auth.verifyOtp({
-			phone: phone.trim(),
-			token: token.trim(),
-			type: 'sms'
-		});
+		const { data, error } = await withAuthTimeout(
+			getSupabaseClient().auth.verifyOtp({
+				phone: phone.trim(),
+				token: token.trim(),
+				type: 'sms'
+			}),
+			'Verification timed out. Check your internet connection and try again.'
+		);
 		if (error || !data.user) throw error ?? new Error('Could not verify the SMS code.');
 		return data.user;
 	});
 }
 
 export async function requestPasswordReset(email: string) {
-	const { error } = await getSupabaseClient().auth.resetPasswordForEmail(normalizeEmail(email));
+	const { error } = await withAuthTimeout(
+		getSupabaseClient().auth.resetPasswordForEmail(normalizeEmail(email)),
+		'Password reset request timed out. Check your internet connection and try again.'
+	);
 	if (error) throw error;
 }
 
 export async function updatePassword(newPassword: string) {
-	const { error } = await getSupabaseClient().auth.updateUser({ password: newPassword });
+	const { error } = await withAuthTimeout(
+		getSupabaseClient().auth.updateUser({ password: newPassword }),
+		'Password update timed out. Check your internet connection and try again.'
+	);
 	if (error) throw error;
 }
 
@@ -153,9 +192,12 @@ export async function requestEmailChange(nextEmail: string): Promise<EmailChange
 		};
 	}
 
-	const { data, error } = await getSupabaseClient().auth.updateUser({
-		email: normalizedNextEmail
-	});
+	const { data, error } = await withAuthTimeout(
+		getSupabaseClient().auth.updateUser({
+			email: normalizedNextEmail
+		}),
+		'Email update timed out. Check your internet connection and try again.'
+	);
 	if (error) throw error;
 
 	return {
@@ -165,13 +207,19 @@ export async function requestEmailChange(nextEmail: string): Promise<EmailChange
 }
 
 export async function signOut() {
-	const { error } = await getSupabaseClient().auth.signOut();
+	const { error } = await withAuthTimeout(
+		getSupabaseClient().auth.signOut(),
+		'Sign-out timed out. Check your internet connection and try again.'
+	);
 	if (error) throw error;
 }
 
 export async function getAuthenticatedUser(): Promise<SupabaseUser | null> {
 	return withRetry(async () => {
-		const { data } = await getSupabaseClient().auth.getUser();
+		const { data } = await withAuthTimeout(
+			getSupabaseClient().auth.getUser(),
+			'Session lookup timed out. Check your internet connection and try again.'
+		);
 		return data.user ?? null;
 	});
 }

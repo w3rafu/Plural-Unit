@@ -153,6 +153,9 @@ describe('mapLoginErrorMessage', () => {
 	it('maps invalid credentials', () => {
 		expect(mapLoginErrorMessage({ message: 'Invalid login credentials' })).toContain("couldn't match");
 	});
+	it('maps network failures', () => {
+		expect(mapLoginErrorMessage({ message: 'Load failed' })).toContain('could not reach Supabase');
+	});
 	it('maps expired OTP', () => {
 		expect(mapLoginErrorMessage({ message: 'Token has expired' })).toContain('expired');
 	});
@@ -162,6 +165,9 @@ describe('mapLoginErrorMessage', () => {
 });
 
 describe('mapRegistrationErrorMessage', () => {
+	it('maps network failures', () => {
+		expect(mapRegistrationErrorMessage({ message: 'Failed to fetch' })).toContain('could not reach Supabase');
+	});
 	it('maps already registered', () => {
 		expect(mapRegistrationErrorMessage({ message: 'User already registered' })).toContain('already registered');
 	});
@@ -192,6 +198,14 @@ describe('validatePasswordResetEmail', () => {
 		const result = validatePasswordResetEmail('User@Example.COM');
 		expect(result.ok).toBe(true);
 		if (result.ok) expect(result.normalizedEmail).toBe('user@example.com');
+	});
+});
+
+describe('mapPasswordResetErrorMessage', () => {
+	it('maps network failures', () => {
+		expect(mapPasswordResetErrorMessage({ message: 'The network connection was lost.' })).toContain(
+			'could not reach Supabase'
+		);
 	});
 });
 
