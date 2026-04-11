@@ -391,3 +391,135 @@ describe('polling', () => {
 		expect(mockFetchOwnMessageThreads).toHaveBeenCalledTimes(1);
 	});
 });
+
+// ── selectThread edge cases ──
+
+describe('selectThread edge cases', () => {
+	it('does not call markMessageThreadRead when unreadCount is 0', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread({ unreadCount: 0 })]);
+
+		await store.loadForUser('user-1');
+		await store.selectThread('thread-1');
+
+		expect(mockMarkMessageThreadRead).not.toHaveBeenCalled();
+	});
+});
+
+// ── openConversationForProfile ──
+
+describe('openConversationForProfile', () => {
+	it('loads messages and opens thread for profile', async () => {
+		const thread = makeThread({
+			id: 'thread-2',
+			participant: { id: 'c2', profileId: 'profile-2', name: 'Eve', avatar_url: '', subtitle: '', isFakeUser: false }
+		});
+
+		mockEnsureDemoMessageThread.mockResolvedValue('demo');
+		mockFetchOwnMessageThreads.mockResolvedValue([thread]);
+		mockMarkMessageThreadRead.mockResolvedValue(undefined);
+
+		const threadId = await store.openConversationForProfile('profile-2', 'user-1');
+
+		expect(threadId).toBe('thread-2');
+		expect(store.isReady).toBe(true);
+		expect(store.activeThreadId).toBe('thread-2');
+	});
+
+	it('creates new thread when profile has no existing thread', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValue('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]); // load
+		mockEnsureMessageThreadForProfile.mockResolvedValueOnce('thread-new');
+		const newThread = makeThread({
+			id: 'thread-new',
+			participant: { id: 'c3', profileId: 'profile-3', name: 'Frank', avatar_url: '', subtitle: '', isFakeUser: false }
+		});
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread(), newThread]); // refresh after create
+		mockMarkMessageThreadRead.mockResolvedValue(undefined);
+		mockFetchOwnMessageThreads.mockResolvedValue([makeThread(), newThread]); // refresh after select
+
+		const threadId = await store.openConversationForProfile('profile-3', 'user-1');
+
+		expect(mockEnsureMessageThreadForProfile).toHaveBeenCalledWith('profile-3');
+		expect(threadId).toBe('thread-new');
+	});
+
+	it('throws when no ownerId provided and store has none', async () => {
+		await expect(store.openConversationForProfile('profile-1')).rejects.toThrow(
+			'No user context'
+		);
+	});
+
+	it('skips loadForUser when already ready', async () => {
+		const thread = makeThread({
+			participant: { id: 'c1', profileId: 'profile-1', name: 'Alice', avatar_url: '', subtitle: '', isFakeUser: false }
+		});
+		mockEnsureDemoMessageThread.mockResolvedValue('demo');
+		mockFetchOwnMessageThreads.mockResolvedValue([thread]);
+		mockMarkMessageThreadRead.mockResolvedValue(undefined);
+
+		await store.loadForUser('user-1');
+
+		const callsBefore = mockEnsureDemoMessageThread.mock.calls.length;
+		await store.openConversationForProfile('profile-1', 'user-1');
+
+		// Should not re-call ensureDemoMessageThread (loadForUser skipped)
+		expect(mockEnsureDemoMessageThread).toHaveBeenCalledTimes(callsBefore);
+	});
+});
+
+// ── trackIncomingReplies ──
+
+describe('incoming reply tracking', () => {
+	it('tracks incoming reply on non-active thread', async () => {
+		const threadA = makeThread({ id: 'thread-a', unreadCount: 0 });
+		const threadB = makeThread({ id: 'thread-b', unreadCount: 0 });
+
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([threadA, threadB]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-a';
+
+		// Simulate incoming message on thread-b
+		const updatedB = makeThread({ id: 'thread-b', unreadCount: 1 });
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([threadA, updatedB]);
+
+		await store.refresh();
+
+		expect(store.recentIncomingThreadId).toBe('thread-b');
+		expect(store.recentIncomingAt).toBeGreaterThan(0);
+	});
+
+	it('does not track incoming reply on active thread', async () => {
+		const thread = makeThread({ id: 'thread-a', unreadCount: 0 });
+
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-a';
+
+		const updated = makeThread({ id: 'thread-a', unreadCount: 1 });
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([updated]);
+
+		await store.refresh();
+
+		expect(store.recentIncomingThreadId).toBe('');
+	});
+
+	it('does not track when unread count does not increase', async () => {
+		const thread = makeThread({ id: 'thread-b', unreadCount: 2 });
+
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.loadForUser('user-1');
+
+		// Same unread count
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.refresh();
+
+		expect(store.recentIncomingThreadId).toBe('');
+	});
+});
