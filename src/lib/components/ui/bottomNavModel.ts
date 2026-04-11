@@ -1,4 +1,4 @@
-export type BottomNavTabId = 'home' | 'hub' | 'organization' | 'profile';
+export type BottomNavTabId = 'home' | 'hub' | 'messages' | 'organization' | 'profile';
 
 export type BottomNavTabDefinition = {
 	id: BottomNavTabId;
@@ -28,6 +28,12 @@ export function getBottomNavTabs(): BottomNavTabDefinition[] {
 			label: 'Hub',
 			href: '/hub',
 			ownsPath: (pathname) => isPathPrefix(pathname, '/hub')
+		},
+		{
+			id: 'messages',
+			label: 'Messages',
+			href: '/messages',
+			ownsPath: (pathname) => isPathPrefix(pathname, '/messages')
 		},
 		{
 			id: 'organization',

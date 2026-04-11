@@ -6,6 +6,7 @@ describe('bottomNavModel', () => {
 		expect(getBottomNavTabs().map((tab) => tab.id)).toEqual([
 			'home',
 			'hub',
+			'messages',
 			'organization',
 			'profile'
 		]);
@@ -17,6 +18,8 @@ describe('bottomNavModel', () => {
 		expect(getActiveBottomNavTab('/hub/manage')).toBe('hub');
 		expect(getActiveBottomNavTab('/organization')).toBe('organization');
 		expect(getActiveBottomNavTab('/profile')).toBe('profile');
+		expect(getActiveBottomNavTab('/messages')).toBe('messages');
+		expect(getActiveBottomNavTab('/messages/thread-1')).toBe('messages');
 		expect(getActiveBottomNavTab('/missing')).toBeNull();
 	});
 });

@@ -41,6 +41,7 @@ import {
 } from '$lib/services/sessionCache';
 import { currentOrganization } from './currentOrganization.svelte';
 import { currentHub } from './currentHub.svelte';
+import { currentMessages } from './currentMessages.svelte';
 
 class CurrentUser {
 	isLoggedIn = $state(false);
@@ -284,6 +285,7 @@ class CurrentUser {
 		this.handleSignedOut();
 		currentOrganization.reset();
 		currentHub.reset();
+		currentMessages.reset();
 	}
 }
 

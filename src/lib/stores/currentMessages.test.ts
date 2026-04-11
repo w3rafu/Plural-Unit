@@ -1,0 +1,393 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { MessageThread } from '$lib/models/messageModel';
+
+// ── Mock message repository ──
+
+const mockFetchOwnMessageThreads = vi.fn();
+const mockEnsureDemoMessageThread = vi.fn();
+const mockEnsureMessageThreadForProfile = vi.fn();
+const mockResetDemoMessageThread = vi.fn();
+const mockSendMessageToThread = vi.fn();
+const mockUploadMessageImage = vi.fn();
+const mockSendImageMessageToThread = vi.fn();
+const mockMarkMessageThreadRead = vi.fn();
+
+const mockRepository = {
+	fetchOwnMessageThreads: mockFetchOwnMessageThreads,
+	ensureDemoMessageThread: mockEnsureDemoMessageThread,
+	ensureMessageThreadForProfile: mockEnsureMessageThreadForProfile,
+	resetDemoMessageThread: mockResetDemoMessageThread,
+	sendMessageToThread: mockSendMessageToThread,
+	uploadMessageImage: mockUploadMessageImage,
+	sendImageMessageToThread: mockSendImageMessageToThread,
+	markMessageThreadRead: mockMarkMessageThreadRead
+};
+
+import { createCurrentMessagesStore } from './currentMessages.svelte';
+
+function makeThread(overrides: Partial<MessageThread> = {}): MessageThread {
+	return {
+		id: 'thread-1',
+		participant: {
+			id: 'contact-1',
+			profileId: null,
+			name: 'Alice',
+			avatar_url: '',
+			subtitle: '',
+			isFakeUser: false
+		},
+		messages: [
+			{
+				id: 'msg-1',
+				threadId: 'thread-1',
+				senderId: 'user-1',
+				senderKind: 'owner',
+				kind: 'text',
+				body: 'Hello',
+				imageUrl: '',
+				sentAt: '2026-04-10T12:00:00Z'
+			}
+		],
+		unreadCount: 0,
+		lastReadAt: '2026-04-10T12:00:00Z',
+		...overrides
+	};
+}
+
+let store: ReturnType<typeof createCurrentMessagesStore>;
+
+beforeEach(() => {
+	vi.resetAllMocks();
+	vi.useFakeTimers();
+	store = createCurrentMessagesStore(mockRepository);
+});
+
+afterEach(() => {
+	store.reset();
+	vi.useRealTimers();
+});
+
+// ── loadForUser ──
+
+describe('loadForUser', () => {
+	it('fetches threads and sets isReady', async () => {
+		const threads = [makeThread()];
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce(threads);
+
+		await store.loadForUser('user-1');
+
+		expect(mockEnsureDemoMessageThread).toHaveBeenCalled();
+		expect(mockFetchOwnMessageThreads).toHaveBeenCalledWith('user-1');
+		expect(store.isReady).toBe(true);
+		expect(store.threads).toEqual(threads);
+		expect(store.isLoading).toBe(false);
+	});
+
+	it('sets isReady even when fetch fails', async () => {
+		mockEnsureDemoMessageThread.mockRejectedValueOnce(new Error('network'));
+
+		await store.loadForUser('user-1');
+
+		expect(store.isReady).toBe(true);
+		expect(store.error).toBe('network');
+	});
+
+	it('skips when ownerId is empty', async () => {
+		await store.loadForUser('');
+
+		expect(mockFetchOwnMessageThreads).not.toHaveBeenCalled();
+		expect(store.isReady).toBe(false);
+	});
+});
+
+// ── refresh ──
+
+describe('refresh', () => {
+	it('refreshes thread list', async () => {
+		const threads = [makeThread()];
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([]);
+
+		await store.loadForUser('user-1');
+
+		mockFetchOwnMessageThreads.mockResolvedValueOnce(threads);
+		await store.refresh();
+
+		expect(store.threads).toEqual(threads);
+	});
+
+	it('captures error on failure', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([]);
+
+		await store.loadForUser('user-1');
+
+		mockFetchOwnMessageThreads.mockRejectedValueOnce(new Error('refresh error'));
+		await store.refresh();
+
+		expect(store.error).toBe('refresh error');
+	});
+
+	it('skips when no ownerId', async () => {
+		await store.refresh();
+		expect(mockFetchOwnMessageThreads).not.toHaveBeenCalled();
+	});
+});
+
+// ── selectThread ──
+
+describe('selectThread', () => {
+	it('sets activeThreadId', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]); // refresh after mark read
+		await store.selectThread('thread-1');
+
+		expect(store.activeThreadId).toBe('thread-1');
+	});
+
+	it('marks thread as read when it has unread messages', async () => {
+		const unreadThread = makeThread({ unreadCount: 3 });
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([unreadThread]);
+		mockMarkMessageThreadRead.mockResolvedValueOnce(undefined);
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread({ unreadCount: 0 })]);
+
+		await store.loadForUser('user-1');
+		await store.selectThread('thread-1');
+
+		expect(mockMarkMessageThreadRead).toHaveBeenCalledWith('thread-1');
+	});
+});
+
+// ── startThreadForProfile ──
+
+describe('startThreadForProfile', () => {
+	it('reuses existing thread for profile', async () => {
+		const thread = makeThread({ participant: { id: 'c1', profileId: 'profile-1', name: 'Bob', avatar_url: '', subtitle: '', isFakeUser: false } });
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		mockMarkMessageThreadRead.mockResolvedValueOnce(undefined);
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.loadForUser('user-1');
+		const id = await store.startThreadForProfile('profile-1');
+
+		expect(id).toBe('thread-1');
+		expect(mockEnsureMessageThreadForProfile).not.toHaveBeenCalled();
+	});
+
+	it('creates new thread when none exists for profile', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+		mockEnsureMessageThreadForProfile.mockResolvedValueOnce('thread-2');
+		// refresh after creating thread
+		const newThread = makeThread({ id: 'thread-2', participant: { id: 'c2', profileId: 'profile-2', name: 'Carol', avatar_url: '', subtitle: '', isFakeUser: false } });
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread(), newThread]);
+		mockMarkMessageThreadRead.mockResolvedValueOnce(undefined);
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread(), newThread]);
+
+		await store.loadForUser('user-1');
+		const id = await store.startThreadForProfile('profile-2');
+
+		expect(mockEnsureMessageThreadForProfile).toHaveBeenCalledWith('profile-2');
+		expect(id).toBe('thread-2');
+	});
+});
+
+// ── sendMessage ──
+
+describe('sendMessage', () => {
+	it('sends message and refreshes', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSendMessageToThread.mockResolvedValueOnce('msg-2');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.sendMessage('Hi');
+
+		expect(mockSendMessageToThread).toHaveBeenCalledWith('thread-1', 'Hi');
+		expect(store.isSending).toBe(false);
+		expect(store.lastSentAt).toBeGreaterThan(0);
+	});
+
+	it('skips when no active thread', async () => {
+		await store.sendMessage('test');
+		expect(mockSendMessageToThread).not.toHaveBeenCalled();
+	});
+
+	it('captures error on failure', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSendMessageToThread.mockRejectedValueOnce(new Error('send fail'));
+		await store.sendMessage('Hi');
+
+		expect(store.error).toBe('send fail');
+		expect(store.isSending).toBe(false);
+	});
+});
+
+// ── sendImage ──
+
+describe('sendImage', () => {
+	it('uploads image and sends image message', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockUploadMessageImage.mockResolvedValueOnce('https://example.com/img.jpg');
+		mockSendImageMessageToThread.mockResolvedValueOnce('msg-3');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		const file = new File(['data'], 'photo.png', { type: 'image/png' });
+		await store.sendImage(file);
+
+		expect(mockUploadMessageImage).toHaveBeenCalledWith('user-1', 'thread-1', file);
+		expect(mockSendImageMessageToThread).toHaveBeenCalledWith('thread-1', 'https://example.com/img.jpg');
+		expect(store.isSending).toBe(false);
+	});
+
+	it('skips when no active thread', async () => {
+		await store.sendImage(new File([], 'x.png'));
+		expect(mockUploadMessageImage).not.toHaveBeenCalled();
+	});
+});
+
+// ── resetDemoThread ──
+
+describe('resetDemoThread', () => {
+	it('resets demo thread and refreshes', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+
+		mockResetDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.resetDemoThread();
+
+		expect(mockResetDemoMessageThread).toHaveBeenCalled();
+		expect(store.isResetting).toBe(false);
+	});
+
+	it('captures error on failure', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+
+		mockResetDemoMessageThread.mockRejectedValueOnce(new Error('reset fail'));
+
+		await store.resetDemoThread();
+
+		expect(store.error).toBe('reset fail');
+		expect(store.isResetting).toBe(false);
+	});
+});
+
+// ── Derived state ──
+
+describe('derived state', () => {
+	it('totalUnreadCount sums across threads', async () => {
+		const threads = [
+			makeThread({ id: 'a', unreadCount: 2 }),
+			makeThread({ id: 'b', unreadCount: 3 })
+		];
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce(threads);
+
+		await store.loadForUser('user-1');
+
+		expect(store.totalUnreadCount).toBe(5);
+	});
+
+	it('activeThread returns the selected thread', async () => {
+		const thread = makeThread();
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		expect(store.activeThread?.id).toBe('thread-1');
+	});
+
+	it('activeThread returns null when not selected', () => {
+		expect(store.activeThread).toBeNull();
+	});
+
+	it('getThreadForProfile returns matching thread', async () => {
+		const thread = makeThread({ participant: { id: 'c1', profileId: 'profile-1', name: 'Alice', avatar_url: '', subtitle: '', isFakeUser: false } });
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('demo');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.loadForUser('user-1');
+
+		expect(store.getThreadForProfile('profile-1')?.id).toBe('thread-1');
+		expect(store.getThreadForProfile('other')).toBeNull();
+	});
+});
+
+// ── reset ──
+
+describe('reset', () => {
+	it('clears all state', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread({ unreadCount: 5 })]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		store.reset();
+
+		expect(store.isReady).toBe(false);
+		expect(store.isLoading).toBe(false);
+		expect(store.threads).toEqual([]);
+		expect(store.activeThreadId).toBe('');
+		expect(store.error).toBe('');
+		expect(store.totalUnreadCount).toBe(0);
+	});
+});
+
+// ── Polling ──
+
+describe('polling', () => {
+	it('starts polling after load', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValue([makeThread()]);
+
+		await store.loadForUser('user-1');
+
+		vi.advanceTimersByTime(15_000);
+
+		// Initial load: ensureDemo + fetch. After 1 tick: fetch again = 3 calls total
+		expect(mockFetchOwnMessageThreads).toHaveBeenCalledTimes(2);
+	});
+
+	it('stops polling on reset', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValue([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.reset();
+
+		vi.advanceTimersByTime(30_000);
+
+		// Only the initial load call
+		expect(mockFetchOwnMessageThreads).toHaveBeenCalledTimes(1);
+	});
+});
