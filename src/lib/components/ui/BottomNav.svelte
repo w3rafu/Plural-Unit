@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
+	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { BOTTOM_NAV_TABS, getActiveBottomNavTab } from '$lib/components/ui/bottomNavModel';
 	import { cn } from '$lib/utils';
 
 	const activeTabId = $derived(getActiveBottomNavTab(page.url.pathname));
+	const unreadCount = $derived(currentMessages.totalUnreadCount);
 </script>
 
 {#if currentUser.isLoggedIn}
@@ -20,7 +22,7 @@
 				<a
 					href={tab.href}
 					class={cn(
-						'flex min-h-14 items-center justify-center rounded-[1rem] border px-3 py-2 text-center text-sm font-medium transition-colors duration-150',
+						'relative flex min-h-14 items-center justify-center rounded-[1rem] border px-3 py-2 text-center text-sm font-medium transition-colors duration-150',
 						activeTabId === tab.id
 							? 'border-border bg-background text-foreground shadow-sm dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950'
 							: 'border-transparent text-muted-foreground hover:bg-muted/65 hover:text-foreground dark:text-zinc-300 dark:hover:bg-zinc-800/90 dark:hover:text-zinc-50'
@@ -28,6 +30,14 @@
 					aria-current={activeTabId === tab.id ? 'page' : undefined}
 				>
 					{tab.label}
+					{#if tab.id === 'messages' && unreadCount > 0}
+						<span
+							class="absolute -top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.6rem] font-bold leading-none text-destructive-foreground"
+							aria-label="{unreadCount} unread"
+						>
+							{unreadCount > 99 ? '99+' : unreadCount}
+						</span>
+					{/if}
 				</a>
 			{/each}
 		</div>

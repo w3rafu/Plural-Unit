@@ -8,21 +8,25 @@
 	import { groupMessagesByDay, formatMessageTime } from './messageUi';
 	import MessageComposer from './MessageComposer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft } from '@lucide/svelte';
+	import { ArrowLeft, RotateCcw } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 
 	let {
 		thread,
 		isSending = false,
+		isResetting = false,
 		onSendMessage,
 		onSendImage,
-		onBack
+		onBack,
+		onResetDemo
 	}: {
 		thread: MessageThread;
 		isSending?: boolean;
+		isResetting?: boolean;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
 		onBack?: () => void;
+		onResetDemo?: () => void;
 	} = $props();
 
 	const dayGroups = $derived(groupMessagesByDay(thread.messages));
@@ -65,6 +69,20 @@
 				<p class="truncate text-xs text-muted-foreground">{thread.participant.subtitle}</p>
 			{/if}
 		</div>
+
+		{#if thread.participant.isFakeUser && onResetDemo}
+			<Button
+				variant="ghost"
+				size="sm"
+				class="shrink-0 text-muted-foreground"
+				disabled={isResetting}
+				onclick={onResetDemo}
+				aria-label="Reset demo conversation"
+			>
+				<RotateCcw class="mr-1.5 h-3.5 w-3.5" />
+				Reset
+			</Button>
+		{/if}
 	</div>
 
 	<!-- Message stream -->

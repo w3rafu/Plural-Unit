@@ -7,6 +7,7 @@
 	import Toaster from '$lib/components/ui/Toaster.svelte';
 	import UnsavedChangesGuard from '$lib/components/ui/UnsavedChangesGuard.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
+	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { pageHeader } from '$lib/stores/pageHeader.svelte';
 
 	let { children } = $props();
@@ -14,6 +15,15 @@
 	const shouldRenderHeader = $derived(
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
+
+	// Load messages early so the unread badge is visible before navigating to /messages.
+	let messagesLoadedForUserId = '';
+	$effect(() => {
+		const userId = currentUser.isLoggedIn ? currentUser.details.id : '';
+		if (!userId || messagesLoadedForUserId === userId) return;
+		messagesLoadedForUserId = userId;
+		void currentMessages.loadForUser(userId);
+	});
 </script>
 
 <ModeWatcher defaultMode="dark" themeColors={{ dark: '#09090b', light: '#fafafa' }} />

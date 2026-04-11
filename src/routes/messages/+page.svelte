@@ -9,16 +9,6 @@
 	import InboxPane from '$lib/components/messages/InboxPane.svelte';
 	import ThreadPane from '$lib/components/messages/ThreadPane.svelte';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
-	import { currentUser } from '$lib/stores/currentUser.svelte';
-
-	let loadedForUserId = '';
-
-	$effect(() => {
-		const userId = currentUser.details.id;
-		if (!userId || loadedForUserId === userId) return;
-		loadedForUserId = userId;
-		void currentMessages.loadForUser(userId);
-	});
 
 	function handleSelectThread(threadId: string) {
 		void currentMessages.selectThread(threadId);
@@ -34,6 +24,10 @@
 
 	function handleSendImage(file: File) {
 		void currentMessages.sendImage(file);
+	}
+
+	function handleResetDemo() {
+		void currentMessages.resetDemoThread();
 	}
 
 	const showThread = $derived(!!currentMessages.activeThread);
@@ -70,8 +64,10 @@
 					<ThreadPane
 						thread={currentMessages.activeThread}
 						isSending={currentMessages.isSending}
+						isResetting={currentMessages.isResetting}
 						onSendMessage={handleSendMessage}
 						onSendImage={handleSendImage}
+						onResetDemo={handleResetDemo}
 					/>
 				{:else}
 					<div class="flex h-full items-center justify-center">
@@ -88,9 +84,11 @@
 					<ThreadPane
 						thread={currentMessages.activeThread}
 						isSending={currentMessages.isSending}
+						isResetting={currentMessages.isResetting}
 						onSendMessage={handleSendMessage}
 						onSendImage={handleSendImage}
 						onBack={handleBack}
+						onResetDemo={handleResetDemo}
 					/>
 				</Card.Root>
 			{:else}

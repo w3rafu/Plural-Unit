@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
@@ -6,6 +7,7 @@
 	import MemberRow from './MemberRow.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import type { OrganizationMember } from '$lib/models/organizationModel';
 	import { toast } from '$lib/stores/toast.svelte';
 	import {
@@ -60,6 +62,19 @@
 
 	function closeConfirmation() {
 		pendingAction = null;
+	}
+
+	async function messageMember(member: OrganizationMember) {
+		try {
+			await currentMessages.openConversationForProfile(member.profile_id);
+			void goto('/messages');
+		} catch (error) {
+			toast({
+				title: 'Could not open conversation',
+				description: error instanceof Error ? error.message : 'Failed to start the message thread.',
+				variant: 'error'
+			});
+		}
 	}
 
 	const confirmationTitle = $derived(getConfirmationTitle(pendingAction));
@@ -218,9 +233,11 @@
 									{adminCount}
 									draftRole={getDraftRole(member)}
 									isMutating={currentOrganization.isMutating}
+									canMessage={member.profile_id !== currentUser.details.id}
 									onDraftRoleChange={(role) => setDraftRole(member, role)}
 									onRoleConfirm={() => openRoleConfirmation(member)}
 									onRemove={() => openRemoveConfirmation(member)}
+									onMessage={() => messageMember(member)}
 								/>
 							{/each}
 						{:else}

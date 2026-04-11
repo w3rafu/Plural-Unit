@@ -9,6 +9,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import { MessageSquare } from '@lucide/svelte';
 	import type { OrganizationMember } from '$lib/models/organizationModel';
 	import {
 		formatJoinedVia,
@@ -24,17 +25,21 @@
 		adminCount,
 		draftRole,
 		isMutating = false,
+		canMessage = false,
 		onDraftRoleChange,
 		onRoleConfirm,
-		onRemove
+		onRemove,
+		onMessage
 	}: {
 		member: OrganizationMember;
 		adminCount: number;
 		draftRole: OrganizationMember['role'];
 		isMutating?: boolean;
+		canMessage?: boolean;
 		onDraftRoleChange: (role: OrganizationMember['role']) => void;
 		onRoleConfirm: () => void;
 		onRemove: () => void;
+		onMessage?: () => void;
 	} = $props();
 
 	const memberLabel = $derived(member.name || formatContact(member));
@@ -75,6 +80,19 @@
 	</Table.Cell>
 	<Table.Cell class="text-right">
 		<div class="flex flex-wrap justify-end gap-2">
+			{#if canMessage && onMessage}
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					aria-label={`Message ${memberLabel}`}
+					onclick={onMessage}
+				>
+					<MessageSquare class="mr-1.5 h-3.5 w-3.5" />
+					Message
+				</Button>
+			{/if}
+
 			<Select.Root
 				type="single"
 				value={draftRole}
