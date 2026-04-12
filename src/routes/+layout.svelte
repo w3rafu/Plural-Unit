@@ -37,7 +37,7 @@
 -->
 <div class="min-h-dvh">
 	<div class="mx-auto flex min-h-dvh max-w-5xl flex-col gap-5 px-4 pb-5 sm:gap-6">
-		<div class="sticky top-0 z-30 min-h-[7.25rem] bg-background pt-4">
+		<div class="sticky top-0 z-30 min-h-[7.25rem] pt-4">
 			{#if shouldRenderHeader}
 				<Header />
 			{/if}
