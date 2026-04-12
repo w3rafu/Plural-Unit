@@ -113,7 +113,7 @@
 						{#if message.kind === 'image' && message.imageUrl}
 							<img
 								src={message.imageUrl}
-								alt="Shared image"
+								alt={message.body.trim() || 'Shared photo'}
 								class="max-h-60 rounded-lg object-contain"
 								loading="lazy"
 							/>
