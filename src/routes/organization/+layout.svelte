@@ -73,7 +73,7 @@
 	}
 </script>
 
-<PageHeader title="Organization" subtitle="Join code, invitations, and membership" />
+<PageHeader preset="section" title="Organization" subtitle="Join code, invitations, and membership" />
 
 <main class="flex flex-col gap-4">
 	{#if !currentOrganization.organization}

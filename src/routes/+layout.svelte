@@ -35,14 +35,14 @@
   The AuthGate handles login, name onboarding, and organization
   onboarding before any page content is shown.
 -->
-<div class="min-h-dvh">
-	<div class="mx-auto flex min-h-dvh max-w-5xl flex-col gap-5 px-4 pb-5 sm:gap-6">
-		<div class="sticky top-0 z-30 min-h-[7.25rem] pt-4">
+<div class="flex h-dvh flex-col overflow-hidden">
+	<div class="mx-auto flex w-full max-w-5xl flex-col overflow-hidden px-4">
+		<div class="z-30 min-h-[7.25rem] flex-none pt-4">
 			{#if shouldRenderHeader}
 				<Header />
 			{/if}
 		</div>
-		<div class="flex-1">
+		<div class="flex-1 overflow-y-auto overflow-x-hidden py-5 sm:py-6">
 			<AuthGate>{@render children()}</AuthGate>
 		</div>
 		<BottomNav />

@@ -33,9 +33,9 @@
 	const showThread = $derived(!!currentMessages.activeThread);
 </script>
 
-<PageHeader title="Messages" subtitle="Conversations and threads" />
+<PageHeader preset="section" title="Messages" subtitle="Conversations and threads" />
 
-<main class="flex flex-col gap-2">
+<main class="flex h-full flex-col gap-2">
 	{#if !currentMessages.isReady}
 		<Card.Root size="sm" class="border-border/70 bg-card/70">
 			<Card.Content>
@@ -50,8 +50,8 @@
 		</Card.Root>
 	{:else}
 		<!-- Desktop: side-by-side -->
-		<div class="hidden md:grid md:grid-cols-[320px_1fr] md:gap-2">
-			<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
+		<div class="hidden min-h-0 flex-1 md:grid md:grid-cols-[320px_1fr] md:gap-2">
+			<Card.Root class="h-full overflow-hidden">
 				<InboxPane
 					threads={currentMessages.sortedThreads}
 					activeThreadId={currentMessages.activeThreadId}
@@ -59,7 +59,7 @@
 				/>
 			</Card.Root>
 
-			<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
+			<Card.Root class="h-full overflow-hidden">
 				{#if currentMessages.activeThread}
 					<ThreadPane
 						thread={currentMessages.activeThread}
@@ -80,7 +80,7 @@
 		<!-- Mobile: inbox or thread -->
 		<div class="md:hidden">
 			{#if showThread && currentMessages.activeThread}
-				<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
+				<Card.Root class="h-full overflow-hidden">
 					<ThreadPane
 						thread={currentMessages.activeThread}
 						isSending={currentMessages.isSending}
@@ -92,7 +92,7 @@
 					/>
 				</Card.Root>
 			{:else}
-				<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
+				<Card.Root class="h-full overflow-hidden">
 					<InboxPane
 						threads={currentMessages.sortedThreads}
 						activeThreadId={currentMessages.activeThreadId}

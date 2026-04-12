@@ -13,7 +13,7 @@
 	<nav
 		id="bottom-nav"
 		aria-label="Primary"
-		class="app-bottom-nav sticky bottom-3 z-20 mt-2 pb-[max(0px,env(safe-area-inset-bottom))]"
+		class="app-bottom-nav flex-none z-20 pb-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
 	>
 		<div
 			class="grid grid-cols-4 gap-2 rounded-[1.55rem] border border-border/70 bg-card/90 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(24,24,27,0.08),0_16px_34px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-white/10 dark:bg-zinc-950/92 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_44px_rgba(0,0,0,0.24)]"

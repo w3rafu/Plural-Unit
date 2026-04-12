@@ -29,7 +29,7 @@
 	}
 </script>
 
-<PageHeader title="Profile" subtitle="Member details and security" />
+<PageHeader preset="section" title="Profile" subtitle="Member details and security" />
 
 <main class="flex flex-col gap-4">
 	<ProfileSection />

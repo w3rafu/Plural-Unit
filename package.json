@@ -1,7 +1,7 @@
 {
 	"name": "plural-unit",
 	"private": true,
-	"version": "0.1.14",
+	"version": "0.1.15",
 	"type": "module",
 	"dependencies": {
 		"@supabase/supabase-js": "^2.57.0",
@@ -24,9 +24,11 @@
 		"@sveltejs/kit": "^2.48.5",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/vite": "^4.1.18",
+		"@tanstack/table-core": "^8.21.3",
 		"@vitest/coverage-v8": "^4.1.4",
 		"bits-ui": "^2.17.2",
 		"clsx": "^2.1.1",
+		"layerchart": "^2.0.0-next.48",
 		"shadcn-svelte": "^1.2.7",
 		"svelte": "^5.34.0",
 		"svelte-check": "^4.2.1",
