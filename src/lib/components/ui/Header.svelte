@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import Building2Icon from '@lucide/svelte/icons/building-2';
 	import AuthHelpSheet from '$lib/components/ui/AuthHelpSheet.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import HubNotificationsSheet from '$lib/components/ui/HubNotificationsSheet.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import {
 		pageHeader,
@@ -57,6 +60,8 @@
 			.filter(Boolean)
 			.join(' ')
 	);
+	const showOrganizationControl = $derived(currentUser.isLoggedIn && currentOrganization.isAdmin);
+	const isOrganizationRoute = $derived(page.url.pathname.startsWith('/organization'));
 	const controlButtonClass = 'shell-header__control';
 </script>
 
@@ -109,6 +114,21 @@
 
 			<div class="shell-header__controls">
 				<ButtonGroup.Root aria-label="Header controls" class="shell-header__control-group">
+					{#if showOrganizationControl}
+						<Button
+							href="/organization/access"
+							type="button"
+							variant="outline"
+							size="sm"
+							class={controlButtonClass}
+							aria-current={isOrganizationRoute ? 'page' : undefined}
+							aria-label="Open organization admin tools"
+						>
+							<Building2Icon class="shell-header__control-icon" aria-hidden="true" />
+							<span class="shell-header__control-label">Org</span>
+						</Button>
+					{/if}
+
 					{#if currentUser.isLoggedIn}
 						<HubNotificationsSheet triggerLabel="Alerts" triggerClass={controlButtonClass} />
 					{:else}
@@ -323,7 +343,8 @@
 	}
 
 	:global(.shell-header__control:active),
-	:global(.shell-header__control[aria-expanded='true']) {
+	:global(.shell-header__control[aria-expanded='true']),
+	:global(.shell-header__control[aria-current='page']) {
 		background: var(--muted);
 		border-color: color-mix(in srgb, var(--color-border) 82%, var(--color-foreground) 18%);
 		box-shadow: inset 0 1px 1px rgb(15 23 42 / 0.05);
@@ -393,7 +414,8 @@
 	}
 
 	:global(.dark .shell-header__control:active),
-	:global(.dark .shell-header__control[aria-expanded='true']) {
+	:global(.dark .shell-header__control[aria-expanded='true']),
+	:global(.dark .shell-header__control[aria-current='page']) {
 		background: var(--muted);
 		border-color: color-mix(in srgb, var(--color-border) 76%, white 24%);
 		box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.16);
