@@ -53,54 +53,53 @@
 	actions={hubActions}
 />
 
-<main class="flex flex-col gap-4">
+<main class="page-stack">
 	<!-- Quick stats row -->
-	<Card.Root class="border-border/70 bg-card">
-		<Card.Content class="grid gap-3 sm:grid-cols-4">
-			<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-				<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-					Members
-				</p>
-				<p class="mt-1 text-sm font-semibold text-foreground">
-					{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}
-				</p>
+	<Card.Root size="sm" class="border-border/70 bg-card">
+		<Card.Content class="metric-grid">
+			<div class="metric-card">
+				<div>
+					<p class="metric-label">Members</p>
+					<p class="metric-value">
+						{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}
+					</p>
+				</div>
+				<p class="metric-copy">People currently connected to this organization.</p>
 			</div>
 
-			<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-				<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-					Role
-				</p>
-				<p class="mt-1 text-sm font-semibold text-foreground">
-					{currentOrganization.membership?.role ?? 'member'}
-				</p>
+			<div class="metric-card">
+				<div>
+					<p class="metric-label">Role</p>
+					<p class="metric-value metric-value--compact capitalize">
+						{currentOrganization.membership?.role ?? 'member'}
+					</p>
+				</div>
+				<p class="metric-copy">Your current level of access in the organization.</p>
 			</div>
 
-			<a href="/messages" class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3 transition-colors hover:bg-muted/55">
-				<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-					Unread messages
-				</p>
-				<p class="mt-1 text-sm font-semibold text-foreground">
-					{unreadMessages}
-				</p>
+			<a href="/messages" class="metric-card metric-card--link">
+				<div>
+					<p class="metric-label">Unread messages</p>
+					<p class="metric-value">{unreadMessages}</p>
+				</div>
+				<p class="metric-copy">Open your conversation queue.</p>
 			</a>
 
 			{#if currentOrganization.isAdmin}
-				<a href="/organization/access" class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3 transition-colors hover:bg-muted/55">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						Pending invites
-					</p>
-					<p class="mt-1 text-sm font-semibold text-foreground">
-						{pendingInvites}
-					</p>
+				<a href="/organization/access" class="metric-card metric-card--link">
+					<div>
+						<p class="metric-label">Pending invites</p>
+						<p class="metric-value">{pendingInvites}</p>
+					</div>
+					<p class="metric-copy">Review who still needs to accept access.</p>
 				</a>
 			{:else}
-				<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						Active sections
-					</p>
-					<p class="mt-1 text-sm font-semibold text-foreground">
-						{activePlugins.length}
-					</p>
+				<div class="metric-card">
+					<div>
+						<p class="metric-label">Active sections</p>
+						<p class="metric-value">{activePlugins.length}</p>
+					</div>
+					<p class="metric-copy">Broadcasts and events visible to members.</p>
 				</div>
 			{/if}
 		</Card.Content>

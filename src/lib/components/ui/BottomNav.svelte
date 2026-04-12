@@ -25,7 +25,7 @@
 					class={cn(
 						'relative flex min-h-12 min-w-0 items-center justify-center rounded-xl border px-2 py-2 text-center text-[0.82rem] font-medium leading-tight transition-[background-color,border-color,color] duration-150 sm:px-3 sm:text-sm',
 						activeTabId === tab.id
-							? 'border-border bg-card text-foreground after:absolute after:bottom-1 after:left-1/2 after:h-0.5 after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-foreground/85 sm:after:w-8'
+							? 'border-border/80 bg-card text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
 							: 'border-transparent text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 					)}
 					aria-label={tab.label}

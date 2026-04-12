@@ -158,7 +158,7 @@
 	onCancel={closeConfirmation}
 />
 
-<Card.Root class="border-border/70 bg-card">
+<Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Members</Card.Title>
 		<Card.Description>
@@ -176,34 +176,35 @@
 			</div>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-5">
-			<div class="grid gap-3 sm:grid-cols-3">
-				<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						Total members
-					</p>
-					<p class="mt-1 text-sm font-semibold text-foreground">{organizationMembers.length}</p>
+		<Card.Content class="space-y-4">
+			<div class="metric-grid">
+				<div class="metric-card">
+					<div>
+						<p class="metric-label">Total members</p>
+						<p class="metric-value">{organizationMembers.length}</p>
+					</div>
+					<p class="metric-copy">Everyone who currently has access.</p>
 				</div>
 
-				<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						Admins
-					</p>
-					<p class="mt-1 text-sm font-semibold text-foreground">{adminCount}</p>
+				<div class="metric-card">
+					<div>
+						<p class="metric-label">Admins</p>
+						<p class="metric-value">{adminCount}</p>
+					</div>
+					<p class="metric-copy">Accounts that can manage membership and access.</p>
 				</div>
 
-				<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						Members
-					</p>
-					<p class="mt-1 text-sm font-semibold text-foreground">
-						{Math.max(organizationMembers.length - adminCount, 0)}
-					</p>
+				<div class="metric-card">
+					<div>
+						<p class="metric-label">Members</p>
+						<p class="metric-value">{Math.max(organizationMembers.length - adminCount, 0)}</p>
+					</div>
+					<p class="metric-copy">People with standard organization access.</p>
 				</div>
 			</div>
 
-			<div class="overflow-x-auto overflow-y-hidden rounded-xl border border-border/70 bg-muted/10">
-				<Table.Root class="min-w-[44rem]">
+			<div class="overflow-x-auto overflow-y-hidden rounded-2xl border border-border/70 bg-muted/10">
+				<Table.Root class="min-w-176">
 					<Table.Caption class="sr-only">Organization members and roles.</Table.Caption>
 					<Table.Header class="bg-muted/25">
 						<Table.Row>

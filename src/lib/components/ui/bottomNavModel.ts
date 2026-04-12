@@ -34,8 +34,8 @@ export function getBottomNavTabs(): BottomNavTabDefinition[] {
 			id: 'directory',
 			label: 'Directory',
 			shortLabel: 'Dir',
-			href: '/organization/members',
-			ownsPath: (pathname) => isPathPrefix(pathname, '/organization/members')
+			href: '/directory',
+			ownsPath: (pathname) => isPathPrefix(pathname, '/directory')
 		},
 		{
 			id: 'profile',

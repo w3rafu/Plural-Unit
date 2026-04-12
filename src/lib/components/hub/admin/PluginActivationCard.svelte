@@ -4,6 +4,7 @@
   Reads the full plugin registry and shows a toggle for each.
 -->
 <script lang="ts">
+	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Item from '$lib/components/ui/item';
@@ -17,13 +18,16 @@
 	}
 </script>
 
-<Item.Root variant="outline">
-	<Item.Content>
-		<Item.Title>Hub sections</Item.Title>
-		<Item.Description>Turn sections on or off for your members.</Item.Description>
+<Card.Root size="sm" class="border-border/70 bg-card">
+	<Card.Header class="gap-2 border-b border-border/70">
+		<Card.Title class="text-lg font-semibold tracking-tight">Hub sections</Card.Title>
+		<Card.Description>Turn sections on or off for your members.</Card.Description>
+	</Card.Header>
+
+	<Card.Content>
 		<Item.Group>
 			{#each plugins as plugin (plugin.key)}
-				<Item.Root variant="muted" size="sm">
+				<Item.Root variant="muted" size="sm" class="bg-muted/20">
 					<Item.Content>
 						<Field.Field orientation="horizontal">
 							<Checkbox
@@ -42,5 +46,5 @@
 				</Item.Root>
 			{/each}
 		</Item.Group>
-	</Item.Content>
-</Item.Root>
+	</Card.Content>
+</Card.Root>

@@ -182,21 +182,21 @@
 	}
 </script>
 
-<Card.Root class="border-border/70 bg-card">
+<Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Profile details</Card.Title>
 		<Card.Description>Keep your name, phone number, and photo current for the rest of your organization.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-5">
+	<Card.Content class="space-y-4">
 		<form
-			class="space-y-5"
+			class="space-y-4"
 			onsubmit={(event) => {
 				event.preventDefault();
 				saveProfileDetails();
 			}}
 		>
-			<Field.Group class="gap-5">
+			<Field.Group class="gap-4">
 				<ProfileAvatarSection
 					{activeAvatarUrl}
 					initials={avatarPreviewInitials}

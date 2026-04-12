@@ -83,7 +83,7 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-4 border-b border-border/70">
+	<Card.Header class="gap-3.5 border-b border-border/70">
 		<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
 			<Avatar.Root class="size-16 border border-border/70 bg-muted/50 shadow-sm after:hidden">
 				{#if currentUser.details.avatar_url}
@@ -112,14 +112,14 @@
 		</div>
 	</Card.Header>
 
-	<Card.Content class="space-y-5">
-		<div class="grid gap-3 sm:grid-cols-2">
+	<Card.Content class="space-y-4">
+		<div class="metric-grid">
 			{#each overviewStats as stat (stat.label)}
-				<div class="min-w-0 rounded-xl border border-border/70 bg-muted/40 px-4 py-3">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						{stat.label}
-					</p>
-					<p class="mt-1 text-sm font-semibold leading-6 text-foreground wrap-break-word">{stat.value}</p>
+				<div class="metric-card min-w-0">
+					<div>
+						<p class="metric-label">{stat.label}</p>
+						<p class="metric-value metric-value--compact wrap-break-word">{stat.value}</p>
+					</div>
 				</div>
 			{/each}
 		</div>

@@ -26,7 +26,7 @@
 	});
 </script>
 
-<Card.Root class="border-border/70 bg-card">
+<Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-3 border-b border-border/70">
 		<div class="space-y-1">
 			<Card.Title class="text-lg font-semibold tracking-tight">Hub setup</Card.Title>
@@ -36,31 +36,29 @@
 		</div>
 	</Card.Header>
 
-	<Card.Content class="grid gap-3 sm:grid-cols-3">
-		<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-			<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-				Available sections
-			</p>
-			<p class="mt-1 text-sm font-semibold text-foreground">{adminPlugins.length}</p>
-			<p class="mt-1 text-sm text-muted-foreground">
-				Broadcasts and events can be turned on independently.
-			</p>
+	<Card.Content class="metric-grid">
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Available sections</p>
+				<p class="metric-value">{adminPlugins.length}</p>
+			</div>
+			<p class="metric-copy">Broadcasts and events can be turned on independently.</p>
 		</div>
 
-		<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-			<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-				Live now
-			</p>
-			<p class="mt-1 text-sm font-semibold text-foreground">{activePlugins.length}</p>
-			<p class="mt-1 text-sm text-muted-foreground">{sectionSummary}</p>
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Live now</p>
+				<p class="metric-value">{activePlugins.length}</p>
+			</div>
+			<p class="metric-copy">{sectionSummary}</p>
 		</div>
 
-		<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-			<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-				Published content
-			</p>
-			<p class="mt-1 text-sm font-semibold text-foreground">{publishedCount}</p>
-			<p class="mt-1 text-sm text-muted-foreground">{contentSummary}</p>
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Published content</p>
+				<p class="metric-value">{publishedCount}</p>
+			</div>
+			<p class="metric-copy">{contentSummary}</p>
 		</div>
 	</Card.Content>
 

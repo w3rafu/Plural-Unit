@@ -138,22 +138,23 @@
 />
 
 {#if currentOrganization.isAdmin}
-	<div class="flex flex-col gap-4">
+	<div class="page-stack">
 		<div class="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-			<Card.Root class="border-border/70 bg-card">
+			<Card.Root size="sm" class="border-border/70 bg-card">
 				<Card.Header class="gap-2 border-b border-border/70">
 					<Card.Title class="text-lg font-semibold tracking-tight">Join code</Card.Title>
 					<Card.Description>Share this when someone should be able to join without a direct invite.</Card.Description>
 				</Card.Header>
 
-				<Card.Content class="space-y-5">
-					<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-4">
-						<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-							Active code
-						</p>
-						<p class="mt-2 font-mono text-2xl font-semibold tracking-[0.28em] text-foreground">
-							{currentOrganization.organization?.join_code ?? '—'}
-						</p>
+				<Card.Content class="space-y-4">
+					<div class="metric-card min-h-0">
+						<div>
+							<p class="metric-label">Active code</p>
+							<p class="mt-2 font-mono text-[1.9rem] font-semibold tracking-[0.24em] text-foreground wrap-break-word">
+								{currentOrganization.organization?.join_code ?? '—'}
+							</p>
+						</div>
+						<p class="metric-copy">Anyone with this code can join until you rotate it.</p>
 					</div>
 
 					<div class="flex flex-wrap gap-2">
@@ -168,7 +169,7 @@
 			<InviteForm />
 		</div>
 
-		<Card.Root class="border-border/70 bg-card">
+		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<Card.Title class="text-lg font-semibold tracking-tight">Pending invitations</Card.Title>
 				<Card.Description>Review the invites that are still waiting to be accepted.</Card.Description>
@@ -193,7 +194,7 @@
 		</Card.Root>
 	</div>
 {:else}
-	<Card.Root class="border-border/70 bg-card">
+	<Card.Root size="sm" class="border-border/70 bg-card">
 		<Card.Header class="gap-2 border-b border-border/70">
 			<Card.Title class="text-lg font-semibold tracking-tight">Access</Card.Title>
 			<Card.Description>Join code and invitations are only available to organization admins.</Card.Description>

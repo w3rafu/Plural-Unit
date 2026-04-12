@@ -40,7 +40,7 @@
 
 <PageHeader title="Manage hub" subtitle="Admin tools" backLabel="Hub" onBack={goBackToHub} />
 
-<main class="flex flex-col gap-4">
+<main class="page-stack">
 	{#if !currentOrganization.isAdmin}
 		<Card.Root class="border-dashed border-border/70 bg-muted/20">
 			<Card.Content>
@@ -56,7 +56,7 @@
 	{:else}
 		<HubManageSummaryCard />
 
-		<Card.Root class="border-border/70 bg-card">
+		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-foreground">Choose a section</p>
@@ -64,11 +64,11 @@
 				</div>
 
 				<nav aria-label="Hub manage sections" class="w-full sm:w-auto">
-					<ButtonGroup.Root class="w-full sm:w-auto">
+					<ButtonGroup.Root class="segmented-control w-full sm:w-auto">
 						<Button
 							href="/hub/manage/sections"
-							variant={isActiveManageSubroute('/hub/manage/sections') ? 'default' : 'outline'}
-							class="w-full sm:w-auto"
+							variant="ghost"
+							class="segmented-control__button w-full sm:w-auto"
 							aria-current={isActiveManageSubroute('/hub/manage/sections') ? 'page' : undefined}
 							onclick={(event) => {
 								event.preventDefault();
@@ -79,8 +79,8 @@
 						</Button>
 						<Button
 							href="/hub/manage/content"
-							variant={isActiveManageSubroute('/hub/manage/content') ? 'default' : 'outline'}
-							class="w-full sm:w-auto"
+							variant="ghost"
+							class="segmented-control__button w-full sm:w-auto"
 							aria-current={isActiveManageSubroute('/hub/manage/content') ? 'page' : undefined}
 							onclick={(event) => {
 								event.preventDefault();

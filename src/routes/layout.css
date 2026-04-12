@@ -143,21 +143,12 @@
 
 	a {
 		color: var(--foreground);
-		text-decoration: underline;
-		text-underline-offset: 0.25rem;
+		text-decoration: none;
 		transition: opacity 150ms ease;
 	}
 
 	a:hover {
 		opacity: 0.72;
-	}
-
-	header a {
-		text-decoration: none;
-	}
-
-	#bottom-nav a {
-		text-decoration: none;
 	}
 
 	:global(body > div) {
@@ -180,4 +171,145 @@
 
 .card-grid-wide {
 	grid-column: 1 / -1;
+}
+
+.page-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+}
+
+.metric-grid {
+	display: grid;
+	gap: 0.75rem;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric-card {
+	display: flex;
+	min-width: 0;
+	min-height: 6rem;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 0.65rem;
+	border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+	border-radius: 1.25rem;
+	background: color-mix(in srgb, var(--muted) 88%, var(--background) 12%);
+	padding: 0.95rem 1rem;
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+}
+
+.metric-card--link {
+	transition:
+		background-color 150ms ease,
+		box-shadow 150ms ease,
+		transform 150ms ease;
+}
+
+.metric-card--link:hover {
+	background: color-mix(in srgb, var(--muted) 70%, var(--background) 30%);
+	box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+	opacity: 1;
+	transform: translateY(-1px);
+}
+
+.metric-label {
+	font-size: 0.69rem;
+	font-weight: 600;
+	line-height: 1.15;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+.metric-value {
+	font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+	font-weight: 700;
+	line-height: 1.05;
+	letter-spacing: -0.04em;
+	color: var(--foreground);
+	word-break: break-word;
+}
+
+.metric-value--compact {
+	font-size: 1rem;
+	line-height: 1.35;
+	letter-spacing: -0.02em;
+}
+
+.metric-copy {
+	font-size: 0.82rem;
+	line-height: 1.45;
+	color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+	.metric-grid {
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	}
+}
+
+.dark .metric-card {
+	background: color-mix(in srgb, var(--muted) 74%, var(--background) 26%);
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.dark .metric-card--link:hover {
+	background: color-mix(in srgb, var(--card) 82%, white 18%);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
+}
+
+.segmented-control {
+	display: inline-flex;
+	width: 100%;
+	align-items: stretch;
+	padding: 0.2rem;
+	border: 1px solid var(--border);
+	border-radius: 9999px;
+	background: color-mix(in srgb, var(--muted) 92%, var(--background) 8%);
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32);
+	overflow: hidden;
+}
+
+.segmented-control > [data-slot='button'] {
+	flex: 1 1 0%;
+	min-width: 0;
+	border: 0;
+	border-radius: 0.9rem;
+	background: transparent;
+	box-shadow: none;
+	color: var(--muted-foreground);
+	transition:
+		background-color 150ms ease,
+		color 150ms ease,
+		box-shadow 150ms ease;
+}
+
+.segmented-control > [data-slot='button']:hover {
+	background: color-mix(in srgb, var(--background) 70%, transparent);
+	color: var(--foreground);
+	opacity: 1;
+}
+
+.segmented-control > [data-slot='button'][aria-current='page'] {
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: 0 1px 3px rgb(15 23 42 / 0.1);
+	opacity: 1;
+}
+
+.dark .segmented-control {
+	background: color-mix(in srgb, var(--muted) 88%, var(--background) 12%);
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.dark .segmented-control > [data-slot='button']:hover {
+	background: color-mix(in srgb, var(--background) 26%, transparent);
+	color: var(--foreground);
+}
+
+.dark .segmented-control > [data-slot='button'][aria-current='page'] {
+	background: color-mix(in srgb, var(--card) 86%, white 14%);
+	color: var(--foreground);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.24);
 }

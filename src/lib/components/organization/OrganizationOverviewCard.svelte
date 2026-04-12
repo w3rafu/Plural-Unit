@@ -58,20 +58,20 @@
 	});
 </script>
 
-<Card.Root class="border-border/70 bg-card">
+<Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Overview</Card.Title>
 		<Card.Description>Review the basics tied to your organization membership.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-5">
-		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+	<Card.Content class="space-y-4">
+		<div class="metric-grid">
 			{#each overviewStats as stat (stat.label)}
-				<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
-					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-						{stat.label}
-					</p>
-					<p class="mt-1 text-sm font-semibold text-foreground">{stat.value}</p>
+				<div class="metric-card">
+					<div>
+						<p class="metric-label">{stat.label}</p>
+						<p class="metric-value metric-value--compact">{stat.value}</p>
+					</div>
 				</div>
 			{/each}
 		</div>

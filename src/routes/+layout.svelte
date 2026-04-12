@@ -16,7 +16,9 @@
 	const shouldRenderHeader = $derived(
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
-	const isMessagesRoute = $derived(page.url.pathname.startsWith('/messages'));
+	const isLockedContentRoute = $derived(
+		page.url.pathname.startsWith('/messages') || page.url.pathname.startsWith('/directory')
+	);
 
 	// Load messages early so the unread badge is visible before navigating to /messages.
 	let messagesLoadedForUserId = '';
@@ -45,7 +47,7 @@
 			{/if}
 		</div>
 		<div
-			class={isMessagesRoute
+			class={isLockedContentRoute
 				? 'min-h-0 flex-1 overflow-hidden py-3 sm:py-4'
 				: 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 sm:py-4'}
 		>

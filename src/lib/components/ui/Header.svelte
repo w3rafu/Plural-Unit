@@ -4,7 +4,6 @@
 	import AuthHelpSheet from '$lib/components/ui/AuthHelpSheet.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import HubNotificationsSheet from '$lib/components/ui/HubNotificationsSheet.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -113,7 +112,7 @@
 			</div>
 
 			<div class="shell-header__controls">
-				<ButtonGroup.Root aria-label="Header controls" class="shell-header__control-group">
+				<div role="group" aria-label="Header controls" class="shell-header__control-group">
 					{#if showOrganizationControl}
 						<Button
 							href="/organization/access"
@@ -136,7 +135,7 @@
 					{/if}
 
 					<ThemeToggle class={controlButtonClass} />
-				</ButtonGroup.Root>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -301,6 +300,9 @@
 	}
 
 	:global(.shell-header__control-group) {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.12rem;
 		border: 1px solid var(--border);
 		border-radius: 9999px;
 		padding: 0.16rem;
@@ -314,6 +316,7 @@
 		background: transparent;
 		box-shadow: none;
 		color: var(--foreground);
+		min-width: 2.35rem;
 		gap: 0.45rem;
 		transition:
 			background-color 150ms ease,
@@ -338,16 +341,22 @@
 	}
 
 	:global(.shell-header__control:hover) {
-		background: color-mix(in srgb, var(--color-muted) 82%, white 18%);
+		background: color-mix(in srgb, var(--color-muted) 88%, white 12%);
 		color: var(--foreground);
+		opacity: 1;
 	}
 
 	:global(.shell-header__control:active),
 	:global(.shell-header__control[aria-expanded='true']),
 	:global(.shell-header__control[aria-current='page']) {
-		background: var(--muted);
-		border-color: color-mix(in srgb, var(--color-border) 82%, var(--color-foreground) 18%);
-		box-shadow: inset 0 1px 1px rgb(15 23 42 / 0.05);
+		position: relative;
+		z-index: 1;
+		background: color-mix(in srgb, var(--color-muted) 76%, var(--foreground) 8%);
+		border-color: transparent;
+		box-shadow:
+			0 1px 2px rgb(15 23 42 / 0.08),
+			inset 0 1px 0 rgb(255 255 255 / 0.18);
+		opacity: 1;
 	}
 
 	:global(.shell-header__control:focus-visible) {
@@ -368,9 +377,9 @@
 	:global(.shell-header__control-group > * + *::before) {
 		content: '';
 		position: absolute;
-		left: 0;
-		top: 22%;
-		bottom: 22%;
+		left: -0.06rem;
+		top: 0.5rem;
+		bottom: 0.5rem;
 		width: 1px;
 		background: var(--border);
 	}
@@ -409,16 +418,18 @@
 	}
 
 	:global(.dark .shell-header__control:hover) {
-		background: color-mix(in srgb, var(--color-muted) 88%, white 12%);
+		background: color-mix(in srgb, var(--color-muted) 82%, white 10%);
 		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__control:active),
 	:global(.dark .shell-header__control[aria-expanded='true']),
 	:global(.dark .shell-header__control[aria-current='page']) {
-		background: var(--muted);
-		border-color: color-mix(in srgb, var(--color-border) 76%, white 24%);
-		box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.16);
+		background: color-mix(in srgb, var(--color-muted) 72%, white 14%);
+		border-color: transparent;
+		box-shadow:
+			0 1px 3px rgb(0 0 0 / 0.24),
+			inset 0 1px 0 rgb(255 255 255 / 0.08);
 	}
 
 	:global(.dark .shell-header__control:disabled),

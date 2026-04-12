@@ -17,8 +17,8 @@ describe('bottomNavModel', () => {
 		expect(getActiveBottomNavTab('/hub/manage/sections')).toBe('hub');
 		expect(getActiveBottomNavTab('/organization')).toBeNull();
 		expect(getActiveBottomNavTab('/organization/access')).toBeNull();
-		expect(getActiveBottomNavTab('/organization/members')).toBe('directory');
-		expect(getActiveBottomNavTab('/organization/members/user-1')).toBe('directory');
+		expect(getActiveBottomNavTab('/directory')).toBe('directory');
+		expect(getActiveBottomNavTab('/directory/user-1')).toBe('directory');
 		expect(getActiveBottomNavTab('/profile')).toBe('profile');
 		expect(getActiveBottomNavTab('/messages')).toBe('messages');
 		expect(getActiveBottomNavTab('/messages/thread-1')).toBe('messages');

@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
+	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -77,13 +78,13 @@
 	const organizationSections = $derived.by(() => [
 		{ href: '/organization/overview', label: 'Overview' },
 		{ href: '/organization/access', label: 'Access' },
-		{ href: '/organization/members', label: 'Directory' }
+		...(currentOrganization.isAdmin ? [{ href: '/organization/members', label: 'Members' }] : [])
 	]);
 </script>
 
 <PageHeader preset="section" title="Organization" subtitle="Join code, invitations, and membership" />
 
-<main class="flex flex-col gap-4">
+<main class="page-stack">
 	{#if !currentOrganization.organization}
 		<Card.Root class="border-dashed border-border/70 bg-muted/20">
 			<Card.Content>
@@ -91,23 +92,23 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<Card.Root class="border-border/70 bg-card">
+		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-foreground">Choose a section</p>
 					<p class="text-sm text-muted-foreground">
-						Switch between overview, access tools, and the member directory.
+						Switch between overview, access tools, and member management.
 					</p>
 				</div>
 
 				<nav aria-label="Organization sections" class="w-full">
-					<div class="grid grid-cols-3 gap-2">
+					<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
 						{#each organizationSections as section (section.href)}
 							<Button
 								href={section.href}
 								size="sm"
-								variant={isActiveOrganizationSubroute(section.href) ? 'default' : 'outline'}
-								class="w-full min-w-0 justify-center px-3 max-sm:text-[0.82rem]"
+								variant="ghost"
+								class="segmented-control__button min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
 								aria-current={isActiveOrganizationSubroute(section.href) ? 'page' : undefined}
 								onclick={(event) => {
 									event.preventDefault();
@@ -117,7 +118,7 @@
 								{section.label}
 							</Button>
 						{/each}
-					</div>
+					</ButtonGroup.Root>
 				</nav>
 			</Card.Content>
 		</Card.Root>
