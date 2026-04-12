@@ -17,7 +17,10 @@
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
 	const isLockedContentRoute = $derived(
-		page.url.pathname.startsWith('/messages') || page.url.pathname.startsWith('/directory')
+		page.url.pathname.startsWith('/messages') ||
+			page.url.pathname.startsWith('/directory') ||
+			page.url.pathname.startsWith('/demo/messages') ||
+			page.url.pathname.startsWith('/demo/directory')
 	);
 
 	// Load messages early so the unread badge is visible before navigating to /messages.

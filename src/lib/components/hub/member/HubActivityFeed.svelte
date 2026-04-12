@@ -1,30 +1,59 @@
 <script lang="ts">
+	import { Sparkles } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import type { HubNotificationItem } from '$lib/models/hubNotifications';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
-	const MAX_VISIBLE_ACTIVITY_ITEMS = 5;
+	let {
+		items = undefined as HubNotificationItem[] | undefined,
+		organizationName = undefined as string | undefined,
+		isLoading = undefined as boolean | undefined
+	} = $props();
+
+	const MAX_VISIBLE_ACTIVITY_ITEMS = 4;
 	let showAll = $state(false);
 
-	const totalItems = $derived(currentHub.activityFeed);
-	const hasMore = $derived(totalItems.length > MAX_VISIBLE_ACTIVITY_ITEMS);
+	const totalItems = $derived(items ?? currentHub.activityFeed);
+	const resolvedOrganizationName = $derived(
+		organizationName ?? currentOrganization.organization?.name ?? 'your organization'
+	);
+	const resolvedIsLoading = $derived(isLoading ?? currentHub.isLoading);
+	const featuredItem = $derived(totalItems[0] ?? null);
+	const broadcastCount = $derived(totalItems.filter((item) => item.kind === 'broadcast').length);
+	const eventCount = $derived(totalItems.filter((item) => item.kind === 'event').length);
+	const remainingItems = $derived(totalItems.slice(1));
+	const hasMore = $derived(remainingItems.length > MAX_VISIBLE_ACTIVITY_ITEMS);
 	const activityItems = $derived(
-		showAll ? totalItems : totalItems.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS)
+		showAll ? remainingItems : remainingItems.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS)
 	);
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
-		<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
-		<Card.Description>
-			The latest broadcasts and event updates from {currentOrganization.organization?.name ?? 'your organization'}.
-		</Card.Description>
+	<Card.Header class="gap-3 border-b border-border/70">
+		<div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+			<div class="space-y-1">
+				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
+				<Card.Description>
+					The latest broadcasts and event updates from {resolvedOrganizationName}.
+				</Card.Description>
+			</div>
+
+			<div class="flex flex-wrap gap-2">
+				<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+					{broadcastCount} broadcasts
+				</Badge>
+				<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+					{eventCount} events
+				</Badge>
+			</div>
+		</div>
 	</Card.Header>
 
 	<Card.Content class="space-y-3">
-		{#if currentHub.isLoading && activityItems.length === 0}
+		{#if resolvedIsLoading && totalItems.length === 0}
 			<div class="space-y-3">
 				{#each Array.from({ length: 3 }) as _, index (`hub-activity-loading-${index}`)}
 					<div class="animate-pulse rounded-2xl border border-border/70 bg-muted/20 px-4 py-3.5">
@@ -38,7 +67,7 @@
 					</div>
 				{/each}
 			</div>
-		{:else if activityItems.length === 0}
+		{:else if totalItems.length === 0}
 			<div class="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-5">
 				<p class="font-medium text-foreground">No recent activity yet</p>
 				<p class="mt-1 text-sm text-muted-foreground">
@@ -46,17 +75,48 @@
 				</p>
 			</div>
 		{:else}
+			{#if featuredItem}
+				<div class="rounded-3xl border border-border/70 bg-background px-5 py-5 shadow-sm">
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+						<div class="flex items-center gap-2">
+							<div class="flex size-10 items-center justify-center rounded-2xl border border-border/70 bg-muted/30">
+								<Sparkles class="size-4 text-muted-foreground" />
+							</div>
+							<div>
+								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+									Featured update
+								</p>
+								<p class="text-sm font-semibold text-foreground">{featuredItem.title}</p>
+							</div>
+						</div>
+
+						<div class="flex flex-wrap items-center gap-2">
+							<Badge variant={featuredItem.kind === 'broadcast' ? 'secondary' : 'outline'}>
+								{featuredItem.label}
+							</Badge>
+							<p class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+								{featuredItem.meta}
+							</p>
+						</div>
+					</div>
+
+					<p class="mt-4 text-sm leading-6 text-muted-foreground">{featuredItem.summary}</p>
+				</div>
+			{/if}
+
 			<div class="space-y-3">
 				{#each activityItems as item (item.id)}
-					<div class="rounded-2xl border border-border/70 bg-background/75 px-4 py-3.5">
+					<div class="rounded-2xl border border-border/70 bg-background/75 px-4 py-4 shadow-sm">
 						<div class="flex items-center justify-between gap-3">
-							<p class="text-sm font-semibold text-foreground">{item.title}</p>
+							<div class="min-w-0">
+								<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
+								<p class="mt-1 text-xs text-muted-foreground">{item.summary}</p>
+							</div>
 							<Badge variant={item.kind === 'broadcast' ? 'secondary' : 'outline'}>
 								{item.label}
 							</Badge>
 						</div>
-						<p class="mt-1.5 text-sm leading-5.5 text-muted-foreground">{item.summary}</p>
-						<p class="mt-2.5 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+						<p class="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
 							{item.meta}
 						</p>
 					</div>

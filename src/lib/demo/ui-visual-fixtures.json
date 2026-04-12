@@ -1,0 +1,355 @@
+{
+	"organizationName": "Harbor Unit",
+	"organizationId": "org_preview_harbor_unit",
+	"currentUserProfileId": "profile-ariana-lopez",
+	"members": [
+		{
+			"profile_id": "profile-ariana-lopez",
+			"name": "Ariana Lopez",
+			"email": "ariana@pluralunit.test",
+			"phone_number": "+1 415 555 0101",
+			"avatar_url": "",
+			"role": "admin",
+			"joined_via": "created",
+			"joined_at": "2026-01-06T15:20:00.000Z"
+		},
+		{
+			"profile_id": "profile-nico-park",
+			"name": "Nico Park",
+			"email": "nico@pluralunit.test",
+			"phone_number": "+1 415 555 0102",
+			"avatar_url": "",
+			"role": "admin",
+			"joined_via": "invitation",
+			"joined_at": "2026-01-12T18:05:00.000Z"
+		},
+		{
+			"profile_id": "profile-elena-rossi",
+			"name": "Elena Rossi",
+			"email": "elena@pluralunit.test",
+			"phone_number": "+1 415 555 0103",
+			"avatar_url": "",
+			"role": "member",
+			"joined_via": "code",
+			"joined_at": "2026-02-04T17:30:00.000Z"
+		},
+		{
+			"profile_id": "profile-malik-johnson",
+			"name": "Malik Johnson",
+			"email": "malik@pluralunit.test",
+			"phone_number": "+1 415 555 0104",
+			"avatar_url": "",
+			"role": "member",
+			"joined_via": "invitation",
+			"joined_at": "2026-02-18T20:10:00.000Z"
+		},
+		{
+			"profile_id": "profile-priya-desai",
+			"name": "Priya Desai",
+			"email": "priya@pluralunit.test",
+			"phone_number": "+1 415 555 0105",
+			"avatar_url": "",
+			"role": "member",
+			"joined_via": "invitation",
+			"joined_at": "2026-03-02T16:45:00.000Z"
+		},
+		{
+			"profile_id": "profile-tomas-ibarra",
+			"name": "Tomas Ibarra",
+			"email": "tomas@pluralunit.test",
+			"phone_number": "+1 415 555 0106",
+			"avatar_url": "",
+			"role": "member",
+			"joined_via": "code",
+			"joined_at": "2026-03-09T19:15:00.000Z"
+		},
+		{
+			"profile_id": "profile-yara-haddad",
+			"name": "Yara Haddad",
+			"email": "yara@pluralunit.test",
+			"phone_number": "+1 415 555 0107",
+			"avatar_url": "",
+			"role": "member",
+			"joined_via": "invitation",
+			"joined_at": "2026-03-14T22:20:00.000Z"
+		},
+		{
+			"profile_id": "profile-lucia-costa",
+			"name": "Lucia Costa",
+			"email": "lucia@pluralunit.test",
+			"phone_number": "+1 415 555 0108",
+			"avatar_url": "",
+			"role": "member",
+			"joined_via": "invitation",
+			"joined_at": "2026-03-29T21:00:00.000Z"
+		}
+	],
+	"threads": [
+		{
+			"id": "thread-elena-rossi",
+			"participant": {
+				"id": "contact-elena-rossi",
+				"profileId": "profile-elena-rossi",
+				"name": "Elena Rossi",
+				"avatar_url": "",
+				"subtitle": "Events lead",
+				"isFakeUser": false
+			},
+			"messages": [
+				{
+					"id": "msg-elena-1",
+					"threadId": "thread-elena-rossi",
+					"senderId": "contact-elena-rossi",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "I locked the community hall for Thursday night. Can you confirm the room setup plan?",
+					"imageUrl": "",
+					"sentAt": "2026-04-10T17:08:00.000Z"
+				},
+				{
+					"id": "msg-elena-2",
+					"threadId": "thread-elena-rossi",
+					"senderId": "preview-owner",
+					"senderKind": "owner",
+					"kind": "text",
+					"body": "Yes. Round tables up front, check-in at the side door, and coffee in the back corner.",
+					"imageUrl": "",
+					"sentAt": "2026-04-10T17:14:00.000Z"
+				},
+				{
+					"id": "msg-elena-3",
+					"threadId": "thread-elena-rossi",
+					"senderId": "contact-elena-rossi",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "Perfect. I also added two overflow chairs by the stage in case more families arrive.",
+					"imageUrl": "",
+					"sentAt": "2026-04-10T17:21:00.000Z"
+				},
+				{
+					"id": "msg-elena-4",
+					"threadId": "thread-elena-rossi",
+					"senderId": "contact-elena-rossi",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "One more thing: we have three first-time guests coming with a youth group, so I want the welcome team ready by 6:40.",
+					"imageUrl": "",
+					"sentAt": "2026-04-11T08:52:00.000Z"
+				}
+			],
+			"unreadCount": 2,
+			"lastReadAt": "2026-04-10T17:14:00.000Z"
+		},
+		{
+			"id": "thread-yara-haddad",
+			"participant": {
+				"id": "contact-yara-haddad",
+				"profileId": "profile-yara-haddad",
+				"name": "Yara Haddad",
+				"avatar_url": "",
+				"subtitle": "Volunteer coordinator",
+				"isFakeUser": false
+			},
+			"messages": [
+				{
+					"id": "msg-yara-1",
+					"threadId": "thread-yara-haddad",
+					"senderId": "preview-owner",
+					"senderKind": "owner",
+					"kind": "text",
+					"body": "Can you reshuffle the Saturday setup crew? We lost two volunteers for the afternoon shift.",
+					"imageUrl": "",
+					"sentAt": "2026-04-09T14:30:00.000Z"
+				},
+				{
+					"id": "msg-yara-2",
+					"threadId": "thread-yara-haddad",
+					"senderId": "contact-yara-haddad",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "Already on it. I can move Tomas and Lucia forward and keep the late cleanup team intact.",
+					"imageUrl": "",
+					"sentAt": "2026-04-09T14:42:00.000Z"
+				},
+				{
+					"id": "msg-yara-3",
+					"threadId": "thread-yara-haddad",
+					"senderId": "contact-yara-haddad",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "I will send the final volunteer board after lunch so the team can share it in the group chat.",
+					"imageUrl": "",
+					"sentAt": "2026-04-10T12:06:00.000Z"
+				}
+			],
+			"unreadCount": 1,
+			"lastReadAt": "2026-04-09T14:42:00.000Z"
+		},
+		{
+			"id": "thread-malik-johnson",
+			"participant": {
+				"id": "contact-malik-johnson",
+				"profileId": "profile-malik-johnson",
+				"name": "Malik Johnson",
+				"avatar_url": "",
+				"subtitle": "Facilities captain",
+				"isFakeUser": false
+			},
+			"messages": [
+				{
+					"id": "msg-malik-1",
+					"threadId": "thread-malik-johnson",
+					"senderId": "contact-malik-johnson",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "The new wayfinding boards are up. I also moved the stroller parking signs closer to the front entrance.",
+					"imageUrl": "",
+					"sentAt": "2026-04-08T16:10:00.000Z"
+				},
+				{
+					"id": "msg-malik-2",
+					"threadId": "thread-malik-johnson",
+					"senderId": "preview-owner",
+					"senderKind": "owner",
+					"kind": "text",
+					"body": "That helps a lot. Please keep the south hallway clear for the accessibility team.",
+					"imageUrl": "",
+					"sentAt": "2026-04-08T16:18:00.000Z"
+				},
+				{
+					"id": "msg-malik-3",
+					"threadId": "thread-malik-johnson",
+					"senderId": "contact-malik-johnson",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "Done. I marked the path and asked two greeters to stay near the lift.",
+					"imageUrl": "",
+					"sentAt": "2026-04-08T16:22:00.000Z"
+				}
+			],
+			"unreadCount": 0,
+			"lastReadAt": "2026-04-08T16:25:00.000Z"
+		},
+		{
+			"id": "thread-priya-desai",
+			"participant": {
+				"id": "contact-priya-desai",
+				"profileId": "profile-priya-desai",
+				"name": "Priya Desai",
+				"avatar_url": "",
+				"subtitle": "Treasurer",
+				"isFakeUser": false
+			},
+			"messages": [
+				{
+					"id": "msg-priya-1",
+					"threadId": "thread-priya-desai",
+					"senderId": "preview-owner",
+					"senderKind": "owner",
+					"kind": "text",
+					"body": "Can you bring the final reimbursement list to Sunday review? I want to close the month cleanly.",
+					"imageUrl": "",
+					"sentAt": "2026-03-21T18:04:00.000Z"
+				},
+				{
+					"id": "msg-priya-2",
+					"threadId": "thread-priya-desai",
+					"senderId": "contact-priya-desai",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "Yes. I have vendor receipts reconciled and the volunteer meal budget is within target.",
+					"imageUrl": "",
+					"sentAt": "2026-03-21T18:19:00.000Z"
+				}
+			],
+			"unreadCount": 0,
+			"lastReadAt": "2026-03-21T18:30:00.000Z"
+		},
+		{
+			"id": "thread-demo-dispatch",
+			"participant": {
+				"id": "contact-demo-dispatch",
+				"profileId": null,
+				"name": "Demo Dispatch",
+				"avatar_url": "",
+				"subtitle": "System preview contact",
+				"isFakeUser": true
+			},
+			"messages": [
+				{
+					"id": "msg-demo-1",
+					"threadId": "thread-demo-dispatch",
+					"senderId": "contact-demo-dispatch",
+					"senderKind": "contact",
+					"kind": "text",
+					"body": "Use this thread to check empty states, long lines, and how the mobile composer wraps when there is more text.",
+					"imageUrl": "",
+					"sentAt": "2026-03-18T11:02:00.000Z"
+				}
+			],
+			"unreadCount": 0,
+			"lastReadAt": "2026-03-18T11:10:00.000Z"
+		}
+	],
+	"broadcasts": [
+		{
+			"id": "broadcast-1",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Sunday hospitality reset",
+			"body": "Please arrive 20 minutes early if you are serving coffee or greeting at the north entrance.",
+			"created_at": "2026-04-11T07:30:00.000Z"
+		},
+		{
+			"id": "broadcast-2",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Youth room volunteers confirmed",
+			"body": "Coverage is full for both rooms. No additional signups needed this week.",
+			"created_at": "2026-04-09T18:10:00.000Z"
+		},
+		{
+			"id": "broadcast-3",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Midweek meal count",
+			"body": "Current RSVP count is 86. Kitchen prep should plan for 95 portions.",
+			"created_at": "2026-04-07T15:42:00.000Z"
+		}
+	],
+	"events": [
+		{
+			"id": "event-1",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Neighborhood dinner",
+			"description": "Shared meal for new members and nearby families after the evening gathering.",
+			"starts_at": "2026-04-17T01:30:00.000Z",
+			"location": "North Hall",
+			"created_at": "2026-04-10T19:15:00.000Z"
+		},
+		{
+			"id": "event-2",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Volunteer captain sync",
+			"description": "Thirty-minute coordination check for setup, care, and accessibility leads.",
+			"starts_at": "2026-04-15T18:00:00.000Z",
+			"location": "Library room",
+			"created_at": "2026-04-09T21:05:00.000Z"
+		},
+		{
+			"id": "event-3",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Prayer breakfast",
+			"description": "Early-morning gathering with short updates from the care team and finance team.",
+			"starts_at": "2026-04-20T14:00:00.000Z",
+			"location": "Courtyard cafe",
+			"created_at": "2026-04-08T13:20:00.000Z"
+		},
+		{
+			"id": "event-4",
+			"organization_id": "org_preview_harbor_unit",
+			"title": "Supply closet reset",
+			"description": "Quick cleanup and relabeling session for operations volunteers.",
+			"starts_at": "2026-04-13T23:00:00.000Z",
+			"location": "Back office",
+			"created_at": "2026-04-07T17:48:00.000Z"
+		}
+	]
+}

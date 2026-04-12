@@ -4,6 +4,7 @@
   Desktop: side-by-side layout.
 -->
 <script lang="ts">
+	import { MessageSquare } from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import InboxPane from '$lib/components/messages/InboxPane.svelte';
@@ -49,9 +50,8 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<!-- Desktop: side-by-side -->
-		<div class="hidden min-h-0 flex-1 md:grid md:grid-cols-[320px_1fr] md:gap-2">
-			<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
+		<div class="hidden min-h-0 flex-1 md:grid md:grid-cols-[340px_1fr] md:gap-2">
+			<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
 				<InboxPane
 					threads={currentMessages.sortedThreads}
 					activeThreadId={currentMessages.activeThreadId}
@@ -59,7 +59,7 @@
 				/>
 			</Card.Root>
 
-			<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
+			<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
 				{#if currentMessages.activeThread}
 					<ThreadPane
 						thread={currentMessages.activeThread}
@@ -70,17 +70,24 @@
 						onResetDemo={handleResetDemo}
 					/>
 				{:else}
-					<div class="flex h-full items-center justify-center">
-						<p class="text-sm text-muted-foreground">Select a conversation</p>
+					<div class="flex h-full items-center justify-center bg-muted/[0.12] p-6">
+						<div class="max-w-sm rounded-3xl border border-dashed border-border/70 bg-background px-6 py-8 text-center shadow-sm">
+							<div class="mx-auto flex size-12 items-center justify-center rounded-2xl border border-border/70 bg-muted/40">
+								<MessageSquare class="size-5 text-muted-foreground" />
+							</div>
+							<p class="mt-4 font-medium text-foreground">Select a conversation</p>
+							<p class="mt-1 text-sm text-muted-foreground">
+								Choose a thread from the inbox to review history and send a reply.
+							</p>
+						</div>
 					</div>
 				{/if}
 			</Card.Root>
 		</div>
 
-		<!-- Mobile: inbox or thread -->
 		<div class="min-h-0 flex-1 md:hidden">
 			{#if showThread && currentMessages.activeThread}
-				<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
+				<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
 					<ThreadPane
 						thread={currentMessages.activeThread}
 						isSending={currentMessages.isSending}
@@ -92,7 +99,7 @@
 					/>
 				</Card.Root>
 			{:else}
-				<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
+				<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
 					<InboxPane
 						threads={currentMessages.sortedThreads}
 						activeThreadId={currentMessages.activeThreadId}

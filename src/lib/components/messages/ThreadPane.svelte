@@ -6,6 +6,7 @@
 	import type { MessageThread } from '$lib/models/messageModel';
 	import { getParticipantInitials } from '$lib/models/messageModel';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import { Badge } from '$lib/components/ui/badge';
 	import { groupMessagesByDay, formatMessageTime } from './messageUi';
 	import MessageComposer from './MessageComposer.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -33,45 +34,62 @@
 	const dayGroups = $derived(groupMessagesByDay(thread.messages));
 	const initials = $derived(getParticipantInitials(thread.participant.name));
 
-	let scrollContainer = $state<HTMLElement | null>(null);
-
-	$effect(() => {
-		// Scroll to bottom when messages change
-		if (thread.messages.length && scrollContainer) {
-			scrollContainer.scrollTop = scrollContainer.scrollHeight;
-		}
-	});
+	function keepScrolledToBottom(_trigger: string) {
+		return (node: HTMLElement) => {
+		node.scrollTop = node.scrollHeight;
+		};
+	}
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<!-- Header -->
-	<div class="flex items-center gap-3 border-b border-border/70 px-3 py-2.5 sm:px-4">
+	<div class="border-b border-border/70 bg-muted/10 px-3 py-3 sm:px-4">
+		<div class="flex items-start gap-3">
 		{#if onBack}
 			<Button variant="ghost" size="icon" class="shrink-0 md:hidden" onclick={onBack} aria-label="Back to inbox">
 				<ArrowLeft class="h-4 w-4" />
 			</Button>
 		{/if}
 
-		<Avatar.Root class="size-8 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+		<Avatar.Root class="size-10 border border-border/70 bg-muted/50 shadow-sm after:hidden">
 			{#if thread.participant.avatar_url}
 				<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
 			{:else}
-				<Avatar.Fallback class="text-xs font-medium text-muted-foreground">{initials}</Avatar.Fallback>
+				<Avatar.Fallback class="text-sm font-medium text-muted-foreground">{initials}</Avatar.Fallback>
 			{/if}
 		</Avatar.Root>
 
-		<div class="min-w-0 flex-1">
-			<p class="truncate text-sm font-medium">{thread.participant.name}</p>
-			{#if thread.participant.subtitle}
-				<p class="truncate text-xs text-muted-foreground">{thread.participant.subtitle}</p>
-			{/if}
+		<div class="min-w-0 flex-1 space-y-2">
+			<div class="space-y-1">
+				<p class="truncate text-sm font-semibold text-foreground">{thread.participant.name}</p>
+				<p class="truncate text-xs text-muted-foreground">
+					{thread.participant.subtitle || 'Direct conversation'}
+				</p>
+			</div>
+
+			<div class="flex flex-wrap gap-2">
+				<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+					{thread.messages.length} {thread.messages.length === 1 ? 'message' : 'messages'}
+				</Badge>
+
+				{#if thread.unreadCount > 0}
+					<Badge variant="default" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+						{thread.unreadCount} unread
+					</Badge>
+				{/if}
+
+				{#if thread.participant.isFakeUser}
+					<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+						Demo conversation
+					</Badge>
+				{/if}
+			</div>
 		</div>
 
 		{#if thread.participant.isFakeUser && onResetDemo}
 			<Button
-				variant="ghost"
+				variant="outline"
 				size="sm"
-				class="shrink-0 text-muted-foreground"
+				class="shrink-0"
 				disabled={isResetting}
 				onclick={onResetDemo}
 				aria-label="Reset demo conversation"
@@ -80,15 +98,19 @@
 				Reset
 			</Button>
 		{/if}
+		</div>
 	</div>
 
-	<!-- Message stream -->
-	<div class="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4" bind:this={scrollContainer}>
+	<div
+		class="min-h-0 flex-1 overflow-y-auto bg-muted/[0.12] px-3 py-3 sm:px-4"
+		{@attach keepScrolledToBottom(`${thread.id}:${thread.messages.length}`)}
+	>
 		{#each dayGroups as group (group.dateKey)}
-			<!-- Day separator -->
 			<div class="my-3 flex items-center gap-3">
 				<div class="h-px flex-1 bg-border/50"></div>
-				<span class="text-xs text-muted-foreground">{group.label}</span>
+				<span class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+					{group.label}
+				</span>
 				<div class="h-px flex-1 bg-border/50"></div>
 			</div>
 
@@ -101,19 +123,24 @@
 				>
 					<div
 						class={cn(
-							'max-w-[75%] rounded-2xl px-3 py-2',
+							'max-w-[82%] rounded-2xl border px-3 py-2.5 shadow-sm',
 							message.senderKind === 'owner'
-								? 'bg-primary text-primary-foreground'
-								: 'bg-muted'
+								? 'border-primary/80 bg-primary text-primary-foreground'
+								: 'border-border/70 bg-background text-foreground'
 						)}
 					>
 						{#if message.kind === 'image' && message.imageUrl}
-							<img
-								src={message.imageUrl}
-								alt={message.body.trim() || 'Shared photo'}
-								class="max-h-60 rounded-lg object-contain"
-								loading="lazy"
-							/>
+							<div class="space-y-2">
+								<img
+									src={message.imageUrl}
+									alt={message.body.trim() || 'Shared photo'}
+									class="max-h-60 rounded-xl object-contain"
+									loading="lazy"
+								/>
+								{#if message.body.trim()}
+									<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
+								{/if}
+							</div>
 						{:else}
 							<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
 						{/if}
@@ -133,12 +160,16 @@
 		{/each}
 
 		{#if thread.messages.length === 0}
-			<p class="py-8 text-center text-sm text-muted-foreground">
-				Start the conversation by sending a message.
-			</p>
+			<div class="flex min-h-full items-center justify-center px-4 py-10">
+				<div class="rounded-3xl border border-dashed border-border/70 bg-background px-6 py-8 text-center shadow-sm">
+					<p class="font-medium text-foreground">Start the conversation</p>
+					<p class="mt-1 text-sm text-muted-foreground">
+						Send the first message to turn this thread into an active exchange.
+					</p>
+				</div>
+			</div>
 		{/if}
 	</div>
 
-	<!-- Composer -->
 	<MessageComposer {isSending} {onSendMessage} {onSendImage} />
 </div>
