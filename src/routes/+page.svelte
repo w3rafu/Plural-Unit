@@ -8,7 +8,6 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import HubOverviewCard from '$lib/components/hub/member/HubOverviewCard.svelte';
 	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';

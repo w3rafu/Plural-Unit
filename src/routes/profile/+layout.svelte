@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { LogOut } from '@lucide/svelte';
 	import ProfileSection from '$lib/components/profile/ProfileSection.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import { currentUser } from '$lib/stores/currentUser.svelte';
 
 	let { children } = $props();
 
@@ -15,16 +17,19 @@
 		return profilePath === pathname;
 	}
 
-	function goHome() {
-		void goto('/');
-	}
+	let isSigningOut = $state(false);
 
 	function goToProfileSubroute(pathname: string) {
 		void goto(pathname, { noScroll: true, keepFocus: true });
 	}
+
+	async function handleSignOut() {
+		isSigningOut = true;
+		await currentUser.logout();
+	}
 </script>
 
-<PageHeader title="Profile" subtitle="Member details and security" backLabel="Hub" onBack={goHome} />
+<PageHeader title="Profile" subtitle="Member details and security" />
 
 <main class="flex flex-col gap-4">
 	<ProfileSection />
@@ -68,4 +73,22 @@
 	</Card.Root>
 
 	{@render children()}
+
+	<Card.Root class="border-border/70 bg-card/80">
+		<Card.Content class="flex items-center justify-between p-4">
+			<div class="space-y-1">
+				<p class="text-sm font-medium text-foreground">Sign out</p>
+				<p class="text-sm text-muted-foreground">End your current session.</p>
+			</div>
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={isSigningOut}
+				onclick={handleSignOut}
+			>
+				<LogOut class="mr-2 size-4" />
+				{isSigningOut ? 'Signing out…' : 'Sign out'}
+			</Button>
+		</Card.Content>
+	</Card.Root>
 </main>

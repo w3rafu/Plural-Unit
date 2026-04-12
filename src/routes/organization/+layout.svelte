@@ -71,13 +71,9 @@
 	function goToOrganizationSubroute(pathname: string) {
 		void goto(pathname, { noScroll: true, keepFocus: true });
 	}
-
-	function goHome() {
-		void goto('/');
-	}
 </script>
 
-<PageHeader title="Organization" subtitle="Join code, invitations, and membership" backLabel="Hub" onBack={goHome} />
+<PageHeader title="Organization" subtitle="Join code, invitations, and membership" />
 
 <main class="flex flex-col gap-4">
 	{#if !currentOrganization.organization}

@@ -33,7 +33,7 @@
 	const showThread = $derived(!!currentMessages.activeThread);
 </script>
 
-<PageHeader title="Messages" />
+<PageHeader title="Messages" subtitle="Conversations and threads" />
 
 <main class="flex flex-col gap-2">
 	{#if !currentMessages.isReady}

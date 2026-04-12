@@ -1,11 +1,18 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
 	const MAX_VISIBLE_ACTIVITY_ITEMS = 5;
-	const activityItems = $derived(currentHub.activityFeed.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS));
+	let showAll = $state(false);
+
+	const totalItems = $derived(currentHub.activityFeed);
+	const hasMore = $derived(totalItems.length > MAX_VISIBLE_ACTIVITY_ITEMS);
+	const activityItems = $derived(
+		showAll ? totalItems : totalItems.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS)
+	);
 </script>
 
 <Card.Root class="border-border/70 bg-card/80">
@@ -55,6 +62,18 @@
 					</div>
 				{/each}
 			</div>
+
+			{#if hasMore}
+				<div class="mt-3 text-center">
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={() => (showAll = !showAll)}
+					>
+						{showAll ? 'Show less' : `View all ${totalItems.length} items`}
+					</Button>
+				</div>
+			{/if}
 		{/if}
 	</Card.Content>
 </Card.Root>
