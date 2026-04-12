@@ -121,9 +121,6 @@
 
 <style>
 	.shell-header {
-		position: sticky;
-		top: 0;
-		z-index: 30;
 		padding-top: max(0.35rem, env(safe-area-inset-top));
 	}
 

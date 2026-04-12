@@ -51,7 +51,7 @@
 	{:else}
 		<!-- Desktop: side-by-side -->
 		<div class="hidden md:grid md:grid-cols-[320px_1fr] md:gap-2">
-			<Card.Root class="h-[calc(100dvh-12rem)] overflow-hidden">
+			<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
 				<InboxPane
 					threads={currentMessages.sortedThreads}
 					activeThreadId={currentMessages.activeThreadId}
@@ -59,7 +59,7 @@
 				/>
 			</Card.Root>
 
-			<Card.Root class="h-[calc(100dvh-12rem)] overflow-hidden">
+			<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
 				{#if currentMessages.activeThread}
 					<ThreadPane
 						thread={currentMessages.activeThread}
@@ -80,7 +80,7 @@
 		<!-- Mobile: inbox or thread -->
 		<div class="md:hidden">
 			{#if showThread && currentMessages.activeThread}
-				<Card.Root class="h-[calc(100dvh-10rem)] overflow-hidden">
+				<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
 					<ThreadPane
 						thread={currentMessages.activeThread}
 						isSending={currentMessages.isSending}
@@ -92,7 +92,7 @@
 					/>
 				</Card.Root>
 			{:else}
-				<Card.Root class="h-[calc(100dvh-10rem)] overflow-hidden">
+				<Card.Root class="h-[calc(100dvh-var(--app-shell-h))] overflow-hidden">
 					<InboxPane
 						threads={currentMessages.sortedThreads}
 						activeThreadId={currentMessages.activeThreadId}
