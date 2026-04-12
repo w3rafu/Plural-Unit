@@ -1,6 +1,5 @@
 /**
  * Auth helper types and validators.
- *
  * This module keeps all auth-related validation and error mapping
  * in one place so components and stores do not duplicate string matching.
  *
