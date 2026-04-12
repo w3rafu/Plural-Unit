@@ -229,7 +229,7 @@ class CurrentOrganization {
 	}
 
 	async loadMembers() {
-		if (!this.organization || !this.isAdmin) {
+		if (!this.organization) {
 			this.members = [];
 			return;
 		}
@@ -248,7 +248,7 @@ class CurrentOrganization {
 		try {
 			await setOrganizationMemberRole(this.organization.id, profileId, role);
 			await this.refresh();
-			if (this.isAdmin) {
+			if (this.organization) {
 				await this.loadMembers();
 			}
 		} finally {
@@ -262,7 +262,7 @@ class CurrentOrganization {
 		try {
 			await removeOrganizationMember(this.organization.id, profileId);
 			await this.refresh();
-			if (this.isAdmin) {
+			if (this.organization) {
 				await this.loadMembers();
 			}
 			await this.loadMemberCount();

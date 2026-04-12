@@ -21,7 +21,6 @@
 
 		if (!currentOrganization.isAdmin) {
 			loadedInvitationsOrgId = '';
-			loadedMembersOrgId = '';
 		}
 	});
 
@@ -51,7 +50,7 @@
 
 	$effect(() => {
 		const organizationId =
-			currentOrganization.isAdmin && organizationPath === '/organization/members'
+			organizationPath.startsWith('/organization/members')
 				? (currentOrganization.organization?.id ?? '')
 				: '';
 
@@ -64,6 +63,10 @@
 	});
 
 	function isActiveOrganizationSubroute(pathname: string) {
+		if (pathname === '/organization/members') {
+			return organizationPath.startsWith(pathname);
+		}
+
 		return organizationPath === pathname;
 	}
 
@@ -74,7 +77,7 @@
 	const organizationSections = $derived.by(() => [
 		{ href: '/organization/overview', label: 'Overview' },
 		{ href: '/organization/access', label: 'Access' },
-		...(currentOrganization.isAdmin ? [{ href: '/organization/members', label: 'Members' }] : [])
+		{ href: '/organization/members', label: 'Directory' }
 	]);
 </script>
 
@@ -93,12 +96,12 @@
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-foreground">Choose a section</p>
 					<p class="text-sm text-muted-foreground">
-						Switch between overview, access tools, and member visibility.
+						Switch between overview, access tools, and the member directory.
 					</p>
 				</div>
 
 				<nav aria-label="Organization sections" class="w-full">
-					<div class={currentOrganization.isAdmin ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-2 gap-2'}>
+					<div class="grid grid-cols-3 gap-2">
 						{#each organizationSections as section (section.href)}
 							<Button
 								href={section.href}
