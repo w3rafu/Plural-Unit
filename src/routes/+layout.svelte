@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import { page } from '$app/state';
 	import { ModeWatcher } from 'mode-watcher';
 	import AuthGate from '$lib/components/auth/AuthGate.svelte';
 	import Header from '$lib/components/ui/Header.svelte';
@@ -15,6 +16,7 @@
 	const shouldRenderHeader = $derived(
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
+	const isMessagesRoute = $derived(page.url.pathname.startsWith('/messages'));
 
 	// Load messages early so the unread badge is visible before navigating to /messages.
 	let messagesLoadedForUserId = '';
@@ -36,14 +38,20 @@
   onboarding before any page content is shown.
 -->
 <div class="flex h-dvh min-h-dvh flex-col overflow-hidden">
-	<div class="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-4">
-		<div class="z-30 flex-none pt-2" style:min-height={'4.85rem'}>
+	<div class="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 sm:px-4">
+		<div class="z-30 flex-none pt-2" style:min-height="4.85rem">
 			{#if shouldRenderHeader}
 				<Header />
 			{/if}
 		</div>
-		<div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 sm:py-4">
-			<AuthGate>{@render children()}</AuthGate>
+		<div
+			class={isMessagesRoute
+				? 'min-h-0 flex-1 overflow-hidden py-3 sm:py-4'
+				: 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 sm:py-4'}
+		>
+			<div class="flex h-full min-h-0 flex-col">
+				<AuthGate>{@render children()}</AuthGate>
+			</div>
 		</div>
 		<BottomNav />
 	</div>

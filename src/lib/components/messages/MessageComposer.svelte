@@ -49,7 +49,7 @@
 </script>
 
 <form
-	class="flex items-center gap-2 border-t border-border/70 px-3 py-2"
+	class="mt-auto flex items-center gap-2 border-t border-border/70 px-3 py-2 sm:px-4"
 	onsubmit={handleSubmit}
 >
 	<button

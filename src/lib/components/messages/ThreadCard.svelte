@@ -6,6 +6,7 @@
 <script lang="ts">
 	import type { MessageThread } from '$lib/models/messageModel';
 	import { getParticipantInitials, getThreadPreview, getThreadLastMessageSentAt } from '$lib/models/messageModel';
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { formatThreadTimestamp } from './messageUi';
 	import { cn } from '$lib/utils';
@@ -36,17 +37,13 @@
 	{onclick}
 >
 	<!-- Avatar -->
-	{#if thread.participant.avatar_url}
-		<img
-			src={thread.participant.avatar_url}
-			alt={thread.participant.name}
-			class="h-10 w-10 shrink-0 rounded-full object-cover"
-		/>
-	{:else}
-		<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-			{initials}
-		</div>
-	{/if}
+	<Avatar.Root class="size-10 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+		{#if thread.participant.avatar_url}
+			<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
+		{:else}
+			<Avatar.Fallback class="text-sm font-medium text-muted-foreground">{initials}</Avatar.Fallback>
+		{/if}
+	</Avatar.Root>
 
 	<!-- Content -->
 	<div class="min-w-0 flex-1">

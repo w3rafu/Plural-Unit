@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AuthHelpSheet from '$lib/components/ui/AuthHelpSheet.svelte';
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import HubNotificationsSheet from '$lib/components/ui/HubNotificationsSheet.svelte';
@@ -73,7 +74,7 @@
 					>
 						<span aria-hidden="true" class="shell-header__back-icon">&larr;</span>
 						{#if backButtonLabel}
-							<span>{backButtonLabel}</span>
+							<span class="shell-header__back-label">{backButtonLabel}</span>
 						{/if}
 					</Button>
 				{:else if showBrandMark}
@@ -83,17 +84,19 @@
 				{/if}
 
 				{#if showContextAvatar}
-					<div class="shell-header__avatar-badge" aria-hidden="true">
+					<Avatar.Root class="shell-header__avatar-badge after:hidden" aria-hidden="true">
 						{#if pageHeader.config.avatarImageUrl}
-							<img
+							<Avatar.Image
 								class="shell-header__avatar-image"
 								src={pageHeader.config.avatarImageUrl}
 								alt=""
 							/>
 						{:else}
-							{pageHeader.config.avatarText}
+							<Avatar.Fallback class="shell-header__avatar-fallback">
+								{pageHeader.config.avatarText}
+							</Avatar.Fallback>
 						{/if}
-					</div>
+					</Avatar.Root>
 				{/if}
 
 				<div class="shell-header__title-block">
@@ -130,7 +133,7 @@
 		border: 0;
 		border-bottom: 1px solid var(--border);
 		border-radius: 0;
-		padding: 0.5rem 0 0.65rem;
+		padding: 0.55rem 0 0.7rem;
 		min-height: 3.75rem;
 		background: transparent;
 		box-shadow: none;
@@ -144,10 +147,10 @@
 	}
 
 	.shell-header__row {
-		display: flex;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
+		gap: 0.85rem;
 		width: 100%;
 	}
 
@@ -164,8 +167,8 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 2.8rem;
-		height: 2.8rem;
+		width: 3.05rem;
+		height: 3.05rem;
 		border: 0;
 		border-radius: 0;
 		background: transparent;
@@ -175,8 +178,8 @@
 
 	.shell-header__brand-image {
 		display: block;
-		width: 2.55rem;
-		height: 2.55rem;
+		width: 2.45rem;
+		height: 2.45rem;
 		object-fit: contain;
 		filter: invert(1) brightness(0.1);
 		transform: none;
@@ -206,6 +209,14 @@
 		object-fit: cover;
 	}
 
+	.shell-header__avatar-fallback {
+		background: transparent;
+		color: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+		letter-spacing: inherit;
+	}
+
 	.shell-header__title-block {
 		min-width: 0;
 		display: grid;
@@ -233,13 +244,13 @@
 	}
 
 	.shell-header__surface--section .shell-header__brand-mark {
-		width: 2.6rem;
-		height: 2.6rem;
+		width: 2.75rem;
+		height: 2.75rem;
 	}
 
 	.shell-header__surface--section .shell-header__brand-image {
-		width: 2.35rem;
-		height: 2.35rem;
+		width: 2.2rem;
+		height: 2.2rem;
 	}
 
 	.shell-header__subtitle {
@@ -266,13 +277,15 @@
 		flex: none;
 		display: flex;
 		align-items: center;
+		justify-self: end;
 	}
 
 	:global(.shell-header__control-group) {
 		border: 1px solid var(--border);
 		border-radius: 9999px;
-		padding: 0.14rem;
-		background: var(--card);
+		padding: 0.16rem;
+		background: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32);
 	}
 
 	:global(.shell-header__control) {
@@ -281,11 +294,23 @@
 		background: transparent;
 		box-shadow: none;
 		color: var(--foreground);
+		gap: 0.45rem;
 		transition:
 			background-color 150ms ease,
 			color 150ms ease,
 			border-color 150ms ease,
 			box-shadow 150ms ease;
+	}
+
+	:global(.shell-header__control-icon) {
+		flex: none;
+		width: 1rem;
+		height: 1rem;
+	}
+
+	:global(.shell-header__control-label) {
+		display: inline-block;
+		white-space: nowrap;
 	}
 
 	:global(.shell-header__control:visited) {
@@ -351,6 +376,7 @@
 
 	:global(.dark .shell-header__control-group) {
 		background: var(--card);
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 	}
 
 	:global(.dark .shell-header__control) {
@@ -382,18 +408,48 @@
 		background: var(--border);
 	}
 
-	@media (max-width: 480px) {
+	@media (max-width: 640px) {
 		.shell-header__surface {
-			padding: 0.45rem 0 0.6rem;
+			padding: 0.45rem 0 0.55rem;
 		}
 
 		.shell-header__row {
-			flex-direction: column;
-			align-items: stretch;
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: center;
+			gap: 0.5rem;
+		}
+
+		.shell-header__identity {
+			gap: 0.6rem;
 		}
 
 		.shell-header__controls {
-			align-self: flex-end;
+			align-self: center;
+			justify-self: end;
+		}
+
+		.shell-header__title {
+			font-size: clamp(1.02rem, 5vw, 1.22rem);
+		}
+
+		.shell-header__subtitle {
+			max-width: 14rem;
+			font-size: 0.74rem;
+			line-height: 1.25;
+		}
+
+		.shell-header__back-label,
+		:global(.shell-header__control-label) {
+			display: none;
+		}
+
+		:global(.shell-header__control) {
+			min-width: 2.2rem;
+			padding-inline: 0.55rem;
+		}
+
+		:global(.shell-header__control-group) {
+			padding: 0.12rem;
 		}
 
 		.shell-header__brand-mark {
@@ -402,8 +458,13 @@
 		}
 
 		.shell-header__brand-image {
-			width: 2.2rem;
-			height: 2.2rem;
+			width: 2rem;
+			height: 2rem;
+		}
+
+		.shell-header__avatar-badge {
+			width: 2.1rem;
+			height: 2.1rem;
 		}
 	}
 </style>

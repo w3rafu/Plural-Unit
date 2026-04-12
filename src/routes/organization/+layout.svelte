@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -71,6 +70,12 @@
 	function goToOrganizationSubroute(pathname: string) {
 		void goto(pathname, { noScroll: true, keepFocus: true });
 	}
+
+	const organizationSections = $derived.by(() => [
+		{ href: '/organization/overview', label: 'Overview' },
+		{ href: '/organization/access', label: 'Access' },
+		...(currentOrganization.isAdmin ? [{ href: '/organization/members', label: 'Members' }] : [])
+	]);
 </script>
 
 <PageHeader preset="section" title="Organization" subtitle="Join code, invitations, and membership" />
@@ -92,47 +97,24 @@
 					</p>
 				</div>
 
-				<nav aria-label="Organization sections" class="w-full sm:w-auto">
-					<ButtonGroup.Root class="w-full sm:w-auto">
-						<Button
-							href="/organization/overview"
-							variant={isActiveOrganizationSubroute('/organization/overview') ? 'default' : 'outline'}
-							class="w-full sm:w-auto"
-							aria-current={isActiveOrganizationSubroute('/organization/overview') ? 'page' : undefined}
-							onclick={(event) => {
-								event.preventDefault();
-								goToOrganizationSubroute('/organization/overview');
-							}}
-						>
-							Overview
-						</Button>
-						<Button
-							href="/organization/access"
-							variant={isActiveOrganizationSubroute('/organization/access') ? 'default' : 'outline'}
-							class="w-full sm:w-auto"
-							aria-current={isActiveOrganizationSubroute('/organization/access') ? 'page' : undefined}
-							onclick={(event) => {
-								event.preventDefault();
-								goToOrganizationSubroute('/organization/access');
-							}}
-						>
-							Access
-						</Button>
-						{#if currentOrganization.isAdmin}
+				<nav aria-label="Organization sections" class="w-full">
+					<div class={currentOrganization.isAdmin ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-2 gap-2'}>
+						{#each organizationSections as section (section.href)}
 							<Button
-								href="/organization/members"
-								variant={isActiveOrganizationSubroute('/organization/members') ? 'default' : 'outline'}
-								class="w-full sm:w-auto"
-								aria-current={isActiveOrganizationSubroute('/organization/members') ? 'page' : undefined}
+								href={section.href}
+								size="sm"
+								variant={isActiveOrganizationSubroute(section.href) ? 'default' : 'outline'}
+								class="w-full min-w-0 justify-center px-3 max-sm:text-[0.82rem]"
+								aria-current={isActiveOrganizationSubroute(section.href) ? 'page' : undefined}
 								onclick={(event) => {
 									event.preventDefault();
-									goToOrganizationSubroute('/organization/members');
+									goToOrganizationSubroute(section.href);
 								}}
 							>
-								Members
+								{section.label}
 							</Button>
-						{/if}
-					</ButtonGroup.Root>
+						{/each}
+					</div>
 				</nav>
 			</Card.Content>
 		</Card.Root>

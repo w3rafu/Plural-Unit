@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BellIcon from '@lucide/svelte/icons/bell';
 	import { Button } from '$lib/components/ui/button';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
@@ -40,8 +41,9 @@
 <Sheet.Root open={open} onOpenChange={handleOpenChange}>
 	<Sheet.Trigger>
 		{#snippet child({ props })}
-			<Button {...props} type="button" variant="outline" size="sm" class={triggerClass}>
-				{triggerLabel}
+			<Button {...props} type="button" variant="outline" size="sm" class={`gap-2 ${triggerClass}`}>
+				<BellIcon class="shell-header__control-icon" aria-hidden="true" />
+				<span class="shell-header__control-label">{triggerLabel}</span>
 			</Button>
 		{/snippet}
 	</Sheet.Trigger>

@@ -5,6 +5,7 @@
   File selection and removal events are dispatched to the parent.
 -->
 <script lang="ts">
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 
 	let {
@@ -35,20 +36,15 @@
 <div class="rounded-xl border border-border/70 bg-muted/25 p-4">
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex items-center gap-4">
-			{#if activeAvatarUrl}
-				<img
-					src={activeAvatarUrl}
-					alt="Profile preview"
-					class="size-20 rounded-full border border-border/70 object-cover shadow-sm"
-				/>
-			{:else}
-				<div
-					class="flex size-20 items-center justify-center rounded-full border border-border/70 bg-muted text-xl font-semibold tracking-tight text-foreground"
-					aria-hidden="true"
-				>
-					{initials}
-				</div>
-			{/if}
+			<Avatar.Root class="size-20 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+				{#if activeAvatarUrl}
+					<Avatar.Image src={activeAvatarUrl} alt="Profile preview" />
+				{:else}
+					<Avatar.Fallback class="text-xl font-semibold tracking-tight text-foreground">
+						{initials}
+					</Avatar.Fallback>
+				{/if}
+			</Avatar.Root>
 
 			<div class="space-y-1">
 				<p class="text-sm font-medium text-foreground">Profile photo</p>

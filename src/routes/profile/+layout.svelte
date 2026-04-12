@@ -4,7 +4,6 @@
 	import { LogOut } from '@lucide/svelte';
 	import ProfileSection from '$lib/components/profile/ProfileSection.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
@@ -22,6 +21,11 @@
 	function goToProfileSubroute(pathname: string) {
 		void goto(pathname, { noScroll: true, keepFocus: true });
 	}
+
+	const profileSections = [
+		{ href: '/profile/details', label: 'Details' },
+		{ href: '/profile/security', label: 'Security' }
+	] as const;
 
 	async function handleSignOut() {
 		isSigningOut = true;
@@ -41,33 +45,24 @@
 				<p class="text-sm text-muted-foreground">Switch between profile details and security settings.</p>
 			</div>
 
-			<nav aria-label="Profile sections" class="w-full sm:w-auto">
-				<ButtonGroup.Root class="w-full sm:w-auto">
-					<Button
-						href="/profile/details"
-						variant={isActiveProfileSubroute('/profile/details') ? 'default' : 'outline'}
-						class="w-full sm:w-auto"
-						aria-current={isActiveProfileSubroute('/profile/details') ? 'page' : undefined}
-						onclick={(event) => {
-							event.preventDefault();
-							goToProfileSubroute('/profile/details');
-						}}
-					>
-						Details
-					</Button>
-					<Button
-						href="/profile/security"
-						variant={isActiveProfileSubroute('/profile/security') ? 'default' : 'outline'}
-						class="w-full sm:w-auto"
-						aria-current={isActiveProfileSubroute('/profile/security') ? 'page' : undefined}
-						onclick={(event) => {
-							event.preventDefault();
-							goToProfileSubroute('/profile/security');
-						}}
-					>
-						Security
-					</Button>
-				</ButtonGroup.Root>
+			<nav aria-label="Profile sections" class="w-full">
+				<div class="grid grid-cols-2 gap-2">
+					{#each profileSections as section (section.href)}
+						<Button
+							href={section.href}
+							size="sm"
+							variant={isActiveProfileSubroute(section.href) ? 'default' : 'outline'}
+							class="w-full min-w-0 justify-center px-3 max-sm:text-[0.82rem]"
+							aria-current={isActiveProfileSubroute(section.href) ? 'page' : undefined}
+							onclick={(event) => {
+								event.preventDefault();
+								goToProfileSubroute(section.href);
+							}}
+						>
+							{section.label}
+						</Button>
+					{/each}
+				</div>
 			</nav>
 		</Card.Content>
 	</Card.Root>

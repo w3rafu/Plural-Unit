@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CircleHelpIcon from '@lucide/svelte/icons/circle-help';
 	import { Button } from '$lib/components/ui/button';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Item from '$lib/components/ui/item';
@@ -15,8 +16,9 @@
 <Sheet.Root>
 	<Sheet.Trigger>
 		{#snippet child({ props })}
-			<Button {...props} type="button" variant="outline" size="sm" class={triggerClass}>
-				{triggerLabel}
+			<Button {...props} type="button" variant="outline" size="sm" class={`gap-2 ${triggerClass}`}>
+				<CircleHelpIcon class="shell-header__control-icon" aria-hidden="true" />
+				<span class="shell-header__control-label">{triggerLabel}</span>
 			</Button>
 		{/snippet}
 	</Sheet.Trigger>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Card from '$lib/components/ui/card';
 	import { computeAvatarInitials } from '$lib/components/profile/avatarUploadModel';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
@@ -84,20 +85,18 @@
 <Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-4 border-b border-border/70">
 		<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
-			{#if currentUser.details.avatar_url}
-				<img
-					src={currentUser.details.avatar_url}
-					alt={`${currentUser.details.name || 'Member'} profile`}
-					class="size-16 rounded-full border border-border/70 object-cover shadow-sm"
-				/>
-			{:else}
-				<div
-					class="flex size-16 items-center justify-center rounded-full bg-muted text-lg font-semibold tracking-tight text-foreground"
-					aria-hidden="true"
-				>
-					{profileInitials}
-				</div>
-			{/if}
+			<Avatar.Root class="size-16 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+				{#if currentUser.details.avatar_url}
+					<Avatar.Image
+						src={currentUser.details.avatar_url}
+						alt={`${currentUser.details.name || 'Member'} profile`}
+					/>
+				{:else}
+					<Avatar.Fallback class="text-lg font-semibold tracking-tight text-foreground">
+						{profileInitials}
+					</Avatar.Fallback>
+				{/if}
+			</Avatar.Root>
 
 			<div class="min-w-0 space-y-2">
 				<div class="space-y-1">
@@ -120,7 +119,7 @@
 					<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
 						{stat.label}
 					</p>
-					<p class="mt-1 text-sm font-semibold leading-6 text-foreground break-words">{stat.value}</p>
+					<p class="mt-1 text-sm font-semibold leading-6 text-foreground wrap-break-word">{stat.value}</p>
 				</div>
 			{/each}
 		</div>

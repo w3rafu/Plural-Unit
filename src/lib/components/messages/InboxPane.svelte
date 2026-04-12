@@ -24,7 +24,7 @@
 	const sections: MessageInboxSections = $derived(getInboxThreadSections(threads, query));
 </script>
 
-<div class="flex h-full flex-col">
+<div class="flex h-full min-h-0 flex-col">
 	<!-- Search -->
 	<div class="relative px-3 pb-2 pt-1">
 		<Search class="pointer-events-none absolute left-6 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -37,7 +37,7 @@
 	</div>
 
 	<!-- Thread list -->
-	<div class="flex-1 overflow-y-auto px-1">
+	<div class="min-h-0 flex-1 overflow-y-auto px-1">
 		{#if sections.visibleThreads.length === 0}
 			<p class="px-3 py-6 text-center text-sm text-muted-foreground">
 				{query ? 'No conversations match your search.' : 'No conversations yet.'}

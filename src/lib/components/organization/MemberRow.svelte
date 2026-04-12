@@ -5,6 +5,7 @@
   All mutation events are dispatched to the parent via callbacks.
 -->
 <script lang="ts">
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Select from '$lib/components/ui/select';
@@ -48,20 +49,15 @@
 <Table.Row class="border-border/70">
 	<Table.Cell class="whitespace-normal">
 		<div class="flex items-center gap-3">
-			{#if member.avatar_url}
-				<img
-					src={member.avatar_url}
-					alt={`${member.name || 'Member'} profile`}
-					class="size-10 rounded-full border border-border/70 object-cover shadow-sm"
-				/>
-			{:else}
-				<div
-					class="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-semibold tracking-tight text-foreground"
-					aria-hidden="true"
-				>
-					{getMemberInitials(member)}
-				</div>
-			{/if}
+			<Avatar.Root class="size-10 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+				{#if member.avatar_url}
+					<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
+				{:else}
+					<Avatar.Fallback class="text-sm font-semibold tracking-tight text-foreground">
+						{getMemberInitials(member)}
+					</Avatar.Fallback>
+				{/if}
+			</Avatar.Root>
 
 			<div class="space-y-1">
 				<p class="font-medium text-foreground">{member.name || 'Unnamed member'}</p>

@@ -35,7 +35,7 @@
 
 <PageHeader preset="section" title="Messages" subtitle="Conversations and threads" />
 
-<main class="flex h-full flex-col gap-2">
+<main class="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
 	{#if !currentMessages.isReady}
 		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content>
@@ -51,7 +51,7 @@
 	{:else}
 		<!-- Desktop: side-by-side -->
 		<div class="hidden min-h-0 flex-1 md:grid md:grid-cols-[320px_1fr] md:gap-2">
-			<Card.Root class="h-full overflow-hidden">
+			<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
 				<InboxPane
 					threads={currentMessages.sortedThreads}
 					activeThreadId={currentMessages.activeThreadId}
@@ -59,7 +59,7 @@
 				/>
 			</Card.Root>
 
-			<Card.Root class="h-full overflow-hidden">
+			<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
 				{#if currentMessages.activeThread}
 					<ThreadPane
 						thread={currentMessages.activeThread}
@@ -78,9 +78,9 @@
 		</div>
 
 		<!-- Mobile: inbox or thread -->
-		<div class="md:hidden">
+		<div class="min-h-0 flex-1 md:hidden">
 			{#if showThread && currentMessages.activeThread}
-				<Card.Root class="h-full overflow-hidden">
+				<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
 					<ThreadPane
 						thread={currentMessages.activeThread}
 						isSending={currentMessages.isSending}
@@ -92,7 +92,7 @@
 					/>
 				</Card.Root>
 			{:else}
-				<Card.Root class="h-full overflow-hidden">
+				<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden">
 					<InboxPane
 						threads={currentMessages.sortedThreads}
 						activeThreadId={currentMessages.activeThreadId}

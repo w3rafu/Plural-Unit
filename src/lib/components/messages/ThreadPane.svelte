@@ -5,6 +5,7 @@
 <script lang="ts">
 	import type { MessageThread } from '$lib/models/messageModel';
 	import { getParticipantInitials } from '$lib/models/messageModel';
+	import * as Avatar from '$lib/components/ui/avatar';
 	import { groupMessagesByDay, formatMessageTime } from './messageUi';
 	import MessageComposer from './MessageComposer.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -42,26 +43,22 @@
 	});
 </script>
 
-<div class="flex h-full flex-col">
+<div class="flex h-full min-h-0 flex-col">
 	<!-- Header -->
-	<div class="flex items-center gap-3 border-b border-border/70 px-3 py-2">
+	<div class="flex items-center gap-3 border-b border-border/70 px-3 py-2.5 sm:px-4">
 		{#if onBack}
 			<Button variant="ghost" size="icon" class="shrink-0 md:hidden" onclick={onBack} aria-label="Back to inbox">
 				<ArrowLeft class="h-4 w-4" />
 			</Button>
 		{/if}
 
-		{#if thread.participant.avatar_url}
-			<img
-				src={thread.participant.avatar_url}
-				alt={thread.participant.name}
-				class="h-8 w-8 shrink-0 rounded-full object-cover"
-			/>
-		{:else}
-			<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-				{initials}
-			</div>
-		{/if}
+		<Avatar.Root class="size-8 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+			{#if thread.participant.avatar_url}
+				<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
+			{:else}
+				<Avatar.Fallback class="text-xs font-medium text-muted-foreground">{initials}</Avatar.Fallback>
+			{/if}
+		</Avatar.Root>
 
 		<div class="min-w-0 flex-1">
 			<p class="truncate text-sm font-medium">{thread.participant.name}</p>
@@ -86,7 +83,7 @@
 	</div>
 
 	<!-- Message stream -->
-	<div class="flex-1 overflow-y-auto px-3 py-2" bind:this={scrollContainer}>
+	<div class="min-h-0 flex-1 overflow-y-auto px-3 py-2 sm:px-4" bind:this={scrollContainer}>
 		{#each dayGroups as group (group.dateKey)}
 			<!-- Day separator -->
 			<div class="my-3 flex items-center gap-3">
@@ -118,7 +115,7 @@
 								loading="lazy"
 							/>
 						{:else}
-							<p class="text-sm whitespace-pre-wrap break-words">{message.body}</p>
+							<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
 						{/if}
 						<p
 							class={cn(
