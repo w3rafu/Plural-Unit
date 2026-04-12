@@ -26,7 +26,7 @@
 	});
 </script>
 
-<Card.Root class="border-border/70 bg-card/80">
+<Card.Root class="border-border/70 bg-card">
 	<Card.Header class="gap-3 border-b border-border/70">
 		<div class="space-y-1">
 			<Card.Title class="text-lg font-semibold tracking-tight">Hub setup</Card.Title>

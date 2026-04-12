@@ -1,21 +1,22 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn, type WithElementRef } from '$lib/utils';
+	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from "svelte/elements";
 
-	type Props = WithElementRef<
-		HTMLAttributes<HTMLDivElement> & {
-			children?: Snippet;
-		}
-	>;
-
-	let { ref = $bindable(null), class: className, children, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...restProps
+	}: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
 </script>
 
 <div
 	bind:this={ref}
 	data-slot="field-group"
-	class={cn('flex flex-col gap-4', className)}
+	class={cn(
+		"gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4 group/field-group @container/field-group flex w-full flex-col",
+		className
+	)}
 	{...restProps}
 >
 	{@render children?.()}

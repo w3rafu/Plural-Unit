@@ -58,7 +58,7 @@
 	});
 </script>
 
-<Card.Root class="border-border/70 bg-card/80">
+<Card.Root class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Overview</Card.Title>
 		<Card.Description>Review the basics tied to your organization membership.</Card.Description>

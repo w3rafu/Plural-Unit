@@ -1,22 +1,19 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn, type WithElementRef } from '$lib/utils';
+	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from "svelte/elements";
 
-	type Props = WithElementRef<
-		HTMLAttributes<HTMLTableSectionElement> & {
-			children?: Snippet;
-			class?: string;
-		}
-	>;
-
-	let { ref = $bindable(null), children, class: className, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...restProps
+	}: WithElementRef<HTMLAttributes<HTMLTableSectionElement>> = $props();
 </script>
 
 <thead
 	bind:this={ref}
 	data-slot="table-header"
-	class={cn('[&_tr]:border-b', className)}
+	class={cn("[&_tr]:border-b", className)}
 	{...restProps}
 >
 	{@render children?.()}

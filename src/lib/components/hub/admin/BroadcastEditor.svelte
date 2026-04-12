@@ -60,7 +60,7 @@
 
 </script>
 
-<Card.Root class="border-border/70 bg-card/80">
+<Card.Root class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Broadcasts</Card.Title>
 		<Card.Description>Write a short update that all members can scan quickly.</Card.Description>

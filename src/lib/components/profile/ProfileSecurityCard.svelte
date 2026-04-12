@@ -124,7 +124,7 @@
 	}
 </script>
 
-<Card.Root class="border-border/70 bg-card/80">
+<Card.Root class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Security</Card.Title>
 		<Card.Description>Update the email and password used to sign in to this account.</Card.Description>

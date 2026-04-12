@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Portal } from 'bits-ui';
+	import { Dialog as SheetPrimitive } from "bits-ui";
 
-	let { ...restProps }: import('svelte/elements').HTMLAttributes<HTMLDivElement> = $props();
+	let { ...restProps }: SheetPrimitive.PortalProps = $props();
 </script>
 
-<Portal {...restProps} />
+<SheetPrimitive.Portal {...restProps} />

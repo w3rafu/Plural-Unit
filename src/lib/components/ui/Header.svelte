@@ -121,45 +121,33 @@
 
 <style>
 	.shell-header {
-		padding-top: max(0.35rem, env(safe-area-inset-top));
+		padding-top: max(0.1rem, env(safe-area-inset-top));
 	}
 
 	.shell-header__surface {
 		display: grid;
 		align-items: center;
-		border: 1px solid rgb(24 24 27 / 0.08);
-		border-radius: 1.55rem;
-		padding: 1.05rem 1.1rem;
-		min-height: 4.75rem;
-		background:
-			radial-gradient(circle at top left, rgb(255 255 255 / 0.78), transparent 34%),
-			linear-gradient(180deg, rgb(255 255 255 / 0.92), rgb(244 244 245 / 0.96));
-		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.7),
-			inset 0 -1px 0 rgb(24 24 27 / 0.08),
-			0 16px 34px rgb(15 23 42 / 0.08);
-		backdrop-filter: blur(18px) saturate(1.08);
-	}
-
-	.shell-header__surface--brand {
-		background:
-			radial-gradient(circle at top left, rgb(255 211 153 / 0.22), transparent 28%),
-			radial-gradient(circle at top right, rgb(255 255 255 / 0.34), transparent 24%),
-			linear-gradient(180deg, rgb(255 255 255 / 0.94), rgb(243 244 246 / 0.98));
+		border: 0;
+		border-bottom: 1px solid var(--border);
+		border-radius: 0;
+		padding: 0.5rem 0 0.65rem;
+		min-height: 3.75rem;
+		background: transparent;
+		box-shadow: none;
 	}
 
 	.shell-header__surface--section,
 	.shell-header__surface--context,
 	.shell-header__surface--detail {
-		padding-block: 0.9rem;
-		min-height: 4.9375rem;
+		padding-block: 0.5rem 0.7rem;
+		min-height: 3.9rem;
 	}
 
 	.shell-header__row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.9rem;
+		gap: 0.75rem;
 		width: 100%;
 	}
 
@@ -168,7 +156,7 @@
 		min-width: 0;
 		flex: 1 1 auto;
 		align-items: center;
-		gap: 0.9rem;
+		gap: 0.75rem;
 	}
 
 	.shell-header__brand-mark {
@@ -176,8 +164,8 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 3.35rem;
-		height: 3.35rem;
+		width: 2.8rem;
+		height: 2.8rem;
 		border: 0;
 		border-radius: 0;
 		background: transparent;
@@ -187,8 +175,8 @@
 
 	.shell-header__brand-image {
 		display: block;
-		width: 3.15rem;
-		height: 3.15rem;
+		width: 2.55rem;
+		height: 2.55rem;
 		object-fit: contain;
 		filter: invert(1) brightness(0.1);
 		transform: none;
@@ -199,19 +187,16 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 2.7rem;
-		height: 2.7rem;
+		width: 2.35rem;
+		height: 2.35rem;
 		overflow: hidden;
-		border: 1px solid rgb(24 24 27 / 0.08);
+		border: 1px solid var(--border);
 		border-radius: 9999px;
-		background: rgb(255 255 255 / 0.82);
-		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.7),
-			0 6px 16px rgb(15 23 42 / 0.06);
+		background: var(--background);
 		font-size: 0.92rem;
 		font-weight: 700;
 		letter-spacing: -0.02em;
-		color: rgb(24 24 27);
+		color: var(--foreground);
 	}
 
 	.shell-header__avatar-image {
@@ -230,46 +215,46 @@
 
 	.shell-header__title {
 		margin: 0;
-		font-size: clamp(1.45rem, 2.8vw, 1.95rem);
+		font-size: clamp(1.25rem, 2.5vw, 1.7rem);
 		font-weight: 700;
 		line-height: 1;
 		letter-spacing: -0.045em;
-		color: rgb(24 24 27);
+		color: var(--foreground);
 	}
 
 	.shell-header__title--brand {
-		font-size: clamp(1.7rem, 3.3vw, 2.15rem);
+		font-size: clamp(1.45rem, 3vw, 1.95rem);
 	}
 
 	.shell-header__title--section,
 	.shell-header__title--context,
 	.shell-header__title--detail {
-		font-size: clamp(1.45rem, 2.7vw, 1.8rem);
+		font-size: clamp(1.22rem, 2.45vw, 1.55rem);
 	}
 
 	.shell-header__surface--section .shell-header__brand-mark {
-		width: 3rem;
-		height: 3rem;
+		width: 2.6rem;
+		height: 2.6rem;
 	}
 
 	.shell-header__surface--section .shell-header__brand-image {
-		width: 2.8rem;
-		height: 2.8rem;
+		width: 2.35rem;
+		height: 2.35rem;
 	}
 
 	.shell-header__subtitle {
-		margin: 0.28rem 0 0;
+		margin: 0.16rem 0 0;
 		max-width: 34rem;
-		font-size: 0.88rem;
-		line-height: 1.5;
-		color: rgb(82 82 91);
+		font-size: 0.82rem;
+		line-height: 1.35;
+		color: var(--muted-foreground);
 	}
 
 	.shell-header__back-button {
 		gap: 0.45rem;
 		flex: none;
 		border-radius: 9999px;
-		padding-inline: 0.9rem;
+		padding-inline: 0.75rem;
 	}
 
 	.shell-header__back-icon {
@@ -284,35 +269,49 @@
 	}
 
 	:global(.shell-header__control-group) {
-		border: 1px solid rgb(24 24 27 / 0.08);
-		border-radius: 1rem;
-		padding: 0.18rem;
-		background: rgb(255 255 255 / 0.62);
-		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.75),
-			0 1px 2px rgb(15 23 42 / 0.06);
-		backdrop-filter: blur(10px);
+		border: 1px solid var(--border);
+		border-radius: 9999px;
+		padding: 0.14rem;
+		background: var(--card);
 	}
 
 	:global(.shell-header__control) {
 		border-color: transparent;
+		border-radius: 9999px;
 		background: transparent;
 		box-shadow: none;
-		color: rgb(39 39 42);
+		color: var(--foreground);
+		transition:
+			background-color 150ms ease,
+			color 150ms ease,
+			border-color 150ms ease,
+			box-shadow 150ms ease;
 	}
 
 	:global(.shell-header__control:visited) {
-		color: rgb(39 39 42);
+		color: var(--foreground);
 	}
 
 	:global(.shell-header__control:hover) {
-		background: rgb(24 24 27 / 0.06);
-		color: rgb(24 24 27);
+		background: color-mix(in srgb, var(--color-muted) 82%, white 18%);
+		color: var(--foreground);
+	}
+
+	:global(.shell-header__control:active),
+	:global(.shell-header__control[aria-expanded='true']) {
+		background: var(--muted);
+		border-color: color-mix(in srgb, var(--color-border) 82%, var(--color-foreground) 18%);
+		box-shadow: inset 0 1px 1px rgb(15 23 42 / 0.05);
+	}
+
+	:global(.shell-header__control:focus-visible) {
+		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ring) 24%, transparent);
 	}
 
 	:global(.shell-header__control:disabled),
 	:global(.shell-header__control[aria-disabled='true']) {
-		color: rgb(113 113 122);
+		color: var(--muted-foreground);
 		opacity: 0.72;
 	}
 
@@ -327,24 +326,11 @@
 		top: 22%;
 		bottom: 22%;
 		width: 1px;
-		background: rgb(24 24 27 / 0.08);
+		background: var(--border);
 	}
 
 	:global(.dark .shell-header__surface) {
-		border-color: rgb(255 255 255 / 0.1);
-		background:
-			radial-gradient(circle at top left, rgb(255 255 255 / 0.08), transparent 34%),
-			linear-gradient(180deg, rgb(18 18 22 / 0.92), rgb(9 9 11 / 0.98));
-		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.05),
-			0 18px 44px rgb(0 0 0 / 0.24);
-	}
-
-	:global(.dark .shell-header__surface--brand) {
-		background:
-			radial-gradient(circle at top left, rgb(255 211 153 / 0.18), transparent 28%),
-			radial-gradient(circle at top right, rgb(255 255 255 / 0.08), transparent 24%),
-			linear-gradient(180deg, rgb(24 24 27 / 0.94), rgb(10 10 12 / 0.98));
+		box-shadow: none;
 	}
 
 	:global(.dark .shell-header__brand-image) {
@@ -352,54 +338,53 @@
 	}
 
 	:global(.dark .shell-header__avatar-badge) {
-		border-color: rgb(255 255 255 / 0.1);
-		background: rgb(255 255 255 / 0.05);
-		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.04),
-			0 10px 22px rgb(0 0 0 / 0.18);
-		color: rgb(250 250 250);
+		background: var(--background);
 	}
 
 	:global(.dark .shell-header__title) {
-		color: rgb(250 250 250);
+		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__subtitle) {
-		color: rgb(161 161 170);
+		color: var(--muted-foreground);
 	}
 
 	:global(.dark .shell-header__control-group) {
-		border-color: rgb(255 255 255 / 0.1);
-		background: rgb(255 255 255 / 0.04);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+		background: var(--card);
 	}
 
 	:global(.dark .shell-header__control) {
-		color: rgb(244 244 245);
+		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__control:visited) {
-		color: rgb(244 244 245);
+		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__control:hover) {
-		background: rgb(255 255 255 / 0.08);
-		color: rgb(255 255 255);
+		background: color-mix(in srgb, var(--color-muted) 88%, white 12%);
+		color: var(--foreground);
+	}
+
+	:global(.dark .shell-header__control:active),
+	:global(.dark .shell-header__control[aria-expanded='true']) {
+		background: var(--muted);
+		border-color: color-mix(in srgb, var(--color-border) 76%, white 24%);
+		box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.16);
 	}
 
 	:global(.dark .shell-header__control:disabled),
 	:global(.dark .shell-header__control[aria-disabled='true']) {
-		color: rgb(161 161 170);
+		color: var(--muted-foreground);
 	}
 
 	:global(.dark .shell-header__control-group > * + *::before) {
-		background: rgb(255 255 255 / 0.1);
+		background: var(--border);
 	}
 
 	@media (max-width: 480px) {
 		.shell-header__surface {
-			padding: 0.95rem 1rem;
-			border-radius: 1.3rem;
+			padding: 0.45rem 0 0.6rem;
 		}
 
 		.shell-header__row {
@@ -412,13 +397,13 @@
 		}
 
 		.shell-header__brand-mark {
-			width: 2.95rem;
-			height: 2.95rem;
+			width: 2.45rem;
+			height: 2.45rem;
 		}
 
 		.shell-header__brand-image {
-			width: 2.7rem;
-			height: 2.7rem;
+			width: 2.2rem;
+			height: 2.2rem;
 		}
 	}
 </style>

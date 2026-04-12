@@ -37,7 +37,7 @@
 
 <main class="flex h-full flex-col gap-2">
 	{#if !currentMessages.isReady}
-		<Card.Root size="sm" class="border-border/70 bg-card/70">
+		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content>
 				<p class="text-sm text-muted-foreground">Loading messages...</p>
 			</Card.Content>

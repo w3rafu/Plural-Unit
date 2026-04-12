@@ -1,68 +1,39 @@
 <script lang="ts">
-	import { Checkbox as CheckboxPrimitive } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils';
-
-	type Props = {
-		children?: Snippet;
-		checked?: boolean;
-		disabled?: boolean;
-		required?: boolean;
-		readonly?: boolean;
-		name?: string;
-		value?: string;
-		onCheckedChange?: (checked: boolean) => void;
-		indeterminate?: boolean;
-		class?: string;
-		ref?: HTMLButtonElement | null;
-	} & Record<string, any>;
+	import { Checkbox as CheckboxPrimitive } from "bits-ui";
+	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+	import CheckIcon from '@lucide/svelte/icons/check';
+	import MinusIcon from '@lucide/svelte/icons/minus';
 
 	let {
 		ref = $bindable(null),
-		class: className,
-		children,
 		checked = $bindable(false),
 		indeterminate = $bindable(false),
+		class: className,
 		...restProps
-	}: Props = $props();
+	}: WithoutChildrenOrChild<CheckboxPrimitive.RootProps> = $props();
 </script>
 
 <CheckboxPrimitive.Root
 	bind:ref
-	bind:checked
-	bind:indeterminate
 	data-slot="checkbox"
 	class={cn(
-		'peer data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 size-4 shrink-0 rounded-[4px] border border-input bg-background shadow-xs outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50',
+		"bg-input/90 data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary data-checked:border-primary aria-invalid:aria-checked:border-primary aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 flex size-4 items-center justify-center rounded-[5px] border border-transparent transition-shadow group-has-disabled/field:opacity-50 focus-visible:ring-3 aria-invalid:ring-3 peer relative shrink-0 outline-none after:absolute after:-inset-x-3 after:-inset-y-2 disabled:cursor-not-allowed disabled:opacity-50",
 		className
 	)}
+	bind:checked
+	bind:indeterminate
 	{...restProps}
 >
-	{#if checked}
-		<svg
-			class="pointer-events-none size-3.5 shrink-0 text-current"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="3"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
+	{#snippet children({ checked, indeterminate })}
+		<div
+			data-slot="checkbox-indicator"
+			class="[&>svg]:size-3.5 grid place-content-center text-current transition-none"
 		>
-			<path d="M20 6 9 17l-5-5" />
-		</svg>
-	{:else if indeterminate}
-		<svg
-			class="pointer-events-none size-3.5 shrink-0 text-current"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="3"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-		>
-			<path d="M5 12h14" />
-		</svg>
-	{/if}
+			{#if checked}
+				<CheckIcon  />
+			{:else if indeterminate}
+				<MinusIcon  />
+			{/if}
+		</div>
+	{/snippet}
 </CheckboxPrimitive.Root>

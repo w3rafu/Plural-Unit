@@ -1,35 +1,19 @@
 <script lang="ts">
-	import { RadioGroup as RadioGroupPrimitive } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/utils';
-
-	type Props = {
-		children?: Snippet;
-		value?: string;
-		name?: string;
-		disabled?: boolean;
-		required?: boolean;
-		orientation?: 'horizontal' | 'vertical';
-		onValueChange?: (value: string) => void;
-		class?: string;
-		ref?: HTMLDivElement | null;
-	} & Record<string, any>;
+	import { RadioGroup as RadioGroupPrimitive } from "bits-ui";
+	import { cn } from "$lib/utils.js";
 
 	let {
 		ref = $bindable(null),
 		class: className,
-		children,
-		value = $bindable(''),
+		value = $bindable(""),
 		...restProps
-	}: Props = $props();
+	}: RadioGroupPrimitive.RootProps = $props();
 </script>
 
 <RadioGroupPrimitive.Root
 	bind:ref
 	bind:value
 	data-slot="radio-group"
-	class={cn('grid gap-2', className)}
+	class={cn("grid gap-3 w-full", className)}
 	{...restProps}
->
-	{@render children?.()}
-</RadioGroupPrimitive.Root>
+/>

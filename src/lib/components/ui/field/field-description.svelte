@@ -1,21 +1,24 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn, type WithElementRef } from '$lib/utils';
+	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from "svelte/elements";
 
-	type Props = WithElementRef<
-		HTMLAttributes<HTMLParagraphElement> & {
-			children?: Snippet;
-		}
-	>;
-
-	let { ref = $bindable(null), class: className, children, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...restProps
+	}: WithElementRef<HTMLAttributes<HTMLParagraphElement>> = $props();
 </script>
 
 <p
 	bind:this={ref}
 	data-slot="field-description"
-	class={cn('text-sm text-muted-foreground', className)}
+	class={cn(
+		"text-muted-foreground text-left text-sm leading-normal font-normal [[data-variant=legend]+&]:-mt-1.5 group-has-data-[orientation=horizontal]/field:text-balance",
+		"last:mt-0 nth-last-2:-mt-1",
+		"[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+		className
+	)}
 	{...restProps}
 >
 	{@render children?.()}

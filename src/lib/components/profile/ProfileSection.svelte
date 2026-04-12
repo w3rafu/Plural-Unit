@@ -81,7 +81,7 @@
 	});
 </script>
 
-<Card.Root size="sm" class="border-border/70 bg-card/80">
+<Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-4 border-b border-border/70">
 		<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
 			{#if currentUser.details.avatar_url}

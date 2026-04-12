@@ -140,7 +140,7 @@
 {#if currentOrganization.isAdmin}
 	<div class="flex flex-col gap-4">
 		<div class="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-			<Card.Root class="border-border/70 bg-card/80">
+			<Card.Root class="border-border/70 bg-card">
 				<Card.Header class="gap-2 border-b border-border/70">
 					<Card.Title class="text-lg font-semibold tracking-tight">Join code</Card.Title>
 					<Card.Description>Share this when someone should be able to join without a direct invite.</Card.Description>
@@ -168,7 +168,7 @@
 			<InviteForm />
 		</div>
 
-		<Card.Root class="border-border/70 bg-card/80">
+		<Card.Root class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<Card.Title class="text-lg font-semibold tracking-tight">Pending invitations</Card.Title>
 				<Card.Description>Review the invites that are still waiting to be accepted.</Card.Description>
@@ -193,7 +193,7 @@
 		</Card.Root>
 	</div>
 {:else}
-	<Card.Root class="border-border/70 bg-card/80">
+	<Card.Root class="border-border/70 bg-card">
 		<Card.Header class="gap-2 border-b border-border/70">
 			<Card.Title class="text-lg font-semibold tracking-tight">Access</Card.Title>
 			<Card.Description>Join code and invitations are only available to organization admins.</Card.Description>

@@ -83,7 +83,7 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<Card.Root class="border-border/70 bg-card/80">
+		<Card.Root class="border-border/70 bg-card">
 			<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-foreground">Choose a section</p>

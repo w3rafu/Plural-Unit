@@ -13,19 +13,20 @@
 	<nav
 		id="bottom-nav"
 		aria-label="Primary"
-		class="app-bottom-nav flex-none z-20 pb-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+		class="app-bottom-nav z-20 flex-none"
+		style:padding-bottom={'max(0.6rem, env(safe-area-inset-bottom))'}
 	>
 		<div
-			class="grid grid-cols-4 gap-2 rounded-[1.55rem] border border-border/70 bg-card/90 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(24,24,27,0.08),0_16px_34px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-white/10 dark:bg-zinc-950/92 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_44px_rgba(0,0,0,0.24)]"
+			class="grid grid-cols-4 gap-1 border-t border-border/80 bg-transparent px-0 pt-2 pb-0 shadow-none"
 		>
 			{#each BOTTOM_NAV_TABS as tab (tab.id)}
 				<a
 					href={tab.href}
 					class={cn(
-						'relative flex min-h-14 items-center justify-center rounded-[1rem] border px-3 py-2 text-center text-sm font-medium transition-colors duration-150',
+						'relative flex min-h-[3rem] items-center justify-center rounded-xl border px-3 py-2 text-center text-sm font-medium transition-[background-color,border-color,color] duration-150',
 						activeTabId === tab.id
-							? 'border-border bg-background text-foreground shadow-sm dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950'
-							: 'border-transparent text-muted-foreground hover:bg-muted/65 hover:text-foreground dark:text-zinc-300 dark:hover:bg-zinc-800/90 dark:hover:text-zinc-50'
+							? 'border-border bg-card text-foreground after:absolute after:bottom-1 after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-foreground/85'
+							: 'border-transparent text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 					)}
 					aria-current={activeTabId === tab.id ? 'page' : undefined}
 				>
@@ -33,7 +34,7 @@
 					{#if tab.id === 'messages' && unreadCount > 0}
 						<span
 							class="absolute -top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.6rem] font-bold leading-none text-destructive-foreground"
-							aria-label="{unreadCount} unread"
+							aria-label={`${unreadCount} unread`}
 						>
 							{unreadCount > 99 ? '99+' : unreadCount}
 						</span>

@@ -1,25 +1,38 @@
 <script lang="ts">
-	import { Select as SelectPrimitive } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { getSelectItemClass } from './selectStyles';
+	import { Select as SelectPrimitive } from "bits-ui";
+	import { cn, type WithoutChild } from "$lib/utils.js";
+	import CheckIcon from '@lucide/svelte/icons/check';
 
-	type Props = {
-		children?: Snippet;
-		value: string;
-		label?: string;
-		disabled?: boolean;
-		class?: string;
-		ref?: HTMLDivElement | null;
-	} & Record<string, any>;
-
-	let { ref = $bindable(null), children, class: className, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		value,
+		label,
+		children: childrenProp,
+		...restProps
+	}: WithoutChild<SelectPrimitive.ItemProps> = $props();
 </script>
 
 <SelectPrimitive.Item
 	bind:ref
+	{value}
 	data-slot="select-item"
-	class={getSelectItemClass(className)}
+	class={cn(
+		"focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground relative flex w-full cursor-default select-none items-center gap-2.5 rounded-2xl py-2 pr-8 pl-3 text-sm font-medium outline-hidden data-disabled:pointer-events-none data-disabled:opacity-50 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+		className
+	)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#snippet children({ selected, highlighted })}
+		<span class="absolute inset-e-2 flex size-3.5 items-center justify-center">
+			{#if selected}
+				<CheckIcon class="cn-select-item-indicator-icon" />
+			{/if}
+		</span>
+		{#if childrenProp}
+			{@render childrenProp({ selected, highlighted })}
+		{:else}
+			{label || value}
+		{/if}
+	{/snippet}
 </SelectPrimitive.Item>

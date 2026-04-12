@@ -25,7 +25,7 @@
 	{:else}
 		<div class="space-y-3">
 			{#each currentHub.events as event (event.id)}
-				<Card.Root size="sm" class="border-border/70 bg-card/80">
+				<Card.Root size="sm" class="border-border/70 bg-card">
 					<Card.Content class="space-y-3">
 						<div class="space-y-1">
 							<h3 class="text-base font-medium text-foreground">{event.title}</h3>

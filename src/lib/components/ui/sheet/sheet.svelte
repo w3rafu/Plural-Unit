@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
+	import { Dialog as SheetPrimitive } from "bits-ui";
 
-	let { open = $bindable(false), ...restProps }: DialogPrimitive.RootProps = $props();
+	let { open = $bindable(false), ...restProps }: SheetPrimitive.RootProps = $props();
 </script>
 
-<DialogPrimitive.Root bind:open {...restProps} />
+<SheetPrimitive.Root bind:open {...restProps} />

@@ -26,7 +26,7 @@
 </script>
 
 <section aria-label="Login" class="card-grid">
-	<Card.Root class="border-border/70 bg-card/80">
+	<Card.Root class="border-border/70 bg-card">
 		<Card.Header class="gap-3 border-b border-border/70">
 			<div class="space-y-1">
 				<Card.Title class="text-lg font-semibold tracking-tight">Choose a sign-in method</Card.Title>
@@ -62,7 +62,7 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root class="border-border/70 bg-card/80">
+	<Card.Root class="border-border/70 bg-card">
 		<Card.Content class="space-y-5 pt-6">
 	{#if authBoundary.authChannel === 'email'}
 		{#if authBoundary.authMode === 'forgot_password'}

@@ -1,37 +1,29 @@
 <script lang="ts">
-	import { Select as SelectPrimitive } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { getSelectTriggerClass } from './selectStyles';
+	import { Select as SelectPrimitive } from "bits-ui";
+	import { cn, type WithoutChild } from "$lib/utils.js";
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
-	type Props = {
-		children?: Snippet;
-		class?: string;
-		id?: string;
-		ref?: HTMLButtonElement | null;
-	} & Record<string, any>;
-
-	let { ref = $bindable(null), children, class: className, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		size = "default",
+		...restProps
+	}: WithoutChild<SelectPrimitive.TriggerProps> & {
+		size?: "sm" | "default";
+	} = $props();
 </script>
 
 <SelectPrimitive.Trigger
 	bind:ref
 	data-slot="select-trigger"
-	class={getSelectTriggerClass(className)}
+	data-size={size}
+	class={cn(
+		"bg-input/50 data-placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 flex w-fit items-center justify-between gap-1.5 whitespace-nowrap rounded-3xl border border-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow,background-color] focus-visible:ring-3 aria-invalid:ring-3 data-[size=default]:h-9 data-[size=sm]:h-8 disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+		className
+	)}
 	{...restProps}
 >
-	<span class="truncate">
-		{@render children?.()}
-	</span>
-	<svg
-		aria-hidden="true"
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="2"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		class="size-4 shrink-0 opacity-50"
-	>
-		<path d="m6 9 6 6 6-6" />
-	</svg>
+	{@render children?.()}
+	<ChevronDownIcon class="text-muted-foreground size-4 pointer-events-none" />
 </SelectPrimitive.Trigger>

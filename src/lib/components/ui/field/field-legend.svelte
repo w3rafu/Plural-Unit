@@ -1,21 +1,23 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn, type WithElementRef } from '$lib/utils';
+	import { cn, type WithElementRef } from "$lib/utils.js";
+	import type { HTMLAttributes } from "svelte/elements";
 
-	type Props = WithElementRef<
-		HTMLAttributes<HTMLLegendElement> & {
-			children?: Snippet;
-		}
-	>;
-
-	let { ref = $bindable(null), class: className, children, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		variant = "legend",
+		children,
+		...restProps
+	}: WithElementRef<HTMLAttributes<HTMLLegendElement>> & {
+		variant?: "legend" | "label";
+	} = $props();
 </script>
 
 <legend
 	bind:this={ref}
 	data-slot="field-legend"
-	class={cn('text-sm font-medium leading-none', className)}
+	data-variant={variant}
+	class={cn("mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base", className)}
 	{...restProps}
 >
 	{@render children?.()}

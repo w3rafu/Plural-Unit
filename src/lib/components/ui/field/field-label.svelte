@@ -1,25 +1,25 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import type { HTMLLabelAttributes } from 'svelte/elements';
-	import { cn, type WithElementRef } from '$lib/utils';
+	import { Label } from "$lib/components/ui/label/index.js";
+	import { cn } from "$lib/utils.js";
+	import type { ComponentProps } from "svelte";
 
-	type Props = WithElementRef<
-		HTMLLabelAttributes & {
-			children?: Snippet;
-		}
-	>;
-
-	let { ref = $bindable(null), class: className, children, ...restProps }: Props = $props();
+	let {
+		ref = $bindable(null),
+		class: className,
+		children,
+		...restProps
+	}: ComponentProps<typeof Label> = $props();
 </script>
 
-<label
-	bind:this={ref}
+<Label
+	bind:ref
 	data-slot="field-label"
 	class={cn(
-		'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+		"has-data-checked:bg-input/30 gap-2 group-data-[disabled=true]/field:opacity-50 has-[>[data-slot=field]]:rounded-2xl has-[>[data-slot=field]]:border *:data-[slot=field]:p-4 group/field-label peer/field-label flex w-fit leading-snug",
+		"has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col",
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
-</label>
+</Label>

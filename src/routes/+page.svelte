@@ -55,7 +55,7 @@
 
 <main class="flex flex-col gap-4">
 	<!-- Quick stats row -->
-	<Card.Root class="border-border/70 bg-card/80">
+	<Card.Root class="border-border/70 bg-card">
 		<Card.Content class="grid gap-3 sm:grid-cols-4">
 			<div class="rounded-xl border border-border/70 bg-muted/35 px-4 py-3">
 				<p class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -109,7 +109,7 @@
 	<HubActivityFeed />
 
 	{#if currentHub.isLoading}
-		<Card.Root size="sm" class="border-border/70 bg-card/70">
+		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content>
 				<p class="text-sm text-muted-foreground">Loading the hub...</p>
 			</Card.Content>

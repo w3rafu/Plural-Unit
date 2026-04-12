@@ -86,7 +86,7 @@
 	}
 </script>
 
-<Card.Root class="border-border/70 bg-card/80">
+<Card.Root class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<div class="flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-start">
 			<div class="space-y-1">
