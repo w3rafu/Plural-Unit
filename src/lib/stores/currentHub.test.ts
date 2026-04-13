@@ -6,64 +6,85 @@ const mockFetchActivePlugins = vi.fn();
 const mockTogglePlugin = vi.fn();
 const mockFetchBroadcasts = vi.fn();
 const mockFetchEvents = vi.fn();
+const mockFetchEventReminderSettings = vi.fn();
 const mockFetchEventResponses = vi.fn();
+const mockFetchHubNotificationPreferences = vi.fn();
+const mockFetchHubNotificationReads = vi.fn();
 const mockFetchResources = vi.fn();
 const mockCreateBroadcast = vi.fn();
 const mockSaveBroadcastDraft = vi.fn();
 const mockScheduleBroadcast = vi.fn();
 const mockPublishBroadcastNow = vi.fn();
+const mockUpdateBroadcastDeliveryState = vi.fn();
 const mockUpdateBroadcast = vi.fn();
 const mockSetBroadcastPinned = vi.fn();
 const mockArchiveBroadcast = vi.fn();
 const mockRestoreBroadcast = vi.fn();
 const mockDeleteBroadcast = vi.fn();
 const mockCreateEvent = vi.fn();
+const mockSaveEventReminderSettings = vi.fn();
+const mockUpdateEventDeliveryState = vi.fn();
 const mockUpdateEvent = vi.fn();
 const mockCancelEvent = vi.fn();
 const mockArchiveEvent = vi.fn();
 const mockRestoreEvent = vi.fn();
 const mockDeleteEvent = vi.fn();
 const mockUpsertOwnEventResponse = vi.fn();
+const mockSaveHubNotificationPreferences = vi.fn();
+const mockMarkHubNotificationRead = vi.fn();
 const mockCreateResource = vi.fn();
 const mockUpdateResource = vi.fn();
 const mockSaveResourceOrder = vi.fn();
 const mockDeleteResource = vi.fn();
+const { mockCurrentOrganization } = vi.hoisted(() => ({
+	mockCurrentOrganization: {
+		organization: { id: 'org-1' as string },
+		membership: { profile_id: 'profile-1', role: 'admin' as 'admin' | 'member' },
+		members: [] as any[],
+		isLoadingMembers: false,
+		isAdmin: true
+	}
+}));
 
 vi.mock('$lib/repositories/hubRepository', () => ({
 	fetchActivePlugins: (...args: any[]) => mockFetchActivePlugins(...args),
 	togglePlugin: (...args: any[]) => mockTogglePlugin(...args),
 	fetchBroadcasts: (...args: any[]) => mockFetchBroadcasts(...args),
 	fetchEvents: (...args: any[]) => mockFetchEvents(...args),
+	fetchEventReminderSettings: (...args: any[]) => mockFetchEventReminderSettings(...args),
 	fetchEventResponses: (...args: any[]) => mockFetchEventResponses(...args),
+	fetchHubNotificationPreferences: (...args: any[]) => mockFetchHubNotificationPreferences(...args),
+	fetchHubNotificationReads: (...args: any[]) => mockFetchHubNotificationReads(...args),
 	fetchResources: (...args: any[]) => mockFetchResources(...args),
 	createBroadcast: (...args: any[]) => mockCreateBroadcast(...args),
 	saveBroadcastDraft: (...args: any[]) => mockSaveBroadcastDraft(...args),
 	scheduleBroadcast: (...args: any[]) => mockScheduleBroadcast(...args),
 	publishBroadcastNow: (...args: any[]) => mockPublishBroadcastNow(...args),
+	updateBroadcastDeliveryState: (...args: any[]) => mockUpdateBroadcastDeliveryState(...args),
 	updateBroadcast: (...args: any[]) => mockUpdateBroadcast(...args),
 	setBroadcastPinned: (...args: any[]) => mockSetBroadcastPinned(...args),
 	archiveBroadcast: (...args: any[]) => mockArchiveBroadcast(...args),
 	restoreBroadcast: (...args: any[]) => mockRestoreBroadcast(...args),
 	deleteBroadcast: (...args: any[]) => mockDeleteBroadcast(...args),
 	createEvent: (...args: any[]) => mockCreateEvent(...args),
+	saveEventReminderSettings: (...args: any[]) => mockSaveEventReminderSettings(...args),
+	updateEventDeliveryState: (...args: any[]) => mockUpdateEventDeliveryState(...args),
 	updateEvent: (...args: any[]) => mockUpdateEvent(...args),
 	cancelEvent: (...args: any[]) => mockCancelEvent(...args),
 	archiveEvent: (...args: any[]) => mockArchiveEvent(...args),
 	restoreEvent: (...args: any[]) => mockRestoreEvent(...args),
 	deleteEvent: (...args: any[]) => mockDeleteEvent(...args),
 	upsertOwnEventResponse: (...args: any[]) => mockUpsertOwnEventResponse(...args),
+	saveHubNotificationPreferences: (...args: any[]) => mockSaveHubNotificationPreferences(...args),
+	markHubNotificationRead: (...args: any[]) => mockMarkHubNotificationRead(...args),
 	createResource: (...args: any[]) => mockCreateResource(...args),
 	updateResource: (...args: any[]) => mockUpdateResource(...args),
 	saveResourceOrder: (...args: any[]) => mockSaveResourceOrder(...args),
 	deleteResource: (...args: any[]) => mockDeleteResource(...args)
 }));
 
-// Mock currentOrganization so orgId resolves
 vi.mock('./currentOrganization.svelte', () => ({
-	currentOrganization: {
-		organization: { id: 'org-1' },
-		membership: { profile_id: 'profile-1' }
-	}
+	currentOrganization: mockCurrentOrganization
 }));
 
 // Mock pluginRegistry
@@ -78,9 +99,12 @@ vi.mock('./pluginRegistry', () => ({
 }));
 
 // Mock hubNotifications
-vi.mock('$lib/models/hubNotifications', () => ({
-	buildHubNotifications: () => []
-}));
+vi.mock('$lib/models/hubNotifications', async () => {
+	const actual = await vi.importActual<typeof import('$lib/models/hubNotifications')>(
+		'$lib/models/hubNotifications'
+	);
+	return actual;
+});
 
 vi.mock('$lib/models/eventResponseModel', async () => {
 	const actual = await vi.importActual<typeof import('$lib/models/eventResponseModel')>(
@@ -104,6 +128,9 @@ function makeBroadcast(
 		publish_at: string | null;
 		archived_at: string | null;
 		expires_at: string | null;
+		delivery_state: 'scheduled' | 'published' | 'failed' | 'skipped' | null;
+		delivered_at: string | null;
+		delivery_failure_reason: string | null;
 	}> = {}
 ) {
 	return {
@@ -117,7 +144,10 @@ function makeBroadcast(
 		is_draft: overrides.is_draft ?? false,
 		publish_at: overrides.publish_at ?? null,
 		archived_at: overrides.archived_at ?? null,
-		expires_at: overrides.expires_at ?? null
+		expires_at: overrides.expires_at ?? null,
+		delivery_state: overrides.delivery_state ?? null,
+		delivered_at: overrides.delivered_at ?? null,
+		delivery_failure_reason: overrides.delivery_failure_reason ?? null
 	};
 }
 
@@ -135,6 +165,9 @@ function makeEvent(
 		publish_at: string | null;
 		canceled_at: string | null;
 		archived_at: string | null;
+			delivery_state: 'scheduled' | 'published' | 'failed' | 'skipped' | null;
+			delivered_at: string | null;
+			delivery_failure_reason: string | null;
 	}> = {}
 ) {
 	return {
@@ -149,7 +182,56 @@ function makeEvent(
 		updated_at: overrides.updated_at ?? '2026-04-12T10:00:00.000Z',
 		publish_at: overrides.publish_at ?? null,
 		canceled_at: overrides.canceled_at ?? null,
-		archived_at: overrides.archived_at ?? null
+		archived_at: overrides.archived_at ?? null,
+		delivery_state: overrides.delivery_state ?? null,
+		delivered_at: overrides.delivered_at ?? null,
+		delivery_failure_reason: overrides.delivery_failure_reason ?? null
+	};
+}
+
+function makeReminderSettings(
+	overrides: Partial<{
+		id: string;
+		event_id: string;
+		organization_id: string;
+		delivery_channel: 'in_app';
+		reminder_offsets: number[];
+		created_at: string;
+		updated_at: string;
+	}> = {}
+) {
+	return {
+		id: overrides.id ?? 'rem-1',
+		event_id: overrides.event_id ?? 'e1',
+		organization_id: overrides.organization_id ?? 'org-1',
+		delivery_channel: overrides.delivery_channel ?? 'in_app',
+		reminder_offsets: overrides.reminder_offsets ?? [1440, 120],
+		created_at: overrides.created_at ?? '2026-04-12T10:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-12T10:00:00.000Z'
+	};
+}
+
+function makeMember(
+	overrides: Partial<{
+		profile_id: string;
+		name: string;
+		email: string;
+		phone_number: string;
+		avatar_url: string;
+		role: 'admin' | 'member';
+		joined_via: 'created' | 'invitation' | 'code';
+		joined_at: string;
+	}> = {}
+) {
+	return {
+		profile_id: overrides.profile_id ?? 'profile-1',
+		name: overrides.name ?? 'Alex',
+		email: overrides.email ?? 'alex@example.com',
+		phone_number: overrides.phone_number ?? '',
+		avatar_url: overrides.avatar_url ?? '',
+		role: overrides.role ?? 'member',
+		joined_via: overrides.joined_via ?? 'invitation',
+		joined_at: overrides.joined_at ?? '2026-04-12T10:00:00.000Z'
 	};
 }
 
@@ -179,8 +261,61 @@ function makeResource(
 	};
 }
 
+function makeNotificationPreferenceRow(
+	overrides: Partial<{
+		id: string;
+		organization_id: string;
+		profile_id: string;
+		broadcast_enabled: boolean;
+		event_enabled: boolean;
+		created_at: string;
+		updated_at: string;
+	}> = {}
+) {
+	return {
+		id: overrides.id ?? 'pref-1',
+		organization_id: overrides.organization_id ?? 'org-1',
+		profile_id: overrides.profile_id ?? 'profile-1',
+		broadcast_enabled: overrides.broadcast_enabled ?? true,
+		event_enabled: overrides.event_enabled ?? true,
+		created_at: overrides.created_at ?? '2026-04-13T10:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-13T10:00:00.000Z'
+	};
+}
+
+function makeNotificationReadRow(
+	overrides: Partial<{
+		id: string;
+		organization_id: string;
+		profile_id: string;
+		notification_kind: 'broadcast' | 'event';
+		source_id: string;
+		read_at: string;
+		created_at: string;
+		updated_at: string;
+	}> = {}
+) {
+	return {
+		id: overrides.id ?? 'read-1',
+		organization_id: overrides.organization_id ?? 'org-1',
+		profile_id: overrides.profile_id ?? 'profile-1',
+		notification_kind: overrides.notification_kind ?? 'broadcast',
+		source_id: overrides.source_id ?? 'b1',
+		read_at: overrides.read_at ?? '2026-04-13T10:00:00.000Z',
+		created_at: overrides.created_at ?? '2026-04-13T10:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-13T10:00:00.000Z'
+	};
+}
+
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockCurrentOrganization.organization = { id: 'org-1' };
+	mockCurrentOrganization.membership = { profile_id: 'profile-1', role: 'admin' };
+	mockCurrentOrganization.members = [];
+	mockCurrentOrganization.isLoadingMembers = false;
+	mockCurrentOrganization.isAdmin = true;
+	mockFetchHubNotificationPreferences.mockResolvedValue(null);
+	mockFetchHubNotificationReads.mockResolvedValue([]);
 	currentHub.reset();
 });
 
@@ -193,6 +328,9 @@ describe('currentHub.load', () => {
 		]);
 		mockFetchBroadcasts.mockResolvedValueOnce([makeBroadcast({ id: 'b1', title: 'Hello' })]);
 		mockFetchEvents.mockResolvedValueOnce([makeEvent({ id: 'e1', title: 'Meeting' })]);
+		mockFetchEventReminderSettings.mockResolvedValueOnce([
+			makeReminderSettings({ event_id: 'e1', reminder_offsets: [1440, 120] })
+		]);
 		mockFetchEventResponses.mockResolvedValueOnce([
 			{
 				id: 'r1',
@@ -214,9 +352,63 @@ describe('currentHub.load', () => {
 		expect(currentHub.plugins.resources).toBe(true);
 		expect(currentHub.broadcasts).toEqual([makeBroadcast({ id: 'b1', title: 'Hello' })]);
 		expect(currentHub.events).toEqual([makeEvent({ id: 'e1', title: 'Meeting' })]);
+		expect(currentHub.getEventReminderOffsets('e1')).toEqual([1440, 120]);
 		expect(currentHub.resources).toEqual([makeResource({ id: 'r1', title: 'Prayer guide' })]);
 		expect(currentHub.getOwnEventResponse('e1')).toBe('going');
 		expect(currentHub.isLoading).toBe(false);
+	});
+
+	it('reconciles persisted delivery metadata for scheduled content when admin load detects a state change', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([
+			{ plugin_key: 'broadcasts', is_enabled: true },
+			{ plugin_key: 'events', is_enabled: true }
+		]);
+		mockFetchBroadcasts.mockResolvedValueOnce([
+			makeBroadcast({ id: 'b1', publish_at: '2026-04-13T10:00:00.000Z' })
+		]);
+		mockFetchEvents.mockResolvedValueOnce([
+			makeEvent({ id: 'e1', publish_at: '2026-04-13T09:00:00.000Z', starts_at: '2026-04-14T09:00:00.000Z' })
+		]);
+		mockFetchEventReminderSettings.mockResolvedValueOnce([]);
+		mockFetchEventResponses.mockResolvedValueOnce([]);
+		mockFetchResources.mockResolvedValueOnce([]);
+		mockUpdateBroadcastDeliveryState.mockResolvedValueOnce(
+			makeBroadcast({
+				id: 'b1',
+				publish_at: '2026-04-13T10:00:00.000Z',
+				delivery_state: 'published',
+				delivered_at: '2026-04-13T10:00:00.000Z'
+			})
+		);
+		mockUpdateEventDeliveryState.mockResolvedValueOnce(
+			makeEvent({
+				id: 'e1',
+				publish_at: '2026-04-13T09:00:00.000Z',
+				starts_at: '2026-04-14T09:00:00.000Z',
+				delivery_state: 'published',
+				delivered_at: '2026-04-13T09:00:00.000Z'
+			})
+		);
+
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-13T12:00:00.000Z'));
+
+		await currentHub.load();
+
+		expect(mockUpdateBroadcastDeliveryState).toHaveBeenCalledWith('b1', {
+			delivery_state: 'published',
+			delivered_at: '2026-04-13T10:00:00.000Z',
+			delivery_failure_reason: null
+		});
+		expect(mockUpdateEventDeliveryState).toHaveBeenCalledWith('e1', {
+			delivery_state: 'published',
+			delivered_at: '2026-04-13T09:00:00.000Z',
+			delivery_failure_reason: null
+		});
+		expect(currentHub.getBroadcastDeliveryStatus('b1')).toMatchObject({ state: 'published' });
+		expect(currentHub.getEventDeliveryStatus('e1')).toMatchObject({ state: 'published' });
+
+		vi.useRealTimers();
 	});
 
 	it('skips fetching data for disabled plugins', async () => {
@@ -230,12 +422,27 @@ describe('currentHub.load', () => {
 
 		expect(mockFetchBroadcasts).not.toHaveBeenCalled();
 		expect(mockFetchEvents).not.toHaveBeenCalled();
+		expect(mockFetchEventReminderSettings).not.toHaveBeenCalled();
 		expect(mockFetchEventResponses).not.toHaveBeenCalled();
 		expect(mockFetchResources).not.toHaveBeenCalled();
 		expect(currentHub.broadcasts).toEqual([]);
 		expect(currentHub.events).toEqual([]);
 		expect(currentHub.resources).toEqual([]);
+		expect(currentHub.eventReminderSettingsMap).toEqual({});
 		expect(currentHub.eventResponseMap).toEqual({});
+	});
+
+	it('skips loading event reminder settings for non-admin members', async () => {
+		mockCurrentOrganization.membership = { profile_id: 'profile-1', role: 'member' };
+		mockCurrentOrganization.isAdmin = false;
+		mockFetchActivePlugins.mockResolvedValueOnce([{ plugin_key: 'events', is_enabled: true }]);
+		mockFetchEvents.mockResolvedValueOnce([makeEvent({ id: 'e1', title: 'Meeting' })]);
+		mockFetchEventResponses.mockResolvedValueOnce([]);
+
+		await currentHub.load();
+
+		expect(mockFetchEventReminderSettings).not.toHaveBeenCalled();
+		expect(currentHub.getEventReminderOffsets('e1')).toEqual([]);
 	});
 
 	it('captures error and re-throws on failure', async () => {
@@ -269,6 +476,87 @@ describe('currentHub.load', () => {
 		expect(mockFetchActivePlugins).toHaveBeenCalledTimes(1);
 		expect(mockFetchBroadcasts).not.toHaveBeenCalled();
 		expect(currentHub.hasLoadedForCurrentOrg).toBe(true);
+	});
+
+	it('hydrates member notification preferences and read state during load', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([
+			{ plugin_key: 'broadcasts', is_enabled: true },
+			{ plugin_key: 'events', is_enabled: true }
+		]);
+		mockFetchBroadcasts.mockResolvedValueOnce([makeBroadcast({ id: 'b1', title: 'Broadcast' })]);
+		mockFetchEvents.mockResolvedValueOnce([makeEvent({ id: 'e1', title: 'Event' })]);
+		mockFetchEventReminderSettings.mockResolvedValueOnce([]);
+		mockFetchEventResponses.mockResolvedValueOnce([]);
+		mockFetchResources.mockResolvedValueOnce([]);
+		mockFetchHubNotificationPreferences.mockResolvedValueOnce(
+			makeNotificationPreferenceRow({ broadcast_enabled: false, event_enabled: true })
+		);
+		mockFetchHubNotificationReads.mockResolvedValueOnce([
+			makeNotificationReadRow({ notification_kind: 'event', source_id: 'e1' })
+		]);
+
+		await currentHub.load();
+
+		expect(currentHub.notificationPreferences).toEqual({ broadcast: false, event: true });
+		expect(currentHub.notificationReadMap).toEqual({
+			'event:e1': '2026-04-13T10:00:00.000Z'
+		});
+		expect(currentHub.activityFeed.map((item) => item.id)).toEqual(['event:e1']);
+		expect(currentHub.unreadActivityCount).toBe(0);
+	});
+});
+
+describe('currentHub notification preferences', () => {
+	it('persists updated member alert preferences', async () => {
+		mockSaveHubNotificationPreferences.mockResolvedValueOnce(
+			makeNotificationPreferenceRow({ broadcast_enabled: true, event_enabled: false })
+		);
+
+		await currentHub.updateNotificationPreferences({ broadcast: true, event: false });
+
+		expect(mockSaveHubNotificationPreferences).toHaveBeenCalledWith('org-1', 'profile-1', {
+			broadcast_enabled: true,
+			event_enabled: false
+		});
+		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: false });
+		expect(currentHub.isSavingNotificationPreferences).toBe(false);
+	});
+
+	it('marks a single visible alert as read and updates the unread count', async () => {
+		currentHub.broadcasts = [makeBroadcast({ id: 'b1', title: 'Broadcast' })];
+		currentHub.loadedOrgId = 'org-1';
+		mockMarkHubNotificationRead.mockResolvedValueOnce(
+			makeNotificationReadRow({ notification_kind: 'broadcast', source_id: 'b1' })
+		);
+
+		await currentHub.markActivityRead(currentHub.activityFeed[0]);
+
+		expect(mockMarkHubNotificationRead).toHaveBeenCalledWith({
+			organizationId: 'org-1',
+			profileId: 'profile-1',
+			notificationKind: 'broadcast',
+			sourceId: 'b1'
+		});
+		expect(currentHub.notificationReadMap).toEqual({
+			'broadcast:b1': '2026-04-13T10:00:00.000Z'
+		});
+		expect(currentHub.unreadActivityCount).toBe(0);
+		expect(currentHub.notificationReadTargetId).toBe('');
+	});
+
+	it('marks all visible alerts read in a single pass', async () => {
+		currentHub.broadcasts = [makeBroadcast({ id: 'b1' })];
+		currentHub.events = [makeEvent({ id: 'e1' })];
+		currentHub.loadedOrgId = 'org-1';
+		mockMarkHubNotificationRead
+			.mockResolvedValueOnce(makeNotificationReadRow({ notification_kind: 'broadcast', source_id: 'b1' }))
+			.mockResolvedValueOnce(makeNotificationReadRow({ notification_kind: 'event', source_id: 'e1' }));
+
+		await currentHub.markAllActivityRead();
+
+		expect(mockMarkHubNotificationRead).toHaveBeenCalledTimes(2);
+		expect(currentHub.unreadActivityCount).toBe(0);
+		expect(currentHub.isMarkingAllActivityRead).toBe(false);
 	});
 });
 
@@ -436,23 +724,34 @@ describe('currentHub.removeBroadcast', () => {
 });
 
 describe('currentHub.addEvent', () => {
-	it('creates an event and inserts it sorted by starts_at', async () => {
+	it('creates an event, inserts it sorted by starts_at, and saves reminder settings when provided', async () => {
 		currentHub.events = [makeEvent({ id: 'e1', title: 'Earlier', starts_at: '2026-04-01' })];
 		const row = makeEvent({ id: 'e2', title: 'Later', starts_at: '2026-05-01' });
 		mockCreateEvent.mockResolvedValueOnce(row);
+		mockSaveEventReminderSettings.mockResolvedValueOnce(
+			makeReminderSettings({ event_id: 'e2', reminder_offsets: [1440, 120] })
+		);
 
-		await currentHub.addEvent({
+		await currentHub.addEvent(
+			{
 			title: 'Later',
 			description: '',
 			starts_at: '2026-05-01',
 			ends_at: null,
 			location: '',
 			publish_at: null
-		});
+			},
+			[120, 1440]
+		);
 
 		expect(currentHub.events).toHaveLength(2);
 		expect(currentHub.events[0].id).toBe('e1');
 		expect(currentHub.events[1].id).toBe('e2');
+		expect(mockSaveEventReminderSettings).toHaveBeenCalledWith('e2', 'org-1', {
+			delivery_channel: 'in_app',
+			reminder_offsets: [1440, 120]
+		});
+		expect(currentHub.getEventReminderOffsets('e2')).toEqual([1440, 120]);
 		expect(currentHub.eventTargetId).toBe('');
 	});
 });
@@ -461,17 +760,25 @@ describe('currentHub.updateEvent', () => {
 	it('updates an event in place', async () => {
 		currentHub.events = [makeEvent({ id: 'e1', title: 'Old' })];
 		mockUpdateEvent.mockResolvedValueOnce(makeEvent({ id: 'e1', title: 'New' }));
+		mockSaveEventReminderSettings.mockResolvedValueOnce(
+			makeReminderSettings({ event_id: 'e1', reminder_offsets: [120] })
+		);
 
-		await currentHub.updateEvent('e1', {
-			title: 'New',
-			description: '',
-			starts_at: '2026-04-20T16:30:00.000Z',
-			ends_at: null,
-			location: '',
-			publish_at: null
-		});
+		await currentHub.updateEvent(
+			'e1',
+			{
+				title: 'New',
+				description: '',
+				starts_at: '2026-04-20T16:30:00.000Z',
+				ends_at: null,
+				location: '',
+				publish_at: null
+			},
+			[120]
+		);
 
 		expect(currentHub.events[0]?.title).toBe('New');
+		expect(currentHub.getEventReminderOffsets('e1')).toEqual([120]);
 		expect(currentHub.eventTargetId).toBe('');
 	});
 });
@@ -538,6 +845,56 @@ describe('currentHub hubEngagementSummary', () => {
 	});
 });
 
+describe('currentHub.getEventResponseRoster', () => {
+	it('derives responders and non-responders from the current organization roster', () => {
+		currentHub.events = [makeEvent({ id: 'live-roster' })];
+		currentHub.eventResponseMap = {
+			'live-roster': [
+				{
+					id: 'r1',
+					event_id: 'live-roster',
+					organization_id: 'org-1',
+					profile_id: 'profile-2',
+					response: 'maybe',
+					created_at: '2026-04-13T10:00:00.000Z',
+					updated_at: '2026-04-13T10:00:00.000Z'
+				},
+				{
+					id: 'r2',
+					event_id: 'live-roster',
+					organization_id: 'org-1',
+					profile_id: 'profile-9',
+					response: 'going',
+					created_at: '2026-04-13T11:00:00.000Z',
+					updated_at: '2026-04-13T11:00:00.000Z'
+				}
+			]
+		};
+		mockCurrentOrganization.members = [
+			makeMember({ profile_id: 'profile-1', name: 'Alex', role: 'admin' }),
+			makeMember({ profile_id: 'profile-2', name: 'Bea' }),
+			makeMember({ profile_id: 'profile-3', name: 'Chris' })
+		];
+
+		const roster = currentHub.getEventResponseRoster('live-roster');
+
+		expect(roster).toMatchObject({
+			totalMembers: 3,
+			respondedCount: 1,
+			nonResponderCount: 2,
+			externalResponseCount: 1
+		});
+		expect(roster?.responders[0]).toMatchObject({
+			member: { profile_id: 'profile-2' },
+			response: 'maybe'
+		});
+		expect(roster?.nonResponders.map((entry) => entry.member.profile_id)).toEqual([
+			'profile-1',
+			'profile-3'
+		]);
+	});
+});
+
 describe('currentHub.cancelEvent', () => {
 	it('moves a canceled event into the inactive bucket', async () => {
 		currentHub.events = [makeEvent({ id: 'e1' })];
@@ -598,6 +955,7 @@ describe('currentHub.removeEvent', () => {
 		await currentHub.removeEvent('e1');
 
 		expect(currentHub.events).toHaveLength(0);
+		expect(currentHub.getEventReminderOffsets('e1')).toEqual([]);
 		expect(currentHub.eventResponseMap).toEqual({});
 	});
 });
@@ -751,10 +1109,16 @@ describe('currentHub.reset', () => {
 		currentHub.broadcasts = [makeBroadcast({ id: 'b1', title: 'X' })];
 		currentHub.resources = [makeResource({ id: 'r1', title: 'Guide' })];
 		currentHub.eventResponseMap = { e1: [] };
+		currentHub.eventReminderSettingsMap = { e1: makeReminderSettings({ event_id: 'e1' }) };
+		currentHub.notificationPreferences = { broadcast: false, event: true };
+		currentHub.notificationReadMap = { 'broadcast:b1': '2026-04-13T10:00:00.000Z' };
 		currentHub.broadcastTargetId = 'b1';
 		currentHub.eventTargetId = 'e1';
 		currentHub.resourceTargetId = 'r1';
 		currentHub.eventResponseTargetId = 'e1';
+		currentHub.isSavingNotificationPreferences = true;
+		currentHub.notificationReadTargetId = 'broadcast:b1';
+		currentHub.isMarkingAllActivityRead = true;
 		currentHub.lastError = new Error('old');
 
 		currentHub.reset();
@@ -768,7 +1132,13 @@ describe('currentHub.reset', () => {
 		expect(currentHub.eventTargetId).toBe('');
 		expect(currentHub.resourceTargetId).toBe('');
 		expect(currentHub.eventResponseMap).toEqual({});
+		expect(currentHub.eventReminderSettingsMap).toEqual({});
 		expect(currentHub.eventResponseTargetId).toBe('');
+		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: true });
+		expect(currentHub.notificationReadMap).toEqual({});
+		expect(currentHub.isSavingNotificationPreferences).toBe(false);
+		expect(currentHub.notificationReadTargetId).toBe('');
+		expect(currentHub.isMarkingAllActivityRead).toBe(false);
 		expect(currentHub.plugins).toEqual({ broadcasts: false, events: false, resources: false });
 		expect(currentHub.lastError).toBeNull();
 		expect(currentHub.isLoading).toBe(false);

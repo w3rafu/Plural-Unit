@@ -184,10 +184,31 @@
 		return currentHub.getBroadcastEngagementSignal(broadcastId);
 	}
 
+	function getDeliveryStatus(broadcastId: string) {
+		return currentHub.getBroadcastDeliveryStatus(broadcastId);
+	}
+
 	function getEngagementClass(broadcastId: string) {
 		return getEngagementSignal(broadcastId)?.needsAttention
 			? 'text-xs text-foreground'
 			: 'text-xs text-muted-foreground';
+	}
+
+	function getDeliveryClass(broadcastId: string) {
+		return getDeliveryStatus(broadcastId)?.needsAttention
+			? 'text-xs text-foreground'
+			: 'text-xs text-muted-foreground';
+	}
+
+	function getDeliveryCopy(broadcastId: string) {
+		const deliveryStatus = getDeliveryStatus(broadcastId);
+		if (!deliveryStatus) {
+			return null;
+		}
+
+		return deliveryStatus.state === 'scheduled'
+			? 'Delivery scheduled.'
+			: deliveryStatus.copy;
 	}
 
 	async function submit() {
@@ -477,6 +498,7 @@
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
+								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{broadcast.title}</Item.Title>
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
@@ -485,6 +507,9 @@
 								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
 									{getMetaCopy(broadcast)}
 								</p>
+								{#if deliveryCopy}
+									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
+								{/if}
 								{#if engagementSignal}
 									<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 								{/if}
@@ -531,6 +556,7 @@
 					<Item.Root variant="muted" size="sm">
 						<Item.Content>
 							{@const engagementSignal = getEngagementSignal(broadcast.id)}
+							{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
 							<div class="flex flex-wrap items-center gap-2">
 								<Item.Title>{broadcast.title}</Item.Title>
 								<Badge variant={broadcast.is_pinned ? 'secondary' : 'outline'}>
@@ -541,6 +567,9 @@
 							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
 								{getMetaCopy(broadcast)}
 							</p>
+							{#if deliveryCopy}
+								<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
+							{/if}
 							{#if engagementSignal}
 								<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 							{/if}
@@ -587,6 +616,8 @@
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
+								{@const deliveryStatus = getDeliveryStatus(broadcast.id)}
+								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{broadcast.title}</Item.Title>
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
@@ -596,11 +627,19 @@
 									{getMetaCopy(broadcast)}
 								</p>
 								<p class="text-xs text-muted-foreground">{getHistoryCopy(broadcast)}</p>
+								{#if deliveryCopy}
+									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
+								{/if}
 								{#if engagementSignal}
 									<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 								{/if}
 							</Item.Content>
 							<Item.Actions>
+								{#if getDeliveryStatus(broadcast.id)}
+									<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
+										Edit
+									</Button>
+								{/if}
 								<Button variant="ghost" size="sm" onclick={() => restore(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
 									Restore
 								</Button>

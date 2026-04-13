@@ -4,14 +4,15 @@
 
 ## Status
 
-Planned on 2026-04-12.
+Completed on 2026-04-13.
 
-- 0.1.24 is documented as complete, and 0.1.25 should assume the remaining release metadata sync is handled separately from this scope.
+- 0.1.24 is documented as complete.
+- app metadata is now synced to `0.1.25` in `package.json` and `package-lock.json`.
 - Slice a, event lifecycle and scheduled visibility, was implemented on 2026-04-12 and validated with `npm run check` plus `npm test` at 36 files / 494 tests.
 - Slice b, calendar export and reminder-ready event details, was implemented on 2026-04-12 and validated with `npm run check` plus `npm test` at 37 files / 499 tests.
 - Slice c, broadcast drafts and scheduled publishing, was implemented on 2026-04-12 and validated with `npm run check` plus `npm test` at 37 files / 510 tests.
 - Slice d, lightweight engagement summaries, was implemented on 2026-04-13 and validated with `npm run check` plus `npm test` at 38 files / 518 tests.
-- Slice e, actionable alerts sheet, was implemented on 2026-04-13 and validated with `npm run check` plus `npm test` at 38 files / 520 tests.
+- Slice e, actionable alerts sheet, was implemented on 2026-04-13 and validated with `npm run check` plus `npm test` at 38 files / 522 tests after the final load-deduplication and manage-link polish pass.
 
 ## Additional product notes
 

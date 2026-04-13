@@ -4,9 +4,11 @@
   Rendered by the hub manage page when the `events` plugin is active.
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onDestroy } from 'svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
@@ -16,19 +18,31 @@
 		normalizeEventLocation
 	} from '$lib/models/eventCalendarModel';
 	import {
+		EVENT_REMINDER_OPTIONS,
+		formatEventReminderOffset,
+		getEventReminderSummaryCopy,
+		normalizeEventReminderOffsets
+	} from '$lib/models/eventReminderModel';
+	import {
 		getEventStateLabel,
 		parseEventDateTimeLocalValue,
 		toEventDateTimeLocalValue
 	} from '$lib/models/eventLifecycleModel';
 	import {
 		formatEventAttendanceSummary,
-		formatEventResponseTotal
+		formatEventResponseTotal,
+		getEventResponseLabel,
+		getEventResponseRosterSummaryCopy
 	} from '$lib/models/eventResponseModel';
 	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
 	import type { EventRow } from '$lib/repositories/hubRepository';
+	import { currentMessages } from '$lib/stores/currentMessages.svelte';
+	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
+	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { formatEventDateTime, formatShortDateTime } from '$lib/utils/dateFormat';
 
 	let editingId = $state<string | null>(null);
@@ -37,8 +51,10 @@
 	let startsAt = $state('');
 	let endsAt = $state('');
 	let publishAt = $state('');
+	let selectedReminderOffsets = $state<number[]>([]);
 	let location = $state('');
 	let feedback = $state('');
+	let openingConversationForProfileId = $state('');
 	const UNSAVED_CHANGES_KEY = 'hub-event-editor';
 	const editingEvent = $derived(
 		editingId ? currentHub.events.find((event) => event.id === editingId) ?? null : null
@@ -50,8 +66,12 @@
 			startsAt: toEventDateTimeLocalValue(editingEvent?.starts_at ?? null),
 			endsAt: toEventDateTimeLocalValue(editingEvent?.ends_at ?? null),
 			publishAt: toEventDateTimeLocalValue(editingEvent?.publish_at ?? null),
+			reminderOffsets: editingEvent ? currentHub.getEventReminderOffsets(editingEvent.id).join('|') : '',
 			location: getEventLocationLabel(editingEvent?.location)
 		})
+	);
+	const normalizedSelectedReminderOffsets = $derived(
+		normalizeEventReminderOffsets(selectedReminderOffsets)
 	);
 	const currentEventSnapshot = $derived.by(() =>
 		createDirtySnapshot({
@@ -60,6 +80,7 @@
 			startsAt,
 			endsAt,
 			publishAt,
+			reminderOffsets: normalizedSelectedReminderOffsets.join('|'),
 			location: normalizeEventLocation(location)
 		})
 	);
@@ -67,6 +88,11 @@
 	const liveEvents = $derived(currentHub.liveEvents);
 	const scheduledEvents = $derived(currentHub.scheduledEvents);
 	const inactiveEvents = $derived(currentHub.inactiveEvents);
+	const selectedReminderPlanCopy = $derived.by(() =>
+		normalizedSelectedReminderOffsets.length === 0
+			? 'No reminders will be queued for this event.'
+			: `Selected: ${normalizedSelectedReminderOffsets.map((offset) => formatEventReminderOffset(offset)).join(' · ')}.`
+	);
 	const isEventDirty = $derived(currentEventSnapshot !== initialEventSnapshot);
 
 	$effect(() => {
@@ -84,6 +110,7 @@
 		startsAt = '';
 		endsAt = '';
 		publishAt = '';
+		selectedReminderOffsets = [];
 		location = '';
 		feedback = '';
 	}
@@ -95,8 +122,17 @@
 		startsAt = toEventDateTimeLocalValue(event.starts_at);
 		endsAt = toEventDateTimeLocalValue(event.ends_at);
 		publishAt = toEventDateTimeLocalValue(event.publish_at);
+		selectedReminderOffsets = currentHub.getEventReminderOffsets(event.id);
 		location = getEventLocationLabel(event.location);
 		feedback = '';
+	}
+
+	function toggleReminderOffset(offsetMinutes: number) {
+		selectedReminderOffsets = normalizeEventReminderOffsets(
+			selectedReminderOffsets.includes(offsetMinutes)
+				? selectedReminderOffsets.filter((value) => value !== offsetMinutes)
+				: [...selectedReminderOffsets, offsetMinutes]
+		);
 	}
 
 	function getScheduleCopy(event: EventRow) {
@@ -136,10 +172,53 @@
 		return currentHub.getEventEngagementSignal(eventId);
 	}
 
+	function getResponseRoster(eventId: string) {
+		return currentHub.getEventResponseRoster(eventId);
+	}
+
+	function getDeliveryStatus(eventId: string) {
+		return currentHub.getEventDeliveryStatus(eventId);
+	}
+
 	function getEngagementClass(eventId: string) {
 		return getEngagementSignal(eventId)?.needsAttention
 			? 'text-xs text-foreground'
 			: 'text-xs text-muted-foreground';
+	}
+
+	function getDeliveryClass(eventId: string) {
+		return getDeliveryStatus(eventId)?.needsAttention
+			? 'text-xs text-foreground'
+			: 'text-xs text-muted-foreground';
+	}
+
+	function getDeliveryCopy(eventId: string) {
+		const deliveryStatus = getDeliveryStatus(eventId);
+		if (!deliveryStatus) {
+			return null;
+		}
+
+		return deliveryStatus.state === 'scheduled'
+			? 'Delivery scheduled.'
+			: deliveryStatus.copy;
+	}
+
+	async function messageProfile(profileId: string) {
+		openingConversationForProfileId = profileId;
+
+		try {
+			await currentMessages.openConversationForProfile(profileId, currentUser.details.id);
+			void goto('/messages');
+		} catch (error) {
+			toast({
+				title: 'Could not open conversation',
+				description:
+					error instanceof Error ? error.message : 'Failed to start the message thread.',
+				variant: 'error'
+			});
+		} finally {
+			openingConversationForProfileId = '';
+		}
 	}
 
 	async function submit() {
@@ -192,9 +271,12 @@
 			};
 
 			if (editingId) {
-				await currentHub.updateEvent(editingId, payload);
+				await currentHub.updateEvent(editingId, payload, normalizedSelectedReminderOffsets);
 			} else {
-				await currentHub.addEvent(payload);
+				await currentHub.addEvent(
+					payload,
+					normalizedSelectedReminderOffsets.length > 0 ? normalizedSelectedReminderOffsets : undefined
+				);
 			}
 
 			resetForm();
@@ -319,6 +401,33 @@
 				</Field.Field>
 				<Field.Field>
 					<Field.Content>
+						<Field.Label>Reminder plan</Field.Label>
+						<Field.Description>
+							Optional. Queue simple in-app reminder windows before the event starts.
+						</Field.Description>
+						<div class="grid gap-2 sm:grid-cols-3">
+							{#each EVENT_REMINDER_OPTIONS as option (option.value)}
+								<label
+									class={`flex items-start gap-3 rounded-xl border px-3 py-3 shadow-sm transition-colors ${normalizedSelectedReminderOffsets.includes(option.value) ? 'border-primary/35 bg-primary/5' : 'border-border/70 bg-background'}`}
+								>
+									<Checkbox
+										id={`event-reminder-${option.value}`}
+										checked={normalizedSelectedReminderOffsets.includes(option.value)}
+										disabled={currentHub.eventTargetId !== ''}
+										onCheckedChange={() => toggleReminderOffset(option.value)}
+									/>
+									<div class="space-y-1">
+										<p class="text-sm font-medium text-foreground">{option.label}</p>
+										<p class="text-xs text-muted-foreground">{option.description}</p>
+									</div>
+								</label>
+							{/each}
+						</div>
+						<p class="text-xs text-muted-foreground">{selectedReminderPlanCopy}</p>
+					</Field.Content>
+				</Field.Field>
+				<Field.Field>
+					<Field.Content>
 						<Field.Label for="event-location">Location</Field.Label>
 						<Field.Description>Optional room, address, or short call-in detail.</Field.Description>
 						<Input id="event-location" type="text" bind:value={location} />
@@ -369,6 +478,9 @@
 						<Item.Content>
 							{@const locationLabel = getEventLocationLabel(event.location)}
 							{@const engagementSignal = getEngagementSignal(event.id)}
+							{@const deliveryCopy = getDeliveryCopy(event.id)}
+							{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
+							{@const responseRoster = getResponseRoster(event.id)}
 							<div class="flex flex-wrap items-center gap-2">
 								<Item.Title>{event.title}</Item.Title>
 								<Badge variant="secondary">{getEventStateLabel(event)}</Badge>
@@ -381,8 +493,113 @@
 								{/if}
 							</div>
 							<p class="text-xs text-muted-foreground">{getAttendanceCopy(event.id)}</p>
+							{#if deliveryCopy}
+								<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
+							{/if}
+							{#if reminderSummary && reminderSummary.count > 0}
+								<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
+							{/if}
 							{#if engagementSignal}
 								<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
+							{/if}
+							{#if currentOrganization.isLoadingMembers && currentOrganization.members.length === 0}
+								<p class="text-xs text-muted-foreground">Loading member roster for follow-up...</p>
+							{:else if responseRoster && responseRoster.totalMembers > 0}
+								<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+									<div class="space-y-1">
+										<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+											Response roster
+										</p>
+										<p class="text-xs text-muted-foreground">
+											{getEventResponseRosterSummaryCopy(responseRoster)}
+										</p>
+									</div>
+
+									<div class="space-y-2">
+										<p class="text-xs font-medium text-foreground">Needs follow-up</p>
+										{#if responseRoster.nonResponders.length === 0}
+											<p class="text-xs text-muted-foreground">Everyone on the current roster has replied.</p>
+										{:else}
+											<div class="space-y-2">
+												{#each responseRoster.nonResponders.slice(0, 3) as entry (entry.member.profile_id)}
+													<div class="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-3 py-2">
+														<div class="min-w-0 space-y-0.5">
+															<p class="truncate text-sm font-medium text-foreground">
+																{entry.member.name || 'Unnamed member'}
+															</p>
+															<p class="text-xs text-muted-foreground">
+																{entry.isCurrentUser ? 'You have not replied yet.' : 'No RSVP yet.'}
+															</p>
+														</div>
+														{#if !entry.isCurrentUser}
+															<Button
+																type="button"
+																variant="outline"
+																size="xs"
+																disabled={openingConversationForProfileId === entry.member.profile_id}
+																onclick={() => messageProfile(entry.member.profile_id)}
+															>
+																{openingConversationForProfileId === entry.member.profile_id ? 'Opening...' : 'Message'}
+															</Button>
+														{/if}
+													</div>
+												{/each}
+											</div>
+											{#if responseRoster.nonResponders.length > 3}
+												<p class="text-xs text-muted-foreground">
+													+{responseRoster.nonResponders.length - 3} more member{responseRoster.nonResponders.length - 3 === 1 ? '' : 's'} still have not replied.
+												</p>
+											{/if}
+										{/if}
+									</div>
+
+									{#if responseRoster.responders.length > 0}
+										<div class="space-y-2">
+											<p class="text-xs font-medium text-foreground">Recent replies</p>
+											<div class="space-y-2">
+												{#each responseRoster.responders.slice(0, 3) as entry (entry.member.profile_id)}
+													<div class="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-3 py-2">
+														<div class="min-w-0 space-y-0.5">
+															<div class="flex flex-wrap items-center gap-2">
+																<p class="truncate text-sm font-medium text-foreground">
+																	{entry.member.name || 'Unnamed member'}
+																</p>
+																<Badge variant={entry.response === 'going' ? 'secondary' : 'outline'}>
+																	{entry.response ? getEventResponseLabel(entry.response) : 'Responded'}
+																</Badge>
+															</div>
+															<p class="text-xs text-muted-foreground">
+																{entry.updatedAt ? `Replied ${formatShortDateTime(entry.updatedAt)}.` : 'Response saved.'}
+															</p>
+														</div>
+														{#if !entry.isCurrentUser}
+															<Button
+																type="button"
+																variant="ghost"
+																size="xs"
+																disabled={openingConversationForProfileId === entry.member.profile_id}
+																onclick={() => messageProfile(entry.member.profile_id)}
+															>
+																{openingConversationForProfileId === entry.member.profile_id ? 'Opening...' : 'Message'}
+															</Button>
+														{/if}
+													</div>
+												{/each}
+											</div>
+											{#if responseRoster.responders.length > 3}
+												<p class="text-xs text-muted-foreground">
+													+{responseRoster.responders.length - 3} more member{responseRoster.responders.length - 3 === 1 ? '' : 's'} already replied.
+												</p>
+											{/if}
+										</div>
+									{/if}
+
+									{#if responseRoster.externalResponseCount > 0}
+										<p class="text-xs text-muted-foreground">
+											{responseRoster.externalResponseCount} saved response{responseRoster.externalResponseCount === 1 ? '' : 's'} came from people no longer on the current roster.
+										</p>
+									{/if}
+								</div>
 							{/if}
 						</Item.Content>
 						<Item.Actions>
@@ -428,6 +645,8 @@
 							<Item.Content>
 								{@const locationLabel = getEventLocationLabel(event.location)}
 								{@const engagementSignal = getEngagementSignal(event.id)}
+								{@const deliveryCopy = getDeliveryCopy(event.id)}
+								{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{event.title}</Item.Title>
 									<Badge variant="outline">{getEventStateLabel(event)}</Badge>
@@ -442,6 +661,12 @@
 								<p class="text-xs text-muted-foreground">
 									{event.publish_at ? `Visible ${formatShortDateTime(event.publish_at)}` : 'Waiting to go live.'}
 								</p>
+								{#if deliveryCopy}
+									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
+								{/if}
+								{#if reminderSummary && reminderSummary.count > 0}
+									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
+								{/if}
 								{#if engagementSignal}
 									<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
 								{/if}
@@ -492,6 +717,8 @@
 							<Item.Content>
 								{@const locationLabel = getEventLocationLabel(event.location)}
 								{@const engagementSignal = getEngagementSignal(event.id)}
+								{@const deliveryCopy = getDeliveryCopy(event.id)}
+								{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{event.title}</Item.Title>
 									<Badge variant="outline">{getEventStateLabel(event)}</Badge>
@@ -505,6 +732,12 @@
 								</div>
 								<p class="text-xs text-muted-foreground">{getHistoryCopy(event)}</p>
 								<p class="text-xs text-muted-foreground">{getAttendanceCopy(event.id)}</p>
+								{#if deliveryCopy}
+									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
+								{/if}
+								{#if reminderSummary && reminderSummary.count > 0}
+									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
+								{/if}
 								{#if engagementSignal}
 									<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
 								{/if}

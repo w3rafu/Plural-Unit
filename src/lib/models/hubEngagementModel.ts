@@ -1,6 +1,8 @@
 import type { BroadcastRow, EventRow } from '$lib/repositories/hubRepository';
 import { isBroadcastDraft, isBroadcastLive, isBroadcastScheduled } from './broadcastLifecycleModel';
 import { isEventLive, isEventScheduled } from './eventLifecycleModel';
+import type { EventReminderSummary } from './eventReminderModel';
+import { getBroadcastDeliveryStatus, getEventDeliveryStatus } from './scheduledDeliveryModel';
 import type { EventAttendanceSummary } from './eventResponseModel';
 import { formatRelativeDateTime } from '$lib/utils/dateFormat';
 
@@ -23,6 +25,9 @@ export type HubAdminEngagementSummary = {
 	scheduledBroadcastCount: number;
 	scheduledItemCount: number;
 	approachingPublishCount: number;
+	deliveryIssueCount: number;
+	failedDeliveryCount: number;
+	skippedDeliveryCount: number;
 	followUpCount: number;
 };
 
@@ -53,6 +58,21 @@ function isResponseStale(value: string | null | undefined, now = Date.now()) {
 	return now - timestamp >= HUB_ENGAGEMENT_STALE_RESPONSE_WINDOW_MS;
 }
 
+function getEventReminderSuffix(
+	reminderSummary: EventReminderSummary | null | undefined,
+	now = Date.now()
+) {
+	if (!reminderSummary || reminderSummary.count === 0) {
+		return '';
+	}
+
+	if (reminderSummary.nextReminderAt) {
+		return ` Next reminder ${formatRelativeDateTime(reminderSummary.nextReminderAt, now)}.`;
+	}
+
+	return ' All reminder windows are already behind this event.';
+}
+
 export function buildHubAdminEngagementSummary(
 	input: {
 		events: EventRow[];
@@ -69,6 +89,8 @@ export function buildHubAdminEngagementSummary(
 	let noResponseLiveEventCount = 0;
 	let staleLiveEventCount = 0;
 	let latestResponseAt: string | null = null;
+	let failedDeliveryCount = 0;
+	let skippedDeliveryCount = 0;
 
 	for (const event of liveEvents) {
 		const attendance = input.eventAttendances[event.id];
@@ -93,9 +115,33 @@ export function buildHubAdminEngagementSummary(
 	}
 
 	const approachingPublishCount = [
-		...scheduledEvents.map((event) => event.publish_at),
-		...scheduledBroadcasts.map((broadcast) => broadcast.publish_at)
+		...scheduledEvents.filter((event) => getEventDeliveryStatus(event, now)?.state !== 'failed').map((event) => event.publish_at),
+		...scheduledBroadcasts.filter((broadcast) => getBroadcastDeliveryStatus(broadcast, now)?.state !== 'failed').map((broadcast) => broadcast.publish_at)
 	].filter((value) => isSoon(value, now)).length;
+
+	for (const event of input.events) {
+		const deliveryStatus = getEventDeliveryStatus(event, now);
+		if (deliveryStatus?.state === 'failed') {
+			failedDeliveryCount += 1;
+		}
+
+		if (deliveryStatus?.state === 'skipped') {
+			skippedDeliveryCount += 1;
+		}
+	}
+
+	for (const broadcast of input.broadcasts) {
+		const deliveryStatus = getBroadcastDeliveryStatus(broadcast, now);
+		if (deliveryStatus?.state === 'failed') {
+			failedDeliveryCount += 1;
+		}
+
+		if (deliveryStatus?.state === 'skipped') {
+			skippedDeliveryCount += 1;
+		}
+	}
+
+	const deliveryIssueCount = failedDeliveryCount + skippedDeliveryCount;
 
 	return {
 		liveEventCount: liveEvents.length,
@@ -107,7 +153,10 @@ export function buildHubAdminEngagementSummary(
 		scheduledBroadcastCount: scheduledBroadcasts.length,
 		scheduledItemCount: scheduledEvents.length + scheduledBroadcasts.length,
 		approachingPublishCount,
-		followUpCount: noResponseLiveEventCount + approachingPublishCount
+		deliveryIssueCount,
+		failedDeliveryCount,
+		skippedDeliveryCount,
+		followUpCount: noResponseLiveEventCount + approachingPublishCount + deliveryIssueCount
 	};
 }
 
@@ -159,14 +208,23 @@ export function getHubEngagementFollowUpCopy(summary: HubAdminEngagementSummary)
 		);
 	}
 
+	if (summary.deliveryIssueCount > 0) {
+		parts.push(
+			`${summary.deliveryIssueCount} scheduled item${summary.deliveryIssueCount === 1 ? '' : 's'} need${summary.deliveryIssueCount === 1 ? 's' : ''} delivery recovery.`
+		);
+	}
+
 	return parts.join(' ');
 }
 
 export function getEventEngagementSignal(
 	event: EventRow,
 	attendance: EventAttendanceSummary,
+	reminderSummary: EventReminderSummary | null = null,
 	now = Date.now()
 ): HubEngagementSignal {
+	const reminderSuffix = getEventReminderSuffix(reminderSummary, now);
+
 	if (isEventScheduled(event, now)) {
 		const relativePublish = event.publish_at ? formatRelativeDateTime(event.publish_at, now) : '';
 		const needsAttention = isSoon(event.publish_at, now);
@@ -174,9 +232,9 @@ export function getEventEngagementSignal(
 		return {
 			copy: relativePublish
 				? needsAttention
-					? `Publishes ${relativePublish}. Review before it goes live.`
-					: `Publishes ${relativePublish}.`
-				: 'Waiting for scheduled visibility.',
+					? `Publishes ${relativePublish}. Review before it goes live.${reminderSuffix}`
+					: `Publishes ${relativePublish}.${reminderSuffix}`
+				: `Waiting for scheduled visibility.${reminderSuffix}`,
 			tone: needsAttention ? 'attention' : 'neutral',
 			needsAttention
 		};
@@ -185,7 +243,7 @@ export function getEventEngagementSignal(
 	if (isEventLive(event, now)) {
 		if (attendance.total === 0) {
 			return {
-				copy: 'This event still needs a first RSVP.',
+				copy: `This event still needs a first RSVP.${reminderSuffix}`,
 				tone: 'attention',
 				needsAttention: true
 			};
@@ -193,7 +251,7 @@ export function getEventEngagementSignal(
 
 		if (attendance.latestUpdatedAt && isResponseStale(attendance.latestUpdatedAt, now)) {
 			return {
-				copy: `Latest reply ${formatRelativeDateTime(attendance.latestUpdatedAt, now)}. Follow up if you need fresher numbers.`,
+				copy: `Latest reply ${formatRelativeDateTime(attendance.latestUpdatedAt, now)}. Follow up if you need fresher numbers.${reminderSuffix}`,
 				tone: 'attention',
 				needsAttention: true
 			};
@@ -201,8 +259,8 @@ export function getEventEngagementSignal(
 
 		return {
 			copy: attendance.latestUpdatedAt
-				? `Latest reply ${formatRelativeDateTime(attendance.latestUpdatedAt, now)}.`
-				: 'Replies are coming in.',
+				? `Latest reply ${formatRelativeDateTime(attendance.latestUpdatedAt, now)}.${reminderSuffix}`
+				: `Replies are coming in.${reminderSuffix}`,
 			tone: 'positive',
 			needsAttention: false
 		};

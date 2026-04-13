@@ -13,21 +13,25 @@ const destinations: HubActivityDestinations = {
 	manageEventsHref: '/hub/manage/content#manage-events'
 };
 
+function makeNotification(kind: 'broadcast' | 'event', sourceId: string) {
+	return {
+		id: `${kind}:${sourceId}`,
+		kind,
+		sourceId,
+		title: kind === 'broadcast' ? 'Broadcast' : 'Event',
+		summary: 'Summary',
+		meta: 'Meta',
+		occurredAt: '2026-04-11T10:00:00.000Z',
+		label: kind === 'broadcast' ? 'Broadcast' : 'Event',
+		isRead: false,
+		readAt: null
+	} as const;
+}
+
 describe('hubActivityModel', () => {
 	it('builds primary actions for broadcasts and events', () => {
 		expect(
-			getHubActivityPrimaryAction(
-				{
-					id: 'broadcast:b1',
-					kind: 'broadcast',
-					title: 'Broadcast',
-					summary: 'Summary',
-					meta: 'Meta',
-					occurredAt: '2026-04-11T10:00:00.000Z',
-					label: 'Broadcast'
-				},
-				destinations
-			)
+			getHubActivityPrimaryAction(makeNotification('broadcast', 'b1'), destinations)
 		).toEqual({
 			label: 'Open broadcasts',
 			href: '#hub-broadcasts',
@@ -35,18 +39,7 @@ describe('hubActivityModel', () => {
 		});
 
 		expect(
-			getHubActivityPrimaryAction(
-				{
-					id: 'event:e1',
-					kind: 'event',
-					title: 'Event',
-					summary: 'Summary',
-					meta: 'Meta',
-					occurredAt: '2026-04-11T10:00:00.000Z',
-					label: 'Event'
-				},
-				destinations
-			)
+			getHubActivityPrimaryAction(makeNotification('event', 'e1'), destinations)
 		).toEqual({
 			label: 'Open events',
 			href: '#hub-events',
@@ -56,18 +49,7 @@ describe('hubActivityModel', () => {
 
 	it('builds secondary manage actions when content tools are available', () => {
 		expect(
-			getHubActivitySecondaryAction(
-				{
-					id: 'broadcast:b1',
-					kind: 'broadcast',
-					title: 'Broadcast',
-					summary: 'Summary',
-					meta: 'Meta',
-					occurredAt: '2026-04-11T10:00:00.000Z',
-					label: 'Broadcast'
-				},
-				destinations
-			)
+			getHubActivitySecondaryAction(makeNotification('broadcast', 'b1'), destinations)
 		).toEqual({
 			label: 'Manage broadcasts',
 			href: '/hub/manage/content#manage-broadcasts',
@@ -75,18 +57,7 @@ describe('hubActivityModel', () => {
 		});
 
 		expect(
-			getHubActivitySecondaryAction(
-				{
-					id: 'event:e1',
-					kind: 'event',
-					title: 'Event',
-					summary: 'Summary',
-					meta: 'Meta',
-					occurredAt: '2026-04-11T10:00:00.000Z',
-					label: 'Event'
-				},
-				destinations
-			)
+			getHubActivitySecondaryAction(makeNotification('event', 'e1'), destinations)
 		).toEqual({
 			label: 'Manage events',
 			href: '/hub/manage/content#manage-events',
@@ -97,15 +68,7 @@ describe('hubActivityModel', () => {
 	it('falls back to the generic content route when section links are unavailable', () => {
 		expect(
 			getHubActivitySecondaryAction(
-				{
-					id: 'broadcast:b1',
-					kind: 'broadcast',
-					title: 'Broadcast',
-					summary: 'Summary',
-					meta: 'Meta',
-					occurredAt: '2026-04-11T10:00:00.000Z',
-					label: 'Broadcast'
-				},
+				makeNotification('broadcast', 'b1'),
 				{
 					broadcastHref: '#hub-broadcasts',
 					eventHref: '#hub-events',
@@ -122,15 +85,7 @@ describe('hubActivityModel', () => {
 	it('returns no secondary action when manage content is unavailable', () => {
 		expect(
 			getHubActivitySecondaryAction(
-				{
-					id: 'event:e1',
-					kind: 'event',
-					title: 'Event',
-					summary: 'Summary',
-					meta: 'Meta',
-					occurredAt: '2026-04-11T10:00:00.000Z',
-					label: 'Event'
-				},
+				makeNotification('event', 'e1'),
 				{ broadcastHref: '#hub-broadcasts', eventHref: '#hub-events' }
 			)
 		).toBeNull();

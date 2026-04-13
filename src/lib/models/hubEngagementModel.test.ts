@@ -94,6 +94,7 @@ describe('hubEngagementModel', () => {
 			scheduledBroadcastCount: 1,
 			scheduledItemCount: 2,
 			approachingPublishCount: 2,
+			deliveryIssueCount: 0,
 			followUpCount: 3
 		});
 	});
@@ -110,6 +111,9 @@ describe('hubEngagementModel', () => {
 			scheduledBroadcastCount: 1,
 			scheduledItemCount: 2,
 			approachingPublishCount: 2,
+			deliveryIssueCount: 1,
+			failedDeliveryCount: 1,
+			skippedDeliveryCount: 0,
 			followUpCount: 3
 		};
 
@@ -117,12 +121,45 @@ describe('hubEngagementModel', () => {
 		expect(getHubEngagementCoverageCopy(summary, now)).toContain('Latest reply 2 hours ago.');
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('1 live event still needs a first RSVP.');
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('2 scheduled items publish within a day.');
+		expect(getHubEngagementFollowUpCopy(summary)).toContain('1 scheduled item needs delivery recovery.');
+	});
+
+	it('counts skipped and failed scheduled delivery outcomes in follow-up totals', () => {
+		const now = new Date('2026-04-13T12:00:00.000Z').getTime();
+		const summary = buildHubAdminEngagementSummary(
+			{
+				events: [
+					makeEvent({
+						id: 'skipped-event',
+						publish_at: '2026-04-13T18:00:00.000Z',
+						starts_at: '2026-04-14T18:00:00.000Z',
+						canceled_at: '2026-04-13T13:00:00.000Z'
+					})
+				],
+				broadcasts: [
+					makeBroadcast({
+						id: 'failed-broadcast',
+						publish_at: '2026-04-13T18:00:00.000Z',
+						expires_at: '2026-04-13T17:00:00.000Z'
+					})
+				],
+				eventAttendances: {}
+			},
+			now
+		);
+
+		expect(summary).toMatchObject({
+			deliveryIssueCount: 2,
+			failedDeliveryCount: 1,
+			skippedDeliveryCount: 1,
+			followUpCount: 2
+		});
 	});
 
 	it('flags live events with no responses and stale reply activity', () => {
 		const now = new Date('2026-04-13T12:00:00.000Z').getTime();
 
-		expect(getEventEngagementSignal(makeEvent(), makeAttendance(), now)).toMatchObject({
+		expect(getEventEngagementSignal(makeEvent(), makeAttendance(), null, now)).toMatchObject({
 			needsAttention: true,
 			copy: 'This event still needs a first RSVP.'
 		});
@@ -131,6 +168,7 @@ describe('hubEngagementModel', () => {
 			getEventEngagementSignal(
 				makeEvent({ id: 'stale-live' }),
 				makeAttendance({ total: 2, latestUpdatedAt: '2026-04-08T12:00:00.000Z' }),
+				null,
 				now
 			)
 		).toMatchObject({
@@ -140,9 +178,37 @@ describe('hubEngagementModel', () => {
 			getEventEngagementSignal(
 				makeEvent({ id: 'scheduled-live', publish_at: '2026-04-13T18:00:00.000Z' }),
 				makeAttendance(),
+				null,
 				now
 			).copy
 		).toContain('Publishes in 6 hours.');
+	});
+
+	it('adds reminder context when an upcoming reminder is still queued', () => {
+		const now = new Date('2026-04-13T12:00:00.000Z').getTime();
+
+		expect(
+			getEventEngagementSignal(
+				makeEvent({ id: 'reminder-live', starts_at: '2026-04-13T16:00:00.000Z' }),
+				makeAttendance(),
+				{
+					count: 1,
+					offsets: [120],
+					schedule: [
+						{
+							offsetMinutes: 120,
+							label: '2 hours before',
+							sendAt: '2026-04-13T14:00:00.000Z',
+							isUpcoming: true
+						}
+					],
+					nextReminderAt: '2026-04-13T14:00:00.000Z',
+					nextReminderOffsetMinutes: 120,
+					hasUpcomingReminder: true
+				},
+				now
+			).copy
+		).toContain('Next reminder in 2 hours.');
 	});
 
 	it('builds draft, scheduled, and live broadcast signals', () => {

@@ -28,7 +28,7 @@ supabase db push          # if using Supabase CLI
 # or paste each file in supabase/migrations/ into the SQL editor
 ```
 
-If you pull newer 0.1.25 code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, and 019, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`.
+If you pull newer 0.1.25 or 0.1.26 code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, and 022, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, or `relation "public.hub_notification_preferences" does not exist`.
 
 ---
 

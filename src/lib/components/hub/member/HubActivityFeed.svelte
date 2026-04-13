@@ -7,7 +7,10 @@
 		getHubActivityPrimaryAction,
 		getHubActivitySecondaryAction
 	} from '$lib/components/hub/member/hubActivityModel';
-	import type { HubNotificationItem } from '$lib/models/hubNotifications';
+		import {
+			hasEnabledHubNotificationPreferences,
+			type HubNotificationItem
+		} from '$lib/models/hubNotifications';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
@@ -25,11 +28,13 @@
 	const MAX_VISIBLE_ACTIVITY_ITEMS = 4;
 	let showAll = $state(false);
 
+	const allItems = $derived(items ?? currentHub.allActivityFeed);
 	const totalItems = $derived(items ?? currentHub.activityFeed);
 	const resolvedOrganizationName = $derived(
 		organizationName ?? currentOrganization.organization?.name ?? 'your organization'
 	);
 	const resolvedIsLoading = $derived(isLoading ?? currentHub.isLoading);
+	const hiddenItemCount = $derived(items ? 0 : Math.max(0, allItems.length - totalItems.length));
 	const featuredItem = $derived(totalItems[0] ?? null);
 	const broadcastCount = $derived(totalItems.filter((item) => item.kind === 'broadcast').length);
 	const eventCount = $derived(totalItems.filter((item) => item.kind === 'event').length);
@@ -57,6 +62,18 @@
 			manageBroadcastsHref,
 			manageEventsHref
 		});
+	}
+
+	function getEmptyStateCopy() {
+		if (!items && hiddenItemCount > 0) {
+			return 'Your notification settings are hiding the recent hub activity that is currently available.';
+		}
+
+		if (!items && !hasEnabledHubNotificationPreferences(currentHub.notificationPreferences)) {
+			return 'All in-app hub alerts are turned off in your notification settings.';
+		}
+
+		return 'When a broadcast goes live or an event is published, it will appear here first.';
 	}
 </script>
 
@@ -100,7 +117,7 @@
 			<div class="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-5">
 				<p class="font-medium text-foreground">No recent activity yet</p>
 				<p class="mt-1 text-sm text-muted-foreground">
-					When a broadcast goes live or an event is published, it will appear here first.
+					{getEmptyStateCopy()}
 				</p>
 			</div>
 		{:else}

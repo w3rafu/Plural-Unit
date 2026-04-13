@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+	buildHubNotificationReadMap,
 	buildHubNotifications,
 	countHubNotifications,
+	countUnreadHubNotifications,
+	createDefaultHubNotificationPreferences,
 	filterHubNotifications
 } from './hubNotifications';
 
@@ -313,5 +316,51 @@ describe('buildHubNotifications', () => {
 		expect(filterHubNotifications(notifications, 'event').map((item) => item.id)).toEqual([
 			'event:e1'
 		]);
+	});
+
+	it('defaults notification preferences to all enabled when no row exists', () => {
+		expect(createDefaultHubNotificationPreferences()).toEqual({
+			broadcast: true,
+			event: true
+		});
+	});
+
+	it('filters out disabled alert categories when preferences are applied', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [makeBroadcast({ id: 'b1' })],
+			events: [makeEvent({ id: 'e1' })],
+			preferences: {
+				broadcast: false,
+				event: true
+			}
+		});
+
+		expect(notifications.map((item) => item.id)).toEqual(['event:e1']);
+	});
+
+	it('applies read-state metadata from the persisted read map', () => {
+		const readMap = buildHubNotificationReadMap([
+			{
+				notification_kind: 'broadcast',
+				source_id: 'b1',
+				read_at: '2026-04-13T10:00:00.000Z'
+			}
+		]);
+
+		const notifications = buildHubNotifications({
+			broadcasts: [makeBroadcast({ id: 'b1' })],
+			events: [makeEvent({ id: 'e1' })],
+			readMap
+		});
+
+		expect(notifications.find((item) => item.id === 'broadcast:b1')).toMatchObject({
+			isRead: true,
+			readAt: '2026-04-13T10:00:00.000Z'
+		});
+		expect(notifications.find((item) => item.id === 'event:e1')).toMatchObject({
+			isRead: false,
+			readAt: null
+		});
+		expect(countUnreadHubNotifications(notifications)).toBe(1);
 	});
 });

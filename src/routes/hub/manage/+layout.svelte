@@ -11,18 +11,32 @@
 
 	let { children } = $props();
 	let loadedHubOrgId = '';
+	let loadedMembersOrgId = '';
 
 	const managePath = $derived(page.url.pathname);
 
 	$effect(() => {
 		const organizationId = currentOrganization.organization?.id ?? '';
 
-		if (!organizationId || loadedHubOrgId === organizationId) {
+		if (!organizationId) {
+			loadedHubOrgId = '';
+			loadedMembersOrgId = '';
 			return;
 		}
 
-		loadedHubOrgId = organizationId;
-		void currentHub.load();
+		if (loadedHubOrgId !== organizationId) {
+			loadedHubOrgId = organizationId;
+			void currentHub.load();
+		}
+
+		if (
+			currentOrganization.isAdmin &&
+			loadedMembersOrgId !== organizationId &&
+			!currentOrganization.isLoadingMembers
+		) {
+			loadedMembersOrgId = organizationId;
+			void currentOrganization.loadMembers();
+		}
 	});
 
 	function isActiveManageSubroute(pathname: string) {

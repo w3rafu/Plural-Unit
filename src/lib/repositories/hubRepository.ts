@@ -11,7 +11,15 @@ import { throwRepositoryError } from '$lib/services/repositoryError';
 // ── Broadcasts ──
 
 const HUB_BROADCAST_SELECT =
-	'id, organization_id, title, body, created_at, updated_at, is_pinned, is_draft, publish_at, archived_at, expires_at';
+	'id, organization_id, title, body, created_at, updated_at, is_pinned, is_draft, publish_at, archived_at, expires_at, delivery_state, delivered_at, delivery_failure_reason';
+
+export type ScheduledDeliveryState = 'scheduled' | 'published' | 'failed' | 'skipped';
+
+export type ScheduledDeliveryMetadataPatch = {
+	delivery_state: ScheduledDeliveryState | null;
+	delivered_at: string | null;
+	delivery_failure_reason: string | null;
+};
 
 /** Row shape returned from the hub_broadcasts table. */
 export type BroadcastRow = {
@@ -26,6 +34,9 @@ export type BroadcastRow = {
 	publish_at: string | null;
 	archived_at: string | null;
 	expires_at: string | null;
+	delivery_state?: ScheduledDeliveryState | null;
+	delivered_at?: string | null;
+	delivery_failure_reason?: string | null;
 };
 
 export type BroadcastMutationPayload = {
@@ -188,6 +199,22 @@ export async function publishBroadcastNow(broadcastId: string): Promise<Broadcas
 	return data as BroadcastRow;
 }
 
+/** Update delivery metadata for a scheduled broadcast. */
+export async function updateBroadcastDeliveryState(
+	broadcastId: string,
+	patch: ScheduledDeliveryMetadataPatch
+): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update(patch)
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update the broadcast delivery state.');
+	return data as BroadcastRow;
+}
+
 /** Permanently delete a broadcast by id. */
 export async function deleteBroadcast(id: string) {
 	const { error } = await getSupabaseClient().from('hub_broadcasts').delete().eq('id', id);
@@ -197,7 +224,10 @@ export async function deleteBroadcast(id: string) {
 // ── Events ──
 
 const HUB_EVENT_SELECT =
-	'id, organization_id, title, description, starts_at, ends_at, location, created_at, updated_at, publish_at, canceled_at, archived_at';
+	'id, organization_id, title, description, starts_at, ends_at, location, created_at, updated_at, publish_at, canceled_at, archived_at, delivery_state, delivered_at, delivery_failure_reason';
+
+const HUB_EVENT_REMINDER_SELECT =
+	'id, event_id, organization_id, delivery_channel, reminder_offsets, created_at, updated_at';
 
 /** Row shape returned from the hub_events table. */
 export type EventRow = {
@@ -213,6 +243,9 @@ export type EventRow = {
 	publish_at: string | null;
 	canceled_at: string | null;
 	archived_at: string | null;
+	delivery_state?: ScheduledDeliveryState | null;
+	delivered_at?: string | null;
+	delivery_failure_reason?: string | null;
 };
 
 export type EventMutationPayload = {
@@ -222,6 +255,18 @@ export type EventMutationPayload = {
 	ends_at: string | null;
 	location: string;
 	publish_at: string | null;
+};
+
+export type EventReminderChannel = 'in_app';
+
+export type EventReminderSettingsRow = {
+	id: string;
+	event_id: string;
+	organization_id: string;
+	delivery_channel: EventReminderChannel;
+	reminder_offsets: number[];
+	created_at: string;
+	updated_at: string;
 };
 
 export type EventResponseStatus = 'going' | 'maybe' | 'cannot_attend';
@@ -258,6 +303,20 @@ export async function fetchEventResponses(organizationId: string): Promise<Event
 
 	if (error) throwRepositoryError(error, 'Could not load event responses.');
 	return (data ?? []) as EventResponseRow[];
+}
+
+/** Fetch reminder settings for events in an organization. */
+export async function fetchEventReminderSettings(
+	organizationId: string
+): Promise<EventReminderSettingsRow[]> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_event_reminders')
+		.select(HUB_EVENT_REMINDER_SELECT)
+		.eq('organization_id', organizationId)
+		.order('updated_at', { ascending: false });
+
+	if (error) throwRepositoryError(error, 'Could not load event reminder settings.');
+	return (data ?? []) as EventReminderSettingsRow[];
 }
 
 /** Insert a new event and return the created row. */
@@ -327,6 +386,22 @@ export async function restoreEvent(eventId: string): Promise<EventRow> {
 	return data as EventRow;
 }
 
+/** Update delivery metadata for a scheduled event. */
+export async function updateEventDeliveryState(
+	eventId: string,
+	patch: ScheduledDeliveryMetadataPatch
+): Promise<EventRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_events')
+		.update(patch)
+		.eq('id', eventId)
+		.select(HUB_EVENT_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update the event delivery state.');
+	return data as EventRow;
+}
+
 /** Upsert the signed-in member's response for an event. */
 export async function upsertOwnEventResponse(payload: {
 	eventId: string;
@@ -352,10 +427,150 @@ export async function upsertOwnEventResponse(payload: {
 	return data as EventResponseRow;
 }
 
+/** Save reminder settings for a single event. */
+export async function saveEventReminderSettings(
+	eventId: string,
+	organizationId: string,
+	payload: {
+		delivery_channel: EventReminderChannel;
+		reminder_offsets: number[];
+	}
+): Promise<EventReminderSettingsRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_event_reminders')
+		.upsert(
+			{
+				event_id: eventId,
+				organization_id: organizationId,
+				...payload
+			},
+			{ onConflict: 'event_id' }
+		)
+		.select(HUB_EVENT_REMINDER_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not save the event reminder settings.');
+	return data as EventReminderSettingsRow;
+}
+
 /** Permanently delete an event by id. */
 export async function deleteEvent(id: string) {
 	const { error } = await getSupabaseClient().from('hub_events').delete().eq('id', id);
 	if (error) throwRepositoryError(error, 'Could not delete the event.');
+}
+
+// ── Notifications ──
+
+const HUB_NOTIFICATION_PREFERENCE_SELECT =
+	'id, organization_id, profile_id, broadcast_enabled, event_enabled, created_at, updated_at';
+
+const HUB_NOTIFICATION_READ_SELECT =
+	'id, organization_id, profile_id, notification_kind, source_id, read_at, created_at, updated_at';
+
+export type HubNotificationKind = 'broadcast' | 'event';
+
+export type HubNotificationPreferenceRow = {
+	id: string;
+	organization_id: string;
+	profile_id: string;
+	broadcast_enabled: boolean;
+	event_enabled: boolean;
+	created_at: string;
+	updated_at: string;
+};
+
+export type HubNotificationPreferenceMutationPayload = {
+	broadcast_enabled: boolean;
+	event_enabled: boolean;
+};
+
+export type HubNotificationReadRow = {
+	id: string;
+	organization_id: string;
+	profile_id: string;
+	notification_kind: HubNotificationKind;
+	source_id: string;
+	read_at: string;
+	created_at: string;
+	updated_at: string;
+};
+
+export async function fetchHubNotificationPreferences(
+	organizationId: string,
+	profileId: string
+): Promise<HubNotificationPreferenceRow | null> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_notification_preferences')
+		.select(HUB_NOTIFICATION_PREFERENCE_SELECT)
+		.eq('organization_id', organizationId)
+		.eq('profile_id', profileId)
+		.maybeSingle();
+
+	if (error) throwRepositoryError(error, 'Could not load notification preferences.');
+	return (data ?? null) as HubNotificationPreferenceRow | null;
+}
+
+export async function saveHubNotificationPreferences(
+	organizationId: string,
+	profileId: string,
+	payload: HubNotificationPreferenceMutationPayload
+): Promise<HubNotificationPreferenceRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_notification_preferences')
+		.upsert(
+			{
+				organization_id: organizationId,
+				profile_id: profileId,
+				...payload
+			},
+			{ onConflict: 'organization_id,profile_id' }
+		)
+		.select(HUB_NOTIFICATION_PREFERENCE_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not save notification preferences.');
+	return data as HubNotificationPreferenceRow;
+}
+
+export async function fetchHubNotificationReads(
+	organizationId: string,
+	profileId: string
+): Promise<HubNotificationReadRow[]> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_notification_reads')
+		.select(HUB_NOTIFICATION_READ_SELECT)
+		.eq('organization_id', organizationId)
+		.eq('profile_id', profileId)
+		.order('updated_at', { ascending: false });
+
+	if (error) throwRepositoryError(error, 'Could not load alert read state.');
+	return (data ?? []) as HubNotificationReadRow[];
+}
+
+export async function markHubNotificationRead(payload: {
+	organizationId: string;
+	profileId: string;
+	notificationKind: HubNotificationKind;
+	sourceId: string;
+	readAt?: string;
+}): Promise<HubNotificationReadRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_notification_reads')
+		.upsert(
+			{
+				organization_id: payload.organizationId,
+				profile_id: payload.profileId,
+				notification_kind: payload.notificationKind,
+				source_id: payload.sourceId,
+				read_at: payload.readAt ?? new Date().toISOString()
+			},
+			{ onConflict: 'organization_id,profile_id,notification_kind,source_id' }
+		)
+		.select(HUB_NOTIFICATION_READ_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update alert read state.');
+	return data as HubNotificationReadRow;
 }
 
 // ── Resources ──

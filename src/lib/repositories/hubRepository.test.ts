@@ -38,18 +38,26 @@ import {
 	saveBroadcastDraft,
 	scheduleBroadcast,
 	publishBroadcastNow,
+	updateBroadcastDeliveryState,
 	updateBroadcast,
 	setBroadcastPinned,
 	archiveBroadcast,
 	restoreBroadcast,
 	deleteBroadcast,
 	fetchEvents,
+	fetchEventReminderSettings,
 	createEvent,
+	saveEventReminderSettings,
+	updateEventDeliveryState,
 	updateEvent,
 	cancelEvent,
 	archiveEvent,
 	restoreEvent,
 	deleteEvent,
+	fetchHubNotificationPreferences,
+	saveHubNotificationPreferences,
+	fetchHubNotificationReads,
+	markHubNotificationRead,
 	fetchResources,
 	createResource,
 	updateResource,
@@ -363,6 +371,41 @@ describe('createBroadcast', () => {
 		});
 	});
 
+	describe('updateBroadcastDeliveryState', () => {
+		it('updates persisted delivery metadata for a broadcast', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Scheduled',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: false,
+				publish_at: '2026-02-01T12:00:00.000Z',
+				archived_at: null,
+				expires_at: null,
+				delivery_state: 'published',
+				delivered_at: '2026-02-01T12:00:00.000Z',
+				delivery_failure_reason: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await updateBroadcastDeliveryState('b1', {
+				delivery_state: 'published',
+				delivered_at: '2026-02-01T12:00:00.000Z',
+				delivery_failure_reason: null
+			});
+
+			expect(mockUpdate).toHaveBeenCalledWith({
+				delivery_state: 'published',
+				delivered_at: '2026-02-01T12:00:00.000Z',
+				delivery_failure_reason: null
+			});
+			expect(result).toEqual(row);
+		});
+	});
+
 describe('deleteBroadcast', () => {
 	it('deletes from hub_broadcasts by id', async () => {
 		mockEq.mockResolvedValueOnce({ error: null });
@@ -442,6 +485,77 @@ describe('createEvent', () => {
 	});
 });
 
+describe('fetchEventReminderSettings', () => {
+	it('queries hub_event_reminders filtered by organization_id', async () => {
+		const rows = [
+			{
+				id: 'rem-1',
+				event_id: 'e1',
+				organization_id: 'org-1',
+				delivery_channel: 'in_app',
+				reminder_offsets: [1440, 120],
+				created_at: '2026-04-13T10:00:00.000Z',
+				updated_at: '2026-04-13T10:00:00.000Z'
+			}
+		];
+		mockOrder.mockResolvedValueOnce({ data: rows, error: null });
+
+		const result = await fetchEventReminderSettings('org-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_event_reminders');
+		expect(result).toEqual(rows);
+	});
+
+	it('throws on reminder query error', async () => {
+		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'reminder fetch fail' } });
+
+		await expect(fetchEventReminderSettings('org-1')).rejects.toThrow('reminder fetch fail');
+	});
+});
+
+describe('saveEventReminderSettings', () => {
+	it('upserts reminder settings for an event and returns the row', async () => {
+		const row = {
+			id: 'rem-1',
+			event_id: 'e1',
+			organization_id: 'org-1',
+			delivery_channel: 'in_app',
+			reminder_offsets: [1440, 120],
+			created_at: '2026-04-13T10:00:00.000Z',
+			updated_at: '2026-04-13T10:05:00.000Z'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await saveEventReminderSettings('e1', 'org-1', {
+			delivery_channel: 'in_app',
+			reminder_offsets: [1440, 120]
+		});
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_event_reminders');
+		expect(mockUpsert).toHaveBeenCalledWith(
+			{
+				event_id: 'e1',
+				organization_id: 'org-1',
+				delivery_channel: 'in_app',
+				reminder_offsets: [1440, 120]
+			},
+			{ onConflict: 'event_id' }
+		);
+		expect(result).toEqual(row);
+	});
+
+	it('throws on reminder upsert error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'reminder save fail' } });
+
+		await expect(
+			saveEventReminderSettings('e1', 'org-1', {
+				delivery_channel: 'in_app',
+				reminder_offsets: [120]
+			})
+		).rejects.toThrow('reminder save fail');
+	});
+});
+
 describe('updateEvent', () => {
 	it('updates an event and returns the latest row', async () => {
 		const row = {
@@ -478,6 +592,42 @@ describe('updateEvent', () => {
 			publish_at: '2026-04-10'
 		});
 		expect(result).toEqual(row);
+	});
+
+	describe('updateEventDeliveryState', () => {
+		it('updates persisted delivery metadata for an event', async () => {
+			const row = {
+				id: 'e1',
+				organization_id: 'org-1',
+				title: 'Meeting',
+				description: 'Desc',
+				starts_at: '2026-04-11',
+				ends_at: null,
+				location: 'Room A',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-01',
+				publish_at: '2026-04-10',
+				canceled_at: null,
+				archived_at: null,
+				delivery_state: 'published',
+				delivered_at: '2026-04-10',
+				delivery_failure_reason: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await updateEventDeliveryState('e1', {
+				delivery_state: 'published',
+				delivered_at: '2026-04-10',
+				delivery_failure_reason: null
+			});
+
+			expect(mockUpdate).toHaveBeenCalledWith({
+				delivery_state: 'published',
+				delivered_at: '2026-04-10',
+				delivery_failure_reason: null
+			});
+			expect(result).toEqual(row);
+		});
 	});
 });
 
@@ -530,6 +680,164 @@ describe('deleteEvent', () => {
 		mockEq.mockResolvedValueOnce({ error: { message: 'event delete fail' } });
 
 		await expect(deleteEvent('e1')).rejects.toThrow('event delete fail');
+	});
+});
+
+// ── Notifications ──
+
+describe('fetchHubNotificationPreferences', () => {
+	it('queries member notification preferences for an organization profile pair', async () => {
+		const row = {
+			id: 'pref-1',
+			organization_id: 'org-1',
+			profile_id: 'profile-1',
+			broadcast_enabled: true,
+			event_enabled: false,
+			created_at: '2026-04-13T10:00:00.000Z',
+			updated_at: '2026-04-13T10:00:00.000Z'
+		};
+		mockMaybeSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await fetchHubNotificationPreferences('org-1', 'profile-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_notification_preferences');
+		expect(result).toEqual(row);
+	});
+
+	it('returns null when a member has not saved preferences yet', async () => {
+		mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+
+		const result = await fetchHubNotificationPreferences('org-1', 'profile-1');
+
+		expect(result).toBeNull();
+	});
+
+	it('throws on preference fetch error', async () => {
+		mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'prefs fail' } });
+
+		await expect(fetchHubNotificationPreferences('org-1', 'profile-1')).rejects.toThrow('prefs fail');
+	});
+});
+
+describe('saveHubNotificationPreferences', () => {
+	it('upserts member notification preferences and returns the row', async () => {
+		const row = {
+			id: 'pref-1',
+			organization_id: 'org-1',
+			profile_id: 'profile-1',
+			broadcast_enabled: false,
+			event_enabled: true,
+			created_at: '2026-04-13T10:00:00.000Z',
+			updated_at: '2026-04-13T10:05:00.000Z'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await saveHubNotificationPreferences('org-1', 'profile-1', {
+			broadcast_enabled: false,
+			event_enabled: true
+		});
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_notification_preferences');
+		expect(mockUpsert).toHaveBeenCalledWith(
+			{
+				organization_id: 'org-1',
+				profile_id: 'profile-1',
+				broadcast_enabled: false,
+				event_enabled: true
+			},
+			{ onConflict: 'organization_id,profile_id' }
+		);
+		expect(result).toEqual(row);
+	});
+
+	it('throws on preference save error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'save prefs fail' } });
+
+		await expect(
+			saveHubNotificationPreferences('org-1', 'profile-1', {
+				broadcast_enabled: true,
+				event_enabled: false
+			})
+		).rejects.toThrow('save prefs fail');
+	});
+});
+
+describe('fetchHubNotificationReads', () => {
+	it('queries read-state rows for a member', async () => {
+		const rows = [
+			{
+				id: 'read-1',
+				organization_id: 'org-1',
+				profile_id: 'profile-1',
+				notification_kind: 'broadcast',
+				source_id: 'b1',
+				read_at: '2026-04-13T10:00:00.000Z',
+				created_at: '2026-04-13T10:00:00.000Z',
+				updated_at: '2026-04-13T10:00:00.000Z'
+			}
+		];
+		mockOrder.mockResolvedValueOnce({ data: rows, error: null });
+
+		const result = await fetchHubNotificationReads('org-1', 'profile-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_notification_reads');
+		expect(result).toEqual(rows);
+	});
+
+	it('throws on read-state fetch error', async () => {
+		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'reads fail' } });
+
+		await expect(fetchHubNotificationReads('org-1', 'profile-1')).rejects.toThrow('reads fail');
+	});
+});
+
+describe('markHubNotificationRead', () => {
+	it('upserts a member alert read marker and returns the row', async () => {
+		const row = {
+			id: 'read-1',
+			organization_id: 'org-1',
+			profile_id: 'profile-1',
+			notification_kind: 'event',
+			source_id: 'e1',
+			read_at: '2026-04-13T10:05:00.000Z',
+			created_at: '2026-04-13T10:05:00.000Z',
+			updated_at: '2026-04-13T10:05:00.000Z'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await markHubNotificationRead({
+			organizationId: 'org-1',
+			profileId: 'profile-1',
+			notificationKind: 'event',
+			sourceId: 'e1',
+			readAt: '2026-04-13T10:05:00.000Z'
+		});
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_notification_reads');
+		expect(mockUpsert).toHaveBeenCalledWith(
+			{
+				organization_id: 'org-1',
+				profile_id: 'profile-1',
+				notification_kind: 'event',
+				source_id: 'e1',
+				read_at: '2026-04-13T10:05:00.000Z'
+			},
+			{ onConflict: 'organization_id,profile_id,notification_kind,source_id' }
+		);
+		expect(result).toEqual(row);
+	});
+
+	it('throws on read-state save error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'mark read fail' } });
+
+		await expect(
+			markHubNotificationRead({
+				organizationId: 'org-1',
+				profileId: 'profile-1',
+				notificationKind: 'broadcast',
+				sourceId: 'b1'
+			})
+		).rejects.toThrow('mark read fail');
 	});
 });
 

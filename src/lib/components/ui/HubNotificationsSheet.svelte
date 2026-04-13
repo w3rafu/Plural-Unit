@@ -11,6 +11,7 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import {
 		countHubNotifications,
+		countUnreadHubNotifications,
 		filterHubNotifications,
 		type HubNotificationFilter,
 		type HubNotificationItem
@@ -23,6 +24,7 @@
 		triggerClass = '',
 		broadcastHref = '/#hub-broadcasts',
 		eventHref = '/#hub-events',
+		settingsHref = '/profile/details#notification-preferences',
 		manageContentHref = undefined as string | undefined,
 		manageBroadcastsHref = undefined as string | undefined,
 		manageEventsHref = undefined as string | undefined
@@ -31,6 +33,7 @@
 		triggerClass?: string;
 		broadcastHref?: string;
 		eventHref?: string;
+		settingsHref?: string;
 		manageContentHref?: string | undefined;
 		manageBroadcastsHref?: string | undefined;
 		manageEventsHref?: string | undefined;
@@ -40,9 +43,13 @@
 	let loadError = $state('');
 	let filter = $state<HubNotificationFilter>('all');
 
+	const allNotifications = $derived(currentHub.allActivityFeed);
 	const notifications = $derived(currentHub.activityFeed);
-	const notificationCounts = $derived(countHubNotifications(notifications));
+	const notificationCounts = $derived(countHubNotifications(allNotifications));
 	const visibleNotifications = $derived(filterHubNotifications(notifications, filter));
+	const visibleUnreadCount = $derived(countUnreadHubNotifications(visibleNotifications));
+	const unreadCount = $derived(currentHub.unreadActivityCount);
+	const hiddenNotificationCount = $derived(Math.max(0, allNotifications.length - notifications.length));
 
 	function closeSheet() {
 		open = false;
@@ -70,14 +77,51 @@
 
 	function getEmptyStateCopy(activeFilter: HubNotificationFilter) {
 		if (activeFilter === 'broadcast') {
+			if (notificationCounts.broadcast > 0 && visibleNotifications.length === 0) {
+				return 'Broadcast alerts are currently hidden by your notification settings.';
+			}
+
 			return 'No broadcast alerts are live right now.';
 		}
 
 		if (activeFilter === 'event') {
+			if (notificationCounts.event > 0 && visibleNotifications.length === 0) {
+				return 'Event alerts are currently hidden by your notification settings.';
+			}
+
 			return 'No event alerts are live right now.';
 		}
 
+		if (hiddenNotificationCount > 0 && notifications.length === 0) {
+			return 'Your notification settings are hiding the hub alerts that are currently available.';
+		}
+
 		return 'No alerts yet. When the hub posts a broadcast or publishes an event, it will show up here.';
+	}
+
+	async function markNotificationRead(notification: HubNotificationItem) {
+		loadError = '';
+
+		try {
+			await currentHub.markActivityRead(notification);
+		} catch (error) {
+			loadError = error instanceof Error ? error.message : 'Could not update alert read state.';
+		}
+	}
+
+	async function markVisibleRead() {
+		loadError = '';
+
+		try {
+			await currentHub.markAllActivityRead(visibleNotifications);
+		} catch (error) {
+			loadError = error instanceof Error ? error.message : 'Could not update alert read state.';
+		}
+	}
+
+	function handleNotificationAction(notification: HubNotificationItem) {
+		void markNotificationRead(notification);
+		closeSheet();
 	}
 
 	async function handleOpenChange(nextOpen: boolean) {
@@ -102,6 +146,11 @@
 			<Button {...props} type="button" variant="outline" size="sm" class={`gap-2 ${triggerClass}`}>
 				<BellIcon class="shell-header__control-icon" aria-hidden="true" />
 				<span class="shell-header__control-label">{triggerLabel}</span>
+				{#if unreadCount > 0}
+					<span class="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-background">
+						{unreadCount}
+					</span>
+				{/if}
 			</Button>
 		{/snippet}
 	</Sheet.Trigger>
@@ -168,6 +217,9 @@
 
 					<p class="text-xs text-muted-foreground">
 						{visibleNotifications.length} {visibleNotifications.length === 1 ? 'alert' : 'alerts'} visible
+						{#if hiddenNotificationCount > 0}
+							· {hiddenNotificationCount} hidden by settings
+						{/if}
 					</p>
 				</div>
 
@@ -180,13 +232,23 @@
 						{#each visibleNotifications as notification (notification.id)}
 							{@const primaryAction = getPrimaryAction(notification)}
 							{@const secondaryAction = getSecondaryAction(notification)}
-							<Item.Root variant="default" class="bg-card">
+							<Item.Root
+								variant="default"
+								class={`bg-card ${notification.isRead ? '' : 'ring-1 ring-border/70'}`}
+							>
 								<Item.Content>
 									<div class="flex items-center justify-between gap-3">
 										<Item.Title>{notification.title}</Item.Title>
-										<span class="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
-											{notification.label}
-										</span>
+										<div class="flex flex-wrap items-center justify-end gap-2">
+											<span class="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
+												{notification.label}
+											</span>
+											{#if !notification.isRead}
+												<span class="rounded-full border border-border bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
+													New
+												</span>
+											{/if}
+										</div>
 									</div>
 									<Item.Description>{notification.summary}</Item.Description>
 									<p class="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
@@ -197,7 +259,7 @@
 											href={primaryAction.href}
 											variant="outline"
 											size="sm"
-											onclick={closeSheet}
+											onclick={() => handleNotificationAction(notification)}
 										>
 											{primaryAction.label}
 											<ArrowUpRightIcon class="size-4" />
@@ -207,9 +269,20 @@
 												href={secondaryAction.href}
 												variant="ghost"
 												size="sm"
-												onclick={closeSheet}
+												onclick={() => handleNotificationAction(notification)}
 											>
 												{secondaryAction.label}
+											</Button>
+										{/if}
+										{#if !notification.isRead}
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												disabled={currentHub.notificationReadTargetId === notification.id}
+												onclick={() => void markNotificationRead(notification)}
+											>
+												{currentHub.notificationReadTargetId === notification.id ? 'Saving...' : 'Mark read'}
 											</Button>
 										{/if}
 									</div>
@@ -221,15 +294,38 @@
 			{/if}
 		</ScrollArea>
 
-		<Sheet.Footer class="justify-between">
-			<p class="text-xs text-muted-foreground">
-				{notificationCounts.all} {notificationCounts.all === 1 ? 'alert' : 'alerts'} total
-			</p>
-			<Sheet.Close>
-				{#snippet child({ props })}
-					<Button {...props} type="button" variant="outline">Close</Button>
-				{/snippet}
-			</Sheet.Close>
+		<Sheet.Footer class="gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div class="space-y-1">
+				<p class="text-xs text-muted-foreground">
+					{notificationCounts.all} {notificationCounts.all === 1 ? 'alert' : 'alerts'} total
+					{#if hiddenNotificationCount > 0}
+						· {hiddenNotificationCount} hidden by settings
+					{/if}
+				</p>
+				{#if visibleUnreadCount > 0}
+					<p class="text-xs text-muted-foreground">
+						{visibleUnreadCount} unread {visibleUnreadCount === 1 ? 'alert' : 'alerts'} in this view
+					</p>
+				{/if}
+			</div>
+
+			<div class="flex flex-wrap gap-2">
+				<Button href={settingsHref} variant="ghost" size="sm" onclick={closeSheet}>Settings</Button>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					disabled={visibleUnreadCount === 0 || currentHub.isMarkingAllActivityRead}
+					onclick={() => void markVisibleRead()}
+				>
+					{currentHub.isMarkingAllActivityRead ? 'Saving...' : 'Mark visible read'}
+				</Button>
+				<Sheet.Close>
+					{#snippet child({ props })}
+						<Button {...props} type="button" variant="outline">Close</Button>
+					{/snippet}
+				</Sheet.Close>
+			</div>
 		</Sheet.Footer>
 	</Sheet.Content>
 </Sheet.Root>
