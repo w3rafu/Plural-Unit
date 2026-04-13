@@ -24,7 +24,7 @@
  * hardcoding copy.
  */
 
-export type PluginKey = 'broadcasts' | 'events';
+export type PluginKey = 'broadcasts' | 'events' | 'resources';
 
 export type PluginDefinition = {
 	key: PluginKey;
@@ -53,6 +53,13 @@ export const PLUGIN_REGISTRY: Record<PluginKey, PluginDefinition> = {
 		description: 'Upcoming gatherings people can plan around.',
 		memberOrder: 20,
 		adminOrder: 20
+	},
+	resources: {
+		key: 'resources',
+		title: 'Resources',
+		description: 'Reference links, forms, documents, and contact points members can reopen anytime.',
+		memberOrder: 30,
+		adminOrder: 30
 	}
 };
 
@@ -65,7 +72,7 @@ export const ALL_PLUGIN_KEYS: PluginKey[] = Object.keys(PLUGIN_REGISTRY) as Plug
 export function buildPluginStateMap(
 	rows: Array<{ plugin_key: string; is_enabled: boolean }>
 ): PluginStateMap {
-	const map: PluginStateMap = { broadcasts: false, events: false };
+	const map: PluginStateMap = { broadcasts: false, events: false, resources: false };
 	for (const row of rows) {
 		if (row.plugin_key in map) {
 			map[row.plugin_key as PluginKey] = row.is_enabled;

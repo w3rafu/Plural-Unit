@@ -93,16 +93,13 @@
 				<Card.Title class="text-lg font-semibold tracking-tight">Invite members</Card.Title>
 				<Card.Description>Send an email or phone invitation to bring someone in directly.</Card.Description>
 			</div>
-			<Badge variant="outline">
-				{currentOrganization.invitations.length}
-				{` pending`}
-			</Badge>
+			<Badge variant="outline">{currentOrganization.invitations.length} pending</Badge>
 		</div>
 	</Card.Header>
 
-	<Card.Content class="space-y-5">
+	<Card.Content class="space-y-4">
 		<form
-			class="space-y-5"
+			class="space-y-4"
 			onsubmit={(event) => {
 				event.preventDefault();
 				sendInvite();

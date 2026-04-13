@@ -1,8 +1,12 @@
 <script lang="ts">
-	import { Sparkles } from '@lucide/svelte';
+	import { ArrowUpRight, ChevronRight, Sparkles } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import {
+		getHubActivityPrimaryAction,
+		getHubActivitySecondaryAction
+	} from '$lib/components/hub/member/hubActivityModel';
 	import type { HubNotificationItem } from '$lib/models/hubNotifications';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -10,7 +14,12 @@
 	let {
 		items = undefined as HubNotificationItem[] | undefined,
 		organizationName = undefined as string | undefined,
-		isLoading = undefined as boolean | undefined
+		isLoading = undefined as boolean | undefined,
+		broadcastHref = '#hub-broadcasts',
+		eventHref = '#hub-events',
+		manageContentHref = undefined as string | undefined,
+		manageBroadcastsHref = undefined as string | undefined,
+		manageEventsHref = undefined as string | undefined
 	} = $props();
 
 	const MAX_VISIBLE_ACTIVITY_ITEMS = 4;
@@ -29,6 +38,26 @@
 	const activityItems = $derived(
 		showAll ? remainingItems : remainingItems.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS)
 	);
+
+	function getPrimaryAction(item: HubNotificationItem) {
+		return getHubActivityPrimaryAction(item, {
+			broadcastHref,
+			eventHref,
+			manageContentHref,
+			manageBroadcastsHref,
+			manageEventsHref
+		});
+	}
+
+	function getSecondaryAction(item: HubNotificationItem) {
+		return getHubActivitySecondaryAction(item, {
+			broadcastHref,
+			eventHref,
+			manageContentHref,
+			manageBroadcastsHref,
+			manageEventsHref
+		});
+	}
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
@@ -76,6 +105,8 @@
 			</div>
 		{:else}
 			{#if featuredItem}
+				{@const featuredPrimaryAction = getPrimaryAction(featuredItem)}
+				{@const featuredSecondaryAction = getSecondaryAction(featuredItem)}
 				<div class="rounded-3xl border border-border/70 bg-background px-5 py-5 shadow-sm">
 					<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 						<div class="flex items-center gap-2">
@@ -101,13 +132,29 @@
 					</div>
 
 					<p class="mt-4 text-sm leading-6 text-muted-foreground">{featuredItem.summary}</p>
+
+					<div class="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+						<p class="text-xs text-muted-foreground">{featuredPrimaryAction.description}</p>
+						<div class="flex flex-wrap gap-2">
+							<Button href={featuredPrimaryAction.href} size="sm">
+								{featuredPrimaryAction.label}
+								<ArrowUpRight class="size-4" />
+							</Button>
+							{#if featuredSecondaryAction}
+								<Button href={featuredSecondaryAction.href} variant="ghost" size="sm">
+									{featuredSecondaryAction.label}
+								</Button>
+							{/if}
+						</div>
+					</div>
 				</div>
 			{/if}
 
 			<div class="space-y-3">
 				{#each activityItems as item (item.id)}
+					{@const primaryAction = getPrimaryAction(item)}
 					<div class="rounded-2xl border border-border/70 bg-background/75 px-4 py-4 shadow-sm">
-						<div class="flex items-center justify-between gap-3">
+						<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 							<div class="min-w-0">
 								<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
 								<p class="mt-1 text-xs text-muted-foreground">{item.summary}</p>
@@ -116,9 +163,15 @@
 								{item.label}
 							</Badge>
 						</div>
-						<p class="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-							{item.meta}
-						</p>
+						<div class="mt-3 flex flex-col gap-3 border-t border-border/70 pt-3 sm:flex-row sm:items-center sm:justify-between">
+							<p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								{item.meta}
+							</p>
+							<Button href={primaryAction.href} variant="ghost" size="sm" class="self-start sm:self-auto">
+								{primaryAction.label}
+								<ChevronRight class="size-4" />
+							</Button>
+						</div>
 					</div>
 				{/each}
 			</div>

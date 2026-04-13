@@ -61,6 +61,21 @@
 	);
 	const showOrganizationControl = $derived(currentUser.isLoggedIn && currentOrganization.isAdmin);
 	const isOrganizationRoute = $derived(page.url.pathname.startsWith('/organization'));
+	const hubBroadcastHref = $derived(page.url.pathname === '/' ? '#hub-broadcasts' : '/#hub-broadcasts');
+	const hubEventHref = $derived(page.url.pathname === '/' ? '#hub-events' : '/#hub-events');
+	const manageContentHref = $derived(
+		currentUser.isLoggedIn && currentOrganization.isAdmin ? '/hub/manage/content' : undefined
+	);
+	const manageBroadcastsHref = $derived(
+		currentUser.isLoggedIn && currentOrganization.isAdmin
+			? '/hub/manage/content#manage-broadcasts'
+			: undefined
+	);
+	const manageEventsHref = $derived(
+		currentUser.isLoggedIn && currentOrganization.isAdmin
+			? '/hub/manage/content#manage-events'
+			: undefined
+	);
 	const controlButtonClass = 'shell-header__control';
 </script>
 
@@ -129,7 +144,15 @@
 					{/if}
 
 					{#if currentUser.isLoggedIn}
-						<HubNotificationsSheet triggerLabel="Alerts" triggerClass={controlButtonClass} />
+						<HubNotificationsSheet
+							triggerLabel="Alerts"
+							triggerClass={controlButtonClass}
+							broadcastHref={hubBroadcastHref}
+							eventHref={hubEventHref}
+							{manageContentHref}
+							{manageBroadcastsHref}
+							{manageEventsHref}
+						/>
 					{:else}
 						<AuthHelpSheet triggerLabel="Help" triggerClass={controlButtonClass} />
 					{/if}

@@ -10,6 +10,9 @@ import { throwRepositoryError } from '$lib/services/repositoryError';
 
 // ── Broadcasts ──
 
+const HUB_BROADCAST_SELECT =
+	'id, organization_id, title, body, created_at, updated_at, is_pinned, is_draft, publish_at, archived_at, expires_at';
+
 /** Row shape returned from the hub_broadcasts table. */
 export type BroadcastRow = {
 	id: string;
@@ -17,13 +20,27 @@ export type BroadcastRow = {
 	title: string;
 	body: string;
 	created_at: string;
+	updated_at: string;
+	is_pinned: boolean;
+	is_draft: boolean;
+	publish_at: string | null;
+	archived_at: string | null;
+	expires_at: string | null;
+};
+
+export type BroadcastMutationPayload = {
+	title: string;
+	body: string;
+	expires_at: string | null;
+	is_draft: boolean;
+	publish_at: string | null;
 };
 
 /** Fetch all broadcasts for an organization, newest first. */
 export async function fetchBroadcasts(organizationId: string): Promise<BroadcastRow[]> {
 	const { data, error } = await getSupabaseClient()
 		.from('hub_broadcasts')
-		.select('id, organization_id, title, body, created_at')
+		.select(HUB_BROADCAST_SELECT)
 		.eq('organization_id', organizationId)
 		.order('created_at', { ascending: false });
 
@@ -34,15 +51,140 @@ export async function fetchBroadcasts(organizationId: string): Promise<Broadcast
 /** Insert a new broadcast and return the created row. */
 export async function createBroadcast(
 	organizationId: string,
-	payload: { title: string; body: string }
+	payload: BroadcastMutationPayload
 ): Promise<BroadcastRow> {
 	const { data, error } = await getSupabaseClient()
 		.from('hub_broadcasts')
 		.insert({ organization_id: organizationId, ...payload })
-		.select()
+		.select(HUB_BROADCAST_SELECT)
 		.single();
 
 	if (error) throwRepositoryError(error, 'Could not create the broadcast.');
+	return data as BroadcastRow;
+}
+
+/** Update a broadcast in place and return the current row. */
+export async function updateBroadcast(
+	broadcastId: string,
+	payload: BroadcastMutationPayload
+): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update(payload)
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update the broadcast.');
+	return data as BroadcastRow;
+}
+
+/** Pin or unpin a broadcast for the organization. */
+export async function setBroadcastPinned(
+	organizationId: string,
+	broadcastId: string,
+	isPinned: boolean
+): Promise<BroadcastRow> {
+	if (isPinned) {
+		const { error: unpinError } = await getSupabaseClient()
+			.from('hub_broadcasts')
+			.update({ is_pinned: false })
+			.eq('organization_id', organizationId);
+
+		if (unpinError) throwRepositoryError(unpinError, 'Could not update the pinned broadcast.');
+	}
+
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update(
+			isPinned
+				? { is_pinned: true, is_draft: false, publish_at: null, archived_at: null }
+				: { is_pinned: false }
+		)
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update the pinned broadcast.');
+	return data as BroadcastRow;
+}
+
+/** Mark a broadcast inactive without permanently deleting it. */
+export async function archiveBroadcast(broadcastId: string): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update({ archived_at: new Date().toISOString(), is_pinned: false })
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not archive the broadcast.');
+	return data as BroadcastRow;
+}
+
+/** Restore an archived or expired broadcast to the live list. */
+export async function restoreBroadcast(broadcastId: string): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update({
+			archived_at: null,
+			expires_at: null,
+			is_pinned: false,
+			is_draft: false,
+			publish_at: null
+		})
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not restore the broadcast.');
+	return data as BroadcastRow;
+}
+
+/** Move a broadcast back into draft without making it member-visible. */
+export async function saveBroadcastDraft(broadcastId: string): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update({ is_draft: true, publish_at: null, archived_at: null, is_pinned: false })
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not save the broadcast as a draft.');
+	return data as BroadcastRow;
+}
+
+/** Schedule a broadcast for later member visibility. */
+export async function scheduleBroadcast(
+	broadcastId: string,
+	publishAt: string
+): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update({
+			is_draft: false,
+			publish_at: publishAt,
+			archived_at: null,
+			is_pinned: false
+		})
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not schedule the broadcast.');
+	return data as BroadcastRow;
+}
+
+/** Publish a broadcast immediately. */
+export async function publishBroadcastNow(broadcastId: string): Promise<BroadcastRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_broadcasts')
+		.update({ is_draft: false, publish_at: null, archived_at: null })
+		.eq('id', broadcastId)
+		.select(HUB_BROADCAST_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not publish the broadcast.');
 	return data as BroadcastRow;
 }
 
@@ -54,6 +196,9 @@ export async function deleteBroadcast(id: string) {
 
 // ── Events ──
 
+const HUB_EVENT_SELECT =
+	'id, organization_id, title, description, starts_at, ends_at, location, created_at, updated_at, publish_at, canceled_at, archived_at';
+
 /** Row shape returned from the hub_events table. */
 export type EventRow = {
 	id: string;
@@ -61,15 +206,41 @@ export type EventRow = {
 	title: string;
 	description: string;
 	starts_at: string;
+	ends_at: string | null;
 	location: string;
 	created_at: string;
+	updated_at: string;
+	publish_at: string | null;
+	canceled_at: string | null;
+	archived_at: string | null;
+};
+
+export type EventMutationPayload = {
+	title: string;
+	description: string;
+	starts_at: string;
+	ends_at: string | null;
+	location: string;
+	publish_at: string | null;
+};
+
+export type EventResponseStatus = 'going' | 'maybe' | 'cannot_attend';
+
+export type EventResponseRow = {
+	id: string;
+	event_id: string;
+	organization_id: string;
+	profile_id: string;
+	response: EventResponseStatus;
+	created_at: string;
+	updated_at: string;
 };
 
 /** Fetch all events for an organization, soonest first. */
 export async function fetchEvents(organizationId: string): Promise<EventRow[]> {
 	const { data, error } = await getSupabaseClient()
 		.from('hub_events')
-		.select('id, organization_id, title, description, starts_at, location, created_at')
+		.select(HUB_EVENT_SELECT)
 		.eq('organization_id', organizationId)
 		.order('starts_at', { ascending: true });
 
@@ -77,25 +248,213 @@ export async function fetchEvents(organizationId: string): Promise<EventRow[]> {
 	return (data ?? []) as EventRow[];
 }
 
+/** Fetch all member event responses for an organization, most recently updated first. */
+export async function fetchEventResponses(organizationId: string): Promise<EventResponseRow[]> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_event_responses')
+		.select('id, event_id, organization_id, profile_id, response, created_at, updated_at')
+		.eq('organization_id', organizationId)
+		.order('updated_at', { ascending: false });
+
+	if (error) throwRepositoryError(error, 'Could not load event responses.');
+	return (data ?? []) as EventResponseRow[];
+}
+
 /** Insert a new event and return the created row. */
 export async function createEvent(
 	organizationId: string,
-	payload: { title: string; description: string; starts_at: string; location: string }
+	payload: EventMutationPayload
 ): Promise<EventRow> {
 	const { data, error } = await getSupabaseClient()
 		.from('hub_events')
 		.insert({ organization_id: organizationId, ...payload })
-		.select()
+		.select(HUB_EVENT_SELECT)
 		.single();
 
 	if (error) throwRepositoryError(error, 'Could not create the event.');
 	return data as EventRow;
 }
 
+/** Update an event in place and return the latest row. */
+export async function updateEvent(eventId: string, payload: EventMutationPayload): Promise<EventRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_events')
+		.update(payload)
+		.eq('id', eventId)
+		.select(HUB_EVENT_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update the event.');
+	return data as EventRow;
+}
+
+/** Mark an event canceled without removing it from admin history. */
+export async function cancelEvent(eventId: string): Promise<EventRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_events')
+		.update({ canceled_at: new Date().toISOString() })
+		.eq('id', eventId)
+		.select(HUB_EVENT_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not cancel the event.');
+	return data as EventRow;
+}
+
+/** Move an event out of the member surface while keeping it in admin history. */
+export async function archiveEvent(eventId: string): Promise<EventRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_events')
+		.update({ archived_at: new Date().toISOString() })
+		.eq('id', eventId)
+		.select(HUB_EVENT_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not archive the event.');
+	return data as EventRow;
+}
+
+/** Restore a canceled or archived event to the active lifecycle. */
+export async function restoreEvent(eventId: string): Promise<EventRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_events')
+		.update({ canceled_at: null, archived_at: null })
+		.eq('id', eventId)
+		.select(HUB_EVENT_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not restore the event.');
+	return data as EventRow;
+}
+
+/** Upsert the signed-in member's response for an event. */
+export async function upsertOwnEventResponse(payload: {
+	eventId: string;
+	organizationId: string;
+	profileId: string;
+	response: EventResponseStatus;
+}): Promise<EventResponseRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_event_responses')
+		.upsert(
+			{
+				event_id: payload.eventId,
+				organization_id: payload.organizationId,
+				profile_id: payload.profileId,
+				response: payload.response
+			},
+			{ onConflict: 'event_id,profile_id' }
+		)
+		.select('id, event_id, organization_id, profile_id, response, created_at, updated_at')
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not save the event response.');
+	return data as EventResponseRow;
+}
+
 /** Permanently delete an event by id. */
 export async function deleteEvent(id: string) {
 	const { error } = await getSupabaseClient().from('hub_events').delete().eq('id', id);
 	if (error) throwRepositoryError(error, 'Could not delete the event.');
+}
+
+// ── Resources ──
+
+export type ResourceType = 'link' | 'form' | 'document' | 'contact';
+
+export type ResourceRow = {
+	id: string;
+	organization_id: string;
+	title: string;
+	description: string;
+	href: string;
+	resource_type: ResourceType;
+	sort_order: number;
+	created_at: string;
+	updated_at: string;
+};
+
+/** Fetch all resources for an organization, ordered for member display. */
+export async function fetchResources(organizationId: string): Promise<ResourceRow[]> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_resources')
+		.select(
+			'id, organization_id, title, description, href, resource_type, sort_order, created_at, updated_at'
+		)
+		.eq('organization_id', organizationId)
+		.order('sort_order', { ascending: true });
+
+	if (error) throwRepositoryError(error, 'Could not load resources.');
+	return (data ?? []) as ResourceRow[];
+}
+
+/** Insert a new resource and return the created row. */
+export async function createResource(
+	organizationId: string,
+	payload: {
+		title: string;
+		description: string;
+		href: string;
+		resource_type: ResourceType;
+		sort_order: number;
+	}
+): Promise<ResourceRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_resources')
+		.insert({ organization_id: organizationId, ...payload })
+		.select(
+			'id, organization_id, title, description, href, resource_type, sort_order, created_at, updated_at'
+		)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not create the resource.');
+	return data as ResourceRow;
+}
+
+/** Update a resource and return the latest row. */
+export async function updateResource(
+	resourceId: string,
+	payload: {
+		title: string;
+		description: string;
+		href: string;
+		resource_type: ResourceType;
+		sort_order?: number;
+	}
+): Promise<ResourceRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_resources')
+		.update(payload)
+		.eq('id', resourceId)
+		.select(
+			'id, organization_id, title, description, href, resource_type, sort_order, created_at, updated_at'
+		)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not update the resource.');
+	return data as ResourceRow;
+}
+
+/** Persist a new resource order. */
+export async function saveResourceOrder(updates: Array<{ id: string; sort_order: number }>) {
+	await Promise.all(
+		updates.map(async (update) => {
+			const { error } = await getSupabaseClient()
+				.from('hub_resources')
+				.update({ sort_order: update.sort_order })
+				.eq('id', update.id);
+
+			if (error) {
+				throwRepositoryError(error, 'Could not save the resource order.');
+			}
+		})
+	);
+}
+
+/** Permanently delete a resource by id. */
+export async function deleteResource(id: string) {
+	const { error } = await getSupabaseClient().from('hub_resources').delete().eq('id', id);
+	if (error) throwRepositoryError(error, 'Could not delete the resource.');
 }
 
 // ── Plugin activation ──

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { formatShortDate, formatShortDateTime, formatEventDateTime } from './dateFormat';
+import {
+	formatShortDate,
+	formatShortDateTime,
+	formatEventDateTime,
+	formatRelativeDateTime
+} from './dateFormat';
 
 describe('formatShortDate', () => {
 	it('formats a valid ISO date', () => {
@@ -56,5 +61,21 @@ describe('formatEventDateTime', () => {
 
 	it('returns empty string for an invalid date', () => {
 		expect(formatEventDateTime('garbage')).toBe('');
+	});
+});
+
+describe('formatRelativeDateTime', () => {
+	const now = new Date('2026-04-13T12:00:00.000Z').getTime();
+
+	it('formats future dates relative to the supplied time', () => {
+		expect(formatRelativeDateTime('2026-04-13T14:00:00.000Z', now)).toBe('in 2 hours');
+	});
+
+	it('formats past dates relative to the supplied time', () => {
+		expect(formatRelativeDateTime('2026-04-11T12:00:00.000Z', now)).toBe('2 days ago');
+	});
+
+	it('returns empty string for invalid dates', () => {
+		expect(formatRelativeDateTime('garbage', now)).toBe('');
 	});
 });

@@ -7,8 +7,9 @@ const mockSingle = vi.fn();
 const mockMaybeSingle = vi.fn();
 const mockSelect = vi.fn(() => ({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, order: mockOrder }));
 const mockInsert = vi.fn(() => ({ select: mockSelect }));
+const mockUpdate = vi.fn(() => ({ eq: mockEq }));
 const mockDelete = vi.fn(() => ({ eq: mockEq }));
-const mockUpsert = vi.fn(() => ({ error: null }));
+const mockUpsert = vi.fn(() => ({ select: mockSelect, error: null }));
 const mockEq = vi.fn(() => ({ maybeSingle: mockMaybeSingle, select: mockSelect, order: mockOrder, eq: mockEq }));
 const mockOrder = vi.fn(() => ({ data: [], error: null }));
 const mockRpc = vi.fn();
@@ -16,6 +17,7 @@ const mockRpc = vi.fn();
 const mockFrom = vi.fn(() => ({
 	select: mockSelect,
 	insert: mockInsert,
+	update: mockUpdate,
 	delete: mockDelete,
 	upsert: mockUpsert,
 	eq: mockEq
@@ -33,10 +35,26 @@ vi.mock('$lib/supabaseClient', () => ({
 import {
 	fetchBroadcasts,
 	createBroadcast,
+	saveBroadcastDraft,
+	scheduleBroadcast,
+	publishBroadcastNow,
+	updateBroadcast,
+	setBroadcastPinned,
+	archiveBroadcast,
+	restoreBroadcast,
 	deleteBroadcast,
 	fetchEvents,
 	createEvent,
+	updateEvent,
+	cancelEvent,
+	archiveEvent,
+	restoreEvent,
 	deleteEvent,
+	fetchResources,
+	createResource,
+	updateResource,
+	saveResourceOrder,
+	deleteResource,
 	fetchActivePlugins,
 	togglePlugin
 } from './hubRepository';
@@ -73,22 +91,277 @@ describe('fetchBroadcasts', () => {
 
 describe('createBroadcast', () => {
 	it('inserts into hub_broadcasts and returns the row', async () => {
-		const row = { id: 'b2', organization_id: 'org-1', title: 'New', body: 'Body', created_at: '2026-01-01' };
+		const row = {
+			id: 'b2',
+			organization_id: 'org-1',
+			title: 'New',
+			body: 'Body',
+			created_at: '2026-01-01',
+			updated_at: '2026-01-01',
+			is_pinned: false,
+			is_draft: false,
+			publish_at: null,
+			archived_at: null,
+			expires_at: null
+		};
 		mockSingle.mockResolvedValueOnce({ data: row, error: null });
 
-		const result = await createBroadcast('org-1', { title: 'New', body: 'Body' });
+		const result = await createBroadcast('org-1', {
+			title: 'New',
+			body: 'Body',
+			expires_at: null,
+			is_draft: false,
+			publish_at: null
+		});
 
 		expect(mockFrom).toHaveBeenCalledWith('hub_broadcasts');
-		expect(mockInsert).toHaveBeenCalledWith({ organization_id: 'org-1', title: 'New', body: 'Body' });
+		expect(mockInsert).toHaveBeenCalledWith({
+			organization_id: 'org-1',
+			title: 'New',
+			body: 'Body',
+			expires_at: null,
+			is_draft: false,
+			publish_at: null
+		});
 		expect(result).toEqual(row);
 	});
 
 	it('throws on insert error', async () => {
 		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'insert fail' } });
 
-		await expect(createBroadcast('org-1', { title: 'X', body: 'Y' })).rejects.toThrow('insert fail');
+		await expect(
+			createBroadcast('org-1', {
+				title: 'X',
+				body: 'Y',
+				expires_at: null,
+				is_draft: true,
+				publish_at: null
+			})
+		).rejects.toThrow('insert fail');
 	});
 });
+
+	describe('updateBroadcast', () => {
+		it('updates a broadcast and returns the latest row', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Updated',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: false,
+				publish_at: null,
+				archived_at: null,
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await updateBroadcast('b1', {
+				title: 'Updated',
+				body: 'Body',
+				expires_at: null,
+				is_draft: false,
+				publish_at: null
+			});
+
+			expect(mockUpdate).toHaveBeenCalledWith({
+				title: 'Updated',
+				body: 'Body',
+				expires_at: null,
+				is_draft: false,
+				publish_at: null
+			});
+			expect(result).toEqual(row);
+		});
+
+		it('throws on update error', async () => {
+			mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'update fail' } });
+
+			await expect(
+				updateBroadcast('b1', {
+					title: 'X',
+					body: 'Y',
+					expires_at: null,
+					is_draft: true,
+					publish_at: null
+				})
+			).rejects.toThrow('update fail');
+		});
+	});
+
+	describe('setBroadcastPinned', () => {
+		it('unpins the rest of the organization before pinning the target row', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Pinned',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: true,
+				is_draft: false,
+				publish_at: null,
+				archived_at: null,
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await setBroadcastPinned('org-1', 'b1', true);
+
+			expect(mockUpdate).toHaveBeenNthCalledWith(1, { is_pinned: false });
+			expect(mockUpdate).toHaveBeenNthCalledWith(2, {
+				is_pinned: true,
+				is_draft: false,
+				publish_at: null,
+				archived_at: null
+			});
+			expect(result).toEqual(row);
+		});
+
+		it('throws on pinning error', async () => {
+			mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'pin fail' } });
+
+			await expect(setBroadcastPinned('org-1', 'b1', false)).rejects.toThrow('pin fail');
+		});
+	});
+
+	describe('archiveBroadcast', () => {
+		it('marks a broadcast archived', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Archived',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: false,
+				publish_at: null,
+				archived_at: '2026-01-02',
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await archiveBroadcast('b1');
+
+			expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ is_pinned: false }));
+			expect(result).toEqual(row);
+		});
+	});
+
+	describe('restoreBroadcast', () => {
+		it('clears lifecycle fields when restoring a broadcast', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Restored',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: false,
+				publish_at: null,
+				archived_at: null,
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await restoreBroadcast('b1');
+
+			expect(mockUpdate).toHaveBeenCalledWith({
+				archived_at: null,
+				expires_at: null,
+				is_pinned: false,
+				is_draft: false,
+				publish_at: null
+			});
+			expect(result).toEqual(row);
+		});
+	});
+
+	describe('saveBroadcastDraft', () => {
+		it('moves a broadcast back into draft state', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Drafted',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: true,
+				publish_at: null,
+				archived_at: null,
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await saveBroadcastDraft('b1');
+
+			expect(mockUpdate).toHaveBeenCalledWith({
+				is_draft: true,
+				publish_at: null,
+				archived_at: null,
+				is_pinned: false
+			});
+			expect(result).toEqual(row);
+		});
+	});
+
+	describe('scheduleBroadcast', () => {
+		it('saves a future publish time', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Scheduled',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: false,
+				publish_at: '2026-02-01T12:00:00.000Z',
+				archived_at: null,
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await scheduleBroadcast('b1', '2026-02-01T12:00:00.000Z');
+
+			expect(mockUpdate).toHaveBeenCalledWith({
+				is_draft: false,
+				publish_at: '2026-02-01T12:00:00.000Z',
+				archived_at: null,
+				is_pinned: false
+			});
+			expect(result).toEqual(row);
+		});
+	});
+
+	describe('publishBroadcastNow', () => {
+		it('publishes a broadcast immediately', async () => {
+			const row = {
+				id: 'b1',
+				organization_id: 'org-1',
+				title: 'Live',
+				body: 'Body',
+				created_at: '2026-01-01',
+				updated_at: '2026-01-02',
+				is_pinned: false,
+				is_draft: false,
+				publish_at: null,
+				archived_at: null,
+				expires_at: null
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			const result = await publishBroadcastNow('b1');
+
+			expect(mockUpdate).toHaveBeenCalledWith({ is_draft: false, publish_at: null, archived_at: null });
+			expect(result).toEqual(row);
+		});
+	});
 
 describe('deleteBroadcast', () => {
 	it('deletes from hub_broadcasts by id', async () => {
@@ -127,13 +400,29 @@ describe('fetchEvents', () => {
 
 describe('createEvent', () => {
 	it('inserts into hub_events and returns the row', async () => {
-		const payload = { title: 'Meeting', description: 'Desc', starts_at: '2026-04-11', location: 'Room A' };
-		const row = { id: 'e2', organization_id: 'org-1', ...payload, created_at: '2026-01-01' };
+		const payload = {
+			title: 'Meeting',
+			description: 'Desc',
+			starts_at: '2026-04-11',
+			ends_at: null,
+			location: 'Room A',
+			publish_at: null
+		};
+		const row = {
+			id: 'e2',
+			organization_id: 'org-1',
+			...payload,
+			created_at: '2026-01-01',
+			updated_at: '2026-01-01',
+			canceled_at: null,
+			archived_at: null
+		};
 		mockSingle.mockResolvedValueOnce({ data: row, error: null });
 
 		const result = await createEvent('org-1', payload);
 
 		expect(mockFrom).toHaveBeenCalledWith('hub_events');
+		expect(mockInsert).toHaveBeenCalledWith({ organization_id: 'org-1', ...payload });
 		expect(result).toEqual(row);
 	});
 
@@ -141,8 +430,90 @@ describe('createEvent', () => {
 		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'event insert fail' } });
 
 		await expect(
-			createEvent('org-1', { title: 'X', description: 'Y', starts_at: '2026-01-01', location: 'Z' })
+			createEvent('org-1', {
+				title: 'X',
+				description: 'Y',
+				starts_at: '2026-01-01',
+				ends_at: null,
+				location: 'Z',
+				publish_at: null
+			})
 		).rejects.toThrow('event insert fail');
+	});
+});
+
+describe('updateEvent', () => {
+	it('updates an event and returns the latest row', async () => {
+		const row = {
+			id: 'e1',
+			organization_id: 'org-1',
+			title: 'Updated meeting',
+			description: 'Desc',
+			starts_at: '2026-04-11',
+			ends_at: '2026-04-11T01:00:00.000Z',
+			location: 'Room A',
+			created_at: '2026-01-01',
+			updated_at: '2026-01-02',
+			publish_at: '2026-04-10',
+			canceled_at: null,
+			archived_at: null
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await updateEvent('e1', {
+			title: 'Updated meeting',
+			description: 'Desc',
+			starts_at: '2026-04-11',
+			ends_at: '2026-04-11T01:00:00.000Z',
+			location: 'Room A',
+			publish_at: '2026-04-10'
+		});
+
+		expect(mockUpdate).toHaveBeenCalledWith({
+			title: 'Updated meeting',
+			description: 'Desc',
+			starts_at: '2026-04-11',
+			ends_at: '2026-04-11T01:00:00.000Z',
+			location: 'Room A',
+			publish_at: '2026-04-10'
+		});
+		expect(result).toEqual(row);
+	});
+});
+
+describe('cancelEvent', () => {
+	it('marks an event canceled', async () => {
+		const row = { id: 'e1', canceled_at: '2026-01-02T00:00:00.000Z' };
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await cancelEvent('e1');
+
+		expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ canceled_at: expect.any(String) }));
+		expect(result).toEqual(row);
+	});
+});
+
+describe('archiveEvent', () => {
+	it('marks an event archived', async () => {
+		const row = { id: 'e1', archived_at: '2026-01-02T00:00:00.000Z' };
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await archiveEvent('e1');
+
+		expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ archived_at: expect.any(String) }));
+		expect(result).toEqual(row);
+	});
+});
+
+describe('restoreEvent', () => {
+	it('clears lifecycle fields when restoring an event', async () => {
+		const row = { id: 'e1', canceled_at: null, archived_at: null };
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await restoreEvent('e1');
+
+		expect(mockUpdate).toHaveBeenCalledWith({ canceled_at: null, archived_at: null });
+		expect(result).toEqual(row);
 	});
 });
 
@@ -159,6 +530,152 @@ describe('deleteEvent', () => {
 		mockEq.mockResolvedValueOnce({ error: { message: 'event delete fail' } });
 
 		await expect(deleteEvent('e1')).rejects.toThrow('event delete fail');
+	});
+});
+
+// ── Resources ──
+
+describe('fetchResources', () => {
+	it('queries hub_resources filtered by organization_id', async () => {
+		mockOrder.mockResolvedValueOnce({ data: [{ id: 'r1', title: 'Guide' }], error: null });
+
+		const result = await fetchResources('org-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_resources');
+		expect(result).toEqual([{ id: 'r1', title: 'Guide' }]);
+	});
+
+	it('throws on resource query error', async () => {
+		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'resources fail' } });
+
+		await expect(fetchResources('org-1')).rejects.toThrow('resources fail');
+	});
+});
+
+describe('createResource', () => {
+	it('inserts into hub_resources and returns the row', async () => {
+		const payload = {
+			title: 'Guide',
+			description: 'Setup steps',
+			href: 'https://example.com/guide',
+			resource_type: 'document' as const,
+			sort_order: 0
+		};
+		const row = {
+			id: 'r1',
+			organization_id: 'org-1',
+			...payload,
+			created_at: '2026-01-01',
+			updated_at: '2026-01-01'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await createResource('org-1', payload);
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_resources');
+		expect(mockInsert).toHaveBeenCalledWith({ organization_id: 'org-1', ...payload });
+		expect(result).toEqual(row);
+	});
+
+	it('throws on resource insert error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'resource insert fail' } });
+
+		await expect(
+			createResource('org-1', {
+				title: 'Guide',
+				description: 'Setup steps',
+				href: 'https://example.com/guide',
+				resource_type: 'document',
+				sort_order: 0
+			})
+		).rejects.toThrow('resource insert fail');
+	});
+});
+
+describe('updateResource', () => {
+	it('updates a resource and returns the latest row', async () => {
+		const row = {
+			id: 'r1',
+			organization_id: 'org-1',
+			title: 'Updated guide',
+			description: 'Setup steps',
+			href: 'https://example.com/guide',
+			resource_type: 'document',
+			sort_order: 2,
+			created_at: '2026-01-01',
+			updated_at: '2026-01-02'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await updateResource('r1', {
+			title: 'Updated guide',
+			description: 'Setup steps',
+			href: 'https://example.com/guide',
+			resource_type: 'document',
+			sort_order: 2
+		});
+
+		expect(mockUpdate).toHaveBeenCalledWith({
+			title: 'Updated guide',
+			description: 'Setup steps',
+			href: 'https://example.com/guide',
+			resource_type: 'document',
+			sort_order: 2
+		});
+		expect(result).toEqual(row);
+	});
+
+	it('throws on resource update error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'resource update fail' } });
+
+		await expect(
+			updateResource('r1', {
+				title: 'Guide',
+				description: 'Setup steps',
+				href: 'https://example.com/guide',
+				resource_type: 'document'
+			})
+		).rejects.toThrow('resource update fail');
+	});
+});
+
+describe('saveResourceOrder', () => {
+	it('updates each resource sort order', async () => {
+		mockEq.mockResolvedValueOnce({ error: null });
+		mockEq.mockResolvedValueOnce({ error: null });
+
+		await saveResourceOrder([
+			{ id: 'r1', sort_order: 0 },
+			{ id: 'r2', sort_order: 1 }
+		]);
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_resources');
+		expect(mockUpdate).toHaveBeenNthCalledWith(1, { sort_order: 0 });
+		expect(mockUpdate).toHaveBeenNthCalledWith(2, { sort_order: 1 });
+	});
+
+	it('throws when any resource order update fails', async () => {
+		mockEq.mockResolvedValueOnce({ error: { message: 'resource order fail' } });
+
+		await expect(saveResourceOrder([{ id: 'r1', sort_order: 0 }])).rejects.toThrow(
+			'resource order fail'
+		);
+	});
+});
+
+describe('deleteResource', () => {
+	it('deletes from hub_resources by id', async () => {
+		mockEq.mockResolvedValueOnce({ error: null });
+
+		await deleteResource('r1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_resources');
+	});
+
+	it('throws on delete error', async () => {
+		mockEq.mockResolvedValueOnce({ error: { message: 'resource delete fail' } });
+
+		await expect(deleteResource('r1')).rejects.toThrow('resource delete fail');
 	});
 });
 

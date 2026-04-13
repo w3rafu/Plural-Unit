@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
+	import {
+		getHubEngagementCoverageCopy,
+		getHubEngagementFollowUpCopy
+	} from '$lib/models/hubEngagementModel';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { getAllPluginsForAdmin } from '$lib/stores/pluginRegistry';
@@ -8,7 +12,26 @@
 	const adminPlugins = getAllPluginsForAdmin();
 
 	const activePlugins = $derived(adminPlugins.filter((plugin) => currentHub.plugins[plugin.key]));
-	const publishedCount = $derived(currentHub.broadcasts.length + currentHub.events.length);
+	const draftBroadcastCount = $derived(currentHub.draftBroadcasts.length);
+	const scheduledBroadcastCount = $derived(currentHub.scheduledBroadcasts.length);
+	const liveBroadcastCount = $derived(currentHub.activeBroadcasts.length);
+	const inactiveBroadcastCount = $derived(currentHub.inactiveBroadcasts.length);
+	const liveEventCount = $derived(currentHub.liveEvents.length);
+	const scheduledEventCount = $derived(currentHub.scheduledEvents.length);
+	const inactiveEventCount = $derived(currentHub.inactiveEvents.length);
+	const liveResourceCount = $derived(currentHub.orderedResources.length);
+	const publishedCount = $derived(liveBroadcastCount + liveEventCount + liveResourceCount);
+	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount);
+	const engagementSummary = $derived(currentHub.hubEngagementSummary);
+	const responseCoverageValue = $derived.by(() => {
+		if (engagementSummary.liveEventCount === 0) {
+			return '—';
+		}
+
+		return `${engagementSummary.respondedLiveEventCount} / ${engagementSummary.liveEventCount}`;
+	});
+	const responseCoverageCopy = $derived(getHubEngagementCoverageCopy(engagementSummary));
+	const followUpCopy = $derived(getHubEngagementFollowUpCopy(engagementSummary));
 	const sectionSummary = $derived.by(() => {
 		if (activePlugins.length === 0) {
 			return 'No hub sections are live yet.';
@@ -18,11 +41,45 @@
 	});
 
 	const contentSummary = $derived.by(() => {
-		if (publishedCount === 0) {
-			return 'No broadcasts or events have been published yet.';
+		if (
+			publishedCount === 0 &&
+			draftBroadcastCount === 0 &&
+			scheduledBroadcastCount === 0 &&
+			scheduledEventCount === 0 &&
+			historyCount === 0
+		) {
+			return 'No broadcasts, events, or resources are live right now.';
 		}
 
-		return `${publishedCount} published item${publishedCount === 1 ? '' : 's'} ready for members.`;
+		const parts = [];
+
+		if (publishedCount > 0) {
+			parts.push(`${publishedCount} live item${publishedCount === 1 ? '' : 's'} ready for members.`);
+		}
+
+		if (scheduledEventCount > 0) {
+			parts.push(
+				`${scheduledEventCount} event${scheduledEventCount === 1 ? '' : 's'} scheduled for later visibility.`
+			);
+		}
+
+		if (draftBroadcastCount > 0) {
+			parts.push(
+				`${draftBroadcastCount} broadcast draft${draftBroadcastCount === 1 ? '' : 's'} waiting for publication.`
+			);
+		}
+
+		if (scheduledBroadcastCount > 0) {
+			parts.push(
+				`${scheduledBroadcastCount} broadcast${scheduledBroadcastCount === 1 ? '' : 's'} scheduled for later visibility.`
+			);
+		}
+
+		if (historyCount > 0) {
+			parts.push(`${historyCount} item${historyCount === 1 ? '' : 's'} in history.`);
+		}
+
+		return parts.join(' ');
 	});
 </script>
 
@@ -42,7 +99,7 @@
 				<p class="metric-label">Available sections</p>
 				<p class="metric-value">{adminPlugins.length}</p>
 			</div>
-			<p class="metric-copy">Broadcasts and events can be turned on independently.</p>
+			<p class="metric-copy">Broadcasts, events, and resources can be turned on independently.</p>
 		</div>
 
 		<div class="metric-card">
@@ -55,10 +112,26 @@
 
 		<div class="metric-card">
 			<div>
-				<p class="metric-label">Published content</p>
+				<p class="metric-label">Live content</p>
 				<p class="metric-value">{publishedCount}</p>
 			</div>
 			<p class="metric-copy">{contentSummary}</p>
+		</div>
+
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Event replies</p>
+				<p class="metric-value metric-value--compact">{responseCoverageValue}</p>
+			</div>
+			<p class="metric-copy">{responseCoverageCopy}</p>
+		</div>
+
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Needs follow-up</p>
+				<p class="metric-value">{engagementSummary.followUpCount}</p>
+			</div>
+			<p class="metric-copy">{followUpCopy}</p>
 		</div>
 	</Card.Content>
 

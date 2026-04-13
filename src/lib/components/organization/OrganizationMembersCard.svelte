@@ -1,36 +1,69 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { Search } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
-	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
-	import MemberRow from './MemberRow.svelte';
-	import { currentUser } from '$lib/stores/currentUser.svelte';
-	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
-	import { currentMessages } from '$lib/stores/currentMessages.svelte';
-	import type { OrganizationMember } from '$lib/models/organizationModel';
-	import { toast } from '$lib/stores/toast.svelte';
+	import {
+		buildOrganizationMembersSummary,
+		countRecentOrganizationMembers,
+		filterOrganizationMembers,
+		getOrganizationMembersEmptyState,
+		type MemberReviewFilter
+	} from '$lib/models/accessReviewModel';
 	import {
 		type PendingMemberAction,
-		formatContact,
-		isLastAdmin,
-		wouldDemoteLastAdmin,
-		getConfirmationTitle,
+		getConfirmationBusyLabel,
 		getConfirmationDescription,
 		getConfirmationDetails,
 		getConfirmationLabel,
-		getConfirmationBusyLabel,
-		getConfirmationVariant
+		getConfirmationTitle,
+		getConfirmationVariant,
+		isLastAdmin,
+		wouldDemoteLastAdmin
 	} from '$lib/models/memberManagementHelpers';
+	import type { OrganizationMember } from '$lib/models/organizationModel';
+	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
+	import { currentMessages } from '$lib/stores/currentMessages.svelte';
+	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+	import { toast } from '$lib/stores/toast.svelte';
+	import { currentUser } from '$lib/stores/currentUser.svelte';
+	import MemberRow from './MemberRow.svelte';
 
 	const organizationMembers = $derived(currentOrganization.members);
+	const memberFilterOptions = [
+		{ value: 'all', label: 'All' },
+		{ value: 'admin', label: 'Admins' },
+		{ value: 'member', label: 'Members' },
+		{ value: 'recent', label: 'Recent' }
+	] as const satisfies Array<{ value: MemberReviewFilter; label: string }>;
 
 	const adminCount = $derived.by(
 		() => organizationMembers.filter((member) => member.role === 'admin').length
 	);
+	const recentJoinCount = $derived(countRecentOrganizationMembers(organizationMembers));
 	let roleDrafts = $state<Record<string, OrganizationMember['role']>>({});
+	let searchQuery = $state('');
+	let memberFilter = $state<MemberReviewFilter>('all');
 	let confirmationOpen = $state(false);
 	let pendingAction = $state<PendingMemberAction>(null);
+
+	const visibleMembers = $derived(
+		filterOrganizationMembers(organizationMembers, {
+			query: searchQuery,
+			filter: memberFilter
+		})
+	);
+	const reviewSummary = $derived(
+		buildOrganizationMembersSummary({
+			query: searchQuery,
+			filter: memberFilter,
+			visibleCount: visibleMembers.length,
+			totalCount: organizationMembers.length
+		})
+	);
+	const emptyState = $derived(getOrganizationMembersEmptyState(searchQuery, memberFilter));
 
 	function getDraftRole(member: OrganizationMember) {
 		return roleDrafts[member.profile_id] ?? member.role;
@@ -122,7 +155,6 @@
 		}
 
 		const member = pendingAction.member;
-
 		const isCurrentUser = member.profile_id === currentUser.details.id;
 
 		try {
@@ -176,7 +208,7 @@
 			</div>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-4">
+		<Card.Content class="space-y-3.5">
 			<div class="metric-grid">
 				<div class="metric-card">
 					<div>
@@ -196,27 +228,64 @@
 
 				<div class="metric-card">
 					<div>
-						<p class="metric-label">Members</p>
-						<p class="metric-value">{Math.max(organizationMembers.length - adminCount, 0)}</p>
+						<p class="metric-label">Recent joins</p>
+						<p class="metric-value">{recentJoinCount}</p>
 					</div>
-					<p class="metric-copy">People with standard organization access.</p>
+					<p class="metric-copy">Members added during the last week.</p>
 				</div>
 			</div>
 
-			<div class="overflow-x-auto overflow-y-hidden rounded-2xl border border-border/70 bg-muted/10">
+			<div class="space-y-3">
+				<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+					<div class="space-y-1">
+						<p class="text-sm text-muted-foreground">{reviewSummary}</p>
+						{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
+							<p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								Refreshing the latest access roster
+							</p>
+						{/if}
+					</div>
+
+					<label class="relative block w-full lg:max-w-xs">
+						<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+						<Input
+							type="search"
+							placeholder="Search members"
+							class="h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+							bind:value={searchQuery}
+						/>
+					</label>
+				</div>
+
+				<div class="flex flex-wrap gap-2">
+					{#each memberFilterOptions as option (option.value)}
+						<Button
+							type="button"
+							size="sm"
+							variant={memberFilter === option.value ? 'secondary' : 'outline'}
+							class="rounded-xl"
+							onclick={() => (memberFilter = option.value)}
+						>
+							{option.label}
+						</Button>
+					{/each}
+				</div>
+			</div>
+
+			<div class="overflow-x-auto overflow-y-hidden rounded-xl border border-border/70 bg-muted/10">
 				<Table.Root class="min-w-176">
 					<Table.Caption class="sr-only">Organization members and roles.</Table.Caption>
 					<Table.Header class="bg-muted/25">
 						<Table.Row>
 							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Member</Table.Head>
 							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Role</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined</Table.Head>
-							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Added</Table.Head>
+							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined via</Table.Head>
+							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined</Table.Head>
 							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
 						</Table.Row>
 					</Table.Header>
 					<Table.Body>
-						{#if currentOrganization.isLoadingMembers}
+						{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
 							<Table.Row class="border-0 hover:bg-transparent">
 								<Table.Cell colspan={5} class="py-10 text-center">
 									<div class="space-y-1">
@@ -227,8 +296,8 @@
 									</div>
 								</Table.Cell>
 							</Table.Row>
-						{:else if organizationMembers.length > 0}
-							{#each organizationMembers as member (member.profile_id)}
+						{:else if visibleMembers.length > 0}
+							{#each visibleMembers as member (member.profile_id)}
 								<MemberRow
 									{member}
 									{adminCount}
@@ -245,10 +314,8 @@
 							<Table.Row class="border-0 hover:bg-transparent">
 								<Table.Cell colspan={5} class="py-10 text-center">
 									<div class="space-y-1">
-										<p class="font-medium text-foreground">No members found</p>
-										<p class="text-sm text-muted-foreground">
-											New members will appear here after they join or accept an invitation.
-										</p>
+										<p class="font-medium text-foreground">{emptyState.title}</p>
+										<p class="text-sm text-muted-foreground">{emptyState.description}</p>
 									</div>
 								</Table.Cell>
 							</Table.Row>

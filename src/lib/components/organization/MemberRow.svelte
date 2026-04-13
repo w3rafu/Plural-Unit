@@ -11,6 +11,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import { MessageSquare } from '@lucide/svelte';
+	import { isRecentOrganizationMember } from '$lib/models/accessReviewModel';
 	import type { OrganizationMember } from '$lib/models/organizationModel';
 	import {
 		formatJoinedVia,
@@ -44,6 +45,8 @@
 	} = $props();
 
 	const memberLabel = $derived(member.name || formatContact(member));
+	const joinedViaLabel = $derived(formatJoinedVia(member));
+	const isRecentJoin = $derived(isRecentOrganizationMember(member));
 </script>
 
 <Table.Row class="border-border/70">
@@ -67,10 +70,17 @@
 	</Table.Cell>
 	<Table.Cell>
 		<Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-			{member.role}
+			{member.role === 'admin' ? 'Admin' : 'Member'}
 		</Badge>
 	</Table.Cell>
-	<Table.Cell class="text-sm text-muted-foreground">{formatJoinedVia(member)}</Table.Cell>
+	<Table.Cell>
+		<div class="flex flex-wrap gap-2">
+			<Badge variant="outline">{joinedViaLabel}</Badge>
+			{#if isRecentJoin}
+				<Badge variant="secondary">Recent</Badge>
+			{/if}
+		</div>
+	</Table.Cell>
 	<Table.Cell class="text-right text-sm text-muted-foreground">
 		{formatJoinedAt(member.joined_at)}
 	</Table.Cell>

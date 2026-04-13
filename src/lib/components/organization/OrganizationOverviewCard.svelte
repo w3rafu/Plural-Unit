@@ -64,7 +64,7 @@
 		<Card.Description>Review the basics tied to your organization membership.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-4">
+	<Card.Content class="space-y-3">
 		<div class="metric-grid">
 			{#each overviewStats as stat (stat.label)}
 				<div class="metric-card">
@@ -76,7 +76,7 @@
 			{/each}
 		</div>
 
-		<p class="text-sm leading-6 text-muted-foreground">
+		<p class="text-sm leading-5 text-muted-foreground">
 			{#if currentOrganization.isAdmin}
 				Your account can manage join access and invitations from the access section.
 			{:else}

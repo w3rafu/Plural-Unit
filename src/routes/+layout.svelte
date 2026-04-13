@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { ModeWatcher } from 'mode-watcher';
 	import AuthGate from '$lib/components/auth/AuthGate.svelte';
+	import { isLockedContentRoute as getIsLockedContentRoute } from '$lib/components/ui/contentLayoutModel';
 	import Header from '$lib/components/ui/Header.svelte';
 	import BottomNav from '$lib/components/ui/BottomNav.svelte';
 	import Toaster from '$lib/components/ui/Toaster.svelte';
@@ -16,12 +17,7 @@
 	const shouldRenderHeader = $derived(
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
-	const isLockedContentRoute = $derived(
-		page.url.pathname.startsWith('/messages') ||
-			page.url.pathname.startsWith('/directory') ||
-			page.url.pathname.startsWith('/demo/messages') ||
-			page.url.pathname.startsWith('/demo/directory')
-	);
+	const isLockedContentRoute = $derived(getIsLockedContentRoute(page.url.pathname));
 
 	// Load messages early so the unread badge is visible before navigating to /messages.
 	let messagesLoadedForUserId = '';

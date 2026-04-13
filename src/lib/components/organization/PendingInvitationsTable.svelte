@@ -2,39 +2,34 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
+	import {
+		getInvitationChannel,
+		getInvitationRecipient,
+		isStaleOrganizationInvitation
+	} from '$lib/models/accessReviewModel';
 	import type { OrganizationInvitation } from '$lib/models/organizationModel';
 	import { formatShortDateTime } from '$lib/utils/dateFormat';
 
 	type Props = {
 		invitations: OrganizationInvitation[];
 		isBusy?: boolean;
+		emptyTitle?: string;
+		emptyDescription?: string;
 		onResend?: (invitation: OrganizationInvitation) => void | Promise<void>;
 		onRevoke?: (invitation: OrganizationInvitation) => void | Promise<void>;
 	};
 
-	let { invitations, isBusy = false, onResend, onRevoke }: Props = $props();
+	let {
+		invitations,
+		isBusy = false,
+		emptyTitle = 'No pending invitations',
+		emptyDescription = 'Send an invite above when you are ready to bring in another member.',
+		onResend,
+		onRevoke
+	}: Props = $props();
 
-	function formatRecipient(invitation: OrganizationInvitation) {
-		return invitation.email ?? invitation.phone ?? 'Unknown';
-	}
-
-	function formatChannel(invitation: OrganizationInvitation) {
-		return invitation.email ? 'Email' : 'Phone';
-	}
-
-	function formatStatusLabel(invitation: OrganizationInvitation) {
-		switch (invitation.status) {
-			case 'pending':
-				return 'Pending';
-			case 'accepted':
-				return 'Accepted';
-			case 'revoked':
-				return 'Revoked';
-			case 'expired':
-				return 'Expired';
-			default:
-				return invitation.status;
-		}
+	function formatChannelLabel(invitation: OrganizationInvitation) {
+		return getInvitationChannel(invitation) === 'email' ? 'Email' : 'Phone';
 	}
 
 	function formatSentAt(value: string | null | undefined) {
@@ -44,13 +39,13 @@
 </script>
 
 <div class="overflow-hidden rounded-xl border border-border/70 bg-muted/10">
-	<Table.Root class="min-w-[38rem]">
+	<Table.Root class="min-w-[40rem]">
 		<Table.Caption class="sr-only">Pending invitations for the current organization.</Table.Caption>
 		<Table.Header class="bg-muted/25">
 			<Table.Row>
 				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Recipient</Table.Head>
 				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Channel</Table.Head>
-				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Status</Table.Head>
+				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Signals</Table.Head>
 				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Sent</Table.Head>
 				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
 			</Table.Row>
@@ -61,17 +56,20 @@
 					<Table.Row class="border-border/70">
 						<Table.Cell class="whitespace-normal">
 							<div class="space-y-1">
-								<p class="font-medium text-foreground">{formatRecipient(invitation)}</p>
+								<p class="font-medium text-foreground">{getInvitationRecipient(invitation)}</p>
 								<p class="text-xs text-muted-foreground">
-									Delivered by {formatChannel(invitation).toLowerCase()}
+									Delivered by {formatChannelLabel(invitation).toLowerCase()}
 								</p>
 							</div>
 						</Table.Cell>
-						<Table.Cell class="text-sm text-muted-foreground">{formatChannel(invitation)}</Table.Cell>
+						<Table.Cell class="text-sm text-muted-foreground">{formatChannelLabel(invitation)}</Table.Cell>
 						<Table.Cell>
-							<Badge variant={invitation.status === 'pending' ? 'secondary' : 'outline'}>
-								{formatStatusLabel(invitation)}
-							</Badge>
+							<div class="flex flex-wrap gap-2">
+								<Badge variant="secondary">Pending</Badge>
+								{#if isStaleOrganizationInvitation(invitation)}
+									<Badge variant="outline">Stale</Badge>
+								{/if}
+							</div>
 						</Table.Cell>
 						<Table.Cell class="text-right text-sm text-muted-foreground">
 							{formatSentAt(invitation.created_at)}
@@ -83,7 +81,7 @@
 									variant="outline"
 									size="sm"
 									disabled={isBusy || !onResend}
-									aria-label={`Resend invitation to ${formatRecipient(invitation)}`}
+									aria-label={`Resend invitation to ${getInvitationRecipient(invitation)}`}
 									onclick={() => onResend?.(invitation)}
 								>
 									Resend
@@ -93,7 +91,7 @@
 									variant="destructive"
 									size="sm"
 									disabled={isBusy || !onRevoke}
-									aria-label={`Revoke invitation for ${formatRecipient(invitation)}`}
+									aria-label={`Revoke invitation for ${getInvitationRecipient(invitation)}`}
 									onclick={() => onRevoke?.(invitation)}
 								>
 									Revoke
@@ -106,10 +104,8 @@
 				<Table.Row class="border-0 hover:bg-transparent">
 					<Table.Cell colspan={5} class="py-10 text-center">
 						<div class="space-y-1">
-							<p class="font-medium text-foreground">No pending invitations</p>
-							<p class="text-sm text-muted-foreground">
-								Send an invite above when you are ready to bring in another member.
-							</p>
+							<p class="font-medium text-foreground">{emptyTitle}</p>
+							<p class="text-sm text-muted-foreground">{emptyDescription}</p>
 						</div>
 					</Table.Cell>
 				</Table.Row>

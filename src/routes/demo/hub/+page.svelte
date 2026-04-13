@@ -47,10 +47,20 @@
 		</Card.Content>
 	</Card.Root>
 
-	<HubActivityFeed items={uiPreviewNotifications} organizationName={uiPreviewFixtures.organizationName} isLoading={false} />
+	<HubActivityFeed
+		items={uiPreviewNotifications}
+		organizationName={uiPreviewFixtures.organizationName}
+		isLoading={false}
+		broadcastHref="#demo-hub-broadcasts"
+		eventHref="#demo-hub-events"
+	/>
 
 	<div class="card-grid">
-		<BroadcastsSection broadcasts={uiPreviewFixtures.broadcasts} />
-		<EventsSection events={uiPreviewFixtures.events} />
+		<BroadcastsSection broadcasts={uiPreviewFixtures.broadcasts} sectionId="demo-hub-broadcasts" />
+		<EventsSection
+			events={uiPreviewFixtures.events}
+			sectionId="demo-hub-events"
+			organizationName={uiPreviewFixtures.organizationName}
+		/>
 	</div>
 </main>

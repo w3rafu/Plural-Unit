@@ -1,9 +1,19 @@
 <script lang="ts">
+	import { Search } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import PendingInvitationsTable from '$lib/components/organization/PendingInvitationsTable.svelte';
 	import InviteForm from '$lib/components/organization/InviteForm.svelte';
 	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
+	import { Input } from '$lib/components/ui/input';
+	import {
+		buildPendingInvitationsSummary,
+		countStaleOrganizationInvitations,
+		filterPendingInvitations,
+		getInvitationChannel,
+		getPendingInvitationsEmptyState,
+		type InvitationReviewFilter
+	} from '$lib/models/accessReviewModel';
 	import type { OrganizationInvitation } from '$lib/models/organizationModel';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
@@ -17,8 +27,41 @@
 		getInviteConfirmationVariant
 	} from '$lib/models/invitationHelpers';
 
+	const invitationFilterOptions = [
+		{ value: 'all', label: 'All' },
+		{ value: 'stale', label: 'Stale' },
+		{ value: 'email', label: 'Email' },
+		{ value: 'phone', label: 'Phone' }
+	] as const satisfies Array<{ value: InvitationReviewFilter; label: string }>;
+
 	let confirmationOpen = $state(false);
 	let pendingInviteAction = $state<PendingInviteAction>(null);
+	let invitationQuery = $state('');
+	let invitationFilter = $state<InvitationReviewFilter>('all');
+	const staleInviteCount = $derived(countStaleOrganizationInvitations(currentOrganization.invitations));
+	const emailInviteCount = $derived(
+		currentOrganization.invitations.filter((invitation) => getInvitationChannel(invitation) === 'email').length
+	);
+	const phoneInviteCount = $derived(
+		currentOrganization.invitations.filter((invitation) => getInvitationChannel(invitation) === 'phone').length
+	);
+	const visibleInvitations = $derived(
+		filterPendingInvitations(currentOrganization.invitations, {
+			query: invitationQuery,
+			filter: invitationFilter
+		})
+	);
+	const invitationSummary = $derived(
+		buildPendingInvitationsSummary({
+			query: invitationQuery,
+			filter: invitationFilter,
+			visibleCount: visibleInvitations.length,
+			totalCount: currentOrganization.invitations.length
+		})
+	);
+	const invitationEmptyState = $derived(
+		getPendingInvitationsEmptyState(invitationQuery, invitationFilter)
+	);
 
 	function openResendConfirmation(invitation: OrganizationInvitation) {
 		pendingInviteAction = { type: 'resend', invitation };
@@ -139,18 +182,18 @@
 
 {#if currentOrganization.isAdmin}
 	<div class="page-stack">
-		<div class="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+		<div class="grid gap-3 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
 			<Card.Root size="sm" class="border-border/70 bg-card">
 				<Card.Header class="gap-2 border-b border-border/70">
 					<Card.Title class="text-lg font-semibold tracking-tight">Join code</Card.Title>
 					<Card.Description>Share this when someone should be able to join without a direct invite.</Card.Description>
 				</Card.Header>
 
-				<Card.Content class="space-y-4">
+				<Card.Content class="space-y-3.5">
 					<div class="metric-card min-h-0">
 						<div>
 							<p class="metric-label">Active code</p>
-							<p class="mt-2 font-mono text-[1.9rem] font-semibold tracking-[0.24em] text-foreground wrap-break-word">
+							<p class="mt-1.5 font-mono text-[1.6rem] font-semibold tracking-[0.22em] text-foreground wrap-break-word">
 								{currentOrganization.organization?.join_code ?? '—'}
 							</p>
 						</div>
@@ -175,11 +218,81 @@
 				<Card.Description>Review the invites that are still waiting to be accepted.</Card.Description>
 			</Card.Header>
 
-			<Card.Content>
+			<Card.Content class="space-y-3.5">
+				<div class="metric-grid">
+					<div class="metric-card">
+						<div>
+							<p class="metric-label">Pending</p>
+							<p class="metric-value">{currentOrganization.invitations.length}</p>
+						</div>
+						<p class="metric-copy">Invitations still waiting for a response.</p>
+					</div>
+
+					<div class="metric-card">
+						<div>
+							<p class="metric-label">Stale</p>
+							<p class="metric-value">{staleInviteCount}</p>
+						</div>
+						<p class="metric-copy">Invites older than a week that may need a follow-up.</p>
+					</div>
+
+					<div class="metric-card">
+						<div>
+							<p class="metric-label">Email</p>
+							<p class="metric-value">{emailInviteCount}</p>
+						</div>
+						<p class="metric-copy">Invitations currently going out through email.</p>
+					</div>
+
+					<div class="metric-card">
+						<div>
+							<p class="metric-label">Phone</p>
+							<p class="metric-value">{phoneInviteCount}</p>
+						</div>
+						<p class="metric-copy">Invitations currently going out through phone.</p>
+					</div>
+				</div>
+
+				{#if currentOrganization.invitations.length > 0}
+					<div class="space-y-3">
+						<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+							<div class="space-y-1">
+								<p class="text-sm text-muted-foreground">{invitationSummary}</p>
+							</div>
+
+							<label class="relative block w-full lg:max-w-xs">
+								<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+								<Input
+									type="search"
+									placeholder="Search invitations"
+									class="h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+									bind:value={invitationQuery}
+								/>
+							</label>
+						</div>
+
+						<div class="flex flex-wrap gap-2">
+							{#each invitationFilterOptions as option (option.value)}
+								<Button
+									type="button"
+									size="sm"
+									variant={invitationFilter === option.value ? 'secondary' : 'outline'}
+									class="rounded-xl"
+									onclick={() => (invitationFilter = option.value)}
+								>
+									{option.label}
+								</Button>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
 				{#if currentOrganization.invitations.length > 0}
 					<PendingInvitationsTable
-						invitations={currentOrganization.invitations}
+						invitations={visibleInvitations}
 						isBusy={currentOrganization.isMutating}
+						emptyTitle={invitationEmptyState.title}
+						emptyDescription={invitationEmptyState.description}
 						onResend={openResendConfirmation}
 						onRevoke={openRevokeConfirmation}
 					/>

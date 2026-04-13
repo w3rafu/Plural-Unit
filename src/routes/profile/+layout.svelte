@@ -40,7 +40,7 @@
 	<ProfileSection />
 
 	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+		<Card.Content class="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
 			<div class="space-y-1">
 				<p class="text-sm font-medium text-foreground">Choose a section</p>
 				<p class="text-sm text-muted-foreground">Switch between profile details and security settings.</p>
@@ -71,7 +71,7 @@
 	{@render children()}
 
 	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="flex items-center justify-between p-4">
+		<Card.Content class="flex items-center justify-between p-3.5">
 			<div class="space-y-1">
 				<p class="text-sm font-medium text-foreground">Sign out</p>
 				<p class="text-sm text-muted-foreground">End your current session.</p>

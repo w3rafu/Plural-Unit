@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildHubNotifications } from './hubNotifications';
+import {
+	buildHubNotifications,
+	countHubNotifications,
+	filterHubNotifications
+} from './hubNotifications';
 
 function makeBroadcast(overrides: Partial<{
 	id: string;
@@ -7,13 +11,25 @@ function makeBroadcast(overrides: Partial<{
 	title: string;
 	body: string;
 	created_at: string;
+	updated_at: string;
+	is_pinned: boolean;
+	is_draft: boolean;
+	publish_at: string | null;
+	archived_at: string | null;
+	expires_at: string | null;
 }> = {}) {
 	return {
 		id: overrides.id ?? 'b1',
 		organization_id: overrides.organization_id ?? 'org1',
 		title: overrides.title ?? 'Broadcast title',
 		body: overrides.body ?? 'Broadcast body',
-		created_at: overrides.created_at ?? '2026-04-05T18:00:00.000Z'
+		created_at: overrides.created_at ?? '2026-04-05T18:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-05T18:00:00.000Z',
+		is_pinned: overrides.is_pinned ?? false,
+		is_draft: overrides.is_draft ?? false,
+		publish_at: overrides.publish_at ?? null,
+		archived_at: overrides.archived_at ?? null,
+		expires_at: overrides.expires_at ?? null
 	};
 }
 
@@ -23,8 +39,13 @@ function makeEvent(overrides: Partial<{
 	title: string;
 	description: string;
 	starts_at: string;
+	ends_at: string | null;
 	location: string;
 	created_at: string;
+	updated_at: string;
+	publish_at: string | null;
+	canceled_at: string | null;
+	archived_at: string | null;
 }> = {}) {
 	return {
 		id: overrides.id ?? 'e1',
@@ -32,8 +53,13 @@ function makeEvent(overrides: Partial<{
 		title: overrides.title ?? 'Event title',
 		description: overrides.description ?? 'Event description',
 		starts_at: overrides.starts_at ?? '2026-04-20T16:30:00.000Z',
+		ends_at: overrides.ends_at ?? null,
 		location: overrides.location ?? 'Main Hall',
-		created_at: overrides.created_at ?? '2026-04-06T12:00:00.000Z'
+		created_at: overrides.created_at ?? '2026-04-06T12:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-06T12:00:00.000Z',
+		publish_at: overrides.publish_at ?? null,
+		canceled_at: overrides.canceled_at ?? null,
+		archived_at: overrides.archived_at ?? null
 	};
 }
 
@@ -191,5 +217,101 @@ describe('buildHubNotifications', () => {
 		// Both present, order is stable (broadcast first from spread order when equal)
 		expect(notifications.map((n) => n.id)).toContain('broadcast:b1');
 		expect(notifications.map((n) => n.id)).toContain('event:e1');
+	});
+
+	it('keeps pinned broadcasts at the top of the feed', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [makeBroadcast({ id: 'b1', is_pinned: true, created_at: '2026-04-01T00:00:00.000Z' })],
+			events: [makeEvent({ id: 'e1', created_at: '2026-04-06T00:00:00.000Z' })]
+		});
+
+		expect(notifications.map((item) => item.id)).toEqual(['broadcast:b1', 'event:e1']);
+		expect(notifications[0]?.meta).toContain('Pinned');
+	});
+
+	it('filters scheduled and historical events out of the feed', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [],
+			events: [
+				makeEvent({ id: 'live' }),
+				makeEvent({ id: 'scheduled', publish_at: '3026-04-06T00:00:00.000Z' }),
+				makeEvent({ id: 'canceled', canceled_at: '2026-04-06T00:00:00.000Z' }),
+				makeEvent({ id: 'archived', archived_at: '2026-04-06T00:00:00.000Z' }),
+				makeEvent({ id: 'past', starts_at: '2000-04-06T00:00:00.000Z' })
+			]
+		});
+
+		expect(notifications.map((item) => item.id)).toEqual(['event:live']);
+	});
+
+	it('filters draft, scheduled, and inactive broadcasts out of the feed', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [
+				makeBroadcast({ id: 'live' }),
+				makeBroadcast({ id: 'draft', is_draft: true }),
+				makeBroadcast({ id: 'scheduled', publish_at: '3026-04-06T00:00:00.000Z' }),
+				makeBroadcast({ id: 'archived', archived_at: '2026-04-06T00:00:00.000Z' }),
+				makeBroadcast({ id: 'expired', expires_at: '2000-04-06T00:00:00.000Z' })
+			],
+			events: []
+		});
+
+		expect(notifications.map((item) => item.id)).toEqual(['broadcast:live']);
+	});
+
+	it('orders newly published broadcasts by publish time instead of original draft creation time', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [
+				makeBroadcast({
+					id: 'older-created-later-published',
+					created_at: '2026-04-01T00:00:00.000Z',
+					publish_at: '2026-04-08T00:00:00.000Z'
+				}),
+				makeBroadcast({ id: 'recent-created', created_at: '2026-04-07T00:00:00.000Z' })
+			],
+			events: []
+		});
+
+		expect(notifications.map((item) => item.id)).toEqual([
+			'broadcast:older-created-later-published',
+			'broadcast:recent-created'
+		]);
+		expect(notifications[0]?.occurredAt).toBe('2026-04-08T00:00:00.000Z');
+	});
+
+	it('counts notifications by kind for filter controls', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [makeBroadcast({ id: 'b1' }), makeBroadcast({ id: 'b2' })],
+			events: [makeEvent({ id: 'e1' })]
+		});
+
+		expect(countHubNotifications(notifications)).toEqual({
+			all: 3,
+			broadcast: 2,
+			event: 1
+		});
+	});
+
+	it('filters notifications without changing their existing order', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [
+				makeBroadcast({ id: 'b1', created_at: '2026-04-08T00:00:00.000Z' }),
+				makeBroadcast({ id: 'b2', created_at: '2026-04-06T00:00:00.000Z' })
+			],
+			events: [makeEvent({ id: 'e1', created_at: '2026-04-07T00:00:00.000Z' })]
+		});
+
+		expect(filterHubNotifications(notifications, 'all').map((item) => item.id)).toEqual([
+			'broadcast:b1',
+			'event:e1',
+			'broadcast:b2'
+		]);
+		expect(filterHubNotifications(notifications, 'broadcast').map((item) => item.id)).toEqual([
+			'broadcast:b1',
+			'broadcast:b2'
+		]);
+		expect(filterHubNotifications(notifications, 'event').map((item) => item.id)).toEqual([
+			'event:e1'
+		]);
 	});
 });

@@ -153,6 +153,17 @@ describe('currentOrganization.sendInvitation', () => {
 		expect(mockCreateInvitation).toHaveBeenCalledWith('org-1', { email: 'test@example.com' });
 		expect(currentOrganization.invitations).toHaveLength(1);
 	});
+
+	it('blocks invitation sending for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		await expect(currentOrganization.sendInvitation({ email: 'test@example.com' })).rejects.toThrow(
+			'Organization admin access required.'
+		);
+		expect(mockCreateInvitation).not.toHaveBeenCalled();
+	});
 });
 
 describe('currentOrganization.resendPendingInvitation', () => {
@@ -194,6 +205,41 @@ describe('currentOrganization.regenerateCode', () => {
 
 		expect(currentOrganization.organization?.join_code).toBe('NEWCODE');
 	});
+
+	it('blocks join code regeneration for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		await expect(currentOrganization.regenerateCode()).rejects.toThrow('Organization admin access required.');
+		expect(mockRegenerateJoinCode).not.toHaveBeenCalled();
+	});
+});
+
+describe('currentOrganization.loadInvitations', () => {
+	it('clears invitations and skips loading for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+		currentOrganization.invitations = [{ id: 'inv-1' } as any];
+
+		await currentOrganization.loadInvitations();
+
+		expect(currentOrganization.invitations).toEqual([]);
+		expect(mockFetchPendingInvitations).not.toHaveBeenCalled();
+	});
+
+	it('clears stale invitations when admin access is lost on refresh', async () => {
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(ORG_CTX);
+		await currentOrganization.refresh('u1');
+		currentOrganization.invitations = [{ id: 'inv-1' } as any];
+
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		expect(currentOrganization.invitations).toEqual([]);
+	});
 });
 
 describe('currentOrganization.loadMembers', () => {
@@ -209,15 +255,18 @@ describe('currentOrganization.loadMembers', () => {
 		expect(currentOrganization.members).toEqual(members);
 	});
 
-	it('clears members when not admin', async () => {
+	it('fetches members for regular members on the directory contract', async () => {
 		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' } };
 		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
 		await currentOrganization.refresh('u1');
 
+		const members = [{ profile_id: 'u2', name: 'Bea', role: 'member' }];
+		mockFetchOrganizationMembers.mockResolvedValueOnce(members);
+
 		await currentOrganization.loadMembers();
 
-		expect(currentOrganization.members).toEqual([]);
-		expect(mockFetchOrganizationMembers).not.toHaveBeenCalled();
+		expect(currentOrganization.members).toEqual(members);
+		expect(mockFetchOrganizationMembers).toHaveBeenCalledWith('org-1');
 	});
 });
 
@@ -234,6 +283,17 @@ describe('currentOrganization.updateMemberRole', () => {
 		await currentOrganization.updateMemberRole('u2', 'admin');
 
 		expect(mockSetOrganizationMemberRole).toHaveBeenCalledWith('org-1', 'u2', 'admin');
+	});
+
+	it('blocks role updates for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		await expect(currentOrganization.updateMemberRole('u2', 'admin')).rejects.toThrow(
+			'Organization admin access required.'
+		);
+		expect(mockSetOrganizationMemberRole).not.toHaveBeenCalled();
 	});
 });
 
@@ -252,6 +312,17 @@ describe('currentOrganization.removeMember', () => {
 
 		expect(mockRemoveOrganizationMember).toHaveBeenCalledWith('org-1', 'u2');
 		expect(currentOrganization.memberCount).toBe(1);
+	});
+
+	it('blocks member removal for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		await expect(currentOrganization.removeMember('u2')).rejects.toThrow(
+			'Organization admin access required.'
+		);
+		expect(mockRemoveOrganizationMember).not.toHaveBeenCalled();
 	});
 });
 

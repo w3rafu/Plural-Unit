@@ -11,6 +11,7 @@
 	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
+	import ResourcesSection from '$lib/components/hub/member/ResourcesSection.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -39,6 +40,12 @@
 	const activePlugins = $derived(getActivePluginsForMember(currentHub.plugins));
 	const unreadMessages = $derived(currentMessages.totalUnreadCount);
 	const pendingInvites = $derived(currentOrganization.invitations.length);
+	const manageBroadcastsHref = $derived(
+		currentOrganization.isAdmin ? '/hub/manage/content#manage-broadcasts' : undefined
+	);
+	const manageEventsHref = $derived(
+		currentOrganization.isAdmin ? '/hub/manage/content#manage-events' : undefined
+	);
 
 	const hubActions = $derived.by(() => [
 		...(currentOrganization.isAdmin
@@ -105,7 +112,12 @@
 		</Card.Content>
 	</Card.Root>
 
-	<HubActivityFeed />
+	<HubActivityFeed
+		broadcastHref="#hub-broadcasts"
+		eventHref="#hub-events"
+		{manageBroadcastsHref}
+		{manageEventsHref}
+	/>
 
 	{#if currentHub.isLoading}
 		<Card.Root size="sm" class="border-border/70 bg-card">
@@ -129,9 +141,11 @@
 		<div class="card-grid">
 			{#each activePlugins as plugin (plugin.key)}
 				{#if plugin.key === 'broadcasts'}
-					<BroadcastsSection />
+					<BroadcastsSection sectionId="hub-broadcasts" />
 				{:else if plugin.key === 'events'}
-					<EventsSection />
+					<EventsSection sectionId="hub-events" />
+				{:else if plugin.key === 'resources'}
+					<ResourcesSection sectionId="hub-resources" />
 				{/if}
 			{/each}
 		</div>

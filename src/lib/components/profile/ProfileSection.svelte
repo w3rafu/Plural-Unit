@@ -83,24 +83,24 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-3.5 border-b border-border/70">
-		<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
-			<Avatar.Root class="size-16 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+	<Card.Header class="gap-3 border-b border-border/70">
+		<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3.5">
+			<Avatar.Root class="size-14 border border-border/70 bg-muted/50 shadow-sm after:hidden">
 				{#if currentUser.details.avatar_url}
 					<Avatar.Image
 						src={currentUser.details.avatar_url}
 						alt={`${currentUser.details.name || 'Member'} profile`}
 					/>
 				{:else}
-					<Avatar.Fallback class="text-lg font-semibold tracking-tight text-foreground">
+					<Avatar.Fallback class="text-base font-semibold tracking-tight text-foreground">
 						{profileInitials}
 					</Avatar.Fallback>
 				{/if}
 			</Avatar.Root>
 
-			<div class="min-w-0 space-y-2">
-				<div class="space-y-1">
-					<div class="space-y-1">
+			<div class="min-w-0 space-y-1.5">
+				<div class="space-y-0.5">
+					<div class="space-y-0.5">
 						<Card.Title class="text-lg font-semibold tracking-tight text-foreground">
 							{currentUser.details.name || 'Profile snapshot'}
 						</Card.Title>
@@ -112,7 +112,7 @@
 		</div>
 	</Card.Header>
 
-	<Card.Content class="space-y-4">
+	<Card.Content class="space-y-3">
 		<div class="metric-grid">
 			{#each overviewStats as stat (stat.label)}
 				<div class="metric-card min-w-0">
@@ -124,10 +124,10 @@
 			{/each}
 		</div>
 
-		<p class="max-w-2xl text-sm leading-6 text-muted-foreground">{supportingText}</p>
+		<p class="max-w-2xl text-sm leading-5 text-muted-foreground">{supportingText}</p>
 	</Card.Content>
 
-	<Card.Footer class="border-t border-border/70 pt-4">
+	<Card.Footer class="border-t border-border/70 pt-3">
 		<div class="flex flex-wrap gap-2">
 			<Badge variant="secondary">{currentOrganization.membership?.role ?? 'member'}</Badge>
 			<Badge variant="outline">{currentOrganization.organization?.name ?? 'No organization'}</Badge>

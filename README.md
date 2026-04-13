@@ -28,12 +28,18 @@ supabase db push          # if using Supabase CLI
 # or paste each file in supabase/migrations/ into the SQL editor
 ```
 
+If you pull newer 0.1.25 code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, and 019, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`.
+
 ---
 
 ## Planning Docs
 
 These are the best starting points for junior developers:
 
+- [docs/roadmap-0.1.25.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.25.md)
+- [docs/roadmap-0.1.25-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.25-checklist.md)
+- [docs/roadmap-0.1.24.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.24.md)
+- [docs/roadmap-0.1.24-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.24-checklist.md)
 - [docs/roadmap-0.1.4.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.4.md)
 - [docs/roadmap-0.1.4-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.4-checklist.md)
 - [docs/roadmap-0.1.3.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3.md)

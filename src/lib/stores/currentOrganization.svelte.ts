@@ -5,6 +5,7 @@
  *  - Resolve current user's organization membership
  *  - Expose create, join, accept-invitation actions
  *  - Load admin-only invitations and member count
+ *  - Load the member roster used by member-facing directory surfaces
  *  - Expose join code regeneration
  *
  * The store listens to Supabase auth changes so it refreshes
@@ -119,6 +120,9 @@ class CurrentOrganization {
 				}
 				this.organization = ctx.organization;
 				this.membership = ctx.membership;
+				if (ctx.membership.role !== 'admin') {
+					this.invitations = [];
+				}
 			} else {
 				this.organization = null;
 				this.membership = null;
@@ -175,12 +179,15 @@ class CurrentOrganization {
 	}
 
 	async loadInvitations() {
-		if (!this.organization) return;
+		if (!this.organization || !this.isAdmin) {
+			this.invitations = [];
+			return;
+		}
 		this.invitations = await fetchPendingInvitations(this.organization.id);
 	}
 
 	async sendInvitation(contact: { email?: string; phone?: string }) {
-		if (!this.organization) throw new Error('No organization.');
+		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
 		this.isMutating = true;
 		try {
 			await createInvitation(this.organization.id, contact);
@@ -213,7 +220,7 @@ class CurrentOrganization {
 	}
 
 	async regenerateCode() {
-		if (!this.organization) throw new Error('No organization.');
+		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
 		this.isMutating = true;
 		try {
 			const newCode = await regenerateJoinCode(this.organization.id);
@@ -229,6 +236,7 @@ class CurrentOrganization {
 	}
 
 	async loadMembers() {
+		// The directory is member-visible, so any signed-in organization member can load the roster.
 		if (!this.organization) {
 			this.members = [];
 			return;
@@ -243,7 +251,7 @@ class CurrentOrganization {
 	}
 
 	async updateMemberRole(profileId: string, role: 'admin' | 'member') {
-		if (!this.organization) throw new Error('No organization.');
+		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
 		this.isMutating = true;
 		try {
 			await setOrganizationMemberRole(this.organization.id, profileId, role);
@@ -257,7 +265,7 @@ class CurrentOrganization {
 	}
 
 	async removeMember(profileId: string) {
-		if (!this.organization) throw new Error('No organization.');
+		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
 		this.isMutating = true;
 		try {
 			await removeOrganizationMember(this.organization.id, profileId);
