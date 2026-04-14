@@ -28,7 +28,7 @@ supabase db push          # if using Supabase CLI
 # or paste each file in supabase/migrations/ into the SQL editor
 ```
 
-If you pull newer 0.1.25, 0.1.26, or 0.1.27 code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, 022, 023, and 024, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, or `column hub_notification_reads.notification_key does not exist`.
+If you pull newer hub code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, and 026, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, or `relation "public.hub_event_attendances" does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts.
 
 ---
 
@@ -36,14 +36,15 @@ If you pull newer 0.1.25, 0.1.26, or 0.1.27 code into an existing database, run 
 
 These are the best starting points for junior developers:
 
+- Start with the newest roadmap, then work backward only if you need older implementation context.
+- [docs/roadmap-0.1.28.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28.md)
+- [docs/roadmap-0.1.28-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28-checklist.md)
+- [docs/roadmap-0.1.27.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.27.md)
+- [docs/roadmap-0.1.27-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.27-checklist.md)
+- [docs/roadmap-0.1.26.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.26.md)
+- [docs/roadmap-0.1.26-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.26-checklist.md)
 - [docs/roadmap-0.1.25.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.25.md)
 - [docs/roadmap-0.1.25-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.25-checklist.md)
-- [docs/roadmap-0.1.24.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.24.md)
-- [docs/roadmap-0.1.24-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.24-checklist.md)
-- [docs/roadmap-0.1.4.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.4.md)
-- [docs/roadmap-0.1.4-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.4-checklist.md)
-- [docs/roadmap-0.1.3.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3.md)
-- [docs/roadmap-0.1.3-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.3-checklist.md)
 - [docs/ui-guardrails.md](/Users/rafa/Desktop/plural-unit/docs/ui-guardrails.md)
 
 ---

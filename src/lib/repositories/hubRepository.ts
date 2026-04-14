@@ -226,6 +226,9 @@ export async function deleteBroadcast(id: string) {
 const HUB_EVENT_SELECT =
 	'id, organization_id, title, description, starts_at, ends_at, location, created_at, updated_at, publish_at, canceled_at, archived_at, delivery_state, delivered_at, delivery_failure_reason';
 
+const HUB_EVENT_ATTENDANCE_SELECT =
+	'id, event_id, organization_id, profile_id, status, marked_by_profile_id, created_at, updated_at';
+
 const HUB_EVENT_REMINDER_SELECT =
 	'id, event_id, organization_id, delivery_channel, reminder_offsets, created_at, updated_at';
 
@@ -281,6 +284,19 @@ export type EventResponseRow = {
 	updated_at: string;
 };
 
+export type EventAttendanceStatus = 'attended' | 'absent';
+
+export type EventAttendanceRow = {
+	id: string;
+	event_id: string;
+	organization_id: string;
+	profile_id: string;
+	status: EventAttendanceStatus;
+	marked_by_profile_id: string | null;
+	created_at: string;
+	updated_at: string;
+};
+
 /** Fetch all events for an organization, soonest first. */
 export async function fetchEvents(organizationId: string): Promise<EventRow[]> {
 	const { data, error } = await getSupabaseClient()
@@ -303,6 +319,58 @@ export async function fetchEventResponses(organizationId: string): Promise<Event
 
 	if (error) throwRepositoryError(error, 'Could not load event responses.');
 	return (data ?? []) as EventResponseRow[];
+}
+
+/** Fetch recorded event attendance outcomes for an organization. */
+export async function fetchEventAttendanceRecords(
+	organizationId: string
+): Promise<EventAttendanceRow[]> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_event_attendances')
+		.select(HUB_EVENT_ATTENDANCE_SELECT)
+		.eq('organization_id', organizationId)
+		.order('updated_at', { ascending: false });
+
+	if (error) throwRepositoryError(error, 'Could not load event attendance.');
+	return (data ?? []) as EventAttendanceRow[];
+}
+
+/** Upsert a recorded attendance outcome for a single member and event. */
+export async function upsertEventAttendanceRecord(payload: {
+	eventId: string;
+	organizationId: string;
+	profileId: string;
+	status: EventAttendanceStatus;
+	markedByProfileId: string;
+}): Promise<EventAttendanceRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_event_attendances')
+		.upsert(
+			{
+				event_id: payload.eventId,
+				organization_id: payload.organizationId,
+				profile_id: payload.profileId,
+				status: payload.status,
+				marked_by_profile_id: payload.markedByProfileId
+			},
+			{ onConflict: 'event_id,profile_id' }
+		)
+		.select(HUB_EVENT_ATTENDANCE_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not save the event attendance record.');
+	return data as EventAttendanceRow;
+}
+
+/** Clear a recorded attendance outcome so the event returns to an unrecorded state. */
+export async function deleteEventAttendanceRecord(eventId: string, profileId: string) {
+	const { error } = await getSupabaseClient()
+		.from('hub_event_attendances')
+		.delete()
+		.eq('event_id', eventId)
+		.eq('profile_id', profileId);
+
+	if (error) throwRepositoryError(error, 'Could not clear the event attendance record.');
 }
 
 /** Fetch reminder settings for events in an organization. */

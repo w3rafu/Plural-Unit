@@ -1,6 +1,10 @@
 import type { BroadcastRow, EventRow } from '$lib/repositories/hubRepository';
 import { isBroadcastDraft, isBroadcastLive, isBroadcastScheduled } from './broadcastLifecycleModel';
 import { isEventLive, isEventScheduled } from './eventLifecycleModel';
+import {
+	isEventAttendanceWindowOpen,
+	type EventAttendanceOutcomeSummary
+} from './eventAttendanceModel';
 import type { EventReminderSummary } from './eventReminderModel';
 import { getBroadcastDeliveryStatus, getEventDeliveryStatus } from './scheduledDeliveryModel';
 import type { EventAttendanceSummary } from './eventResponseModel';
@@ -28,6 +32,7 @@ export type HubAdminEngagementSummary = {
 	deliveryIssueCount: number;
 	failedDeliveryCount: number;
 	skippedDeliveryCount: number;
+	attendanceReviewCount: number;
 	followUpCount: number;
 };
 
@@ -78,6 +83,7 @@ export function buildHubAdminEngagementSummary(
 		events: EventRow[];
 		broadcasts: BroadcastRow[];
 		eventAttendances: Record<string, EventAttendanceSummary>;
+		eventAttendanceOutcomes: Record<string, EventAttendanceOutcomeSummary>;
 	},
 	now = Date.now()
 ): HubAdminEngagementSummary {
@@ -91,6 +97,7 @@ export function buildHubAdminEngagementSummary(
 	let latestResponseAt: string | null = null;
 	let failedDeliveryCount = 0;
 	let skippedDeliveryCount = 0;
+	let attendanceReviewCount = 0;
 
 	for (const event of liveEvents) {
 		const attendance = input.eventAttendances[event.id];
@@ -120,6 +127,18 @@ export function buildHubAdminEngagementSummary(
 	].filter((value) => isSoon(value, now)).length;
 
 	for (const event of input.events) {
+		const attendance = input.eventAttendances[event.id] ?? null;
+		const attendanceOutcome = input.eventAttendanceOutcomes[event.id] ?? null;
+		const expectedAttendanceCount = (attendance?.going ?? 0) + (attendance?.maybe ?? 0);
+
+		if (
+			isEventAttendanceWindowOpen(event, now) &&
+			expectedAttendanceCount > 0 &&
+			(attendanceOutcome?.recorded ?? 0) < expectedAttendanceCount
+		) {
+			attendanceReviewCount += 1;
+		}
+
 		const deliveryStatus = getEventDeliveryStatus(event, now);
 		if (deliveryStatus?.state === 'failed') {
 			failedDeliveryCount += 1;
@@ -156,8 +175,18 @@ export function buildHubAdminEngagementSummary(
 		deliveryIssueCount,
 		failedDeliveryCount,
 		skippedDeliveryCount,
-		followUpCount: noResponseLiveEventCount + approachingPublishCount + deliveryIssueCount
+		attendanceReviewCount,
+		followUpCount:
+			noResponseLiveEventCount + approachingPublishCount + deliveryIssueCount + attendanceReviewCount
 	};
+}
+
+export function getHubEngagementAttendanceCopy(summary: HubAdminEngagementSummary) {
+	if (summary.attendanceReviewCount === 0) {
+		return 'No live or recent events still need day-of attendance updates.';
+	}
+
+	return `${summary.attendanceReviewCount} live or recent event${summary.attendanceReviewCount === 1 ? '' : 's'} still need day-of attendance decisions for expected attendees.`;
 }
 
 export function getHubEngagementCoverageCopy(
@@ -211,6 +240,12 @@ export function getHubEngagementFollowUpCopy(summary: HubAdminEngagementSummary)
 	if (summary.deliveryIssueCount > 0) {
 		parts.push(
 			`${summary.deliveryIssueCount} scheduled item${summary.deliveryIssueCount === 1 ? '' : 's'} need${summary.deliveryIssueCount === 1 ? 's' : ''} delivery recovery.`
+		);
+	}
+
+	if (summary.attendanceReviewCount > 0) {
+		parts.push(
+			`${summary.attendanceReviewCount} live or recent event${summary.attendanceReviewCount === 1 ? '' : 's'} still need day-of attendance updates.`
 		);
 	}
 

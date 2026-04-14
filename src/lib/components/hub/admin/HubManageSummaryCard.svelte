@@ -2,6 +2,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import {
+		getHubEngagementAttendanceCopy,
 		getHubEngagementCoverageCopy,
 		getHubEngagementFollowUpCopy
 	} from '$lib/models/hubEngagementModel';
@@ -26,6 +27,7 @@
 	const recoverableExecutionCount = $derived(currentHub.recoverableExecutionCount);
 	const processedExecutionCount = $derived(currentHub.processedExecutionItems.length);
 	const engagementSummary = $derived(currentHub.hubEngagementSummary);
+	const attendanceReviewCount = $derived(engagementSummary.attendanceReviewCount);
 	const responseCoverageValue = $derived.by(() => {
 		if (engagementSummary.liveEventCount === 0) {
 			return '—';
@@ -34,6 +36,7 @@
 		return `${engagementSummary.respondedLiveEventCount} / ${engagementSummary.liveEventCount}`;
 	});
 	const responseCoverageCopy = $derived(getHubEngagementCoverageCopy(engagementSummary));
+	const attendanceReviewCopy = $derived(getHubEngagementAttendanceCopy(engagementSummary));
 	const followUpCopy = $derived(getHubEngagementFollowUpCopy(engagementSummary));
 	const dueExecutionCopy = $derived.by(() => {
 		if (dueExecutionCount === 0) {
@@ -143,6 +146,14 @@
 				<p class="metric-value metric-value--compact">{responseCoverageValue}</p>
 			</div>
 			<p class="metric-copy">{responseCoverageCopy}</p>
+		</div>
+
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Day-of status</p>
+				<p class="metric-value">{attendanceReviewCount}</p>
+			</div>
+			<p class="metric-copy">{attendanceReviewCopy}</p>
 		</div>
 
 		<div class="metric-card">

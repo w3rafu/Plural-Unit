@@ -45,9 +45,12 @@ import {
 	restoreBroadcast,
 	deleteBroadcast,
 	fetchEvents,
+	fetchEventAttendanceRecords,
 	fetchEventReminderSettings,
 	createEvent,
+	deleteEventAttendanceRecord,
 	saveEventReminderSettings,
+	upsertEventAttendanceRecord,
 	updateEventDeliveryState,
 	updateEvent,
 	cancelEvent,
@@ -445,6 +448,35 @@ describe('fetchEvents', () => {
 	});
 });
 
+describe('fetchEventAttendanceRecords', () => {
+	it('queries hub_event_attendances filtered by organization_id', async () => {
+		const rows = [
+			{
+				id: 'att-1',
+				event_id: 'e1',
+				organization_id: 'org-1',
+				profile_id: 'profile-1',
+				status: 'attended',
+				marked_by_profile_id: 'admin-1',
+				created_at: '2026-04-14T10:00:00.000Z',
+				updated_at: '2026-04-14T10:00:00.000Z'
+			}
+		];
+		mockOrder.mockResolvedValueOnce({ data: rows, error: null });
+
+		const result = await fetchEventAttendanceRecords('org-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_event_attendances');
+		expect(result).toEqual(rows);
+	});
+
+	it('throws on attendance query error', async () => {
+		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'attendance fetch fail' } });
+
+		await expect(fetchEventAttendanceRecords('org-1')).rejects.toThrow('attendance fetch fail');
+	});
+});
+
 describe('createEvent', () => {
 	it('inserts into hub_events and returns the row', async () => {
 		const payload = {
@@ -486,6 +518,68 @@ describe('createEvent', () => {
 				publish_at: null
 			})
 		).rejects.toThrow('event insert fail');
+	});
+});
+
+describe('upsertEventAttendanceRecord', () => {
+	it('upserts a recorded attendance outcome and returns the row', async () => {
+		const row = {
+			id: 'att-1',
+			event_id: 'e1',
+			organization_id: 'org-1',
+			profile_id: 'profile-2',
+			status: 'attended',
+			marked_by_profile_id: 'profile-1',
+			created_at: '2026-04-14T10:00:00.000Z',
+			updated_at: '2026-04-14T10:05:00.000Z'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await upsertEventAttendanceRecord({
+			eventId: 'e1',
+			organizationId: 'org-1',
+			profileId: 'profile-2',
+			status: 'attended',
+			markedByProfileId: 'profile-1'
+		});
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_event_attendances');
+		expect(mockUpsert).toHaveBeenCalledWith(
+			{
+				event_id: 'e1',
+				organization_id: 'org-1',
+				profile_id: 'profile-2',
+				status: 'attended',
+				marked_by_profile_id: 'profile-1'
+			},
+			{ onConflict: 'event_id,profile_id' }
+		);
+		expect(result).toEqual(row);
+	});
+
+	it('throws on attendance upsert error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'attendance save fail' } });
+
+		await expect(
+			upsertEventAttendanceRecord({
+				eventId: 'e1',
+				organizationId: 'org-1',
+				profileId: 'profile-2',
+				status: 'absent',
+				markedByProfileId: 'profile-1'
+			})
+		).rejects.toThrow('attendance save fail');
+	});
+});
+
+describe('deleteEventAttendanceRecord', () => {
+	it('deletes a recorded attendance outcome for one member and event', async () => {
+		await deleteEventAttendanceRecord('e1', 'profile-2');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_event_attendances');
+		expect(mockDelete).toHaveBeenCalledTimes(1);
+		expect(mockEq).toHaveBeenNthCalledWith(1, 'event_id', 'e1');
+		expect(mockEq).toHaveBeenNthCalledWith(2, 'profile_id', 'profile-2');
 	});
 });
 

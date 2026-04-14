@@ -6,6 +6,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
+	import EventAttendanceRosterPanel from '$lib/components/hub/admin/EventAttendanceRosterPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -597,6 +598,7 @@
 									{/if}
 								</div>
 							{/if}
+							<EventAttendanceRosterPanel {event} />
 						</Item.Content>
 						<Item.Actions>
 							<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={currentHub.eventTargetId === event.id}>
@@ -666,6 +668,7 @@
 								{#if engagementSignal}
 									<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
 								{/if}
+								<EventAttendanceRosterPanel {event} />
 							</Item.Content>
 							<Item.Actions>
 								<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={currentHub.eventTargetId === event.id}>
@@ -737,6 +740,7 @@
 								{#if engagementSignal}
 									<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
 								{/if}
+								<EventAttendanceRosterPanel {event} />
 							</Item.Content>
 							<Item.Actions>
 								<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={currentHub.eventTargetId === event.id}>

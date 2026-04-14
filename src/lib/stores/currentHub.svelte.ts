@@ -49,6 +49,17 @@ import {
 	type EventAttendanceSummary
 } from '$lib/models/eventResponseModel';
 import {
+	buildEventAttendanceMap,
+	buildEventAttendanceRoster,
+	getEventAttendanceForProfile,
+	isEventAttendanceWindowOpen,
+	removeEventAttendanceFromMap,
+	summarizeEventAttendance,
+	type EventAttendanceRoster,
+	type EventAttendanceOutcomeSummary,
+	upsertEventAttendanceMap
+} from '$lib/models/eventAttendanceModel';
+import {
 	buildHubAdminEngagementSummary,
 	getBroadcastEngagementSignal as buildBroadcastEngagementSignal,
 	getEventEngagementSignal as buildEventEngagementSignal,
@@ -92,6 +103,8 @@ import type {
 	HubExecutionLedgerMutationPayload,
 	HubExecutionLedgerRow,
 	EventMutationPayload,
+	EventAttendanceRow,
+	EventAttendanceStatus,
 	EventReminderSettingsRow,
 	EventResponseRow,
 	EventResponseStatus,
@@ -103,6 +116,7 @@ import type {
 import {
 	fetchBroadcasts,
 	fetchEvents,
+	fetchEventAttendanceRecords,
 	fetchEventReminderSettings,
 	fetchEventResponses,
 	fetchHubExecutionLedger,
@@ -123,6 +137,7 @@ import {
 	restoreBroadcast,
 	deleteBroadcast,
 	createEvent,
+	deleteEventAttendanceRecord,
 	saveEventReminderSettings,
 	updateEventDeliveryState,
 	updateEvent,
@@ -130,6 +145,7 @@ import {
 	archiveEvent,
 	restoreEvent,
 	deleteEvent,
+	upsertEventAttendanceRecord,
 	upsertOwnEventResponse,
 	upsertHubExecutionLedgerEntries,
 	deleteHubExecutionLedgerEntries,
@@ -153,10 +169,12 @@ class CurrentHub {
 	eventTargetId = $state('');
 	resourceTargetId = $state('');
 	eventResponseMap = $state<Record<string, EventResponseRow[]>>({});
+	eventAttendanceMap = $state<Record<string, EventAttendanceRow[]>>({});
 	eventReminderSettingsMap = $state<Record<string, EventReminderSettingsRow>>({});
 	executionLedger = $state<HubExecutionLedgerRow[]>([]);
 	executionTargetId = $state('');
 	eventResponseTargetId = $state('');
+	eventAttendanceTargetId = $state('');
 	notificationPreferences = $state<HubNotificationPreferences>(
 		createDefaultHubNotificationPreferences()
 	);
@@ -221,11 +239,15 @@ class CurrentHub {
 		const eventAttendances = Object.fromEntries(
 			this.events.map((event) => [event.id, this.getEventAttendanceSummary(event.id)])
 		);
+		const eventAttendanceOutcomes = Object.fromEntries(
+			this.events.map((event) => [event.id, this.getEventAttendanceOutcomeSummary(event.id)])
+		);
 
 		return buildHubAdminEngagementSummary({
 			events: this.events,
 			broadcasts: this.broadcasts,
-			eventAttendances
+			eventAttendances,
+			eventAttendanceOutcomes
 		});
 	}
 
@@ -301,10 +323,12 @@ class CurrentHub {
 		this.eventTargetId = '';
 		this.resourceTargetId = '';
 		this.eventResponseMap = {};
+		this.eventAttendanceMap = {};
 		this.eventReminderSettingsMap = {};
 		this.executionLedger = [];
 		this.executionTargetId = '';
 		this.eventResponseTargetId = '';
+		this.eventAttendanceTargetId = '';
 		this.notificationPreferences = createDefaultHubNotificationPreferences();
 		this.notificationReadMap = {};
 		this.isSavingNotificationPreferences = false;
@@ -348,6 +372,7 @@ class CurrentHub {
 				broadcasts,
 				events,
 				eventResponses,
+				eventAttendanceRecords,
 				eventReminderSettings,
 				resources,
 				notificationPreferenceRow,
@@ -356,6 +381,7 @@ class CurrentHub {
 				plugins.broadcasts ? fetchBroadcasts(orgId) : Promise.resolve([]),
 				plugins.events ? fetchEvents(orgId) : Promise.resolve([]),
 				plugins.events ? fetchEventResponses(orgId) : Promise.resolve([]),
+				plugins.events && profileId ? fetchEventAttendanceRecords(orgId) : Promise.resolve([]),
 				plugins.events && currentOrganization.isAdmin
 					? fetchEventReminderSettings(orgId)
 					: Promise.resolve([]),
@@ -413,6 +439,7 @@ class CurrentHub {
 			this.broadcasts = syncedBroadcasts;
 			this.events = sortEventRows(syncedEvents);
 			this.eventResponseMap = buildEventResponseMap(eventResponses);
+			this.eventAttendanceMap = buildEventAttendanceMap(eventAttendanceRecords);
 			this.eventReminderSettingsMap = reminderSettingsMap;
 			this.executionLedger = syncedExecutionLedger;
 			this.resources = resources;
@@ -761,10 +788,13 @@ class CurrentHub {
 			await deleteEvent(id);
 			this.events = removeEventRow(this.events, id);
 			const nextEventResponseMap = { ...this.eventResponseMap };
+			const nextEventAttendanceMap = { ...this.eventAttendanceMap };
 			const nextEventReminderSettingsMap = { ...this.eventReminderSettingsMap };
 			delete nextEventResponseMap[id];
+			delete nextEventAttendanceMap[id];
 			delete nextEventReminderSettingsMap[id];
 			this.eventResponseMap = nextEventResponseMap;
+			this.eventAttendanceMap = nextEventAttendanceMap;
 			this.eventReminderSettingsMap = nextEventReminderSettingsMap;
 			await this.reconcileExecutionLedger();
 		} finally {
@@ -910,6 +940,24 @@ class CurrentHub {
 		return summarizeEventResponses(this.eventResponseMap[eventId] ?? []);
 	}
 
+	getEventAttendanceOutcomeSummary(eventId: string): EventAttendanceOutcomeSummary {
+		return summarizeEventAttendance(this.eventAttendanceMap[eventId] ?? []);
+	}
+
+	getEventAttendanceRoster(eventId: string): EventAttendanceRoster | null {
+		const event = this.events.find((entry) => entry.id === eventId);
+		if (!event || !isEventAttendanceWindowOpen(event)) {
+			return null;
+		}
+
+		return buildEventAttendanceRoster(
+			currentOrganization.members,
+			this.eventResponseMap[eventId] ?? [],
+			this.eventAttendanceMap[eventId] ?? [],
+			this.ownProfileId ?? ''
+		);
+	}
+
 	getEventResponseRoster(eventId: string): EventResponseRoster | null {
 		const event = this.events.find((entry) => entry.id === eventId);
 		if (!event) {
@@ -945,6 +993,18 @@ class CurrentHub {
 		return buildBroadcastEngagementSignal(broadcast);
 	}
 
+	getEventAttendanceStatus(eventId: string, profileId: string): EventAttendanceStatus | null {
+		return getEventAttendanceForProfile(this.eventAttendanceMap[eventId] ?? [], profileId);
+	}
+
+	getOwnEventAttendance(eventId: string): EventAttendanceStatus | null {
+		if (!this.ownProfileId) {
+			return null;
+		}
+
+		return this.getEventAttendanceStatus(eventId, this.ownProfileId);
+	}
+
 	getOwnEventResponse(eventId: string): EventResponseStatus | null {
 		if (!this.ownProfileId) {
 			return null;
@@ -975,6 +1035,59 @@ class CurrentHub {
 		} finally {
 			if (this.eventResponseTargetId === eventId) {
 				this.eventResponseTargetId = '';
+			}
+		}
+	}
+
+	async setEventAttendance(eventId: string, profileId: string, status: EventAttendanceStatus) {
+		if (!this.orgId || !this.ownProfileId || !currentOrganization.isAdmin) return;
+		if (this.getEventAttendanceStatus(eventId, profileId) === status) return;
+
+		this.lastError = null;
+		const targetId = `${eventId}:${profileId}`;
+		this.eventAttendanceTargetId = targetId;
+
+		try {
+			const row = await upsertEventAttendanceRecord({
+				eventId,
+				organizationId: this.orgId,
+				profileId,
+				status,
+				markedByProfileId: this.ownProfileId
+			});
+
+			this.eventAttendanceMap = upsertEventAttendanceMap(this.eventAttendanceMap, row);
+		} catch (error) {
+			this.captureError(error);
+			throw error;
+		} finally {
+			if (this.eventAttendanceTargetId === targetId) {
+				this.eventAttendanceTargetId = '';
+			}
+		}
+	}
+
+	async clearEventAttendance(eventId: string, profileId: string) {
+		if (!currentOrganization.isAdmin) return;
+		if (this.getEventAttendanceStatus(eventId, profileId) === null) return;
+
+		this.lastError = null;
+		const targetId = `${eventId}:${profileId}`;
+		this.eventAttendanceTargetId = targetId;
+
+		try {
+			await deleteEventAttendanceRecord(eventId, profileId);
+			this.eventAttendanceMap = removeEventAttendanceFromMap(
+				this.eventAttendanceMap,
+				eventId,
+				profileId
+			);
+		} catch (error) {
+			this.captureError(error);
+			throw error;
+		} finally {
+			if (this.eventAttendanceTargetId === targetId) {
+				this.eventAttendanceTargetId = '';
 			}
 		}
 	}

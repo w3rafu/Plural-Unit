@@ -4,6 +4,7 @@ import type { EventAttendanceSummary } from './eventResponseModel';
 import {
 	buildHubAdminEngagementSummary,
 	getBroadcastEngagementSignal,
+	getHubEngagementAttendanceCopy,
 	getEventEngagementSignal,
 	getHubEngagementCoverageCopy,
 	getHubEngagementFollowUpCopy
@@ -79,7 +80,8 @@ describe('hubEngagementModel', () => {
 					'live-silent': makeAttendance(),
 					'scheduled-event': makeAttendance(),
 					'past-event': makeAttendance({ total: 1, going: 1, latestUpdatedAt: '2026-04-10T10:30:00.000Z' })
-				}
+				},
+				eventAttendanceOutcomes: {}
 			},
 			now
 		);
@@ -95,6 +97,7 @@ describe('hubEngagementModel', () => {
 			scheduledItemCount: 2,
 			approachingPublishCount: 2,
 			deliveryIssueCount: 0,
+			attendanceReviewCount: 0,
 			followUpCount: 3
 		});
 	});
@@ -114,11 +117,15 @@ describe('hubEngagementModel', () => {
 			deliveryIssueCount: 1,
 			failedDeliveryCount: 1,
 			skippedDeliveryCount: 0,
+			attendanceReviewCount: 0,
 			followUpCount: 3
 		};
 
 		expect(getHubEngagementCoverageCopy(summary, now)).toContain('2 of 3 live events have replies.');
 		expect(getHubEngagementCoverageCopy(summary, now)).toContain('Latest reply 2 hours ago.');
+		expect(getHubEngagementAttendanceCopy(summary)).toBe(
+			'No live or recent events still need day-of attendance updates.'
+		);
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('1 live event still needs a first RSVP.');
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('2 scheduled items publish within a day.');
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('1 scheduled item needs delivery recovery.');
@@ -143,7 +150,8 @@ describe('hubEngagementModel', () => {
 						expires_at: '2026-04-13T17:00:00.000Z'
 					})
 				],
-				eventAttendances: {}
+				eventAttendances: {},
+				eventAttendanceOutcomes: {}
 			},
 			now
 		);
@@ -152,8 +160,54 @@ describe('hubEngagementModel', () => {
 			deliveryIssueCount: 2,
 			failedDeliveryCount: 1,
 			skippedDeliveryCount: 1,
+			attendanceReviewCount: 0,
 			followUpCount: 2
 		});
+	});
+
+	it('counts live or recent events that still need attendance review', () => {
+		const now = new Date('2026-04-13T12:00:00.000Z').getTime();
+		const summary = buildHubAdminEngagementSummary(
+			{
+				events: [
+					makeEvent({ id: 'day-of-live', starts_at: '2026-04-13T16:00:00.000Z' }),
+					makeEvent({ id: 'recent-past', starts_at: '2026-04-13T08:00:00.000Z', ends_at: '2026-04-13T10:00:00.000Z' })
+				],
+				broadcasts: [],
+				eventAttendances: {
+					'day-of-live': makeAttendance({ total: 2, going: 2, maybe: 0 }),
+					'recent-past': makeAttendance({ total: 1, going: 1, maybe: 0 })
+				},
+				eventAttendanceOutcomes: {
+					'day-of-live': {
+						attended: 0,
+						absent: 0,
+						recorded: 0,
+						recentProfileIds: [],
+						latestUpdatedAt: null
+					},
+					'recent-past': {
+						attended: 1,
+						absent: 0,
+						recorded: 1,
+						recentProfileIds: ['profile-1'],
+						latestUpdatedAt: '2026-04-13T10:15:00.000Z'
+					}
+				}
+			},
+			now
+		);
+
+		expect(summary).toMatchObject({
+			attendanceReviewCount: 1,
+			followUpCount: 1
+		});
+		expect(getHubEngagementAttendanceCopy(summary)).toContain(
+			'1 live or recent event still need day-of attendance decisions'
+		);
+		expect(getHubEngagementFollowUpCopy(summary)).toContain(
+			'1 live or recent event still need day-of attendance updates.'
+		);
 	});
 
 	it('flags live events with no responses and stale reply activity', () => {

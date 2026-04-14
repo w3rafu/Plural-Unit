@@ -8,6 +8,7 @@ const mockFetchBroadcasts = vi.fn();
 const mockFetchEvents = vi.fn();
 const mockFetchEventReminderSettings = vi.fn();
 const mockFetchEventResponses = vi.fn();
+const mockFetchEventAttendanceRecords = vi.fn();
 const mockFetchHubExecutionLedger = vi.fn();
 const mockProcessDueHubReminderExecutions = vi.fn();
 const mockFetchHubNotificationPreferences = vi.fn();
@@ -31,6 +32,8 @@ const mockCancelEvent = vi.fn();
 const mockArchiveEvent = vi.fn();
 const mockRestoreEvent = vi.fn();
 const mockDeleteEvent = vi.fn();
+const mockUpsertEventAttendanceRecord = vi.fn();
+const mockDeleteEventAttendanceRecord = vi.fn();
 const mockUpsertOwnEventResponse = vi.fn();
 const mockUpsertHubExecutionLedgerEntries = vi.fn();
 const mockDeleteHubExecutionLedgerEntries = vi.fn();
@@ -57,6 +60,7 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	fetchEvents: (...args: any[]) => mockFetchEvents(...args),
 	fetchEventReminderSettings: (...args: any[]) => mockFetchEventReminderSettings(...args),
 	fetchEventResponses: (...args: any[]) => mockFetchEventResponses(...args),
+	fetchEventAttendanceRecords: (...args: any[]) => mockFetchEventAttendanceRecords(...args),
 	fetchHubExecutionLedger: (...args: any[]) => mockFetchHubExecutionLedger(...args),
 	processDueHubReminderExecutions: (...args: any[]) => mockProcessDueHubReminderExecutions(...args),
 	fetchHubNotificationPreferences: (...args: any[]) => mockFetchHubNotificationPreferences(...args),
@@ -80,6 +84,8 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	archiveEvent: (...args: any[]) => mockArchiveEvent(...args),
 	restoreEvent: (...args: any[]) => mockRestoreEvent(...args),
 	deleteEvent: (...args: any[]) => mockDeleteEvent(...args),
+	upsertEventAttendanceRecord: (...args: any[]) => mockUpsertEventAttendanceRecord(...args),
+	deleteEventAttendanceRecord: (...args: any[]) => mockDeleteEventAttendanceRecord(...args),
 	upsertOwnEventResponse: (...args: any[]) => mockUpsertOwnEventResponse(...args),
 	upsertHubExecutionLedgerEntries: (...args: any[]) => mockUpsertHubExecutionLedgerEntries(...args),
 	deleteHubExecutionLedgerEntries: (...args: any[]) => mockDeleteHubExecutionLedgerEntries(...args),
@@ -216,6 +222,30 @@ function makeReminderSettings(
 		reminder_offsets: overrides.reminder_offsets ?? [1440, 120],
 		created_at: overrides.created_at ?? '2026-04-12T10:00:00.000Z',
 		updated_at: overrides.updated_at ?? '2026-04-12T10:00:00.000Z'
+	};
+}
+
+function makeAttendanceRecord(
+	overrides: Partial<{
+		id: string;
+		event_id: string;
+		organization_id: string;
+		profile_id: string;
+		status: 'attended' | 'absent';
+		marked_by_profile_id: string | null;
+		created_at: string;
+		updated_at: string;
+	}> = {}
+) {
+	return {
+		id: overrides.id ?? 'att-1',
+		event_id: overrides.event_id ?? 'e1',
+		organization_id: overrides.organization_id ?? 'org-1',
+		profile_id: overrides.profile_id ?? 'profile-1',
+		status: overrides.status ?? 'attended',
+		marked_by_profile_id: overrides.marked_by_profile_id ?? 'profile-admin',
+		created_at: overrides.created_at ?? '2026-04-14T10:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-14T10:00:00.000Z'
 	};
 }
 
@@ -358,6 +388,7 @@ beforeEach(() => {
 	mockCurrentOrganization.members = [];
 	mockCurrentOrganization.isLoadingMembers = false;
 	mockCurrentOrganization.isAdmin = true;
+	mockFetchEventAttendanceRecords.mockResolvedValue([]);
 	mockFetchHubExecutionLedger.mockResolvedValue([]);
 	mockProcessDueHubReminderExecutions.mockResolvedValue([]);
 	mockUpsertHubExecutionLedgerEntries.mockImplementation(async (entries: any[]) =>
@@ -369,6 +400,7 @@ beforeEach(() => {
 		)
 	);
 	mockDeleteHubExecutionLedgerEntries.mockResolvedValue(undefined);
+	mockDeleteEventAttendanceRecord.mockResolvedValue(undefined);
 	mockFetchHubNotificationPreferences.mockResolvedValue(null);
 	mockFetchHubNotificationReads.mockResolvedValue([]);
 	currentHub.reset();
@@ -385,6 +417,9 @@ describe('currentHub.load', () => {
 		mockFetchEvents.mockResolvedValueOnce([makeEvent({ id: 'e1', title: 'Meeting' })]);
 		mockFetchEventReminderSettings.mockResolvedValueOnce([
 			makeReminderSettings({ event_id: 'e1', reminder_offsets: [1440, 120] })
+		]);
+		mockFetchEventAttendanceRecords.mockResolvedValueOnce([
+			makeAttendanceRecord({ event_id: 'e1', profile_id: 'profile-1', status: 'attended' })
 		]);
 		mockFetchEventResponses.mockResolvedValueOnce([
 			{
@@ -410,6 +445,7 @@ describe('currentHub.load', () => {
 		expect(currentHub.getEventReminderOffsets('e1')).toEqual([1440, 120]);
 		expect(currentHub.resources).toEqual([makeResource({ id: 'r1', title: 'Prayer guide' })]);
 		expect(currentHub.getOwnEventResponse('e1')).toBe('going');
+		expect(currentHub.getOwnEventAttendance('e1')).toBe('attended');
 		expect(currentHub.isLoading).toBe(false);
 	});
 
@@ -479,12 +515,14 @@ describe('currentHub.load', () => {
 		expect(mockFetchEvents).not.toHaveBeenCalled();
 		expect(mockFetchEventReminderSettings).not.toHaveBeenCalled();
 		expect(mockFetchEventResponses).not.toHaveBeenCalled();
+		expect(mockFetchEventAttendanceRecords).not.toHaveBeenCalled();
 		expect(mockFetchResources).not.toHaveBeenCalled();
 		expect(currentHub.broadcasts).toEqual([]);
 		expect(currentHub.events).toEqual([]);
 		expect(currentHub.resources).toEqual([]);
 		expect(currentHub.eventReminderSettingsMap).toEqual({});
 		expect(currentHub.eventResponseMap).toEqual({});
+		expect(currentHub.eventAttendanceMap).toEqual({});
 	});
 
 	it('skips loading event reminder settings for non-admin members', async () => {
@@ -1345,6 +1383,9 @@ describe('currentHub.restoreEvent', () => {
 describe('currentHub.removeEvent', () => {
 	it('removes an event from the list', async () => {
 		currentHub.events = [makeEvent({ id: 'e1', title: 'A', starts_at: '' })];
+		currentHub.eventAttendanceMap = {
+			e1: [makeAttendanceRecord({ event_id: 'e1', profile_id: 'profile-2', status: 'attended' })]
+		};
 		currentHub.executionLedger = [
 			makeExecutionLedgerRow({
 				id: 'event-publish',
@@ -1372,10 +1413,82 @@ describe('currentHub.removeEvent', () => {
 		await currentHub.removeEvent('e1');
 
 		expect(currentHub.events).toHaveLength(0);
+		expect(currentHub.eventAttendanceMap).toEqual({});
 		expect(currentHub.getEventReminderOffsets('e1')).toEqual([]);
 		expect(currentHub.eventResponseMap).toEqual({});
 		expect(mockDeleteHubExecutionLedgerEntries).toHaveBeenCalledWith(['event-publish']);
 		expect(currentHub.executionLedger).toEqual([]);
+	});
+});
+
+describe('currentHub.setEventAttendance', () => {
+	it('upserts a recorded attendance outcome and updates local summaries', async () => {
+		mockUpsertEventAttendanceRecord.mockResolvedValueOnce(
+			makeAttendanceRecord({
+				id: 'att-2',
+				event_id: 'e1',
+				profile_id: 'profile-2',
+				status: 'attended',
+				marked_by_profile_id: 'profile-1',
+				updated_at: '2026-04-14T12:00:00.000Z'
+			})
+		);
+
+		await currentHub.setEventAttendance('e1', 'profile-2', 'attended');
+
+		expect(mockUpsertEventAttendanceRecord).toHaveBeenCalledWith({
+			eventId: 'e1',
+			organizationId: 'org-1',
+			profileId: 'profile-2',
+			status: 'attended',
+			markedByProfileId: 'profile-1'
+		});
+		expect(currentHub.getEventAttendanceStatus('e1', 'profile-2')).toBe('attended');
+		expect(currentHub.getEventAttendanceOutcomeSummary('e1')).toMatchObject({
+			attended: 1,
+			absent: 0,
+			recorded: 1
+		});
+		expect(currentHub.eventAttendanceTargetId).toBe('');
+	});
+});
+
+describe('currentHub.getEventAttendanceRoster', () => {
+	it('builds a compact day-of roster for events inside the attendance window', () => {
+		mockCurrentOrganization.members = [
+			makeMember({ profile_id: 'profile-1', name: 'Alex' }),
+			makeMember({ profile_id: 'profile-2', name: 'Bea' })
+		];
+		currentHub.events = [makeEvent({ id: 'e1', starts_at: '2099-04-20T16:30:00.000Z' })];
+		currentHub.eventResponseMap = {
+			e1: [
+				{
+					id: 'r1',
+					event_id: 'e1',
+					organization_id: 'org-1',
+					profile_id: 'profile-1',
+					response: 'going',
+					created_at: '2099-04-20T10:00:00.000Z',
+					updated_at: '2099-04-20T10:00:00.000Z'
+				}
+			]
+		};
+		currentHub.eventAttendanceMap = {
+			e1: [makeAttendanceRecord({ event_id: 'e1', profile_id: 'profile-2', status: 'attended' })]
+		};
+
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2099-04-20T12:00:00.000Z'));
+
+		const roster = currentHub.getEventAttendanceRoster('e1');
+
+		expect(roster).toMatchObject({
+			expectedCount: 2,
+			pendingCount: 1,
+			recordedCount: 1
+		});
+
+		vi.useRealTimers();
 	});
 });
 
@@ -1420,6 +1533,25 @@ describe('currentHub.setEventResponse', () => {
 			total: 2
 		});
 		expect(currentHub.eventResponseTargetId).toBe('');
+	});
+});
+
+describe('currentHub.clearEventAttendance', () => {
+	it('clears a recorded attendance outcome and returns the member to an unrecorded state', async () => {
+		currentHub.eventAttendanceMap = {
+			e1: [makeAttendanceRecord({ event_id: 'e1', profile_id: 'profile-2', status: 'absent' })]
+		};
+
+		await currentHub.clearEventAttendance('e1', 'profile-2');
+
+		expect(mockDeleteEventAttendanceRecord).toHaveBeenCalledWith('e1', 'profile-2');
+		expect(currentHub.getEventAttendanceStatus('e1', 'profile-2')).toBeNull();
+		expect(currentHub.getEventAttendanceOutcomeSummary('e1')).toMatchObject({
+			attended: 0,
+			absent: 0,
+			recorded: 0
+		});
+		expect(currentHub.eventAttendanceTargetId).toBe('');
 	});
 });
 
