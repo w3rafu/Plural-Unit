@@ -4,7 +4,7 @@
   Rendered by the hub manage page when the `broadcasts` plugin is active.
 -->
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -22,7 +22,6 @@
 	} from '$lib/models/broadcastLifecycleModel';
 	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
 	import type { BroadcastRow } from '$lib/repositories/hubRepository';
-	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { formatShortDate, formatShortDateTime } from '$lib/utils/dateFormat';
@@ -113,18 +112,6 @@
 			default:
 				return isEditing ? 'Save live broadcast' : 'Publish now';
 		}
-	});
-
-	$effect(() => {
-		unsavedChanges.set(
-			UNSAVED_CHANGES_KEY,
-			isEditing ? 'broadcast edits' : 'broadcast draft',
-			isBroadcastDirty
-		);
-	});
-
-	onDestroy(() => {
-		unsavedChanges.clear(UNSAVED_CHANGES_KEY);
 	});
 
 	function resetForm() {
@@ -348,6 +335,11 @@
 	<Card.Content class="space-y-6">
 		<form
 			class="space-y-5"
+			use:syncUnsavedChanges={{
+				key: UNSAVED_CHANGES_KEY,
+				label: isEditing ? 'broadcast edits' : 'broadcast draft',
+				isDirty: isBroadcastDirty
+			}}
 			onsubmit={(e) => {
 				e.preventDefault();
 				submit();

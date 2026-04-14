@@ -9,6 +9,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
+	import MemberCommitmentsCard from '$lib/components/hub/member/MemberCommitmentsCard.svelte';
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
 	import ResourcesSection from '$lib/components/hub/member/ResourcesSection.svelte';
@@ -111,6 +112,8 @@
 			{/if}
 		</Card.Content>
 	</Card.Root>
+
+	<MemberCommitmentsCard eventHref="#hub-events" />
 
 	<HubActivityFeed
 		broadcastHref="#hub-broadcasts"

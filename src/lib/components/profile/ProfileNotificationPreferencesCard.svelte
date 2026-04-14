@@ -131,7 +131,7 @@
 						<Field.Content>
 							<Field.Label for="notification-preferences-events">Event alerts</Field.Label>
 							<Field.Description>
-								Show newly published events and live event updates in your alert tray.
+								Show newly published events, event reminders, and live event updates in your alert tray.
 							</Field.Description>
 						</Field.Content>
 					</Field.Field>

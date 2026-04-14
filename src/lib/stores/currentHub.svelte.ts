@@ -26,7 +26,7 @@ import {
 	sortInactiveEvents,
 	sortLiveEvents,
 	sortScheduledEvents
-	} from '$lib/models/eventLifecycleModel';
+} from '$lib/models/eventLifecycleModel';
 import {
 	normalizeEventReminderOffsets,
 	summarizeEventReminderSchedule,
@@ -68,6 +68,16 @@ import {
 	buildPluginStateMap
 } from './pluginRegistry';
 import {
+	buildExpectedHubExecutionLedgerRows,
+	buildHubExecutionLedgerSyncPlan,
+	countDueHubExecutionLedgerRows,
+	countRecoverableHubExecutionLedgerRows,
+	getHubExecutionLedgerKey,
+	groupHubExecutionLedger,
+	mergeHubExecutionLedgerRows,
+	sortHubExecutionLedgerRows
+} from '$lib/models/hubExecutionLedger';
+import {
 	buildHubNotificationReadMap,
 	buildHubNotifications,
 	countUnreadHubNotifications,
@@ -79,6 +89,8 @@ import {
 import type {
 	BroadcastMutationPayload,
 	BroadcastRow,
+	HubExecutionLedgerMutationPayload,
+	HubExecutionLedgerRow,
 	EventMutationPayload,
 	EventReminderSettingsRow,
 	EventResponseRow,
@@ -93,6 +105,8 @@ import {
 	fetchEvents,
 	fetchEventReminderSettings,
 	fetchEventResponses,
+	fetchHubExecutionLedger,
+	processDueHubReminderExecutions,
 	fetchHubNotificationPreferences,
 	fetchHubNotificationReads,
 	fetchResources,
@@ -117,6 +131,8 @@ import {
 	restoreEvent,
 	deleteEvent,
 	upsertOwnEventResponse,
+	upsertHubExecutionLedgerEntries,
+	deleteHubExecutionLedgerEntries,
 	markHubNotificationRead,
 	saveHubNotificationPreferences,
 	createResource,
@@ -138,6 +154,8 @@ class CurrentHub {
 	resourceTargetId = $state('');
 	eventResponseMap = $state<Record<string, EventResponseRow[]>>({});
 	eventReminderSettingsMap = $state<Record<string, EventReminderSettingsRow>>({});
+	executionLedger = $state<HubExecutionLedgerRow[]>([]);
+	executionTargetId = $state('');
 	eventResponseTargetId = $state('');
 	notificationPreferences = $state<HubNotificationPreferences>(
 		createDefaultHubNotificationPreferences()
@@ -215,16 +233,55 @@ class CurrentHub {
 		return sortResourceRows(this.resources);
 	}
 
+	get executionLedgerGroups() {
+		return groupHubExecutionLedger(this.executionLedger);
+	}
+
+	get dueExecutionItems() {
+		return this.executionLedgerGroups.due;
+	}
+
+	get upcomingExecutionItems() {
+		return this.executionLedgerGroups.upcoming;
+	}
+
+	get processedExecutionItems() {
+		return this.executionLedgerGroups.processed;
+	}
+
+	get failedExecutionItems() {
+		return this.executionLedgerGroups.failed;
+	}
+
+	get skippedExecutionItems() {
+		return this.executionLedgerGroups.skipped;
+	}
+
+	get dueExecutionCount() {
+		return countDueHubExecutionLedgerRows(this.executionLedger);
+	}
+
+	get recoverableExecutionCount() {
+		return countRecoverableHubExecutionLedgerRows(this.executionLedger);
+	}
+
+	get processedReminderExecutionItems() {
+		return this.processedExecutionItems.filter((row) => row.job_kind === 'event_reminder');
+	}
+
 	get allActivityFeed() {
 		return buildHubNotifications({
 			broadcasts: this.activeBroadcasts,
 			events: this.liveEvents,
+			reminderExecutions: this.processedReminderExecutionItems,
 			readMap: this.notificationReadMap
 		});
 	}
 
 	get activityFeed() {
-		return this.allActivityFeed.filter((item) => this.notificationPreferences[item.kind]);
+		return this.allActivityFeed.filter(
+			(item) => this.notificationPreferences[item.kind === 'broadcast' ? 'broadcast' : 'event']
+		);
 	}
 
 	get unreadActivityCount() {
@@ -245,6 +302,8 @@ class CurrentHub {
 		this.resourceTargetId = '';
 		this.eventResponseMap = {};
 		this.eventReminderSettingsMap = {};
+		this.executionLedger = [];
+		this.executionTargetId = '';
 		this.eventResponseTargetId = '';
 		this.notificationPreferences = createDefaultHubNotificationPreferences();
 		this.notificationReadMap = {};
@@ -323,13 +382,39 @@ class CurrentHub {
 				return;
 			}
 
+			if (plugins.events && profileId) {
+				await processDueHubReminderExecutions(orgId);
+			}
+
+			const executionLedgerRows =
+				plugins.broadcasts || plugins.events
+					? currentOrganization.isAdmin || (plugins.events && profileId)
+						? await fetchHubExecutionLedger(orgId)
+						: ([] as HubExecutionLedgerRow[])
+					: ([] as HubExecutionLedgerRow[]);
+
+			const reminderSettingsMap = Object.fromEntries(
+				eventReminderSettings.map((settings) => [settings.event_id, settings])
+			);
+
+			const syncedExecutionLedger =
+				plugins.broadcasts || plugins.events
+					? currentOrganization.isAdmin
+						? await this.syncExecutionLedgerRows({
+							broadcasts: syncedBroadcasts,
+							events: sortEventRows(syncedEvents),
+							eventReminderSettingsMap: reminderSettingsMap,
+							currentRows: executionLedgerRows
+						})
+						: sortHubExecutionLedgerRows(executionLedgerRows)
+					: [];
+
 			this.plugins = plugins;
 			this.broadcasts = syncedBroadcasts;
 			this.events = sortEventRows(syncedEvents);
 			this.eventResponseMap = buildEventResponseMap(eventResponses);
-			this.eventReminderSettingsMap = Object.fromEntries(
-				eventReminderSettings.map((settings) => [settings.event_id, settings])
-			);
+			this.eventReminderSettingsMap = reminderSettingsMap;
+			this.executionLedger = syncedExecutionLedger;
 			this.resources = resources;
 			this.notificationPreferences = notificationPreferenceRow
 				? {
@@ -391,7 +476,12 @@ class CurrentHub {
 		}
 	}
 
-	async markActivityRead(notification: Pick<HubNotificationItem, 'id' | 'kind' | 'sourceId' | 'isRead'>) {
+	async markActivityRead(
+		notification: Pick<
+			HubNotificationItem,
+			'id' | 'kind' | 'sourceId' | 'notificationKey' | 'isRead'
+		>
+	) {
 		if (!this.orgId || !this.ownProfileId || notification.isRead) {
 			return;
 		}
@@ -404,7 +494,8 @@ class CurrentHub {
 				organizationId: this.orgId,
 				profileId: this.ownProfileId,
 				notificationKind: notification.kind,
-				sourceId: notification.sourceId
+				sourceId: notification.sourceId,
+				notificationKey: notification.notificationKey
 			});
 
 			this.notificationReadMap = upsertHubNotificationReadMap(this.notificationReadMap, row);
@@ -440,6 +531,7 @@ class CurrentHub {
 						profileId: this.ownProfileId as string,
 						notificationKind: item.kind,
 						sourceId: item.sourceId,
+						notificationKey: item.notificationKey,
 						readAt
 					})
 				)
@@ -467,7 +559,9 @@ class CurrentHub {
 
 		try {
 			const row = await createBroadcast(this.orgId, payload);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -478,7 +572,9 @@ class CurrentHub {
 
 		try {
 			const row = await updateBroadcast(broadcastId, payload);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -489,7 +585,9 @@ class CurrentHub {
 
 		try {
 			const row = await saveBroadcastDraft(broadcastId);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -500,7 +598,9 @@ class CurrentHub {
 
 		try {
 			const row = await scheduleBroadcast(broadcastId, publishAt);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -511,7 +611,9 @@ class CurrentHub {
 
 		try {
 			const row = await publishBroadcastNow(broadcastId);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -523,10 +625,12 @@ class CurrentHub {
 
 		try {
 			const row = await setBroadcastPinned(this.orgId, broadcastId, isPinned);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
 			const nextRows = this.broadcasts.map((broadcast) =>
 				broadcast.organization_id === this.orgId ? { ...broadcast, is_pinned: false } : broadcast
 			);
-			this.broadcasts = replaceBroadcastRow(nextRows, row);
+			this.broadcasts = replaceBroadcastRow(nextRows, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -537,7 +641,9 @@ class CurrentHub {
 
 		try {
 			const row = await archiveBroadcast(broadcastId);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -548,7 +654,9 @@ class CurrentHub {
 
 		try {
 			const row = await restoreBroadcast(broadcastId);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, row);
+			const syncedRow = await this.syncBroadcastDeliveryRow(row);
+			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -560,6 +668,7 @@ class CurrentHub {
 		try {
 			await deleteBroadcast(id);
 			this.broadcasts = removeBroadcastRow(this.broadcasts, id);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.broadcastTargetId = '';
 		}
@@ -573,11 +682,14 @@ class CurrentHub {
 
 		try {
 			const row = await createEvent(this.orgId, payload);
-			this.events = replaceEventRow(this.events, row);
+			const syncedRow = await this.syncEventDeliveryRow(row);
+			this.events = replaceEventRow(this.events, syncedRow);
 
 			if (reminderOffsets) {
 				await this.persistEventReminderSettings(row.id, reminderOffsets);
 			}
+
+			await this.reconcileExecutionLedger();
 		} finally {
 			if (this.eventTargetId === 'draft') {
 				this.eventTargetId = '';
@@ -590,11 +702,14 @@ class CurrentHub {
 
 		try {
 			const row = await updateEvent(eventId, payload);
-			this.events = replaceEventRow(this.events, row);
+			const syncedRow = await this.syncEventDeliveryRow(row);
+			this.events = replaceEventRow(this.events, syncedRow);
 
 			if (reminderOffsets !== undefined) {
 				await this.persistEventReminderSettings(eventId, reminderOffsets);
 			}
+
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.eventTargetId = '';
 		}
@@ -605,7 +720,9 @@ class CurrentHub {
 
 		try {
 			const row = await cancelEvent(eventId);
-			this.events = replaceEventRow(this.events, row);
+			const syncedRow = await this.syncEventDeliveryRow(row);
+			this.events = replaceEventRow(this.events, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.eventTargetId = '';
 		}
@@ -616,7 +733,9 @@ class CurrentHub {
 
 		try {
 			const row = await archiveEvent(eventId);
-			this.events = replaceEventRow(this.events, row);
+			const syncedRow = await this.syncEventDeliveryRow(row);
+			this.events = replaceEventRow(this.events, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.eventTargetId = '';
 		}
@@ -627,7 +746,9 @@ class CurrentHub {
 
 		try {
 			const row = await restoreEvent(eventId);
-			this.events = replaceEventRow(this.events, row);
+			const syncedRow = await this.syncEventDeliveryRow(row);
+			this.events = replaceEventRow(this.events, syncedRow);
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.eventTargetId = '';
 		}
@@ -645,6 +766,7 @@ class CurrentHub {
 			delete nextEventReminderSettingsMap[id];
 			this.eventResponseMap = nextEventResponseMap;
 			this.eventReminderSettingsMap = nextEventReminderSettingsMap;
+			await this.reconcileExecutionLedger();
 		} finally {
 			this.eventTargetId = '';
 		}
@@ -665,6 +787,113 @@ class CurrentHub {
 		}
 
 		return summarizeEventReminderSchedule(event, this.getEventReminderOffsets(eventId));
+	}
+
+	async retryExecutionEntry(entryId: string) {
+		const row = this.executionLedger.find((entry) => entry.id === entryId);
+		if (!row) return;
+
+		this.executionTargetId = entryId;
+
+		try {
+			if (row.job_kind === 'broadcast_publish') {
+				const broadcast = this.broadcasts.find((entry) => entry.id === row.source_id);
+				if (broadcast) {
+					const syncedRow = await this.syncBroadcastDeliveryRow(broadcast);
+					this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+				}
+			} else if (row.job_kind === 'event_publish') {
+				const event = this.events.find((entry) => entry.id === row.source_id);
+				if (event) {
+					const syncedRow = await this.syncEventDeliveryRow(event);
+					this.events = replaceEventRow(this.events, syncedRow);
+				}
+			}
+
+			const expectedRow = this.getExpectedExecutionLedgerRow(row);
+			if (!expectedRow) {
+				await this.deleteExecutionLedgerEntry(row.id);
+				return;
+			}
+
+			const attemptedAt = new Date().toISOString();
+			await this.upsertExecutionLedgerEntry({
+				organization_id: expectedRow.organization_id,
+				job_kind: expectedRow.job_kind,
+				source_id: expectedRow.source_id,
+				execution_key: expectedRow.execution_key,
+				due_at: expectedRow.due_at,
+				execution_state: expectedRow.execution_state,
+				processed_at:
+					expectedRow.execution_state === 'processed'
+						? expectedRow.processed_at ?? attemptedAt
+						: null,
+				last_attempted_at: attemptedAt,
+				attempt_count: Math.max(row.attempt_count + 1, expectedRow.execution_state === 'processed' ? 1 : 0),
+				last_failure_reason: expectedRow.last_failure_reason
+			});
+		} finally {
+			if (this.executionTargetId === entryId) {
+				this.executionTargetId = '';
+			}
+		}
+	}
+
+	async runExecutionEntryNow(entryId: string) {
+		const row = this.executionLedger.find((entry) => entry.id === entryId);
+		if (!row || row.job_kind === 'event_reminder') return;
+
+		this.executionTargetId = entryId;
+
+		try {
+			if (row.job_kind === 'broadcast_publish') {
+				await this.publishBroadcastNow(row.source_id);
+			} else {
+				const event = this.events.find((entry) => entry.id === row.source_id);
+				if (!event) {
+					await this.deleteExecutionLedgerEntry(row.id);
+					return;
+				}
+
+				if (event.archived_at || event.canceled_at) {
+					await this.restoreEvent(event.id);
+				}
+
+				const nextEvent = this.events.find((entry) => entry.id === event.id) ?? event;
+				const reminderOffsets = this.getEventReminderSettings(nextEvent.id)?.reminder_offsets;
+
+				await this.updateEvent(
+					nextEvent.id,
+					{
+						title: nextEvent.title,
+						description: nextEvent.description,
+						starts_at: nextEvent.starts_at,
+						ends_at: nextEvent.ends_at,
+						location: nextEvent.location,
+						publish_at: null
+					},
+					reminderOffsets
+				);
+			}
+
+			const processedAt = new Date().toISOString();
+			await this.upsertExecutionLedgerEntry({
+				organization_id: row.organization_id,
+				job_kind: row.job_kind,
+				source_id: row.source_id,
+				execution_key: row.execution_key,
+				due_at: row.due_at,
+				execution_state: 'processed',
+				processed_at: processedAt,
+				last_attempted_at: processedAt,
+				attempt_count: Math.max(row.attempt_count + 1, 1),
+				last_failure_reason: null
+			});
+		} finally {
+			if (this.executionTargetId === entryId) {
+				this.executionTargetId = '';
+			}
+		}
 	}
 
 	getBroadcastDeliveryStatus(broadcastId: string): ScheduledDeliveryStatus | null {
@@ -764,6 +993,75 @@ class CurrentHub {
 			...this.eventReminderSettingsMap,
 			[eventId]: row
 		};
+	}
+
+	private async reconcileExecutionLedger() {
+		this.executionLedger = await this.syncExecutionLedgerRows({
+			broadcasts: this.broadcasts,
+			events: this.events,
+			eventReminderSettingsMap: this.eventReminderSettingsMap,
+			currentRows: this.executionLedger
+		});
+	}
+
+	private async syncExecutionLedgerRows(input: {
+		broadcasts: BroadcastRow[];
+		events: EventRow[];
+		eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
+		currentRows: HubExecutionLedgerRow[];
+	}) {
+		if (!this.orgId || !currentOrganization.isAdmin) {
+			return [];
+		}
+
+		const { upsertEntries, deleteEntryIds } = buildHubExecutionLedgerSyncPlan({
+			broadcasts: input.broadcasts,
+			events: input.events,
+			eventReminderSettings: input.eventReminderSettingsMap,
+			currentRows: input.currentRows
+		});
+
+		if (upsertEntries.length === 0 && deleteEntryIds.length === 0) {
+			return sortHubExecutionLedgerRows(input.currentRows);
+		}
+
+		const upsertedRows = upsertEntries.length
+			? await upsertHubExecutionLedgerEntries(upsertEntries)
+			: [];
+
+		if (deleteEntryIds.length > 0) {
+			await deleteHubExecutionLedgerEntries(deleteEntryIds);
+		}
+
+		return mergeHubExecutionLedgerRows(input.currentRows, upsertedRows, deleteEntryIds);
+	}
+
+	private getExpectedExecutionLedgerRow(
+		row: Pick<HubExecutionLedgerRow, 'job_kind' | 'source_id' | 'execution_key'>
+	) {
+		return (
+			buildExpectedHubExecutionLedgerRows({
+				broadcasts: this.broadcasts,
+				events: this.events,
+				eventReminderSettings: this.eventReminderSettingsMap
+			}).find(
+				(entry) =>
+					getHubExecutionLedgerKey(entry.job_kind, entry.source_id, entry.execution_key) ===
+					getHubExecutionLedgerKey(row.job_kind, row.source_id, row.execution_key)
+			) ?? null
+		);
+	}
+
+	private async upsertExecutionLedgerEntry(entry: HubExecutionLedgerMutationPayload) {
+		const [upsertedRow] = await upsertHubExecutionLedgerEntries([entry]);
+		this.executionLedger = mergeHubExecutionLedgerRows(this.executionLedger, [upsertedRow], []);
+	}
+
+	private async deleteExecutionLedgerEntry(entryId: string) {
+		await deleteHubExecutionLedgerEntries([entryId]);
+		this.executionLedger = sortHubExecutionLedgerRows(
+			this.executionLedger.filter((entry) => entry.id !== entryId)
+		);
 	}
 
 	private async syncBroadcastDeliveryRow(row: BroadcastRow) {

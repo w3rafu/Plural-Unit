@@ -8,6 +8,8 @@ const mockFetchBroadcasts = vi.fn();
 const mockFetchEvents = vi.fn();
 const mockFetchEventReminderSettings = vi.fn();
 const mockFetchEventResponses = vi.fn();
+const mockFetchHubExecutionLedger = vi.fn();
+const mockProcessDueHubReminderExecutions = vi.fn();
 const mockFetchHubNotificationPreferences = vi.fn();
 const mockFetchHubNotificationReads = vi.fn();
 const mockFetchResources = vi.fn();
@@ -30,6 +32,8 @@ const mockArchiveEvent = vi.fn();
 const mockRestoreEvent = vi.fn();
 const mockDeleteEvent = vi.fn();
 const mockUpsertOwnEventResponse = vi.fn();
+const mockUpsertHubExecutionLedgerEntries = vi.fn();
+const mockDeleteHubExecutionLedgerEntries = vi.fn();
 const mockSaveHubNotificationPreferences = vi.fn();
 const mockMarkHubNotificationRead = vi.fn();
 const mockCreateResource = vi.fn();
@@ -53,6 +57,8 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	fetchEvents: (...args: any[]) => mockFetchEvents(...args),
 	fetchEventReminderSettings: (...args: any[]) => mockFetchEventReminderSettings(...args),
 	fetchEventResponses: (...args: any[]) => mockFetchEventResponses(...args),
+	fetchHubExecutionLedger: (...args: any[]) => mockFetchHubExecutionLedger(...args),
+	processDueHubReminderExecutions: (...args: any[]) => mockProcessDueHubReminderExecutions(...args),
 	fetchHubNotificationPreferences: (...args: any[]) => mockFetchHubNotificationPreferences(...args),
 	fetchHubNotificationReads: (...args: any[]) => mockFetchHubNotificationReads(...args),
 	fetchResources: (...args: any[]) => mockFetchResources(...args),
@@ -75,6 +81,8 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	restoreEvent: (...args: any[]) => mockRestoreEvent(...args),
 	deleteEvent: (...args: any[]) => mockDeleteEvent(...args),
 	upsertOwnEventResponse: (...args: any[]) => mockUpsertOwnEventResponse(...args),
+	upsertHubExecutionLedgerEntries: (...args: any[]) => mockUpsertHubExecutionLedgerEntries(...args),
+	deleteHubExecutionLedgerEntries: (...args: any[]) => mockDeleteHubExecutionLedgerEntries(...args),
 	saveHubNotificationPreferences: (...args: any[]) => mockSaveHubNotificationPreferences(...args),
 	markHubNotificationRead: (...args: any[]) => mockMarkHubNotificationRead(...args),
 	createResource: (...args: any[]) => mockCreateResource(...args),
@@ -288,8 +296,9 @@ function makeNotificationReadRow(
 		id: string;
 		organization_id: string;
 		profile_id: string;
-		notification_kind: 'broadcast' | 'event';
+		notification_kind: 'broadcast' | 'event' | 'event_reminder';
 		source_id: string;
+		notification_key: string;
 		read_at: string;
 		created_at: string;
 		updated_at: string;
@@ -301,19 +310,65 @@ function makeNotificationReadRow(
 		profile_id: overrides.profile_id ?? 'profile-1',
 		notification_kind: overrides.notification_kind ?? 'broadcast',
 		source_id: overrides.source_id ?? 'b1',
+		notification_key: overrides.notification_key ?? 'default',
 		read_at: overrides.read_at ?? '2026-04-13T10:00:00.000Z',
 		created_at: overrides.created_at ?? '2026-04-13T10:00:00.000Z',
 		updated_at: overrides.updated_at ?? '2026-04-13T10:00:00.000Z'
 	};
 }
 
+function makeExecutionLedgerRow(
+	overrides: Partial<{
+		id: string;
+		organization_id: string;
+		job_kind: 'broadcast_publish' | 'event_publish' | 'event_reminder';
+		source_id: string;
+		execution_key: string;
+		due_at: string;
+		execution_state: 'pending' | 'processed' | 'failed' | 'skipped';
+		processed_at: string | null;
+		last_attempted_at: string | null;
+		attempt_count: number;
+		last_failure_reason: string | null;
+		created_at: string;
+		updated_at: string;
+	}> = {}
+) {
+	return {
+		id: overrides.id ?? 'exec-1',
+		organization_id: overrides.organization_id ?? 'org-1',
+		job_kind: overrides.job_kind ?? 'event_reminder',
+		source_id: overrides.source_id ?? 'e1',
+		execution_key: overrides.execution_key ?? '120',
+		due_at: overrides.due_at ?? '2026-04-20T14:00:00.000Z',
+		execution_state: overrides.execution_state ?? 'pending',
+		processed_at: overrides.processed_at ?? null,
+		last_attempted_at: overrides.last_attempted_at ?? null,
+		attempt_count: overrides.attempt_count ?? 0,
+		last_failure_reason: overrides.last_failure_reason ?? null,
+		created_at: overrides.created_at ?? '2026-04-14T08:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-14T08:00:00.000Z'
+	};
+}
+
 beforeEach(() => {
-	vi.clearAllMocks();
+	vi.resetAllMocks();
 	mockCurrentOrganization.organization = { id: 'org-1' };
 	mockCurrentOrganization.membership = { profile_id: 'profile-1', role: 'admin' };
 	mockCurrentOrganization.members = [];
 	mockCurrentOrganization.isLoadingMembers = false;
 	mockCurrentOrganization.isAdmin = true;
+	mockFetchHubExecutionLedger.mockResolvedValue([]);
+	mockProcessDueHubReminderExecutions.mockResolvedValue([]);
+	mockUpsertHubExecutionLedgerEntries.mockImplementation(async (entries: any[]) =>
+		entries.map((entry, index) =>
+			makeExecutionLedgerRow({
+				id: `exec-${index + 1}`,
+				...entry
+			})
+		)
+	);
+	mockDeleteHubExecutionLedgerEntries.mockResolvedValue(undefined);
 	mockFetchHubNotificationPreferences.mockResolvedValue(null);
 	mockFetchHubNotificationReads.mockResolvedValue([]);
 	currentHub.reset();
@@ -442,7 +497,48 @@ describe('currentHub.load', () => {
 		await currentHub.load();
 
 		expect(mockFetchEventReminderSettings).not.toHaveBeenCalled();
+		expect(mockProcessDueHubReminderExecutions).toHaveBeenCalledWith('org-1');
 		expect(currentHub.getEventReminderOffsets('e1')).toEqual([]);
+	});
+
+	it('hydrates processed reminder alerts for non-admin members', async () => {
+		mockCurrentOrganization.membership = { profile_id: 'profile-1', role: 'member' };
+		mockCurrentOrganization.isAdmin = false;
+		mockFetchActivePlugins.mockResolvedValueOnce([{ plugin_key: 'events', is_enabled: true }]);
+		mockFetchEvents.mockResolvedValueOnce([makeEvent({ id: 'e1', title: 'Meeting' })]);
+		mockFetchEventResponses.mockResolvedValueOnce([]);
+		mockFetchHubNotificationReads.mockResolvedValueOnce([
+			makeNotificationReadRow({ notification_kind: 'event', source_id: 'e1' })
+		]);
+		mockFetchHubExecutionLedger.mockResolvedValueOnce([
+			makeExecutionLedgerRow({
+				id: 'exec-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				execution_state: 'processed',
+				processed_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2026-04-20T14:00:00.000Z'
+			})
+		]);
+
+		await currentHub.load();
+
+		expect(mockFetchEventReminderSettings).not.toHaveBeenCalled();
+		expect(mockProcessDueHubReminderExecutions).toHaveBeenCalledWith('org-1');
+		expect(mockFetchHubExecutionLedger).toHaveBeenCalledWith('org-1');
+		expect(currentHub.executionLedger.map((row) => row.id)).toEqual(['exec-reminder']);
+		expect(currentHub.activityFeed.map((item) => item.id)).toEqual([
+			'event_reminder:e1:120',
+			'event:e1'
+		]);
+		expect(currentHub.activityFeed[0]).toMatchObject({
+			kind: 'event_reminder',
+			sourceId: 'e1',
+			notificationKey: '120',
+			isRead: false
+		});
+		expect(currentHub.unreadActivityCount).toBe(1);
 	});
 
 	it('captures error and re-throws on failure', async () => {
@@ -504,6 +600,245 @@ describe('currentHub.load', () => {
 		expect(currentHub.activityFeed.map((item) => item.id)).toEqual(['event:e1']);
 		expect(currentHub.unreadActivityCount).toBe(0);
 	});
+
+	it('hydrates and syncs execution ledger rows for admin loads', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([
+			{ plugin_key: 'broadcasts', is_enabled: true },
+			{ plugin_key: 'events', is_enabled: true }
+		]);
+		mockFetchBroadcasts.mockResolvedValueOnce([
+			makeBroadcast({
+				id: 'b1',
+				publish_at: '2099-04-18T12:00:00.000Z',
+				delivery_state: 'scheduled'
+			})
+		]);
+		mockFetchEvents.mockResolvedValueOnce([
+			makeEvent({
+				id: 'e1',
+				publish_at: '2099-04-18T10:00:00.000Z',
+				starts_at: '2099-04-20T16:00:00.000Z',
+				delivery_state: 'scheduled'
+			})
+		]);
+		mockFetchEventReminderSettings.mockResolvedValueOnce([
+			makeReminderSettings({ event_id: 'e1', reminder_offsets: [120] })
+		]);
+		mockFetchEventResponses.mockResolvedValueOnce([]);
+		mockFetchResources.mockResolvedValueOnce([]);
+		mockFetchHubExecutionLedger.mockResolvedValueOnce([
+			makeExecutionLedgerRow({
+				id: 'existing-broadcast',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2099-04-18T12:00:00.000Z'
+			})
+		]);
+		mockUpsertHubExecutionLedgerEntries.mockResolvedValueOnce([
+			makeExecutionLedgerRow({
+				id: 'event-publish',
+				job_kind: 'event_publish',
+				source_id: 'e1',
+				execution_key: 'publish',
+				due_at: '2099-04-18T10:00:00.000Z'
+			}),
+			makeExecutionLedgerRow({
+				id: 'event-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2099-04-20T14:00:00.000Z'
+			})
+		]);
+
+		await currentHub.load();
+
+		expect(mockProcessDueHubReminderExecutions).toHaveBeenCalledWith('org-1');
+		expect(mockFetchHubExecutionLedger).toHaveBeenCalledWith('org-1');
+		expect(mockUpsertHubExecutionLedgerEntries).toHaveBeenCalledWith([
+			expect.objectContaining({
+				job_kind: 'event_publish',
+				source_id: 'e1',
+				execution_key: 'publish'
+			}),
+			expect.objectContaining({
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120'
+			})
+		]);
+		expect(currentHub.executionLedger.map((row) => row.id)).toEqual([
+			'event-publish',
+			'existing-broadcast',
+			'event-reminder'
+		]);
+		expect(currentHub.upcomingExecutionItems).toHaveLength(3);
+		expect(currentHub.dueExecutionCount).toBe(0);
+	});
+});
+
+describe('currentHub execution queue actions', () => {
+	it('retries a failed reminder row by re-running ledger reconciliation', async () => {
+		currentHub.events = [
+			makeEvent({
+				id: 'e1',
+				publish_at: '2026-04-18T10:00:00.000Z',
+				starts_at: '2026-04-20T16:00:00.000Z'
+			})
+		];
+		currentHub.eventReminderSettingsMap = {
+			e1: makeReminderSettings({ event_id: 'e1', reminder_offsets: [120] })
+		};
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'exec-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2026-04-20T14:00:00.000Z',
+				execution_state: 'failed',
+				last_failure_reason:
+					'Reminder window lands before event visibility. Adjust the publish time or reminder plan.'
+			})
+		];
+		mockUpsertHubExecutionLedgerEntries.mockResolvedValueOnce([
+			makeExecutionLedgerRow({
+				id: 'exec-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2026-04-20T14:00:00.000Z',
+				execution_state: 'pending',
+				last_failure_reason: null
+			})
+		]);
+
+		await currentHub.retryExecutionEntry('exec-reminder');
+
+		expect(mockUpsertHubExecutionLedgerEntries).toHaveBeenCalledWith([
+			expect.objectContaining({
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				execution_state: 'pending',
+				last_failure_reason: null
+			})
+		]);
+		expect(currentHub.executionLedger).toEqual([
+			makeExecutionLedgerRow({
+				id: 'exec-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2026-04-20T14:00:00.000Z',
+				execution_state: 'pending',
+				last_failure_reason: null
+			})
+		]);
+		expect(currentHub.executionTargetId).toBe('');
+	});
+
+	it('runs a scheduled broadcast immediately from the queue', async () => {
+		currentHub.broadcasts = [
+			makeBroadcast({
+				id: 'b1',
+				publish_at: '2099-04-15T16:30:00.000Z',
+				delivery_state: 'scheduled'
+			})
+		];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'exec-broadcast',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2099-04-15T16:30:00.000Z'
+			})
+		];
+		mockPublishBroadcastNow.mockResolvedValueOnce(
+			makeBroadcast({ id: 'b1', publish_at: null, delivery_state: null })
+		);
+
+		await currentHub.runExecutionEntryNow('exec-broadcast');
+
+		expect(mockPublishBroadcastNow).toHaveBeenCalledWith('b1');
+		expect(mockDeleteHubExecutionLedgerEntries).toHaveBeenCalledWith(['exec-broadcast']);
+		expect(currentHub.executionLedger).toHaveLength(1);
+		expect(currentHub.executionLedger[0]).toMatchObject({
+			job_kind: 'broadcast_publish',
+			source_id: 'b1',
+			execution_key: 'publish',
+			execution_state: 'processed',
+			last_failure_reason: null
+		});
+		expect(currentHub.executionLedger[0]?.processed_at).toBeTruthy();
+		expect(currentHub.executionTargetId).toBe('');
+	});
+
+	it('restores a skipped event before forcing it live from the queue', async () => {
+		currentHub.events = [
+			makeEvent({
+				id: 'e1',
+				publish_at: '2099-04-18T10:00:00.000Z',
+				starts_at: '2099-04-20T16:00:00.000Z',
+				canceled_at: '2026-04-14T09:00:00.000Z',
+				delivery_state: 'skipped'
+			})
+		];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'exec-event',
+				job_kind: 'event_publish',
+				source_id: 'e1',
+				execution_key: 'publish',
+				due_at: '2099-04-18T10:00:00.000Z',
+				execution_state: 'skipped',
+				last_failure_reason:
+					'Canceled before the scheduled visibility window. Restore the event if it still needs to go live.'
+			})
+		];
+		mockRestoreEvent.mockResolvedValueOnce(
+			makeEvent({
+				id: 'e1',
+				publish_at: '2099-04-18T10:00:00.000Z',
+				starts_at: '2099-04-20T16:00:00.000Z',
+				canceled_at: null,
+				delivery_state: 'scheduled'
+			})
+		);
+		mockUpdateEvent.mockResolvedValueOnce(
+			makeEvent({
+				id: 'e1',
+				publish_at: null,
+				starts_at: '2099-04-20T16:00:00.000Z',
+				canceled_at: null,
+				delivery_state: null
+			})
+		);
+
+		await currentHub.runExecutionEntryNow('exec-event');
+
+		expect(mockRestoreEvent).toHaveBeenCalledWith('e1');
+		expect(mockUpdateEvent).toHaveBeenCalledWith('e1', {
+			title: 'Meeting',
+			description: '',
+			starts_at: '2099-04-20T16:00:00.000Z',
+			ends_at: null,
+			location: '',
+			publish_at: null
+		});
+		expect(currentHub.executionLedger).toHaveLength(1);
+		expect(currentHub.executionLedger[0]).toMatchObject({
+			job_kind: 'event_publish',
+			source_id: 'e1',
+			execution_key: 'publish',
+			execution_state: 'processed',
+			last_failure_reason: null
+		});
+		expect(currentHub.executionLedger[0]?.processed_at).toBeTruthy();
+		expect(currentHub.executionTargetId).toBe('');
+	});
 });
 
 describe('currentHub notification preferences', () => {
@@ -535,10 +870,59 @@ describe('currentHub notification preferences', () => {
 			organizationId: 'org-1',
 			profileId: 'profile-1',
 			notificationKind: 'broadcast',
-			sourceId: 'b1'
+			sourceId: 'b1',
+			notificationKey: 'default'
 		});
 		expect(currentHub.notificationReadMap).toEqual({
 			'broadcast:b1': '2026-04-13T10:00:00.000Z'
+		});
+		expect(currentHub.unreadActivityCount).toBe(0);
+		expect(currentHub.notificationReadTargetId).toBe('');
+	});
+
+	it('marks a reminder alert as read without collapsing the base event notification', async () => {
+		currentHub.events = [makeEvent({ id: 'e1', title: 'Event' })];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'exec-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				execution_state: 'processed',
+				processed_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2026-04-20T14:00:00.000Z'
+			})
+		];
+		currentHub.notificationReadMap = {
+			'event:e1': '2026-04-13T10:00:00.000Z'
+		};
+		currentHub.loadedOrgId = 'org-1';
+		mockMarkHubNotificationRead.mockResolvedValueOnce(
+			makeNotificationReadRow({
+				notification_kind: 'event_reminder',
+				source_id: 'e1',
+				notification_key: '120'
+			})
+		);
+
+		const reminderNotification = currentHub.activityFeed.find(
+			(item) => item.id === 'event_reminder:e1:120'
+		);
+
+		expect(reminderNotification).toBeTruthy();
+
+		await currentHub.markActivityRead(reminderNotification!);
+
+		expect(mockMarkHubNotificationRead).toHaveBeenCalledWith({
+			organizationId: 'org-1',
+			profileId: 'profile-1',
+			notificationKind: 'event_reminder',
+			sourceId: 'e1',
+			notificationKey: '120'
+		});
+		expect(currentHub.notificationReadMap).toEqual({
+			'event:e1': '2026-04-13T10:00:00.000Z',
+			'event_reminder:e1:120': '2026-04-13T10:00:00.000Z'
 		});
 		expect(currentHub.unreadActivityCount).toBe(0);
 		expect(currentHub.notificationReadTargetId).toBe('');
@@ -648,11 +1032,35 @@ describe('currentHub.scheduleBroadcast', () => {
 		mockScheduleBroadcast.mockResolvedValueOnce(
 			makeBroadcast({ id: 'b1', is_draft: false, publish_at: '2099-04-15T16:30:00.000Z' })
 		);
+		mockUpdateBroadcastDeliveryState.mockResolvedValueOnce(
+			makeBroadcast({
+				id: 'b1',
+				is_draft: false,
+				publish_at: '2099-04-15T16:30:00.000Z',
+				delivery_state: 'scheduled'
+			})
+		);
+		mockUpsertHubExecutionLedgerEntries.mockResolvedValueOnce([
+			makeExecutionLedgerRow({
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2099-04-15T16:30:00.000Z'
+			})
+		]);
 
 		await currentHub.scheduleBroadcast('b1', '2099-04-15T16:30:00.000Z');
 
 		expect(currentHub.scheduledBroadcasts[0]?.id).toBe('b1');
 		expect(currentHub.draftBroadcasts).toEqual([]);
+		expect(currentHub.executionLedger).toEqual([
+			makeExecutionLedgerRow({
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2099-04-15T16:30:00.000Z'
+			})
+		]);
 		expect(currentHub.broadcastTargetId).toBe('');
 	});
 });
@@ -937,6 +1345,15 @@ describe('currentHub.restoreEvent', () => {
 describe('currentHub.removeEvent', () => {
 	it('removes an event from the list', async () => {
 		currentHub.events = [makeEvent({ id: 'e1', title: 'A', starts_at: '' })];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'event-publish',
+				job_kind: 'event_publish',
+				source_id: 'e1',
+				execution_key: 'publish',
+				due_at: '2099-04-18T10:00:00.000Z'
+			})
+		];
 		currentHub.eventResponseMap = {
 			e1: [
 				{
@@ -957,6 +1374,8 @@ describe('currentHub.removeEvent', () => {
 		expect(currentHub.events).toHaveLength(0);
 		expect(currentHub.getEventReminderOffsets('e1')).toEqual([]);
 		expect(currentHub.eventResponseMap).toEqual({});
+		expect(mockDeleteHubExecutionLedgerEntries).toHaveBeenCalledWith(['event-publish']);
+		expect(currentHub.executionLedger).toEqual([]);
 	});
 });
 
@@ -1110,6 +1529,7 @@ describe('currentHub.reset', () => {
 		currentHub.resources = [makeResource({ id: 'r1', title: 'Guide' })];
 		currentHub.eventResponseMap = { e1: [] };
 		currentHub.eventReminderSettingsMap = { e1: makeReminderSettings({ event_id: 'e1' }) };
+		currentHub.executionLedger = [makeExecutionLedgerRow()];
 		currentHub.notificationPreferences = { broadcast: false, event: true };
 		currentHub.notificationReadMap = { 'broadcast:b1': '2026-04-13T10:00:00.000Z' };
 		currentHub.broadcastTargetId = 'b1';
@@ -1133,6 +1553,7 @@ describe('currentHub.reset', () => {
 		expect(currentHub.resourceTargetId).toBe('');
 		expect(currentHub.eventResponseMap).toEqual({});
 		expect(currentHub.eventReminderSettingsMap).toEqual({});
+		expect(currentHub.executionLedger).toEqual([]);
 		expect(currentHub.eventResponseTargetId).toBe('');
 		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: true });
 		expect(currentHub.notificationReadMap).toEqual({});

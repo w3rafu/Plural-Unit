@@ -1,9 +1,18 @@
 import rawFixtures from './ui-visual-fixtures.json';
 
+import {
+	buildEventResponseMap,
+	getOwnEventResponseForProfile
+} from '$lib/models/eventResponseModel';
 import { buildHubNotifications } from '$lib/models/hubNotifications';
 import type { MessageThread } from '$lib/models/messageModel';
 import type { OrganizationMember } from '$lib/models/organizationModel';
-import type { BroadcastRow, EventRow } from '$lib/repositories/hubRepository';
+import type {
+	BroadcastRow,
+	EventResponseRow,
+	EventRow,
+	EventResponseStatus
+} from '$lib/repositories/hubRepository';
 
 export type UiPreviewFixtures = {
 	organizationName: string;
@@ -16,6 +25,66 @@ export type UiPreviewFixtures = {
 };
 
 export const uiPreviewFixtures = rawFixtures as UiPreviewFixtures;
+
+export const uiPreviewEventResponses: EventResponseRow[] = [
+	{
+		id: 'response-event-1-ariana',
+		event_id: 'event-1',
+		organization_id: uiPreviewFixtures.organizationId,
+		profile_id: uiPreviewFixtures.currentUserProfileId,
+		response: 'going',
+		created_at: '2026-04-11T18:00:00.000Z',
+		updated_at: '2026-04-11T18:00:00.000Z'
+	},
+	{
+		id: 'response-event-1-elena',
+		event_id: 'event-1',
+		organization_id: uiPreviewFixtures.organizationId,
+		profile_id: 'profile-elena-rossi',
+		response: 'going',
+		created_at: '2026-04-11T18:10:00.000Z',
+		updated_at: '2026-04-11T18:10:00.000Z'
+	},
+	{
+		id: 'response-event-2-malik',
+		event_id: 'event-2',
+		organization_id: uiPreviewFixtures.organizationId,
+		profile_id: 'profile-malik-johnson',
+		response: 'going',
+		created_at: '2026-04-13T13:15:00.000Z',
+		updated_at: '2026-04-13T13:15:00.000Z'
+	},
+	{
+		id: 'response-event-3-ariana',
+		event_id: 'event-3',
+		organization_id: uiPreviewFixtures.organizationId,
+		profile_id: uiPreviewFixtures.currentUserProfileId,
+		response: 'maybe',
+		created_at: '2026-04-12T09:30:00.000Z',
+		updated_at: '2026-04-12T09:30:00.000Z'
+	},
+	{
+		id: 'response-event-3-lucia',
+		event_id: 'event-3',
+		organization_id: uiPreviewFixtures.organizationId,
+		profile_id: 'profile-lucia-costa',
+		response: 'going',
+		created_at: '2026-04-12T10:00:00.000Z',
+		updated_at: '2026-04-12T10:00:00.000Z'
+	}
+];
+
+export const uiPreviewEventResponseMap = buildEventResponseMap(uiPreviewEventResponses);
+
+export const uiPreviewOwnEventResponses = Object.fromEntries(
+	uiPreviewFixtures.events.map((event) => [
+		event.id,
+		getOwnEventResponseForProfile(
+			uiPreviewEventResponseMap[event.id] ?? [],
+			uiPreviewFixtures.currentUserProfileId
+		)
+	])
+) as Record<string, EventResponseStatus | null>;
 
 export function cloneUiPreviewThreads() {
 	return uiPreviewFixtures.threads.map((thread) => ({

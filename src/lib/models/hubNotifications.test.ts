@@ -66,6 +66,32 @@ function makeEvent(overrides: Partial<{
 	};
 }
 
+function makeReminderExecutionRow(overrides: Partial<{
+	id: string;
+	organization_id: string;
+	source_id: string;
+	execution_key: string;
+	due_at: string;
+	processed_at: string | null;
+	execution_state: 'pending' | 'processed' | 'failed' | 'skipped';
+}> = {}) {
+	return {
+		id: overrides.id ?? 'exec-1',
+		organization_id: overrides.organization_id ?? 'org1',
+		job_kind: 'event_reminder' as const,
+		source_id: overrides.source_id ?? 'e1',
+		execution_key: overrides.execution_key ?? '120',
+		due_at: overrides.due_at ?? '2026-04-20T14:30:00.000Z',
+		execution_state: overrides.execution_state ?? 'processed',
+		processed_at: overrides.processed_at ?? '2026-04-20T14:30:00.000Z',
+		last_attempted_at: overrides.processed_at ?? '2026-04-20T14:30:00.000Z',
+		attempt_count: 1,
+		last_failure_reason: null,
+		created_at: '2026-04-14T08:00:00.000Z',
+		updated_at: '2026-04-20T14:30:00.000Z'
+	};
+}
+
 describe('buildHubNotifications', () => {
 	it('merges broadcasts and events newest first', () => {
 		const notifications = buildHubNotifications({
@@ -343,6 +369,7 @@ describe('buildHubNotifications', () => {
 			{
 				notification_kind: 'broadcast',
 				source_id: 'b1',
+				notification_key: 'default',
 				read_at: '2026-04-13T10:00:00.000Z'
 			}
 		]);
@@ -362,5 +389,64 @@ describe('buildHubNotifications', () => {
 			readAt: null
 		});
 		expect(countUnreadHubNotifications(notifications)).toBe(1);
+	});
+
+	it('builds reminder alerts from processed reminder executions with distinct identity keys', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [],
+			events: [makeEvent({ id: 'e1', title: 'Volunteer night', location: 'Room A' })],
+			reminderExecutions: [makeReminderExecutionRow({ source_id: 'e1', execution_key: '120' })]
+		});
+
+		expect(notifications.map((item) => item.id)).toEqual(['event_reminder:e1:120', 'event:e1']);
+		expect(notifications[0]).toMatchObject({
+			kind: 'event_reminder',
+			notificationKey: '120',
+			label: 'Reminder'
+		});
+		expect(notifications[0]?.summary).toContain('Reminder sent 2 hours before.');
+	});
+
+	it('counts reminder alerts under the event filter', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [makeBroadcast({ id: 'b1' })],
+			events: [makeEvent({ id: 'e1' })],
+			reminderExecutions: [makeReminderExecutionRow({ source_id: 'e1', execution_key: '30' })]
+		});
+
+		expect(countHubNotifications(notifications)).toEqual({
+			all: 3,
+			broadcast: 1,
+			event: 2
+		});
+		expect(filterHubNotifications(notifications, 'event').map((item) => item.id)).toEqual([
+			'event_reminder:e1:30',
+			'event:e1'
+		]);
+	});
+
+	it('tracks reminder read state by notification key instead of colliding with the base event alert', () => {
+		const notifications = buildHubNotifications({
+			broadcasts: [],
+			events: [makeEvent({ id: 'e1' })],
+			reminderExecutions: [makeReminderExecutionRow({ source_id: 'e1', execution_key: '120' })],
+			readMap: buildHubNotificationReadMap([
+				{
+					notification_kind: 'event_reminder',
+					source_id: 'e1',
+					notification_key: '120',
+					read_at: '2026-04-20T14:35:00.000Z'
+				}
+			])
+		});
+
+		expect(notifications.find((item) => item.id === 'event_reminder:e1:120')).toMatchObject({
+			isRead: true,
+			readAt: '2026-04-20T14:35:00.000Z'
+		});
+		expect(notifications.find((item) => item.id === 'event:e1')).toMatchObject({
+			isRead: false,
+			readAt: null
+		});
 	});
 });

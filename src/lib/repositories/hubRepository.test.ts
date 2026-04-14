@@ -54,6 +54,10 @@ import {
 	archiveEvent,
 	restoreEvent,
 	deleteEvent,
+	fetchHubExecutionLedger,
+	processDueHubReminderExecutions,
+	upsertHubExecutionLedgerEntries,
+	deleteHubExecutionLedgerEntries,
 	fetchHubNotificationPreferences,
 	saveHubNotificationPreferences,
 	fetchHubNotificationReads,
@@ -683,6 +687,214 @@ describe('deleteEvent', () => {
 	});
 });
 
+// ── Execution ledger ──
+
+describe('fetchHubExecutionLedger', () => {
+	it('queries execution ledger rows for an organization', async () => {
+		const rows = [
+			{
+				id: 'exec-1',
+				organization_id: 'org-1',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2026-04-18T12:00:00.000Z',
+				execution_state: 'pending',
+				processed_at: null,
+				last_attempted_at: null,
+				attempt_count: 0,
+				last_failure_reason: null,
+				created_at: '2026-04-14T08:00:00.000Z',
+				updated_at: '2026-04-14T08:00:00.000Z'
+			}
+		];
+		mockOrder.mockResolvedValueOnce({ data: rows, error: null });
+
+		const result = await fetchHubExecutionLedger('org-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_execution_ledger');
+		expect(result).toEqual(rows);
+	});
+
+	it('throws on execution ledger query error', async () => {
+		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'ledger fail' } });
+
+		await expect(fetchHubExecutionLedger('org-1')).rejects.toThrow('ledger fail');
+	});
+});
+
+describe('upsertHubExecutionLedgerEntries', () => {
+	it('upserts ledger rows and returns the saved results', async () => {
+		const firstRow = {
+			id: 'exec-1',
+			organization_id: 'org-1',
+			job_kind: 'broadcast_publish',
+			source_id: 'b1',
+			execution_key: 'publish',
+			due_at: '2026-04-18T12:00:00.000Z',
+			execution_state: 'pending',
+			processed_at: null,
+			last_attempted_at: null,
+			attempt_count: 0,
+			last_failure_reason: null,
+			created_at: '2026-04-14T08:00:00.000Z',
+			updated_at: '2026-04-14T08:00:00.000Z'
+		};
+		const secondRow = {
+			id: 'exec-2',
+			organization_id: 'org-1',
+			job_kind: 'event_reminder',
+			source_id: 'e1',
+			execution_key: '120',
+			due_at: '2026-04-20T14:00:00.000Z',
+			execution_state: 'pending',
+			processed_at: null,
+			last_attempted_at: null,
+			attempt_count: 0,
+			last_failure_reason: null,
+			created_at: '2026-04-14T08:00:00.000Z',
+			updated_at: '2026-04-14T08:00:00.000Z'
+		};
+		mockSingle
+			.mockResolvedValueOnce({ data: firstRow, error: null })
+			.mockResolvedValueOnce({ data: secondRow, error: null });
+
+		const result = await upsertHubExecutionLedgerEntries([
+			{
+				organization_id: 'org-1',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2026-04-18T12:00:00.000Z',
+				execution_state: 'pending',
+				processed_at: null,
+				last_attempted_at: null,
+				attempt_count: 0,
+				last_failure_reason: null
+			},
+			{
+				organization_id: 'org-1',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2026-04-20T14:00:00.000Z',
+				execution_state: 'pending',
+				processed_at: null,
+				last_attempted_at: null,
+				attempt_count: 0,
+				last_failure_reason: null
+			}
+		]);
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_execution_ledger');
+		expect(mockUpsert).toHaveBeenNthCalledWith(
+			1,
+			{
+				organization_id: 'org-1',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2026-04-18T12:00:00.000Z',
+				execution_state: 'pending',
+				processed_at: null,
+				last_attempted_at: null,
+				attempt_count: 0,
+				last_failure_reason: null
+			},
+			{ onConflict: 'job_kind,source_id,execution_key' }
+		);
+		expect(result).toEqual([firstRow, secondRow]);
+	});
+
+	it('returns empty output for an empty upsert batch', async () => {
+		await expect(upsertHubExecutionLedgerEntries([])).resolves.toEqual([]);
+		expect(mockFrom).not.toHaveBeenCalledWith('hub_execution_ledger');
+	});
+
+	it('throws on execution ledger upsert error', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'ledger upsert fail' } });
+
+		await expect(
+			upsertHubExecutionLedgerEntries([
+				{
+					organization_id: 'org-1',
+					job_kind: 'broadcast_publish',
+					source_id: 'b1',
+					execution_key: 'publish',
+					due_at: '2026-04-18T12:00:00.000Z',
+					execution_state: 'pending',
+					processed_at: null,
+					last_attempted_at: null,
+					attempt_count: 0,
+					last_failure_reason: null
+				}
+			])
+		).rejects.toThrow('ledger upsert fail');
+	});
+});
+
+describe('deleteHubExecutionLedgerEntries', () => {
+	it('deletes stale ledger rows by id', async () => {
+		mockEq.mockResolvedValueOnce({ error: null });
+		mockEq.mockResolvedValueOnce({ error: null });
+
+		await deleteHubExecutionLedgerEntries(['exec-1', 'exec-2']);
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_execution_ledger');
+		expect(mockEq).toHaveBeenNthCalledWith(1, 'id', 'exec-1');
+		expect(mockEq).toHaveBeenNthCalledWith(2, 'id', 'exec-2');
+	});
+
+	it('does nothing for an empty delete batch', async () => {
+		await expect(deleteHubExecutionLedgerEntries([])).resolves.toBeUndefined();
+		expect(mockFrom).not.toHaveBeenCalledWith('hub_execution_ledger');
+	});
+
+	it('throws on stale ledger delete error', async () => {
+		mockEq.mockResolvedValueOnce({ error: { message: 'ledger delete fail' } });
+
+		await expect(deleteHubExecutionLedgerEntries(['exec-1'])).rejects.toThrow(
+			'ledger delete fail'
+		);
+	});
+});
+
+describe('processDueHubReminderExecutions', () => {
+	it('processes due reminder rows through the rpc helper', async () => {
+		const rows = [
+			{
+				id: 'exec-1',
+				organization_id: 'org-1',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2026-04-20T14:00:00.000Z',
+				execution_state: 'processed',
+				processed_at: '2026-04-20T14:00:00.000Z',
+				last_attempted_at: '2026-04-20T14:00:00.000Z',
+				attempt_count: 1,
+				last_failure_reason: null,
+				created_at: '2026-04-14T08:00:00.000Z',
+				updated_at: '2026-04-20T14:00:00.000Z'
+			}
+		];
+		mockRpc.mockResolvedValueOnce({ data: rows, error: null });
+
+		const result = await processDueHubReminderExecutions('org-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('process_hub_due_reminder_executions', {
+			target_organization_id: 'org-1'
+		});
+		expect(result).toEqual(rows);
+	});
+
+	it('throws on reminder processing rpc errors', async () => {
+		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'reminder rpc fail' } });
+
+		await expect(processDueHubReminderExecutions('org-1')).rejects.toThrow('reminder rpc fail');
+	});
+});
+
 // ── Notifications ──
 
 describe('fetchHubNotificationPreferences', () => {
@@ -771,6 +983,7 @@ describe('fetchHubNotificationReads', () => {
 				profile_id: 'profile-1',
 				notification_kind: 'broadcast',
 				source_id: 'b1',
+				notification_key: 'default',
 				read_at: '2026-04-13T10:00:00.000Z',
 				created_at: '2026-04-13T10:00:00.000Z',
 				updated_at: '2026-04-13T10:00:00.000Z'
@@ -799,6 +1012,7 @@ describe('markHubNotificationRead', () => {
 			profile_id: 'profile-1',
 			notification_kind: 'event',
 			source_id: 'e1',
+			notification_key: 'default',
 			read_at: '2026-04-13T10:05:00.000Z',
 			created_at: '2026-04-13T10:05:00.000Z',
 			updated_at: '2026-04-13T10:05:00.000Z'
@@ -820,12 +1034,48 @@ describe('markHubNotificationRead', () => {
 				profile_id: 'profile-1',
 				notification_kind: 'event',
 				source_id: 'e1',
+					notification_key: 'default',
 				read_at: '2026-04-13T10:05:00.000Z'
 			},
-			{ onConflict: 'organization_id,profile_id,notification_kind,source_id' }
+				{ onConflict: 'organization_id,profile_id,notification_kind,source_id,notification_key' }
 		);
 		expect(result).toEqual(row);
 	});
+
+		it('uses a reminder notification key when marking reminder alerts read', async () => {
+			const row = {
+				id: 'read-2',
+				organization_id: 'org-1',
+				profile_id: 'profile-1',
+				notification_kind: 'event_reminder',
+				source_id: 'e1',
+				notification_key: '120',
+				read_at: '2026-04-13T10:10:00.000Z',
+				created_at: '2026-04-13T10:10:00.000Z',
+				updated_at: '2026-04-13T10:10:00.000Z'
+			};
+			mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+			await markHubNotificationRead({
+				organizationId: 'org-1',
+				profileId: 'profile-1',
+				notificationKind: 'event_reminder',
+				sourceId: 'e1',
+				notificationKey: '120'
+			});
+
+			expect(mockUpsert).toHaveBeenCalledWith(
+				{
+					organization_id: 'org-1',
+					profile_id: 'profile-1',
+					notification_kind: 'event_reminder',
+					source_id: 'e1',
+					notification_key: '120',
+					read_at: expect.any(String)
+				},
+				{ onConflict: 'organization_id,profile_id,notification_kind,source_id,notification_key' }
+			);
+		});
 
 	it('throws on read-state save error', async () => {
 		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'mark read fail' } });

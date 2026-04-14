@@ -2,6 +2,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import BroadcastEditor from '$lib/components/hub/admin/BroadcastEditor.svelte';
 	import EventEditor from '$lib/components/hub/admin/EventEditor.svelte';
+	import HubExecutionQueueCard from '$lib/components/hub/admin/HubExecutionQueueCard.svelte';
 	import ResourceEditor from '$lib/components/hub/admin/ResourceEditor.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 </script>
@@ -14,23 +15,31 @@
 		</Card.Header>
 	</Card.Root>
 {:else}
-	<div class="card-grid">
-		{#if currentHub.plugins.broadcasts}
-			<section id="manage-broadcasts" aria-label="Broadcast editor" class="scroll-mt-24">
-				<BroadcastEditor />
+	<div class="space-y-6">
+		{#if currentHub.plugins.broadcasts || currentHub.plugins.events}
+			<section id="manage-operations" aria-label="Operations queue" class="scroll-mt-24">
+				<HubExecutionQueueCard />
 			</section>
 		{/if}
 
-		{#if currentHub.plugins.events}
-			<section id="manage-events" aria-label="Event editor" class="scroll-mt-24">
-				<EventEditor />
-			</section>
-		{/if}
+		<div class="card-grid">
+			{#if currentHub.plugins.broadcasts}
+				<section id="manage-broadcasts" aria-label="Broadcast editor" class="scroll-mt-24">
+					<BroadcastEditor />
+				</section>
+			{/if}
 
-		{#if currentHub.plugins.resources}
-			<section id="manage-resources" aria-label="Resource editor" class="scroll-mt-24">
-				<ResourceEditor />
-			</section>
-		{/if}
+			{#if currentHub.plugins.events}
+				<section id="manage-events" aria-label="Event editor" class="scroll-mt-24">
+					<EventEditor />
+				</section>
+			{/if}
+
+			{#if currentHub.plugins.resources}
+				<section id="manage-resources" aria-label="Resource editor" class="scroll-mt-24">
+					<ResourceEditor />
+				</section>
+			{/if}
+		</div>
 	</div>
 {/if}

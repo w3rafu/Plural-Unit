@@ -13,16 +13,30 @@ const destinations: HubActivityDestinations = {
 	manageEventsHref: '/hub/manage/content#manage-events'
 };
 
-function makeNotification(kind: 'broadcast' | 'event', sourceId: string) {
+function makeNotification(
+	kind: 'broadcast' | 'event' | 'event_reminder',
+	sourceId: string,
+	notificationKey = 'default'
+) {
+	const id =
+		notificationKey === 'default'
+			? `${kind}:${sourceId}`
+			: `${kind}:${sourceId}:${notificationKey}`;
+	const label =
+		kind === 'broadcast' ? 'Broadcast' : kind === 'event_reminder' ? 'Reminder' : 'Event';
+	const title =
+		kind === 'broadcast' ? 'Broadcast' : kind === 'event_reminder' ? 'Reminder' : 'Event';
+
 	return {
-		id: `${kind}:${sourceId}`,
+		id,
 		kind,
 		sourceId,
-		title: kind === 'broadcast' ? 'Broadcast' : 'Event',
+		notificationKey,
+		title,
 		summary: 'Summary',
 		meta: 'Meta',
 		occurredAt: '2026-04-11T10:00:00.000Z',
-		label: kind === 'broadcast' ? 'Broadcast' : 'Event',
+		label,
 		isRead: false,
 		readAt: null
 	} as const;
@@ -44,6 +58,14 @@ describe('hubActivityModel', () => {
 			label: 'Open events',
 			href: '#hub-events',
 			description: 'Jump to the upcoming events below.'
+		});
+
+		expect(
+			getHubActivityPrimaryAction(makeNotification('event_reminder', 'e1', '120'), destinations)
+		).toEqual({
+			label: 'Open event details',
+			href: '#hub-events',
+			description: 'Jump to the upcoming events below and review the reminder target.'
 		});
 	});
 

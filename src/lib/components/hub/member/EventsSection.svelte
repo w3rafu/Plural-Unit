@@ -20,6 +20,12 @@
 		formatEventAttendanceSummary,
 		formatEventResponseTotal
 	} from '$lib/models/eventResponseModel';
+	import {
+		buildMemberCommitments,
+		buildMemberCommitmentLookup,
+		type MemberCommitmentResponseLookup
+	} from '$lib/models/memberCommitmentModel';
+	import type { HubNotificationItem } from '$lib/models/hubNotifications';
 	import type { EventResponseStatus, EventRow } from '$lib/repositories/hubRepository';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -31,7 +37,9 @@
 		events = undefined as EventRow[] | undefined,
 		sectionId = undefined as string | undefined,
 		showResponses = undefined as boolean | undefined,
-		organizationName = undefined as string | undefined
+		organizationName = undefined as string | undefined,
+		ownResponses = undefined as MemberCommitmentResponseLookup | undefined,
+		notifications = undefined as HubNotificationItem[] | undefined
 	} = $props();
 
 	const items = $derived.by(() => (events ? sortLiveEvents(events) : currentHub.liveEvents));
@@ -39,6 +47,41 @@
 	const resolvedOrganizationName = $derived(
 		organizationName ?? currentOrganization.organization?.name ?? undefined
 	);
+	const resolvedOwnResponses = $derived.by(() => {
+		if (ownResponses) {
+			return ownResponses;
+		}
+
+		if (events !== undefined) {
+			return {};
+		}
+
+		return Object.fromEntries(items.map((event) => [event.id, currentHub.getOwnEventResponse(event.id)]));
+	});
+	const resolvedNotifications = $derived.by(() => {
+		if (notifications) {
+			return notifications;
+		}
+
+		return events === undefined ? currentHub.allActivityFeed : [];
+	});
+	const commitmentLookup = $derived(
+		buildMemberCommitmentLookup(
+			buildMemberCommitments({
+				events: items,
+				ownResponses: resolvedOwnResponses,
+				notifications: resolvedNotifications
+			}).all
+		)
+	);
+
+	function getStatusVariant(status: 'reply_needed' | 'going' | 'maybe') {
+		if (status === 'reply_needed') {
+			return 'destructive';
+		}
+
+		return status === 'going' ? 'secondary' : 'outline';
+	}
 
 	async function respondToEvent(eventId: string, response: EventResponseStatus) {
 		try {
@@ -107,14 +150,23 @@
 				{@const ownResponse = currentHub.getOwnEventResponse(event.id)}
 				{@const isSavingResponse = currentHub.eventResponseTargetId === event.id}
 				{@const locationLabel = getEventLocationLabel(event.location)}
+				{@const commitment = commitmentLookup[event.id]}
 				{@const googleCalendarHref = buildGoogleCalendarHref(event, { organizationName: resolvedOrganizationName })}
 				{@const calendarDownloadHref = buildEventCalendarDataUrl(event, { organizationName: resolvedOrganizationName })}
 				<Card.Root size="sm" class="border-border/70 bg-card">
 					<Card.Content class="space-y-2.5">
 						<div class="flex flex-wrap items-center justify-between gap-2">
-							<Badge variant="outline" class="rounded-xl px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-								Upcoming event
-							</Badge>
+							<div class="flex flex-wrap items-center gap-2">
+								<Badge variant="outline" class="rounded-xl px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+									Upcoming event
+								</Badge>
+								{#if commitment}
+									<Badge variant={getStatusVariant(commitment.status)}>{commitment.statusLabel}</Badge>
+									{#if commitment.isStartingSoon}
+										<Badge variant="outline">Starts soon</Badge>
+									{/if}
+								{/if}
+							</div>
 							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
 								{formatEventDateTime(event.starts_at)}
 							</p>
@@ -138,6 +190,13 @@
 						</div>
 
 						<div class="space-y-2 border-t border-border/70 pt-2.5">
+							{#if commitment}
+								<p class="text-xs text-muted-foreground">{commitment.statusCopy}</p>
+								{#if commitment.reminderCopy}
+									<p class="text-xs text-muted-foreground">{commitment.reminderCopy}</p>
+								{/if}
+							{/if}
+
 							{#if resolvedShowResponses}
 								<div class="flex flex-wrap gap-1.5">
 									{#each EVENT_RESPONSE_OPTIONS as option (option.value)}

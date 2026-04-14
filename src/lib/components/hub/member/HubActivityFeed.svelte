@@ -7,10 +7,10 @@
 		getHubActivityPrimaryAction,
 		getHubActivitySecondaryAction
 	} from '$lib/components/hub/member/hubActivityModel';
-		import {
-			hasEnabledHubNotificationPreferences,
-			type HubNotificationItem
-		} from '$lib/models/hubNotifications';
+	import {
+		hasEnabledHubNotificationPreferences,
+		type HubNotificationItem
+	} from '$lib/models/hubNotifications';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
@@ -37,7 +37,7 @@
 	const hiddenItemCount = $derived(items ? 0 : Math.max(0, allItems.length - totalItems.length));
 	const featuredItem = $derived(totalItems[0] ?? null);
 	const broadcastCount = $derived(totalItems.filter((item) => item.kind === 'broadcast').length);
-	const eventCount = $derived(totalItems.filter((item) => item.kind === 'event').length);
+	const eventCount = $derived(totalItems.filter((item) => item.kind !== 'broadcast').length);
 	const remainingItems = $derived(totalItems.slice(1));
 	const hasMore = $derived(remainingItems.length > MAX_VISIBLE_ACTIVITY_ITEMS);
 	const activityItems = $derived(
@@ -73,7 +73,7 @@
 			return 'All in-app hub alerts are turned off in your notification settings.';
 		}
 
-		return 'When a broadcast goes live or an event is published, it will appear here first.';
+		return 'When a broadcast goes live, an event is published, or a reminder is sent, it will appear here first.';
 	}
 </script>
 
@@ -83,7 +83,7 @@
 			<div class="space-y-1">
 				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
 				<Card.Description>
-					The latest broadcasts and event updates from {resolvedOrganizationName}.
+					The latest broadcasts, event launches, and reminders from {resolvedOrganizationName}.
 				</Card.Description>
 			</div>
 
@@ -92,7 +92,7 @@
 					{broadcastCount} broadcasts
 				</Badge>
 				<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-					{eventCount} events
+					{eventCount} event alerts
 				</Badge>
 			</div>
 		</div>

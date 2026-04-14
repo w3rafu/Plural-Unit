@@ -459,15 +459,106 @@ export async function deleteEvent(id: string) {
 	if (error) throwRepositoryError(error, 'Could not delete the event.');
 }
 
+// ── Execution ledger ──
+
+const HUB_EXECUTION_LEDGER_SELECT =
+	'id, organization_id, job_kind, source_id, execution_key, due_at, execution_state, processed_at, last_attempted_at, attempt_count, last_failure_reason, created_at, updated_at';
+
+export type HubExecutionJobKind = 'broadcast_publish' | 'event_publish' | 'event_reminder';
+
+export type HubExecutionState = 'pending' | 'processed' | 'failed' | 'skipped';
+
+export type HubExecutionLedgerRow = {
+	id: string;
+	organization_id: string;
+	job_kind: HubExecutionJobKind;
+	source_id: string;
+	execution_key: string;
+	due_at: string;
+	execution_state: HubExecutionState;
+	processed_at: string | null;
+	last_attempted_at: string | null;
+	attempt_count: number;
+	last_failure_reason: string | null;
+	created_at: string;
+	updated_at: string;
+};
+
+export type HubExecutionLedgerMutationPayload = {
+	organization_id: string;
+	job_kind: HubExecutionJobKind;
+	source_id: string;
+	execution_key: string;
+	due_at: string;
+	execution_state: HubExecutionState;
+	processed_at: string | null;
+	last_attempted_at: string | null;
+	attempt_count: number;
+	last_failure_reason: string | null;
+};
+
+export async function fetchHubExecutionLedger(
+	organizationId: string
+): Promise<HubExecutionLedgerRow[]> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_execution_ledger')
+		.select(HUB_EXECUTION_LEDGER_SELECT)
+		.eq('organization_id', organizationId)
+		.order('due_at', { ascending: true });
+
+	if (error) throwRepositoryError(error, 'Could not load the execution ledger.');
+	return (data ?? []) as HubExecutionLedgerRow[];
+}
+
+export async function upsertHubExecutionLedgerEntries(
+	entries: HubExecutionLedgerMutationPayload[]
+): Promise<HubExecutionLedgerRow[]> {
+	if (entries.length === 0) {
+		return [];
+	}
+
+	const rows = await Promise.all(
+		entries.map(async (entry) => {
+			const { data, error } = await getSupabaseClient()
+				.from('hub_execution_ledger')
+				.upsert(entry, { onConflict: 'job_kind,source_id,execution_key' })
+				.select(HUB_EXECUTION_LEDGER_SELECT)
+				.single();
+
+			if (error) throwRepositoryError(error, 'Could not sync the execution ledger.');
+			return data as HubExecutionLedgerRow;
+		})
+	);
+
+	return rows;
+}
+
+export async function deleteHubExecutionLedgerEntries(entryIds: string[]) {
+	if (entryIds.length === 0) {
+		return;
+	}
+
+	await Promise.all(
+		entryIds.map(async (entryId) => {
+			const { error } = await getSupabaseClient()
+				.from('hub_execution_ledger')
+				.delete()
+				.eq('id', entryId);
+
+			if (error) throwRepositoryError(error, 'Could not prune stale execution ledger entries.');
+		})
+	);
+}
+
 // ── Notifications ──
 
 const HUB_NOTIFICATION_PREFERENCE_SELECT =
 	'id, organization_id, profile_id, broadcast_enabled, event_enabled, created_at, updated_at';
 
 const HUB_NOTIFICATION_READ_SELECT =
-	'id, organization_id, profile_id, notification_kind, source_id, read_at, created_at, updated_at';
+	'id, organization_id, profile_id, notification_kind, source_id, notification_key, read_at, created_at, updated_at';
 
-export type HubNotificationKind = 'broadcast' | 'event';
+export type HubNotificationKind = 'broadcast' | 'event' | 'event_reminder';
 
 export type HubNotificationPreferenceRow = {
 	id: string;
@@ -490,10 +581,22 @@ export type HubNotificationReadRow = {
 	profile_id: string;
 	notification_kind: HubNotificationKind;
 	source_id: string;
+	notification_key: string;
 	read_at: string;
 	created_at: string;
 	updated_at: string;
 };
+
+export async function processDueHubReminderExecutions(
+	organizationId: string
+): Promise<HubExecutionLedgerRow[]> {
+	const { data, error } = await getSupabaseClient().rpc('process_hub_due_reminder_executions', {
+		target_organization_id: organizationId
+	});
+
+	if (error) throwRepositoryError(error, 'Could not process due reminder alerts.');
+	return (data ?? []) as HubExecutionLedgerRow[];
+}
 
 export async function fetchHubNotificationPreferences(
 	organizationId: string,
@@ -552,6 +655,7 @@ export async function markHubNotificationRead(payload: {
 	profileId: string;
 	notificationKind: HubNotificationKind;
 	sourceId: string;
+	notificationKey?: string;
 	readAt?: string;
 }): Promise<HubNotificationReadRow> {
 	const { data, error } = await getSupabaseClient()
@@ -562,9 +666,10 @@ export async function markHubNotificationRead(payload: {
 				profile_id: payload.profileId,
 				notification_kind: payload.notificationKind,
 				source_id: payload.sourceId,
+				notification_key: payload.notificationKey ?? 'default',
 				read_at: payload.readAt ?? new Date().toISOString()
 			},
-			{ onConflict: 'organization_id,profile_id,notification_kind,source_id' }
+			{ onConflict: 'organization_id,profile_id,notification_kind,source_id,notification_key' }
 		)
 		.select(HUB_NOTIFICATION_READ_SELECT)
 		.single();

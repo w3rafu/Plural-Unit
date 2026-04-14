@@ -27,9 +27,12 @@ export function getHubActivityPrimaryAction(
 	}
 
 	return {
-		label: 'Open events',
+		label: item.kind === 'event_reminder' ? 'Open event details' : 'Open events',
 		href: destinations.eventHref,
-		description: 'Jump to the upcoming events below.'
+		description:
+			item.kind === 'event_reminder'
+				? 'Jump to the upcoming events below and review the reminder target.'
+				: 'Jump to the upcoming events below.'
 	};
 }
 

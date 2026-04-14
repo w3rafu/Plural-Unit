@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onDestroy } from 'svelte';
+	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -38,7 +38,6 @@
 	import type { EventRow } from '$lib/repositories/hubRepository';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
-	import { unsavedChanges } from '$lib/stores/unsavedChanges.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
@@ -94,14 +93,6 @@
 			: `Selected: ${normalizedSelectedReminderOffsets.map((offset) => formatEventReminderOffset(offset)).join(' · ')}.`
 	);
 	const isEventDirty = $derived(currentEventSnapshot !== initialEventSnapshot);
-
-	$effect(() => {
-		unsavedChanges.set(UNSAVED_CHANGES_KEY, isEditing ? 'event edits' : 'event draft', isEventDirty);
-	});
-
-	onDestroy(() => {
-		unsavedChanges.clear(UNSAVED_CHANGES_KEY);
-	});
 
 	function resetForm() {
 		editingId = null;
@@ -355,6 +346,11 @@
 	<Card.Content class="space-y-6">
 		<form
 			class="space-y-5"
+			use:syncUnsavedChanges={{
+				key: UNSAVED_CHANGES_KEY,
+				label: isEditing ? 'event edits' : 'event draft',
+				isDirty: isEventDirty
+			}}
 			onsubmit={(e) => {
 				e.preventDefault();
 				submit();

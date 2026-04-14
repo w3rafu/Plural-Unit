@@ -3,13 +3,34 @@
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
 	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
+	import MemberCommitmentsCard from '$lib/components/hub/member/MemberCommitmentsCard.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
+	import type { EventResponseStatus } from '$lib/repositories/hubRepository';
 	import {
 		uiPreviewFixtures,
 		uiPreviewMemberCount,
 		uiPreviewNotifications,
+		uiPreviewOwnEventResponses,
 		uiPreviewUnreadMessageCount
 	} from '$lib/demo/uiPreviewFixtures';
+
+	let previewResponses = $state<Record<string, EventResponseStatus | null>>({
+		...uiPreviewOwnEventResponses
+	});
+	let previewResponseTargetId = $state('');
+
+	async function handlePreviewResponse(eventId: string, response: EventResponseStatus) {
+		previewResponseTargetId = eventId;
+
+		try {
+			previewResponses = {
+				...previewResponses,
+				[eventId]: response
+			};
+		} finally {
+			previewResponseTargetId = '';
+		}
+	}
 </script>
 
 <PageHeader
@@ -47,6 +68,15 @@
 		</Card.Content>
 	</Card.Root>
 
+	<MemberCommitmentsCard
+		events={uiPreviewFixtures.events}
+		ownResponses={previewResponses}
+		notifications={uiPreviewNotifications}
+		responseTargetId={previewResponseTargetId}
+		onRespond={handlePreviewResponse}
+		eventHref="#demo-hub-events"
+	/>
+
 	<HubActivityFeed
 		items={uiPreviewNotifications}
 		organizationName={uiPreviewFixtures.organizationName}
@@ -59,6 +89,8 @@
 		<BroadcastsSection broadcasts={uiPreviewFixtures.broadcasts} sectionId="demo-hub-broadcasts" />
 		<EventsSection
 			events={uiPreviewFixtures.events}
+			ownResponses={previewResponses}
+			notifications={uiPreviewNotifications}
 			sectionId="demo-hub-events"
 			organizationName={uiPreviewFixtures.organizationName}
 		/>

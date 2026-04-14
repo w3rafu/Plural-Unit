@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { buildHubNotifications } from '$lib/models/hubNotifications';
 import {
 	cloneUiPreviewThreads,
+	uiPreviewEventResponses,
 	getUiPreviewMember,
 	uiPreviewAdminCount,
 	uiPreviewFixtures,
 	uiPreviewMemberCount,
 	uiPreviewNotifications,
+	uiPreviewOwnEventResponses,
 	uiPreviewUnreadMessageCount
 } from './uiPreviewFixtures';
 
@@ -18,9 +20,16 @@ describe('uiPreviewFixtures', () => {
 		expect(uiPreviewFixtures.threads).toHaveLength(5);
 		expect(uiPreviewFixtures.broadcasts).toHaveLength(3);
 		expect(uiPreviewFixtures.events).toHaveLength(4);
+		expect(uiPreviewEventResponses).toHaveLength(5);
 		expect(uiPreviewAdminCount).toBe(2);
 		expect(uiPreviewMemberCount).toBe(6);
 		expect(uiPreviewUnreadMessageCount).toBe(3);
+		expect(uiPreviewOwnEventResponses).toMatchObject({
+			'event-1': 'going',
+			'event-2': null,
+			'event-3': 'maybe',
+			'event-4': null
+		});
 	});
 
 	it('looks up members by profile id and returns null for unknown ids', () => {
@@ -42,7 +51,7 @@ describe('uiPreviewFixtures', () => {
 			events: uiPreviewFixtures.events
 		});
 
-		expect(uiPreviewNotifications).toHaveLength(7);
+		expect(uiPreviewNotifications).toHaveLength(expectedNotifications.length);
 		expect(uiPreviewNotifications.map((item) => item.id)).toEqual(
 			expectedNotifications.map((item) => item.id)
 		);

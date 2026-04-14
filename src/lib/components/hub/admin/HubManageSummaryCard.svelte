@@ -22,6 +22,9 @@
 	const liveResourceCount = $derived(currentHub.orderedResources.length);
 	const publishedCount = $derived(liveBroadcastCount + liveEventCount + liveResourceCount);
 	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount);
+	const dueExecutionCount = $derived(currentHub.dueExecutionCount);
+	const recoverableExecutionCount = $derived(currentHub.recoverableExecutionCount);
+	const processedExecutionCount = $derived(currentHub.processedExecutionItems.length);
 	const engagementSummary = $derived(currentHub.hubEngagementSummary);
 	const responseCoverageValue = $derived.by(() => {
 		if (engagementSummary.liveEventCount === 0) {
@@ -32,6 +35,22 @@
 	});
 	const responseCoverageCopy = $derived(getHubEngagementCoverageCopy(engagementSummary));
 	const followUpCopy = $derived(getHubEngagementFollowUpCopy(engagementSummary));
+	const dueExecutionCopy = $derived.by(() => {
+		if (dueExecutionCount === 0) {
+			return processedExecutionCount === 0
+				? 'Scheduled publishes and reminder windows are clear right now.'
+				: `${processedExecutionCount} execution item${processedExecutionCount === 1 ? '' : 's'} already processed and retained in the ledger.`;
+		}
+
+		return `${dueExecutionCount} execution item${dueExecutionCount === 1 ? '' : 's'} is ready for operator review in content tools.`;
+	});
+	const recoveryQueueCopy = $derived.by(() => {
+		if (recoverableExecutionCount === 0) {
+			return 'No failed or skipped execution rows need recovery.';
+		}
+
+		return `${recoverableExecutionCount} failed or skipped row${recoverableExecutionCount === 1 ? '' : 's'} can be retried or opened for correction.`;
+	});
 	const sectionSummary = $derived.by(() => {
 		if (activePlugins.length === 0) {
 			return 'No hub sections are live yet.';
@@ -124,6 +143,22 @@
 				<p class="metric-value metric-value--compact">{responseCoverageValue}</p>
 			</div>
 			<p class="metric-copy">{responseCoverageCopy}</p>
+		</div>
+
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Due work</p>
+				<p class="metric-value">{dueExecutionCount}</p>
+			</div>
+			<p class="metric-copy">{dueExecutionCopy}</p>
+		</div>
+
+		<div class="metric-card">
+			<div>
+				<p class="metric-label">Recovery queue</p>
+				<p class="metric-value">{recoverableExecutionCount}</p>
+			</div>
+			<p class="metric-copy">{recoveryQueueCopy}</p>
 		</div>
 
 		<div class="metric-card">
