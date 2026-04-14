@@ -19,6 +19,19 @@ export type HubEngagementSignal = {
 	needsAttention: boolean;
 };
 
+export type HubEventFollowUpSignalKind = 'attendance_review' | 'no_show' | 'low_turnout';
+
+export type HubEventFollowUpSignal = {
+	eventId: string;
+	eventTitle: string;
+	kind: HubEventFollowUpSignalKind;
+	statusLabel: string;
+	copy: string;
+	timingCopy: string;
+	tone: 'attention' | 'neutral';
+	completedAt: string;
+};
+
 export type HubAdminEngagementSummary = {
 	liveEventCount: number;
 	respondedLiveEventCount: number;
@@ -33,6 +46,10 @@ export type HubAdminEngagementSummary = {
 	failedDeliveryCount: number;
 	skippedDeliveryCount: number;
 	attendanceReviewCount: number;
+	recentAttendanceReviewCount: number;
+	noShowEventCount: number;
+	lowTurnoutEventCount: number;
+	postEventFollowUpCount: number;
 	followUpCount: number;
 };
 
@@ -78,6 +95,146 @@ function getEventReminderSuffix(
 	return ' All reminder windows are already behind this event.';
 }
 
+function getEventCompletionTime(event: Pick<EventRow, 'starts_at' | 'ends_at'>) {
+	return getTime(event.ends_at) ?? getTime(event.starts_at);
+}
+
+function getEventCompletionValue(event: Pick<EventRow, 'starts_at' | 'ends_at'>) {
+	return event.ends_at ?? event.starts_at;
+}
+
+function isRecentFollowUpEvent(event: EventRow, now = Date.now()) {
+	const completionTime = getEventCompletionTime(event);
+
+	return (
+		completionTime !== null &&
+		completionTime <= now &&
+		isEventAttendanceWindowOpen(event, now)
+	);
+}
+
+function getFollowUpPriority(kind: HubEventFollowUpSignalKind) {
+	switch (kind) {
+		case 'attendance_review':
+			return 0;
+		case 'no_show':
+			return 1;
+		default:
+			return 2;
+	}
+}
+
+function buildEventFollowUpSignal(input: {
+	event: EventRow;
+	attendance: EventAttendanceSummary;
+	attendanceOutcome: EventAttendanceOutcomeSummary;
+	now: number;
+}): HubEventFollowUpSignal | null {
+	if (!isRecentFollowUpEvent(input.event, input.now)) {
+		return null;
+	}
+
+	const expectedAttendanceCount = input.attendance.going + input.attendance.maybe;
+	if (expectedAttendanceCount === 0) {
+		return null;
+	}
+
+	const completedAt = getEventCompletionValue(input.event);
+	if (!completedAt) {
+		return null;
+	}
+
+	const attendedCount = input.attendanceOutcome.attended;
+	const absentCount = input.attendanceOutcome.absent;
+	const recordedCount = input.attendanceOutcome.recorded;
+	const eventTitle = input.event.title.trim() || 'Untitled event';
+	const timingCopy = `Completed ${formatRelativeDateTime(completedAt, input.now)}.`;
+
+	if (recordedCount < expectedAttendanceCount) {
+		const remainingCount = expectedAttendanceCount - recordedCount;
+
+		return {
+			eventId: input.event.id,
+			eventTitle,
+			kind: 'attendance_review',
+			statusLabel: 'Attendance review',
+			copy: `${remainingCount} of ${expectedAttendanceCount} expected attendee${expectedAttendanceCount === 1 ? '' : 's'} still need final attendance outcomes.`,
+			timingCopy,
+			tone: 'attention',
+			completedAt: completedAt
+		};
+	}
+
+	if (attendedCount === 0 && absentCount > 0) {
+		return {
+			eventId: input.event.id,
+			eventTitle,
+			kind: 'no_show',
+			statusLabel: 'No-shows',
+			copy: `All ${expectedAttendanceCount} expected attendee${expectedAttendanceCount === 1 ? '' : 's'} were marked absent.`,
+			timingCopy,
+			tone: 'attention',
+			completedAt: completedAt
+		};
+	}
+
+	if (attendedCount > 0 && attendedCount < expectedAttendanceCount) {
+		return {
+			eventId: input.event.id,
+			eventTitle,
+			kind: 'low_turnout',
+			statusLabel: 'Low turnout',
+			copy: `${attendedCount} of ${expectedAttendanceCount} expected attendee${expectedAttendanceCount === 1 ? '' : 's'} were marked attended.${absentCount > 0 ? ` ${absentCount} marked absent.` : ''}`,
+			timingCopy,
+			tone: 'neutral',
+			completedAt: completedAt
+		};
+	}
+
+	return null;
+}
+
+export function buildHubEventFollowUpSignals(
+	input: {
+		events: EventRow[];
+		eventAttendances: Record<string, EventAttendanceSummary>;
+		eventAttendanceOutcomes: Record<string, EventAttendanceOutcomeSummary>;
+	},
+	now = Date.now()
+) {
+	return input.events
+		.map((event) =>
+			buildEventFollowUpSignal({
+				event,
+				attendance: input.eventAttendances[event.id] ?? {
+					going: 0,
+					maybe: 0,
+					cannotAttend: 0,
+					total: 0,
+					recentProfileIds: [],
+					latestUpdatedAt: null
+				},
+				attendanceOutcome: input.eventAttendanceOutcomes[event.id] ?? {
+					attended: 0,
+					absent: 0,
+					recorded: 0,
+					recentProfileIds: [],
+					latestUpdatedAt: null
+				},
+				now
+			})
+		)
+		.filter((signal): signal is HubEventFollowUpSignal => signal !== null)
+		.sort((left, right) => {
+			const priorityDelta = getFollowUpPriority(left.kind) - getFollowUpPriority(right.kind);
+			if (priorityDelta !== 0) {
+				return priorityDelta;
+			}
+
+			return (getTime(right.completedAt) ?? 0) - (getTime(left.completedAt) ?? 0);
+		});
+}
+
 export function buildHubAdminEngagementSummary(
 	input: {
 		events: EventRow[];
@@ -98,6 +255,7 @@ export function buildHubAdminEngagementSummary(
 	let failedDeliveryCount = 0;
 	let skippedDeliveryCount = 0;
 	let attendanceReviewCount = 0;
+	let recentAttendanceReviewCount = 0;
 
 	for (const event of liveEvents) {
 		const attendance = input.eventAttendances[event.id];
@@ -137,6 +295,10 @@ export function buildHubAdminEngagementSummary(
 			(attendanceOutcome?.recorded ?? 0) < expectedAttendanceCount
 		) {
 			attendanceReviewCount += 1;
+
+			if (isRecentFollowUpEvent(event, now)) {
+				recentAttendanceReviewCount += 1;
+			}
 		}
 
 		const deliveryStatus = getEventDeliveryStatus(event, now);
@@ -161,6 +323,12 @@ export function buildHubAdminEngagementSummary(
 	}
 
 	const deliveryIssueCount = failedDeliveryCount + skippedDeliveryCount;
+	const followUpSignals = buildHubEventFollowUpSignals(input, now);
+	const noShowEventCount = followUpSignals.filter((signal) => signal.kind === 'no_show').length;
+	const lowTurnoutEventCount = followUpSignals.filter(
+		(signal) => signal.kind === 'low_turnout'
+	).length;
+	const postEventFollowUpCount = followUpSignals.length;
 
 	return {
 		liveEventCount: liveEvents.length,
@@ -176,8 +344,15 @@ export function buildHubAdminEngagementSummary(
 		failedDeliveryCount,
 		skippedDeliveryCount,
 		attendanceReviewCount,
+		recentAttendanceReviewCount,
+		noShowEventCount,
+		lowTurnoutEventCount,
+		postEventFollowUpCount,
 		followUpCount:
-			noResponseLiveEventCount + approachingPublishCount + deliveryIssueCount + attendanceReviewCount
+			noResponseLiveEventCount +
+			approachingPublishCount +
+			deliveryIssueCount +
+			postEventFollowUpCount
 	};
 }
 
@@ -243,9 +418,21 @@ export function getHubEngagementFollowUpCopy(summary: HubAdminEngagementSummary)
 		);
 	}
 
-	if (summary.attendanceReviewCount > 0) {
+	if (summary.recentAttendanceReviewCount > 0) {
 		parts.push(
-			`${summary.attendanceReviewCount} live or recent event${summary.attendanceReviewCount === 1 ? '' : 's'} still need day-of attendance updates.`
+			`${summary.recentAttendanceReviewCount} recent event${summary.recentAttendanceReviewCount === 1 ? '' : 's'} still need final attendance updates.`
+		);
+	}
+
+	if (summary.noShowEventCount > 0) {
+		parts.push(
+			`${summary.noShowEventCount} recent event${summary.noShowEventCount === 1 ? '' : 's'} ended with recorded no-shows.`
+		);
+	}
+
+	if (summary.lowTurnoutEventCount > 0) {
+		parts.push(
+			`${summary.lowTurnoutEventCount} recent event${summary.lowTurnoutEventCount === 1 ? '' : 's'} landed below expected turnout.`
 		);
 	}
 

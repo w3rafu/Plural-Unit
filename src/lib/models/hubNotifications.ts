@@ -8,8 +8,11 @@ import type {
 } from '$lib/repositories/hubRepository';
 import { isBroadcastLive } from '$lib/models/broadcastLifecycleModel';
 import { getEventLocationLabel } from '$lib/models/eventCalendarModel';
+import {
+	getMemberEventTimingState,
+	type MemberCommitmentTimingState
+} from '$lib/models/memberCommitmentModel';
 import { formatEventReminderOffset } from '$lib/models/eventReminderModel';
-import { isEventLive } from '$lib/models/eventLifecycleModel';
 import { formatShortDateTime } from '$lib/utils/dateFormat';
 
 export type HubNotificationPreferences = {
@@ -32,6 +35,7 @@ export type HubNotificationItem = {
 	label: string;
 	isRead: boolean;
 	readAt: string | null;
+	eventTimingState?: MemberCommitmentTimingState;
 	priority?: number;
 };
 
@@ -59,6 +63,113 @@ function formatEventMeta(event: EventRow) {
 	const location = getEventLocationLabel(event.location);
 
 	return location ? `${startsText} · ${location}` : startsText;
+}
+
+function joinMeta(parts: Array<string | null | undefined>) {
+	return parts.filter((part): part is string => Boolean(part)).join(' · ');
+}
+
+function getEventNotificationOccurredAt(
+	event: EventRow,
+	timingState: MemberCommitmentTimingState
+) {
+	if (timingState === 'today' || timingState === 'in_progress') {
+		return event.starts_at;
+	}
+
+	if (timingState === 'recently_completed') {
+		return event.ends_at ?? event.starts_at;
+	}
+
+	return event.publish_at ?? event.created_at;
+}
+
+function getEventNotificationLabel(timingState: MemberCommitmentTimingState) {
+	if (timingState === 'today') {
+		return 'Today';
+	}
+
+	if (timingState === 'in_progress') {
+		return 'Live';
+	}
+
+	if (timingState === 'recently_completed') {
+		return 'Recent';
+	}
+
+	return 'Event';
+}
+
+function getEventNotificationSummary(
+	event: EventRow,
+	timingState: MemberCommitmentTimingState
+) {
+	const description = event.description.trim();
+	if (description) {
+		return description;
+	}
+
+	if (timingState === 'today') {
+		return 'This event is happening today. Open it for the latest details.';
+	}
+
+	if (timingState === 'in_progress') {
+		return 'This event is underway now. Open it for the latest details.';
+	}
+
+	if (timingState === 'recently_completed') {
+		return 'This event wrapped recently. Open it for the latest details.';
+	}
+
+	return 'A new event was posted to the hub.';
+}
+
+function getEventNotificationMeta(
+	event: EventRow,
+	timingState: MemberCommitmentTimingState
+) {
+	if (timingState === 'today') {
+		return joinMeta([formatEventMeta(event), 'Today']);
+	}
+
+	if (timingState === 'in_progress') {
+		return joinMeta([formatEventMeta(event), 'In progress']);
+	}
+
+	if (timingState === 'recently_completed') {
+		return joinMeta([
+			formatEventMeta(event),
+			`Completed ${formatShortDateTime(event.ends_at ?? event.starts_at)}`
+		]);
+	}
+
+	return formatEventMeta(event);
+}
+
+function buildEventNotification(
+	event: EventRow,
+	timingState: MemberCommitmentTimingState,
+	readMap: HubNotificationReadMap
+): HubNotificationItem {
+	const notificationKey = 'default';
+	const id = getHubNotificationId('event', event.id, notificationKey);
+	const readAt = readMap[id] ?? null;
+
+	return {
+		id,
+		kind: 'event',
+		sourceId: event.id,
+		notificationKey,
+		title: event.title.trim() || 'Event update',
+		summary: getEventNotificationSummary(event, timingState),
+		meta: getEventNotificationMeta(event, timingState),
+		occurredAt: getEventNotificationOccurredAt(event, timingState),
+		label: getEventNotificationLabel(timingState),
+		isRead: Boolean(readAt),
+		readAt,
+		eventTimingState: timingState,
+		priority: 1
+	};
 }
 
 export function createDefaultHubNotificationPreferences(): HubNotificationPreferences {
@@ -148,6 +259,7 @@ export function filterHubNotifications(
 function buildEventReminderNotification(
 	row: HubExecutionLedgerRow,
 	event: EventRow,
+	timingState: MemberCommitmentTimingState,
 	readMap: HubNotificationReadMap
 ): HubNotificationItem {
 	const notificationKey = row.execution_key;
@@ -158,6 +270,13 @@ function buildEventReminderNotification(
 		? formatEventReminderOffset(offsetMinutes)
 		: 'Event starts soon';
 	const eventDescription = event.description.trim();
+	const reminderSentAt = row.processed_at ?? row.due_at;
+	const detailCopy =
+		timingState === 'in_progress'
+			? `This event is underway. The last reminder went out ${reminderLabel}.`
+			: timingState === 'recently_completed'
+				? `This event wrapped recently. The last reminder went out ${reminderLabel}.`
+				: `Reminder sent ${reminderLabel}. Open the event for the latest details.`;
 
 	return {
 		id,
@@ -165,14 +284,16 @@ function buildEventReminderNotification(
 		sourceId: event.id,
 		notificationKey,
 		title: event.title.trim() || 'Event reminder',
-		summary: eventDescription
-			? `${eventDescription} Reminder sent ${reminderLabel}.`
-			: `Reminder sent ${reminderLabel}. Open the event for the latest details.`,
-		meta: `${formatEventMeta(event)} · Reminder sent ${formatShortDateTime(row.processed_at ?? row.due_at)}`,
-		occurredAt: row.processed_at ?? row.due_at,
+		summary: eventDescription ? `${eventDescription} ${detailCopy}` : detailCopy,
+		meta: joinMeta([
+			getEventNotificationMeta(event, timingState),
+			`Reminder sent ${formatShortDateTime(reminderSentAt)}`
+		]),
+		occurredAt: reminderSentAt,
 		label: 'Reminder',
 		isRead: Boolean(readAt),
 		readAt,
+		eventTimingState: timingState,
 		priority: 1
 	};
 }
@@ -184,11 +305,16 @@ export function buildHubNotifications(input: {
 	reminderExecutions?: HubExecutionLedgerRow[];
 	preferences?: HubNotificationPreferences;
 	readMap?: HubNotificationReadMap;
-}): HubNotificationItem[] {
+}, now = Date.now()): HubNotificationItem[] {
 	const preferences = input.preferences ?? createDefaultHubNotificationPreferences();
 	const readMap = input.readMap ?? {};
-	const liveEvents = input.events.filter((event) => isEventLive(event));
-	const liveEventMap = new Map(liveEvents.map((event) => [event.id, event]));
+	const visibleEvents = input.events
+		.map((event) => ({ event, timingState: getMemberEventTimingState(event, now) }))
+		.filter(
+			(item): item is { event: EventRow; timingState: MemberCommitmentTimingState } =>
+				item.timingState !== null
+		);
+	const visibleEventMap = new Map(visibleEvents.map((item) => [item.event.id, item]));
 
 	const broadcastItems = preferences.broadcast
 		? input.broadcasts.filter((broadcast) => isBroadcastLive(broadcast)).map((broadcast) => {
@@ -216,26 +342,9 @@ export function buildHubNotifications(input: {
 		: [];
 
 	const eventItems = preferences.event
-		? liveEvents.map((event) => {
-				const notificationKey = 'default';
-				const id = getHubNotificationId('event', event.id, notificationKey);
-				const readAt = readMap[id] ?? null;
-
-				return {
-					id,
-					kind: 'event' as const,
-					sourceId: event.id,
-					notificationKey,
-					title: event.title.trim() || 'Event update',
-					summary: event.description.trim() || 'A new event was posted to the hub.',
-					meta: formatEventMeta(event),
-					occurredAt: event.created_at,
-					label: 'Event',
-					isRead: Boolean(readAt),
-					readAt,
-					priority: 1
-				};
-			})
+		? visibleEvents.map(({ event, timingState }) =>
+				buildEventNotification(event, timingState, readMap)
+			)
 		: [];
 
 	const reminderItems = preferences.event
@@ -244,8 +353,10 @@ export function buildHubNotifications(input: {
 					(row) => row.job_kind === 'event_reminder' && row.execution_state === 'processed'
 				)
 				.map((row) => {
-					const event = liveEventMap.get(row.source_id);
-					return event ? buildEventReminderNotification(row, event, readMap) : null;
+					const eventEntry = visibleEventMap.get(row.source_id);
+					return eventEntry
+						? buildEventReminderNotification(row, eventEntry.event, eventEntry.timingState, readMap)
+						: null;
 				})
 				.filter((item): item is HubNotificationItem => item !== null)
 		: [];

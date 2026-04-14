@@ -16,7 +16,9 @@ const destinations: HubActivityDestinations = {
 function makeNotification(
 	kind: 'broadcast' | 'event' | 'event_reminder',
 	sourceId: string,
-	notificationKey = 'default'
+	notificationKey = 'default',
+	eventTimingState: 'upcoming' | 'today' | 'in_progress' | 'recently_completed' | undefined =
+		undefined
 ) {
 	const id =
 		notificationKey === 'default'
@@ -38,7 +40,8 @@ function makeNotification(
 		occurredAt: '2026-04-11T10:00:00.000Z',
 		label,
 		isRead: false,
-		readAt: null
+		readAt: null,
+		eventTimingState
 	} as const;
 }
 
@@ -66,6 +69,41 @@ describe('hubActivityModel', () => {
 			label: 'Open event details',
 			href: '#hub-events',
 			description: 'Jump to the upcoming events below and review the reminder target.'
+		});
+	});
+
+	it('adjusts event actions for today, live, and recent event states', () => {
+		expect(
+			getHubActivityPrimaryAction(
+				makeNotification('event', 'today', 'default', 'today'),
+				destinations
+			)
+		).toEqual({
+			label: 'Open events',
+			href: '#hub-events',
+			description: "Jump to today's event details below."
+		});
+
+		expect(
+			getHubActivityPrimaryAction(
+				makeNotification('event_reminder', 'live', '120', 'in_progress'),
+				destinations
+			)
+		).toEqual({
+			label: 'Open live event',
+			href: '#hub-events',
+			description: 'Jump to the live event details below. This reminder was sent before the event started.'
+		});
+
+		expect(
+			getHubActivityPrimaryAction(
+				makeNotification('event', 'recent', 'default', 'recently_completed'),
+				destinations
+			)
+		).toEqual({
+			label: 'Open events',
+			href: '#hub-events',
+			description: 'Jump to the recent event details below and review what just wrapped.'
 		});
 	});
 

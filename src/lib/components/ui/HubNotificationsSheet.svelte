@@ -86,17 +86,17 @@
 
 		if (activeFilter === 'event') {
 			if (notificationCounts.event > 0 && visibleNotifications.length === 0) {
-				return 'Event alerts and reminders are currently hidden by your notification settings.';
+				return 'Event alerts, reminders, and recent follow-up cues are currently hidden by your notification settings.';
 			}
 
-			return 'No event alerts or reminders are live right now.';
+			return 'No event alerts, reminders, or recent follow-up cues are available right now.';
 		}
 
 		if (hiddenNotificationCount > 0 && notifications.length === 0) {
 			return 'Your notification settings are hiding the hub alerts that are currently available.';
 		}
 
-		return 'No alerts yet. When the hub posts a broadcast, publishes an event, or sends a reminder, it will show up here.';
+		return 'No alerts yet. When the hub posts a broadcast, sends an event update, or processes a reminder, it will show up here.';
 	}
 
 	async function markNotificationRead(notification: HubNotificationItem) {
@@ -159,7 +159,7 @@
 		<Sheet.Header>
 			<Sheet.Title>Alerts</Sheet.Title>
 			<Sheet.Description>
-				A live feed of broadcasts, event launches, and reminders, with shortcuts to open or manage what needs attention.
+				A live feed of broadcasts, event updates, reminders, and recent follow-up cues, with shortcuts to open or manage what needs attention.
 			</Sheet.Description>
 		</Sheet.Header>
 

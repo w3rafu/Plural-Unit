@@ -449,4 +449,89 @@ describe('buildHubNotifications', () => {
 			readAt: null
 		});
 	});
+
+	it('keeps today, in-progress, and recent events in the feed with timing-aware labels', () => {
+		const now = new Date('2026-04-14T12:00:00.000Z').getTime();
+		const notifications = buildHubNotifications(
+			{
+				broadcasts: [],
+				events: [
+					makeEvent({ id: 'today', starts_at: '2026-04-14T16:30:00.000Z' }),
+					makeEvent({
+						id: 'in-progress',
+						starts_at: '2026-04-14T10:00:00.000Z',
+						ends_at: '2026-04-14T14:00:00.000Z',
+						description: '  '
+					}),
+					makeEvent({
+						id: 'recent',
+						starts_at: '2026-04-14T08:00:00.000Z',
+						ends_at: '2026-04-14T09:00:00.000Z',
+						description: '  '
+					}),
+					makeEvent({
+						id: 'past',
+						starts_at: '2026-04-12T08:00:00.000Z',
+						ends_at: '2026-04-12T09:00:00.000Z'
+					})
+				]
+			},
+			now
+		);
+
+		expect(notifications.map((item) => item.id)).toEqual([
+			'event:today',
+			'event:in-progress',
+			'event:recent'
+		]);
+		expect(notifications.find((item) => item.id === 'event:today')).toMatchObject({
+			label: 'Today',
+			eventTimingState: 'today'
+		});
+		expect(notifications.find((item) => item.id === 'event:in-progress')).toMatchObject({
+			label: 'Live',
+			eventTimingState: 'in_progress',
+			summary: 'This event is underway now. Open it for the latest details.'
+		});
+		expect(notifications.find((item) => item.id === 'event:recent')).toMatchObject({
+			label: 'Recent',
+			eventTimingState: 'recently_completed',
+			summary: 'This event wrapped recently. Open it for the latest details.'
+		});
+	});
+
+	it('keeps processed reminder alerts visible for recently completed events', () => {
+		const now = new Date('2026-04-14T12:00:00.000Z').getTime();
+		const notifications = buildHubNotifications(
+			{
+				broadcasts: [],
+				events: [
+					makeEvent({
+						id: 'e1',
+						starts_at: '2026-04-14T08:00:00.000Z',
+						ends_at: '2026-04-14T10:00:00.000Z',
+						description: '  '
+					})
+				],
+				reminderExecutions: [
+					makeReminderExecutionRow({
+						source_id: 'e1',
+						execution_key: '120',
+						processed_at: '2026-04-14T06:00:00.000Z',
+						due_at: '2026-04-14T06:00:00.000Z'
+					})
+				]
+			},
+			now
+		);
+
+		expect(notifications.map((item) => item.id)).toEqual([
+			'event:e1',
+			'event_reminder:e1:120'
+		]);
+		expect(notifications.find((item) => item.id === 'event_reminder:e1:120')).toMatchObject({
+			eventTimingState: 'recently_completed',
+			summary: 'This event wrapped recently. The last reminder went out 2 hours before.'
+		});
+	});
 });

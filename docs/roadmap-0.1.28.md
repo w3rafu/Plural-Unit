@@ -11,6 +11,7 @@ Planned on 2026-04-14.
 - Slice a, attendance records and event outcome primitives, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 603 tests.
 - Slice b, day-of roster and quick attendance actions, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 607 tests.
 - Slice c, attendance-aware member surfaces and recent event history, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 609 tests.
+- Slice d, post-event follow-up signals and reminder cleanup, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 616 tests.
 - This release should assume hub migrations `014` through `026` are already applied before development resumes.
 - Existing execution-ledger seams, direct-message follow-up flow, and member commitment surfaces should be reused rather than replaced.
 
@@ -122,6 +123,12 @@ Candidate files:
 ### d - Post-event follow-up signals and reminder cleanup
 
 Make the hub operational after events end by surfacing what still needs attention instead of letting all day-of state disappear into history.
+
+Implemented on 2026-04-14.
+
+- Expanded `src/lib/models/hubNotifications.ts`, `src/lib/components/hub/member/hubActivityModel.ts`, `src/lib/components/ui/HubNotificationsSheet.svelte`, `src/lib/components/hub/member/HubActivityFeed.svelte`, `src/lib/models/hubNotifications.test.ts`, `src/lib/components/hub/member/hubActivityModel.test.ts`, and `src/lib/stores/currentHub.test.ts` so event alerts and reminder alerts stay timing-aware through `today`, `in progress`, and `recently completed` states instead of assuming every event update targets an upcoming item.
+- Expanded `src/lib/models/hubEngagementModel.ts`, `src/lib/models/hubEngagementModel.test.ts`, `src/lib/stores/currentHub.svelte.ts`, `src/lib/stores/currentHub.test.ts`, and `src/lib/components/hub/admin/HubExecutionQueueCard.svelte` so the admin surface now derives compact recent follow-up signals for attendance review, recorded no-shows, and low-turnout events without creating a separate analytics or campaign layer.
+- Kept the first version inside existing manage and alert surfaces only, with validation passing at `44 files / 616 tests` after the slice-d notification cleanup and admin follow-up passes landed together.
 
 Goals:
 

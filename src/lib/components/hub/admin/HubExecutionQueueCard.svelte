@@ -16,7 +16,11 @@
 	const dueCount = $derived(queueSections.due.length);
 	const recoveryCount = $derived(queueSections.recovery.length);
 	const processedCount = $derived(currentHub.processedExecutionItems.length);
-	const hasQueueItems = $derived(dueCount > 0 || recoveryCount > 0 || processedCount > 0);
+	const followUpSignals = $derived(currentHub.hubEventFollowUpSignals);
+	const followUpCount = $derived(followUpSignals.length);
+	const hasQueueItems = $derived(
+		dueCount > 0 || recoveryCount > 0 || processedCount > 0 || followUpCount > 0
+	);
 	const summaryCopy = $derived.by(() => {
 		if (!hasQueueItems) {
 			return 'Scheduled publishes and reminder windows will collect here once the hub has timed work to manage.';
@@ -34,6 +38,10 @@
 
 		if (processedCount > 0) {
 			parts.push(`${processedCount} already processed`);
+		}
+
+		if (followUpCount > 0) {
+			parts.push(`${followUpCount} needing follow-up`);
 		}
 
 		return `${parts.join(' · ')}.`;
@@ -55,6 +63,18 @@
 	function getOpenHref(item: HubExecutionQueueItem) {
 		return `/hub/manage/content#${item.sectionId}`;
 	}
+
+	function getFollowUpVariant(tone: 'attention' | 'neutral') {
+		return tone === 'attention' ? 'destructive' : 'outline';
+	}
+
+	function getFollowUpOpenHref() {
+		return '/hub/manage/content#manage-events';
+	}
+
+	function getFollowUpActionLabel(kind: 'attendance_review' | 'no_show' | 'low_turnout') {
+		return kind === 'attendance_review' ? 'Review attendance' : 'Open event';
+	}
 </script>
 
 <Card.Root class="border-border/70 bg-card">
@@ -68,7 +88,7 @@
 			<Card.Root size="sm" class="border-dashed border-border/70 bg-muted/20">
 				<Card.Content>
 					<p class="text-sm text-muted-foreground">
-						No due work, recovery items, or recent execution history needs review right now.
+						No due work, recovery items, post-event follow-up, or recent execution history needs review right now.
 					</p>
 				</Card.Content>
 			</Card.Root>
@@ -154,6 +174,36 @@
 										</Button>
 									{/if}
 									<Button href={getOpenHref(item)} variant="outline" size="xs">Open</Button>
+								</Item.Actions>
+							</Item.Root>
+						{/each}
+					</Item.Group>
+				</div>
+			{/if}
+
+			{#if followUpSignals.length > 0}
+				<div class="space-y-3">
+					<div class="space-y-1">
+						<h3 class="text-sm font-semibold tracking-tight text-foreground">Follow-up now</h3>
+						<p class="text-sm text-muted-foreground">
+							Recent events that still need final attendance decisions or a quick operator follow-up.
+						</p>
+					</div>
+					<Item.Group>
+						{#each followUpSignals as signal (signal.eventId)}
+							<Item.Root variant="muted" size="sm">
+								<Item.Content>
+									<div class="flex flex-wrap items-center gap-2">
+										<Item.Title>{signal.eventTitle}</Item.Title>
+										<Badge variant={getFollowUpVariant(signal.tone)}>{signal.statusLabel}</Badge>
+									</div>
+									<Item.Description>{signal.copy}</Item.Description>
+									<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
+								</Item.Content>
+								<Item.Actions>
+									<Button href={getFollowUpOpenHref()} variant="outline" size="xs">
+										{getFollowUpActionLabel(signal.kind)}
+									</Button>
 								</Item.Actions>
 							</Item.Root>
 						{/each}

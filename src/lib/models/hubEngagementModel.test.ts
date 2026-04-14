@@ -3,6 +3,7 @@ import type { BroadcastRow, EventRow } from '$lib/repositories/hubRepository';
 import type { EventAttendanceSummary } from './eventResponseModel';
 import {
 	buildHubAdminEngagementSummary,
+	buildHubEventFollowUpSignals,
 	getBroadcastEngagementSignal,
 	getHubEngagementAttendanceCopy,
 	getEventEngagementSignal,
@@ -118,6 +119,10 @@ describe('hubEngagementModel', () => {
 			failedDeliveryCount: 1,
 			skippedDeliveryCount: 0,
 			attendanceReviewCount: 0,
+			recentAttendanceReviewCount: 0,
+			noShowEventCount: 0,
+			lowTurnoutEventCount: 0,
+			postEventFollowUpCount: 0,
 			followUpCount: 3
 		};
 
@@ -129,6 +134,66 @@ describe('hubEngagementModel', () => {
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('1 live event still needs a first RSVP.');
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('2 scheduled items publish within a day.');
 		expect(getHubEngagementFollowUpCopy(summary)).toContain('1 scheduled item needs delivery recovery.');
+	});
+
+	it('builds post-event follow-up signals for recent attendance review, no-shows, and low turnout', () => {
+		const now = new Date('2026-04-14T12:00:00.000Z').getTime();
+		const signals = buildHubEventFollowUpSignals(
+			{
+				events: [
+					makeEvent({ id: 'needs-review', starts_at: '2026-04-14T08:00:00.000Z', ends_at: '2026-04-14T09:00:00.000Z' }),
+					makeEvent({ id: 'no-show', starts_at: '2026-04-14T07:00:00.000Z', ends_at: '2026-04-14T08:00:00.000Z' }),
+					makeEvent({ id: 'low-turnout', starts_at: '2026-04-14T06:00:00.000Z', ends_at: '2026-04-14T07:00:00.000Z' })
+				],
+				eventAttendances: {
+					'needs-review': makeAttendance({ going: 2, maybe: 1, total: 3 }),
+					'no-show': makeAttendance({ going: 2, maybe: 0, total: 2 }),
+					'low-turnout': makeAttendance({ going: 3, maybe: 0, total: 3 })
+				},
+				eventAttendanceOutcomes: {
+					'needs-review': {
+						attended: 1,
+						absent: 0,
+						recorded: 1,
+						recentProfileIds: [],
+						latestUpdatedAt: '2026-04-14T09:10:00.000Z'
+					},
+					'no-show': {
+						attended: 0,
+						absent: 2,
+						recorded: 2,
+						recentProfileIds: [],
+						latestUpdatedAt: '2026-04-14T08:10:00.000Z'
+					},
+					'low-turnout': {
+						attended: 2,
+						absent: 1,
+						recorded: 3,
+						recentProfileIds: [],
+						latestUpdatedAt: '2026-04-14T07:10:00.000Z'
+					}
+				}
+			},
+			now
+		);
+
+		expect(signals.map((signal) => signal.kind)).toEqual([
+			'attendance_review',
+			'no_show',
+			'low_turnout'
+		]);
+		expect(signals[0]).toMatchObject({
+			eventId: 'needs-review',
+			statusLabel: 'Attendance review'
+		});
+		expect(signals[1]).toMatchObject({
+			eventId: 'no-show',
+			statusLabel: 'No-shows'
+		});
+		expect(signals[2]).toMatchObject({
+			eventId: 'low-turnout',
+			statusLabel: 'Low turnout'
+		});
 	});
 
 	it('counts skipped and failed scheduled delivery outcomes in follow-up totals', () => {
@@ -200,13 +265,74 @@ describe('hubEngagementModel', () => {
 
 		expect(summary).toMatchObject({
 			attendanceReviewCount: 1,
-			followUpCount: 1
+			recentAttendanceReviewCount: 0,
+			postEventFollowUpCount: 0,
+			followUpCount: 0
 		});
 		expect(getHubEngagementAttendanceCopy(summary)).toContain(
 			'1 live or recent event still need day-of attendance decisions'
 		);
+		expect(getHubEngagementFollowUpCopy(summary)).toBe('No follow-up signals need attention right now.');
+	});
+
+	it('counts recent post-event follow-up signals separately from day-of attendance review', () => {
+		const now = new Date('2026-04-14T12:00:00.000Z').getTime();
+		const summary = buildHubAdminEngagementSummary(
+			{
+				events: [
+					makeEvent({ id: 'needs-review', starts_at: '2026-04-14T08:00:00.000Z', ends_at: '2026-04-14T09:00:00.000Z' }),
+					makeEvent({ id: 'no-show', starts_at: '2026-04-14T07:00:00.000Z', ends_at: '2026-04-14T08:00:00.000Z' }),
+					makeEvent({ id: 'low-turnout', starts_at: '2026-04-14T06:00:00.000Z', ends_at: '2026-04-14T07:00:00.000Z' })
+				],
+				broadcasts: [],
+				eventAttendances: {
+					'needs-review': makeAttendance({ going: 2, maybe: 1, total: 3 }),
+					'no-show': makeAttendance({ going: 2, total: 2 }),
+					'low-turnout': makeAttendance({ going: 3, total: 3 })
+				},
+				eventAttendanceOutcomes: {
+					'needs-review': {
+						attended: 1,
+						absent: 0,
+						recorded: 1,
+						recentProfileIds: [],
+						latestUpdatedAt: '2026-04-14T09:10:00.000Z'
+					},
+					'no-show': {
+						attended: 0,
+						absent: 2,
+						recorded: 2,
+						recentProfileIds: [],
+						latestUpdatedAt: '2026-04-14T08:10:00.000Z'
+					},
+					'low-turnout': {
+						attended: 2,
+						absent: 1,
+						recorded: 3,
+						recentProfileIds: [],
+						latestUpdatedAt: '2026-04-14T07:10:00.000Z'
+					}
+				}
+			},
+			now
+		);
+
+		expect(summary).toMatchObject({
+			attendanceReviewCount: 1,
+			recentAttendanceReviewCount: 1,
+			noShowEventCount: 1,
+			lowTurnoutEventCount: 1,
+			postEventFollowUpCount: 3,
+			followUpCount: 3
+		});
 		expect(getHubEngagementFollowUpCopy(summary)).toContain(
-			'1 live or recent event still need day-of attendance updates.'
+			'1 recent event still need final attendance updates.'
+		);
+		expect(getHubEngagementFollowUpCopy(summary)).toContain(
+			'1 recent event ended with recorded no-shows.'
+		);
+		expect(getHubEngagementFollowUpCopy(summary)).toContain(
+			'1 recent event landed below expected turnout.'
 		);
 	});
 

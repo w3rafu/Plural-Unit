@@ -34,8 +34,8 @@
 
 ## d - Post-event follow-up signals and reminder cleanup
 
-- [ ] Surface no-show, low-turnout, or attendance-still-unrecorded signals in existing admin summary areas
-- [ ] Align notification and activity copy with day-of and post-event states
-- [ ] Keep the first version limited to in-app follow-up cues rather than campaigns or surveys
-- [ ] Reduce stale reminder framing once an event is underway or complete
-- [ ] Add focused tests for attendance-aware follow-up signals and notification behavior
+- [x] Surface no-show, low-turnout, or attendance-still-unrecorded signals in existing admin summary areas
+- [x] Align notification and activity copy with day-of and post-event states
+- [x] Keep the first version limited to in-app follow-up cues rather than campaigns or surveys
+- [x] Reduce stale reminder framing once an event is underway or complete
+- [x] Add focused tests for attendance-aware follow-up signals and notification behavior

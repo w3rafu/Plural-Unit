@@ -61,9 +61,11 @@ import {
 } from '$lib/models/eventAttendanceModel';
 import {
 	buildHubAdminEngagementSummary,
+	buildHubEventFollowUpSignals,
 	getBroadcastEngagementSignal as buildBroadcastEngagementSignal,
 	getEventEngagementSignal as buildEventEngagementSignal,
 	type HubAdminEngagementSummary,
+	type HubEventFollowUpSignal,
 	type HubEngagementSignal
 } from '$lib/models/hubEngagementModel';
 import {
@@ -251,6 +253,21 @@ class CurrentHub {
 		});
 	}
 
+	get hubEventFollowUpSignals(): HubEventFollowUpSignal[] {
+		const eventAttendances = Object.fromEntries(
+			this.events.map((event) => [event.id, this.getEventAttendanceSummary(event.id)])
+		);
+		const eventAttendanceOutcomes = Object.fromEntries(
+			this.events.map((event) => [event.id, this.getEventAttendanceOutcomeSummary(event.id)])
+		);
+
+		return buildHubEventFollowUpSignals({
+			events: this.events,
+			eventAttendances,
+			eventAttendanceOutcomes
+		});
+	}
+
 	get orderedResources() {
 		return sortResourceRows(this.resources);
 	}
@@ -294,7 +311,7 @@ class CurrentHub {
 	get allActivityFeed() {
 		return buildHubNotifications({
 			broadcasts: this.activeBroadcasts,
-			events: this.liveEvents,
+			events: this.events,
 			reminderExecutions: this.processedReminderExecutionItems,
 			readMap: this.notificationReadMap
 		});

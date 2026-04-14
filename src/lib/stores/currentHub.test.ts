@@ -579,6 +579,48 @@ describe('currentHub.load', () => {
 		expect(currentHub.unreadActivityCount).toBe(1);
 	});
 
+	it('keeps recent event alerts visible for post-event follow-up', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
+
+		try {
+			currentHub.events = [
+				makeEvent({
+					id: 'e1',
+					starts_at: '2026-04-14T08:00:00.000Z',
+					ends_at: '2026-04-14T10:00:00.000Z',
+					description: '  '
+				})
+			];
+			currentHub.executionLedger = [
+				makeExecutionLedgerRow({
+					id: 'exec-reminder',
+					job_kind: 'event_reminder',
+					source_id: 'e1',
+					execution_key: '120',
+					execution_state: 'processed',
+					processed_at: '2026-04-14T06:00:00.000Z',
+					due_at: '2026-04-14T06:00:00.000Z'
+				})
+			];
+
+			expect(currentHub.activityFeed.map((item) => item.id)).toEqual([
+				'event:e1',
+				'event_reminder:e1:120'
+			]);
+			expect(currentHub.activityFeed[0]).toMatchObject({
+				eventTimingState: 'recently_completed',
+				label: 'Recent'
+			});
+			expect(currentHub.activityFeed[1]).toMatchObject({
+				kind: 'event_reminder',
+				eventTimingState: 'recently_completed'
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('captures error and re-throws on failure', async () => {
 		mockFetchActivePlugins.mockRejectedValueOnce(new Error('network'));
 
@@ -1285,6 +1327,126 @@ describe('currentHub hubEngagementSummary', () => {
 		});
 		expect(currentHub.getBroadcastEngagementSignal('scheduled-broadcast')).toMatchObject({
 			needsAttention: true
+		});
+
+		vi.useRealTimers();
+	});
+
+	it('derives post-event follow-up signals for recent events', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
+
+		currentHub.events = [
+			makeEvent({ id: 'needs-review', starts_at: '2026-04-14T08:00:00.000Z', ends_at: '2026-04-14T09:00:00.000Z' }),
+			makeEvent({ id: 'no-show', starts_at: '2026-04-14T07:00:00.000Z', ends_at: '2026-04-14T08:00:00.000Z' }),
+			makeEvent({ id: 'low-turnout', starts_at: '2026-04-14T06:00:00.000Z', ends_at: '2026-04-14T07:00:00.000Z' })
+		];
+		currentHub.eventResponseMap = {
+			'needs-review': [
+				{
+					id: 'r1',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-2',
+					response: 'going',
+					created_at: '2026-04-14T07:00:00.000Z',
+					updated_at: '2026-04-14T07:00:00.000Z'
+				},
+				{
+					id: 'r2',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-3',
+					response: 'going',
+					created_at: '2026-04-14T07:05:00.000Z',
+					updated_at: '2026-04-14T07:05:00.000Z'
+				},
+				{
+					id: 'r3',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-4',
+					response: 'maybe',
+					created_at: '2026-04-14T07:10:00.000Z',
+					updated_at: '2026-04-14T07:10:00.000Z'
+				}
+			],
+			'no-show': [
+				{
+					id: 'r4',
+					event_id: 'no-show',
+					organization_id: 'org-1',
+					profile_id: 'profile-2',
+					response: 'going',
+					created_at: '2026-04-14T06:00:00.000Z',
+					updated_at: '2026-04-14T06:00:00.000Z'
+				},
+				{
+					id: 'r5',
+					event_id: 'no-show',
+					organization_id: 'org-1',
+					profile_id: 'profile-3',
+					response: 'going',
+					created_at: '2026-04-14T06:05:00.000Z',
+					updated_at: '2026-04-14T06:05:00.000Z'
+				}
+			],
+			'low-turnout': [
+				{
+					id: 'r6',
+					event_id: 'low-turnout',
+					organization_id: 'org-1',
+					profile_id: 'profile-2',
+					response: 'going',
+					created_at: '2026-04-14T05:00:00.000Z',
+					updated_at: '2026-04-14T05:00:00.000Z'
+				},
+				{
+					id: 'r7',
+					event_id: 'low-turnout',
+					organization_id: 'org-1',
+					profile_id: 'profile-3',
+					response: 'going',
+					created_at: '2026-04-14T05:05:00.000Z',
+					updated_at: '2026-04-14T05:05:00.000Z'
+				},
+				{
+					id: 'r8',
+					event_id: 'low-turnout',
+					organization_id: 'org-1',
+					profile_id: 'profile-4',
+					response: 'going',
+					created_at: '2026-04-14T05:10:00.000Z',
+					updated_at: '2026-04-14T05:10:00.000Z'
+				}
+			]
+		};
+		currentHub.eventAttendanceMap = {
+			'needs-review': [
+				makeAttendanceRecord({ id: 'a1', event_id: 'needs-review', profile_id: 'profile-2', status: 'attended' })
+			],
+			'no-show': [
+				makeAttendanceRecord({ id: 'a2', event_id: 'no-show', profile_id: 'profile-2', status: 'absent' }),
+				makeAttendanceRecord({ id: 'a3', event_id: 'no-show', profile_id: 'profile-3', status: 'absent' })
+			],
+			'low-turnout': [
+				makeAttendanceRecord({ id: 'a4', event_id: 'low-turnout', profile_id: 'profile-2', status: 'attended' }),
+				makeAttendanceRecord({ id: 'a5', event_id: 'low-turnout', profile_id: 'profile-3', status: 'attended' }),
+				makeAttendanceRecord({ id: 'a6', event_id: 'low-turnout', profile_id: 'profile-4', status: 'absent' })
+			]
+		};
+
+		expect(currentHub.hubEventFollowUpSignals.map((signal) => signal.kind)).toEqual([
+			'attendance_review',
+			'no_show',
+			'low_turnout'
+		]);
+		expect(currentHub.hubEngagementSummary).toMatchObject({
+			recentAttendanceReviewCount: 1,
+			noShowEventCount: 1,
+			lowTurnoutEventCount: 1,
+			postEventFollowUpCount: 3,
+			followUpCount: 3
 		});
 
 		vi.useRealTimers();

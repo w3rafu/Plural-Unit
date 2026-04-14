@@ -73,7 +73,7 @@
 			return 'All in-app hub alerts are turned off in your notification settings.';
 		}
 
-		return 'When a broadcast goes live, an event is published, or a reminder is sent, it will appear here first.';
+		return 'When a broadcast goes live, an event update lands, or a reminder is processed, it will appear here first.';
 	}
 </script>
 
@@ -83,7 +83,7 @@
 			<div class="space-y-1">
 				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
 				<Card.Description>
-					The latest broadcasts, event launches, and reminders from {resolvedOrganizationName}.
+					The latest broadcasts, event updates, reminders, and recent follow-up cues from {resolvedOrganizationName}.
 				</Card.Description>
 			</div>
 
