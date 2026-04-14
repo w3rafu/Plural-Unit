@@ -4,14 +4,15 @@
 
 ## Status
 
-Planned on 2026-04-14.
+Completed on 2026-04-14.
 
 - 0.1.27 is documented as complete.
-- App metadata in `package.json` and `package-lock.json` remains synced to `0.1.27` until 0.1.28 ships.
+- App metadata in `package.json` and `package-lock.json` is now synced to `0.1.28`.
 - Slice a, attendance records and event outcome primitives, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 603 tests.
 - Slice b, day-of roster and quick attendance actions, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 607 tests.
 - Slice c, attendance-aware member surfaces and recent event history, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 609 tests.
 - Slice d, post-event follow-up signals and reminder cleanup, was implemented on 2026-04-14 and validated with `npm run check` plus `npm test` at 44 files / 616 tests.
+- Release closeout re-ran `npm run check` and `npm test` with app metadata synced to `0.1.28`, holding at 44 files / 616 tests.
 - This release should assume hub migrations `014` through `026` are already applied before development resumes.
 - Existing execution-ledger seams, direct-message follow-up flow, and member commitment surfaces should be reused rather than replaced.
 

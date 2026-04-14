@@ -5,7 +5,7 @@
 - [x] Keep touched live surfaces aligned with the denser 0.1.24 spacing and firmer card radius pass
 - [x] Keep attendance and follow-up UI compact, action-first, and grounded in the existing hub manage, home, alerts, and messages shells
 - [x] Prefer explicit persisted attendance and follow-through state over client-only heuristics for in-progress and completed events
-- [x] Leave app metadata at `0.1.27` until 0.1.28 ships, then sync package files and docs as part of release closeout
+- [x] Sync app metadata to `0.1.28` in package files and release docs as part of closeout
 - [x] Re-run `npm run check` and `npm test` as each major slice lands
 
 ## a - Attendance records and event outcome primitives
