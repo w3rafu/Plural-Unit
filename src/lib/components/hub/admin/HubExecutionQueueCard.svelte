@@ -6,15 +6,20 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import * as Item from '$lib/components/ui/item';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import {
+		buildHubExecutionFollowUpTriageKey,
 		buildHubExecutionQueueFocusHref,
+		buildHubExecutionQueueItemTriageKey,
 		isHubExecutionQueueFocusActive,
 		parseHubExecutionQueueFocus,
 		type HubExecutionQueueBucketFilter,
+		type HubExecutionQueueFollowUpSignal,
 		type HubExecutionQueueItem,
 		type HubExecutionQueueJobFilter,
 		type HubExecutionQueueSubjectFilter
 	} from '$lib/models/hubExecutionQueue';
+	import { MAX_HUB_OPERATOR_WORKFLOW_NOTE_LENGTH } from '$lib/models/hubOperatorWorkflowModel';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 
 	const bucketOptions = [
@@ -36,6 +41,8 @@
 	] as const satisfies Array<{ value: HubExecutionQueueSubjectFilter; label: string }>;
 
 	let showTriagedItems = $state(false);
+	let activeWorkflowNoteComposerKey = $state<string | null>(null);
+	let workflowNoteDraft = $state('');
 	const queueFocus = $derived(parseHubExecutionQueueFocus(page.url));
 
 	const queueSections = $derived(
@@ -49,8 +56,10 @@
 	const visibleUpcomingCount = $derived(queueSections.upcoming.length);
 	const processedCount = $derived(currentHub.processedExecutionItems.length);
 	const visibleProcessedCount = $derived(queueSections.processed.length);
-	const triagedItemCount = $derived(currentHub.triagedQueueItemCount);
-	const hasTriagedItems = $derived(triagedItemCount > 0);
+	const hiddenTriagedItemCount = $derived(currentHub.triagedQueueItemCount);
+	const staleExecutionItemCount = $derived(currentHub.staleExecutionItemCount);
+	const staleItemCount = $derived(currentHub.staleQueueItemCount);
+	const hasHiddenTriagedItems = $derived(hiddenTriagedItemCount > 0);
 	const followUpSignals = $derived(
 		currentHub.getHubEventFollowUpSignals({ includeTriaged: showTriagedItems })
 	);
@@ -67,7 +76,7 @@
 	const summaryCopy = $derived.by(() => {
 		if (hasQueueFocus) {
 			if (!hasVisibleQueueItems) {
-				return hasTriagedItems && !showTriagedItems
+				return hasHiddenTriagedItems && !showTriagedItems
 					? 'No active queue rows match the current filters. Reviewed or deferred rows are hidden.'
 					: 'No queue rows match the current filters.';
 			}
@@ -90,12 +99,16 @@
 				parts.push(`${visibleProcessedCount} processed`);
 			}
 
+			if (staleExecutionItemCount > 0) {
+				parts.push(`${staleExecutionItemCount} changed since review`);
+			}
+
 			return `Showing ${parts.join(' · ')}.`;
 		}
 
 		if (!hasVisibleItems) {
-			if (hasTriagedItems && !showTriagedItems) {
-				return `${triagedItemCount} reviewed or deferred item${triagedItemCount === 1 ? '' : 's'} hidden from the default queue view.`;
+			if (hasHiddenTriagedItems && !showTriagedItems) {
+				return `${hiddenTriagedItemCount} reviewed or deferred item${hiddenTriagedItemCount === 1 ? '' : 's'} hidden from the default queue view.`;
 			}
 
 			return 'Scheduled publishes and reminder windows will collect here once the hub has timed work to manage.';
@@ -119,8 +132,12 @@
 			parts.push(`${followUpCount} needing follow-up`);
 		}
 
-		if (hasTriagedItems && !showTriagedItems) {
-			parts.push(`${triagedItemCount} triaged`);
+		if (staleItemCount > 0) {
+			parts.push(`${staleItemCount} changed since review`);
+		}
+
+		if (hasHiddenTriagedItems && !showTriagedItems) {
+			parts.push(`${hiddenTriagedItemCount} triaged`);
 		}
 
 		return `${parts.join(' · ')}.`;
@@ -161,6 +178,13 @@
 
 	function toggleTriagedItems() {
 		showTriagedItems = !showTriagedItems;
+	}
+
+	function shouldShowReviewActions(
+		triageStatus: HubExecutionQueueItem['triageStatus'],
+		isStaleReview: boolean
+	) {
+		return triageStatus === null || isStaleReview;
 	}
 
 	function getStatusVariant(item: HubExecutionQueueItem) {
@@ -204,6 +228,10 @@
 		return status === 'reviewed' ? 'Reviewed' : 'Deferred';
 	}
 
+	function getStaleReviewLabel() {
+		return 'Needs re-review';
+	}
+
 	function getFollowUpOpenHref() {
 		return buildHubExecutionQueueFocusHref({
 			url: page.url,
@@ -214,6 +242,79 @@
 
 	function getFollowUpActionLabel(kind: 'attendance_review' | 'no_show' | 'low_turnout') {
 		return kind === 'attendance_review' ? 'Review attendance' : 'Open event';
+	}
+
+	function getExecutionWorkflowKey(item: Pick<HubExecutionQueueItem, 'id'>) {
+		return buildHubExecutionQueueItemTriageKey(item);
+	}
+
+	function getFollowUpWorkflowKey(signal: Pick<HubExecutionQueueFollowUpSignal, 'eventId' | 'kind'>) {
+		return buildHubExecutionFollowUpTriageKey(signal);
+	}
+
+	function getWorkflowSummary(workflowKey: string) {
+		return currentHub.getWorkflowSummary(workflowKey);
+	}
+
+	function isWorkflowNoteComposerOpen(workflowKey: string) {
+		return activeWorkflowNoteComposerKey === workflowKey;
+	}
+
+	function closeWorkflowNoteComposer() {
+		activeWorkflowNoteComposerKey = null;
+		workflowNoteDraft = '';
+	}
+
+	function toggleWorkflowNoteComposer(workflowKey: string) {
+		if (activeWorkflowNoteComposerKey === workflowKey) {
+			closeWorkflowNoteComposer();
+			return;
+		}
+
+		activeWorkflowNoteComposerKey = workflowKey;
+		workflowNoteDraft = getWorkflowSummary(workflowKey)?.note ?? '';
+	}
+
+	function getWorkflowNoteToggleLabel(workflowKey: string) {
+		if (isWorkflowNoteComposerOpen(workflowKey)) {
+			return 'Close note';
+		}
+
+		return getWorkflowSummary(workflowKey)?.note ? 'Edit note' : 'Add note';
+	}
+
+	async function saveExecutionWorkflowNote(
+		item: HubExecutionQueueItem,
+		status: 'reviewed' | 'deferred'
+	) {
+		if (status === 'reviewed') {
+			await currentHub.markExecutionQueueItemReviewed(item.id, { note: workflowNoteDraft });
+		} else {
+			await currentHub.deferExecutionQueueItem(item.id, { note: workflowNoteDraft });
+		}
+
+		if (activeWorkflowNoteComposerKey === getExecutionWorkflowKey(item)) {
+			closeWorkflowNoteComposer();
+		}
+	}
+
+	async function saveFollowUpWorkflowNote(
+		signal: HubExecutionQueueFollowUpSignal,
+		status: 'reviewed' | 'deferred'
+	) {
+		if (status === 'reviewed') {
+			await currentHub.markFollowUpSignalReviewed(signal.eventId, signal.kind, {
+				note: workflowNoteDraft
+			});
+		} else {
+			await currentHub.deferFollowUpSignal(signal.eventId, signal.kind, {
+				note: workflowNoteDraft
+			});
+		}
+
+		if (activeWorkflowNoteComposerKey === getFollowUpWorkflowKey(signal)) {
+			closeWorkflowNoteComposer();
+		}
 	}
 </script>
 
@@ -302,14 +403,16 @@
 							Show upcoming
 						{/if}
 					</Button>
-					{#if hasTriagedItems}
+					{#if hasHiddenTriagedItems}
 						<Button
 							type="button"
 							size="xs"
 							variant={showTriagedItems ? 'secondary' : 'outline'}
 							onclick={toggleTriagedItems}
 						>
-							{showTriagedItems ? 'Hide triaged' : `Show triaged (${triagedItemCount})`}
+							{showTriagedItems
+								? 'Hide triaged'
+								: `Show triaged (${hiddenTriagedItemCount})`}
 						</Button>
 					{/if}
 				</div>
@@ -329,7 +432,7 @@
 							Clear filters
 						</Button>
 					{/if}
-					{#if hasTriagedItems && !showTriagedItems}
+					{#if hasHiddenTriagedItems && !showTriagedItems}
 						<Button type="button" variant="outline" size="xs" onclick={toggleTriagedItems}>
 							Show triaged
 						</Button>
@@ -347,15 +450,33 @@
 					</div>
 					<Item.Group>
 						{#each queueSections.due as item (item.id)}
+							{@const workflowKey = getExecutionWorkflowKey(item)}
+							{@const workflowSummary = getWorkflowSummary(workflowKey)}
 							<Item.Root variant="muted" size="sm">
 								<Item.Content>
 									<div class="flex flex-wrap items-center gap-2">
 										<Item.Title>{item.subjectTitle}</Item.Title>
 										<Badge variant={getStatusVariant(item)}>{item.statusLabel}</Badge>
 										<Badge variant="outline">{item.jobLabel}</Badge>
+										{#if item.isStaleReview}
+											<Badge variant="destructive">{getStaleReviewLabel()}</Badge>
+										{/if}
 									</div>
 									<Item.Description>{item.detailCopy}</Item.Description>
-									<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									<div class="space-y-1">
+										{#if item.staleReviewCopy}
+											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+										{/if}
+										{#if workflowSummary}
+											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												{#if workflowSummary.note}
+													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+												{/if}
+											</div>
+										{/if}
+										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									</div>
 								</Item.Content>
 								<Item.Actions>
 									{#if item.canRunNow}
@@ -386,15 +507,33 @@
 					</div>
 					<Item.Group>
 						{#each queueSections.upcoming as item (item.id)}
+							{@const workflowKey = getExecutionWorkflowKey(item)}
+							{@const workflowSummary = getWorkflowSummary(workflowKey)}
 							<Item.Root variant="muted" size="sm">
 								<Item.Content>
 									<div class="flex flex-wrap items-center gap-2">
 										<Item.Title>{item.subjectTitle}</Item.Title>
 										<Badge variant={getStatusVariant(item)}>{item.statusLabel}</Badge>
 										<Badge variant="outline">{item.jobLabel}</Badge>
+										{#if item.isStaleReview}
+											<Badge variant="destructive">{getStaleReviewLabel()}</Badge>
+										{/if}
 									</div>
 									<Item.Description>{item.detailCopy}</Item.Description>
-									<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									<div class="space-y-1">
+										{#if item.staleReviewCopy}
+											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+										{/if}
+										{#if workflowSummary}
+											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												{#if workflowSummary.note}
+													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+												{/if}
+											</div>
+										{/if}
+										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									</div>
 								</Item.Content>
 								<Item.Actions>
 									{#if item.canRunNow}
@@ -425,6 +564,8 @@
 					</div>
 					<Item.Group>
 						{#each queueSections.recovery as item (item.id)}
+							{@const workflowKey = getExecutionWorkflowKey(item)}
+							{@const workflowSummary = getWorkflowSummary(workflowKey)}
 							<Item.Root variant="muted" size="sm">
 								<Item.Content>
 									<div class="flex flex-wrap items-center gap-2">
@@ -433,6 +574,9 @@
 										<Badge variant="outline">{item.jobLabel}</Badge>
 										{#if item.recoveryGuidance}
 											<Badge variant={getRecoveryVariant(item)}>{item.recoveryGuidance.label}</Badge>
+										{/if}
+										{#if item.isStaleReview}
+											<Badge variant="destructive">{getStaleReviewLabel()}</Badge>
 										{/if}
 										{#if item.triageStatus}
 											<Badge variant={getTriageVariant(item.triageStatus)}>
@@ -444,6 +588,38 @@
 									<div class="space-y-1">
 										{#if item.recoveryGuidance}
 											<p class="text-xs text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
+										{/if}
+										{#if item.staleReviewCopy}
+											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+										{/if}
+										{#if workflowSummary}
+											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												{#if workflowSummary.note}
+													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+												{/if}
+											</div>
+										{/if}
+										{#if isWorkflowNoteComposerOpen(workflowKey)}
+											<div class="space-y-2 rounded-lg border border-border/70 bg-background/80 p-3">
+												<Textarea
+													bind:value={workflowNoteDraft}
+													rows={3}
+													maxlength={MAX_HUB_OPERATOR_WORKFLOW_NOTE_LENGTH}
+													placeholder="Add a short handoff note for the next admin."
+												/>
+												<div class="flex flex-wrap gap-2">
+													<Button type="button" variant="secondary" size="xs" onclick={() => saveExecutionWorkflowNote(item, 'reviewed')}>
+														Save as reviewed
+													</Button>
+													<Button type="button" variant="outline" size="xs" onclick={() => saveExecutionWorkflowNote(item, 'deferred')}>
+														Save as deferred
+													</Button>
+													<Button type="button" variant="ghost" size="xs" onclick={closeWorkflowNoteComposer}>
+														Cancel
+													</Button>
+												</div>
+											</div>
 										{/if}
 										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
 									</div>
@@ -474,6 +650,14 @@
 									<Button href={getOpenHref(item)} variant="outline" size="xs">
 										{getOpenLabel(item)}
 									</Button>
+									<Button
+										type="button"
+										variant={isWorkflowNoteComposerOpen(workflowKey) ? 'secondary' : 'ghost'}
+										size="xs"
+										onclick={() => toggleWorkflowNoteComposer(workflowKey)}
+									>
+										{getWorkflowNoteToggleLabel(workflowKey)}
+									</Button>
 									{#if item.triageStatus}
 										<Button
 											type="button"
@@ -483,7 +667,8 @@
 										>
 											Surface again
 										</Button>
-									{:else}
+									{/if}
+									{#if shouldShowReviewActions(item.triageStatus, item.isStaleReview)}
 										<Button
 											type="button"
 											variant="ghost"
@@ -518,11 +703,16 @@
 					</div>
 					<Item.Group>
 						{#each followUpSignals as signal (signal.eventId)}
+							{@const workflowKey = getFollowUpWorkflowKey(signal)}
+							{@const workflowSummary = getWorkflowSummary(workflowKey)}
 							<Item.Root variant="muted" size="sm">
 								<Item.Content>
 									<div class="flex flex-wrap items-center gap-2">
 										<Item.Title>{signal.eventTitle}</Item.Title>
 										<Badge variant={getFollowUpVariant(signal.tone)}>{signal.statusLabel}</Badge>
+										{#if signal.isStaleReview}
+											<Badge variant="destructive">{getStaleReviewLabel()}</Badge>
+										{/if}
 										{#if signal.triageStatus}
 											<Badge variant={getTriageVariant(signal.triageStatus)}>
 												{getTriageLabel(signal.triageStatus)}
@@ -530,11 +720,53 @@
 										{/if}
 									</div>
 									<Item.Description>{signal.copy}</Item.Description>
-									<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
+									<div class="space-y-1">
+										{#if signal.staleReviewCopy}
+											<p class="text-xs text-destructive">{signal.staleReviewCopy}</p>
+										{/if}
+										{#if workflowSummary}
+											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												{#if workflowSummary.note}
+													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+												{/if}
+											</div>
+										{/if}
+										{#if isWorkflowNoteComposerOpen(workflowKey)}
+											<div class="space-y-2 rounded-lg border border-border/70 bg-background/80 p-3">
+												<Textarea
+													bind:value={workflowNoteDraft}
+													rows={3}
+													maxlength={MAX_HUB_OPERATOR_WORKFLOW_NOTE_LENGTH}
+													placeholder="Add a short handoff note for the next admin."
+												/>
+												<div class="flex flex-wrap gap-2">
+													<Button type="button" variant="secondary" size="xs" onclick={() => saveFollowUpWorkflowNote(signal, 'reviewed')}>
+														Save as reviewed
+													</Button>
+													<Button type="button" variant="outline" size="xs" onclick={() => saveFollowUpWorkflowNote(signal, 'deferred')}>
+														Save as deferred
+													</Button>
+													<Button type="button" variant="ghost" size="xs" onclick={closeWorkflowNoteComposer}>
+														Cancel
+													</Button>
+												</div>
+											</div>
+										{/if}
+										<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
+									</div>
 								</Item.Content>
 								<Item.Actions>
 									<Button href={getFollowUpOpenHref()} variant="outline" size="xs">
 										{getFollowUpActionLabel(signal.kind)}
+									</Button>
+									<Button
+										type="button"
+										variant={isWorkflowNoteComposerOpen(workflowKey) ? 'secondary' : 'ghost'}
+										size="xs"
+										onclick={() => toggleWorkflowNoteComposer(workflowKey)}
+									>
+										{getWorkflowNoteToggleLabel(workflowKey)}
 									</Button>
 									{#if signal.triageStatus}
 										<Button
@@ -545,7 +777,8 @@
 										>
 											Surface again
 										</Button>
-									{:else}
+									{/if}
+									{#if shouldShowReviewActions(signal.triageStatus, signal.isStaleReview)}
 										<Button
 											type="button"
 											variant="ghost"
@@ -580,12 +813,17 @@
 					</div>
 					<Item.Group>
 						{#each queueSections.processed as item (item.id)}
+							{@const workflowKey = getExecutionWorkflowKey(item)}
+							{@const workflowSummary = getWorkflowSummary(workflowKey)}
 							<Item.Root variant="muted" size="sm">
 								<Item.Content>
 									<div class="flex flex-wrap items-center gap-2">
 										<Item.Title>{item.subjectTitle}</Item.Title>
 										<Badge variant={getStatusVariant(item)}>{item.statusLabel}</Badge>
 										<Badge variant="outline">{item.jobLabel}</Badge>
+										{#if item.isStaleReview}
+											<Badge variant="destructive">{getStaleReviewLabel()}</Badge>
+										{/if}
 										{#if item.triageStatus}
 											<Badge variant={getTriageVariant(item.triageStatus)}>
 												{getTriageLabel(item.triageStatus)}
@@ -593,10 +831,52 @@
 										{/if}
 									</div>
 									<Item.Description>{item.detailCopy}</Item.Description>
-									<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									<div class="space-y-1">
+										{#if item.staleReviewCopy}
+											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+										{/if}
+										{#if workflowSummary}
+											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												{#if workflowSummary.note}
+													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+												{/if}
+											</div>
+										{/if}
+										{#if isWorkflowNoteComposerOpen(workflowKey)}
+											<div class="space-y-2 rounded-lg border border-border/70 bg-background/80 p-3">
+												<Textarea
+													bind:value={workflowNoteDraft}
+													rows={3}
+													maxlength={MAX_HUB_OPERATOR_WORKFLOW_NOTE_LENGTH}
+													placeholder="Add a short handoff note for the next admin."
+												/>
+												<div class="flex flex-wrap gap-2">
+													<Button type="button" variant="secondary" size="xs" onclick={() => saveExecutionWorkflowNote(item, 'reviewed')}>
+														Save as reviewed
+													</Button>
+													<Button type="button" variant="outline" size="xs" onclick={() => saveExecutionWorkflowNote(item, 'deferred')}>
+														Save as deferred
+													</Button>
+													<Button type="button" variant="ghost" size="xs" onclick={closeWorkflowNoteComposer}>
+														Cancel
+													</Button>
+												</div>
+											</div>
+										{/if}
+										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									</div>
 								</Item.Content>
 								<Item.Actions>
 									<Button href={getOpenHref(item)} variant="outline" size="xs">Open</Button>
+									<Button
+										type="button"
+										variant={isWorkflowNoteComposerOpen(workflowKey) ? 'secondary' : 'ghost'}
+										size="xs"
+										onclick={() => toggleWorkflowNoteComposer(workflowKey)}
+									>
+										{getWorkflowNoteToggleLabel(workflowKey)}
+									</Button>
 									{#if item.triageStatus}
 										<Button
 											type="button"
@@ -606,7 +886,8 @@
 										>
 											Surface again
 										</Button>
-									{:else}
+									{/if}
+									{#if shouldShowReviewActions(item.triageStatus, item.isStaleReview)}
 										<Button
 											type="button"
 											variant="ghost"

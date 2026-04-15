@@ -41,14 +41,17 @@ import {
 	buildHubExecutionFollowUpTriageKey,
 	buildHubExecutionQueueItemTriageKey,
 	buildHubExecutionQueueSections,
-	clearHubExecutionQueueTriage,
-	setHubExecutionQueueTriage,
+	buildHubExecutionQueueTriageMapFromWorkflowStateRows,
 	type HubExecutionQueueFocus,
 	type HubExecutionQueueFollowUpSignal,
 	type HubExecutionQueueSections,
 	type HubExecutionTriageMap,
 	type HubExecutionTriageStatus
 } from '$lib/models/hubExecutionQueue';
+import {
+	buildHubOperatorWorkflowSummary,
+	normalizeHubOperatorWorkflowNote
+} from '$lib/models/hubOperatorWorkflowModel';
 import {
 	sortResourceRows,
 	type ResourceMoveDirection
@@ -72,6 +75,9 @@ import type {
 	BroadcastRow,
 	HubExecutionLedgerMutationPayload,
 	HubExecutionLedgerRow,
+	HubOperatorWorkflowStateKind,
+	HubOperatorWorkflowStateMutationPayload,
+	HubOperatorWorkflowStateRow,
 	EventMutationPayload,
 	EventAttendanceRow,
 	EventAttendanceStatus,
@@ -82,7 +88,11 @@ import type {
 	ResourceRow,
 	ResourceType
 } from '$lib/repositories/hubRepository';
-import { togglePlugin } from '$lib/repositories/hubRepository';
+import {
+	deleteHubOperatorWorkflowStateEntries,
+	togglePlugin,
+	upsertHubOperatorWorkflowStateEntries
+} from '$lib/repositories/hubRepository';
 import {
 	getCurrentHubActivityFeed,
 	getCurrentHubAllActivityFeed,
@@ -169,12 +179,18 @@ import {
 } from '$lib/demo/smokeMode';
 
 const HUB_EXECUTION_QUEUE_TRIAGE_STORAGE_KEY_PREFIX = 'plural-unit:hub-queue-triage:';
+const HUB_EXECUTION_QUEUE_TRIAGE_IMPORT_STORAGE_KEY_PREFIX =
+	'plural-unit:hub-queue-triage-imported:';
 
 function getHubExecutionQueueTriageStorageKey(orgId: string) {
 	return `${HUB_EXECUTION_QUEUE_TRIAGE_STORAGE_KEY_PREFIX}${orgId}`;
 }
 
-function loadHubExecutionQueueTriageMap(orgId: string | null): HubExecutionTriageMap {
+function getHubExecutionQueueTriageImportStorageKey(orgId: string) {
+	return `${HUB_EXECUTION_QUEUE_TRIAGE_IMPORT_STORAGE_KEY_PREFIX}${orgId}`;
+}
+
+function loadLegacyHubExecutionQueueTriageMap(orgId: string | null): HubExecutionTriageMap {
 	if (typeof window === 'undefined' || !orgId) {
 		return {};
 	}
@@ -191,37 +207,88 @@ function loadHubExecutionQueueTriageMap(orgId: string | null): HubExecutionTriag
 		}
 
 		return Object.fromEntries(
-			Object.entries(parsed).filter((entry): entry is [string, { status: HubExecutionTriageStatus; updatedAt: string }] => {
-				const value = entry[1];
-				const triageValue = value as { status?: unknown; updatedAt?: unknown } | null;
-				return (
-					value !== null &&
-					typeof value === 'object' &&
-					(triageValue?.status === 'reviewed' || triageValue?.status === 'deferred') &&
-					typeof triageValue?.updatedAt === 'string'
-				);
-			})
+			Object.entries(parsed)
+				.filter((entry): entry is [string, { status: HubExecutionTriageStatus; updatedAt: string }] => {
+					const value = entry[1];
+					const triageValue = value as { status?: unknown; updatedAt?: unknown } | null;
+					return (
+						value !== null &&
+						typeof value === 'object' &&
+						(triageValue?.status === 'reviewed' || triageValue?.status === 'deferred') &&
+						typeof triageValue?.updatedAt === 'string'
+					);
+				})
+				.map(([key, value]) => [
+					key,
+					{
+						status: value.status,
+						updatedAt: value.updatedAt,
+						reviewedAgainstSignature: null
+					}
+				])
 		);
 	} catch {
 		return {};
 	}
 }
 
-function persistHubExecutionQueueTriageMap(
-	orgId: string | null,
-	triageMap: HubExecutionTriageMap
-) {
+function clearLegacyHubExecutionQueueTriageMap(orgId: string | null) {
 	if (typeof window === 'undefined' || !orgId) {
 		return;
 	}
 
-	const storageKey = getHubExecutionQueueTriageStorageKey(orgId);
-	if (Object.keys(triageMap).length === 0) {
-		window.localStorage.removeItem(storageKey);
+	window.localStorage.removeItem(getHubExecutionQueueTriageStorageKey(orgId));
+}
+
+function hasImportedLegacyHubExecutionQueueTriage(orgId: string | null) {
+	if (typeof window === 'undefined' || !orgId) {
+		return false;
+	}
+
+	return window.localStorage.getItem(getHubExecutionQueueTriageImportStorageKey(orgId)) === '1';
+}
+
+function markLegacyHubExecutionQueueTriageImported(orgId: string | null) {
+	if (typeof window === 'undefined' || !orgId) {
 		return;
 	}
 
-	window.localStorage.setItem(storageKey, JSON.stringify(triageMap));
+	window.localStorage.setItem(getHubExecutionQueueTriageImportStorageKey(orgId), '1');
+}
+
+function resolveHubOperatorWorkflowStateKind(
+	workflowKey: string
+): HubOperatorWorkflowStateKind | null {
+	if (workflowKey.startsWith('execution:')) {
+		return 'execution_item';
+	}
+
+	if (workflowKey.startsWith('followup:')) {
+		return 'followup_signal';
+	}
+
+	return null;
+}
+
+function upsertHubOperatorWorkflowStateRow(
+	rows: HubOperatorWorkflowStateRow[],
+	row: HubOperatorWorkflowStateRow
+) {
+	const existingIndex = rows.findIndex((entry) => entry.workflow_key === row.workflow_key);
+	if (existingIndex === -1) {
+		return [row, ...rows];
+	}
+
+	const nextRows = [...rows];
+	nextRows[existingIndex] = row;
+	return nextRows;
+}
+
+function removeHubOperatorWorkflowStateRow(
+	rows: HubOperatorWorkflowStateRow[],
+	workflowKey: string
+) {
+	return rows.filter((entry) => entry.workflow_key !== workflowKey);
 }
 
 function buildSmokeEventAttendanceRow(input: {
@@ -292,6 +359,7 @@ class CurrentHub {
 	isSavingNotificationPreferences = $state(false);
 	notificationReadTargetId = $state('');
 	isMarkingAllActivityRead = $state(false);
+	workflowStateRows = $state<HubOperatorWorkflowStateRow[]>([]);
 	queueTriageMap = $state<HubExecutionTriageMap>({});
 	lastError = $state<Error | null>(null);
 
@@ -301,29 +369,294 @@ class CurrentHub {
 
 	private loadPromise: Promise<void> | null = null;
 	private loadingOrgId: string | null = null;
+	private workflowMutationTokens = new Map<string, string>();
+	private smokeFixtureNow = Date.now();
+
+	private buildSmokeHydratedState() {
+		const smokeState = buildSmokeHubState(this.smokeFixtureNow);
+		const workflowStateRows =
+			this.workflowStateRows.length > 0 ? this.workflowStateRows : smokeState.workflowStateRows;
+
+		return {
+			...smokeState,
+			workflowStateRows,
+			queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(workflowStateRows)
+		};
+	}
 
 	constructor() {
 		if (typeof window !== 'undefined' && shouldHydrateSmokeHubState()) {
-			applyCurrentHubLoadedState(this, buildSmokeHubState());
+			applyCurrentHubLoadedState(this, this.buildSmokeHydratedState());
 		}
 	}
 
-	private loadQueueTriageState(orgId: string | null = this.orgId) {
-		this.queueTriageMap = loadHubExecutionQueueTriageMap(orgId);
+	private applyWorkflowStateRows(rows: HubOperatorWorkflowStateRow[]) {
+		this.workflowStateRows = rows;
+		this.queueTriageMap = buildHubExecutionQueueTriageMapFromWorkflowStateRows(rows);
 	}
 
-	private persistQueueTriageState(orgId: string | null = this.orgId) {
-		persistHubExecutionQueueTriageMap(orgId, this.queueTriageMap);
+	private getWorkflowStateRow(workflowKey: string) {
+		return this.workflowStateRows.find((row) => row.workflow_key === workflowKey) ?? null;
 	}
 
-	private setQueueTriageStatus(triageKey: string, status: HubExecutionTriageStatus) {
-		this.queueTriageMap = setHubExecutionQueueTriage(this.queueTriageMap, triageKey, status);
-		this.persistQueueTriageState();
+	private getActiveFollowUpWorkflowKeys() {
+		return new Set(
+			this.getHubEventFollowUpSignals({ includeTriaged: true }).map((signal) =>
+				buildHubExecutionFollowUpTriageKey(signal)
+			)
+		);
 	}
 
-	private clearQueueTriageStatus(triageKey: string) {
-		this.queueTriageMap = clearHubExecutionQueueTriage(this.queueTriageMap, triageKey);
-		this.persistQueueTriageState();
+	private getOrphanedFollowUpWorkflowKeys(rows: HubOperatorWorkflowStateRow[] = this.workflowStateRows) {
+		const activeFollowUpWorkflowKeys = this.getActiveFollowUpWorkflowKeys();
+
+		return rows
+			.filter(
+				(row) =>
+					row.workflow_kind === 'followup_signal' &&
+					!activeFollowUpWorkflowKeys.has(row.workflow_key)
+			)
+			.map((row) => row.workflow_key);
+	}
+
+	private async cleanupOrphanedFollowUpWorkflowStateRows(options?: { persist?: boolean }) {
+		const orphanedWorkflowKeys = this.getOrphanedFollowUpWorkflowKeys();
+		if (orphanedWorkflowKeys.length === 0) {
+			return;
+		}
+
+		const orphanedWorkflowKeySet = new Set(orphanedWorkflowKeys);
+		this.applyWorkflowStateRows(
+			this.workflowStateRows.filter((row) => !orphanedWorkflowKeySet.has(row.workflow_key))
+		);
+
+		if (options?.persist === false || isSmokeModeEnabled()) {
+			return;
+		}
+
+		const orgId = this.orgId;
+		if (!orgId) {
+			return;
+		}
+
+		try {
+			await deleteHubOperatorWorkflowStateEntries(orgId, orphanedWorkflowKeys);
+		} catch (error) {
+			this.captureError(error);
+		}
+	}
+
+	private getWorkflowReviewSignature(workflowKey: string) {
+		const executionSections = this.getExecutionQueueSections(
+			{ includeUpcoming: true },
+			{ includeTriaged: true }
+		);
+		const executionItem = [
+			...executionSections.due,
+			...executionSections.upcoming,
+			...executionSections.recovery,
+			...executionSections.processed
+		].find((item) => buildHubExecutionQueueItemTriageKey(item) === workflowKey);
+
+		if (executionItem) {
+			return executionItem.reviewSignature;
+		}
+
+		return (
+			this.getHubEventFollowUpSignals({ includeTriaged: true }).find(
+				(signal) => buildHubExecutionFollowUpTriageKey(signal) === workflowKey
+			)?.reviewSignature ?? null
+		);
+	}
+
+	private buildWorkflowStateMutationPayload(
+		workflowKey: string,
+		status: HubExecutionTriageStatus,
+		note?: string | null
+	): HubOperatorWorkflowStateMutationPayload | null {
+		const orgId = this.orgId;
+		const ownProfileId = this.ownProfileId;
+		const existingRow = this.getWorkflowStateRow(workflowKey);
+		const workflowKind =
+			existingRow?.workflow_kind ?? resolveHubOperatorWorkflowStateKind(workflowKey);
+
+		if (!orgId || !ownProfileId || !workflowKind) {
+			return null;
+		}
+
+		return {
+			organization_id: orgId,
+			workflow_key: workflowKey,
+			workflow_kind: workflowKind,
+			status,
+			reviewed_by_profile_id: ownProfileId,
+			note: normalizeHubOperatorWorkflowNote(
+				note === undefined ? existingRow?.note ?? '' : note
+			),
+			reviewed_against_signature: this.getWorkflowReviewSignature(workflowKey)
+		};
+	}
+
+	private createWorkflowMutationToken(workflowKey: string) {
+		const token = `${Date.now()}:${Math.random()}`;
+		this.workflowMutationTokens.set(workflowKey, token);
+		return token;
+	}
+
+	private isCurrentWorkflowMutation(workflowKey: string, token: string) {
+		return this.workflowMutationTokens.get(workflowKey) === token;
+	}
+
+	private finishWorkflowMutation(workflowKey: string, token: string) {
+		if (this.isCurrentWorkflowMutation(workflowKey, token)) {
+			this.workflowMutationTokens.delete(workflowKey);
+		}
+	}
+
+	private restoreWorkflowStateRow(
+		workflowKey: string,
+		previousRow: HubOperatorWorkflowStateRow | null
+	) {
+		this.applyWorkflowStateRows(
+			previousRow
+				? upsertHubOperatorWorkflowStateRow(this.workflowStateRows, previousRow)
+				: removeHubOperatorWorkflowStateRow(this.workflowStateRows, workflowKey)
+		);
+	}
+
+	private async importLegacyQueueTriageIfNeeded(
+		orgId: string,
+		workflowStateRows: HubOperatorWorkflowStateRow[]
+	) {
+		if (
+			workflowStateRows.length > 0 ||
+			hasImportedLegacyHubExecutionQueueTriage(orgId) ||
+			!currentOrganization.isAdmin ||
+			!this.ownProfileId
+		) {
+			return workflowStateRows;
+		}
+
+		const legacyTriageMap = loadLegacyHubExecutionQueueTriageMap(orgId);
+		if (Object.keys(legacyTriageMap).length === 0) {
+			return workflowStateRows;
+		}
+
+		const legacyEntries = Object.entries(legacyTriageMap).flatMap(([workflowKey, entry]) => {
+			const workflowKind = resolveHubOperatorWorkflowStateKind(workflowKey);
+			if (!workflowKind) {
+				return [];
+			}
+
+			return [
+				{
+					organization_id: orgId,
+					workflow_key: workflowKey,
+					workflow_kind: workflowKind,
+					status: entry.status,
+					reviewed_by_profile_id: this.ownProfileId as string,
+					note: '',
+					reviewed_against_signature: null
+				} satisfies HubOperatorWorkflowStateMutationPayload
+			];
+		});
+
+		if (legacyEntries.length === 0) {
+			markLegacyHubExecutionQueueTriageImported(orgId);
+			clearLegacyHubExecutionQueueTriageMap(orgId);
+			return workflowStateRows;
+		}
+
+		try {
+			const importedRows = await upsertHubOperatorWorkflowStateEntries(legacyEntries);
+			markLegacyHubExecutionQueueTriageImported(orgId);
+			clearLegacyHubExecutionQueueTriageMap(orgId);
+			return importedRows;
+		} catch {
+			return workflowStateRows;
+		}
+	}
+
+	private async setQueueTriageStatus(
+		workflowKey: string,
+		status: HubExecutionTriageStatus,
+		options?: { note?: string | null }
+	) {
+		const payload = this.buildWorkflowStateMutationPayload(workflowKey, status, options?.note);
+		if (!payload) {
+			return;
+		}
+
+		const previousRow = this.getWorkflowStateRow(workflowKey);
+		const timestamp = new Date().toISOString();
+		const optimisticRow: HubOperatorWorkflowStateRow = {
+			...payload,
+			created_at: previousRow?.created_at ?? timestamp,
+			updated_at: timestamp
+		};
+
+		this.applyWorkflowStateRows(
+			upsertHubOperatorWorkflowStateRow(this.workflowStateRows, optimisticRow)
+		);
+
+		if (isSmokeModeEnabled()) {
+			return;
+		}
+
+		const token = this.createWorkflowMutationToken(workflowKey);
+
+		try {
+			const [persistedRow] = await upsertHubOperatorWorkflowStateEntries([payload]);
+			if (!persistedRow || !this.isCurrentWorkflowMutation(workflowKey, token)) {
+				return;
+			}
+
+			this.applyWorkflowStateRows(
+				upsertHubOperatorWorkflowStateRow(this.workflowStateRows, persistedRow)
+			);
+		} catch (error) {
+			if (this.isCurrentWorkflowMutation(workflowKey, token)) {
+				this.restoreWorkflowStateRow(workflowKey, previousRow);
+			}
+			this.captureError(error);
+		} finally {
+			this.finishWorkflowMutation(workflowKey, token);
+		}
+	}
+
+	private async clearQueueTriageStatus(workflowKey: string) {
+		const orgId = this.orgId;
+		const previousRow = this.getWorkflowStateRow(workflowKey);
+
+		if (!previousRow) {
+			return;
+		}
+
+		this.applyWorkflowStateRows(
+			removeHubOperatorWorkflowStateRow(this.workflowStateRows, workflowKey)
+		);
+
+		if (isSmokeModeEnabled()) {
+			return;
+		}
+
+		if (!orgId) {
+			this.restoreWorkflowStateRow(workflowKey, previousRow);
+			return;
+		}
+
+		const token = this.createWorkflowMutationToken(workflowKey);
+
+		try {
+			await deleteHubOperatorWorkflowStateEntries(orgId, [workflowKey]);
+		} catch (error) {
+			if (this.isCurrentWorkflowMutation(workflowKey, token)) {
+				this.restoreWorkflowStateRow(workflowKey, previousRow);
+			}
+			this.captureError(error);
+		} finally {
+			this.finishWorkflowMutation(workflowKey, token);
+		}
 	}
 
 	private captureError(error: unknown) {
@@ -489,6 +822,19 @@ class CurrentHub {
 		});
 	}
 
+	getWorkflowSummary(workflowKey: string) {
+		const workflowRow = this.getWorkflowStateRow(workflowKey);
+		if (!workflowRow) {
+			return null;
+		}
+
+		return buildHubOperatorWorkflowSummary({
+			row: workflowRow,
+			members: currentOrganization.members,
+			ownProfileId: this.ownProfileId
+		});
+	}
+
 	get orderedResources() {
 		return sortResourceRows(this.resources);
 	}
@@ -543,18 +889,36 @@ class CurrentHub {
 		return this.getExecutionQueueSections().recovery.length;
 	}
 
+	get staleExecutionItemCount() {
+		const sections = this.getExecutionQueueSections(undefined, { includeTriaged: true });
+
+		return [...sections.due, ...sections.upcoming, ...sections.recovery, ...sections.processed].filter(
+			(item) => item.triageStatus !== null && item.isStaleReview
+		).length;
+	}
+
 	get triagedExecutionItemCount() {
 		const sections = this.getExecutionQueueSections(undefined, { includeTriaged: true });
 
 		return [...sections.recovery, ...sections.processed].filter(
-			(item) => item.triageStatus !== null
+			(item) => item.triageStatus !== null && !item.isStaleReview
+		).length;
+	}
+
+	get staleFollowUpSignalCount() {
+		return this.getHubEventFollowUpSignals({ includeTriaged: true }).filter(
+			(signal) => signal.triageStatus !== null && signal.isStaleReview
 		).length;
 	}
 
 	get triagedFollowUpSignalCount() {
 		return this.getHubEventFollowUpSignals({ includeTriaged: true }).filter(
-			(signal) => signal.triageStatus !== null
+			(signal) => signal.triageStatus !== null && !signal.isStaleReview
 		).length;
+	}
+
+	get staleQueueItemCount() {
+		return this.staleExecutionItemCount + this.staleFollowUpSignalCount;
 	}
 
 	get triagedQueueItemCount() {
@@ -587,6 +951,8 @@ class CurrentHub {
 		resetCurrentHubState(this);
 		this.loadPromise = null;
 		this.loadingOrgId = null;
+		this.workflowMutationTokens.clear();
+		this.smokeFixtureNow = Date.now();
 	}
 
 	async load() {
@@ -604,8 +970,8 @@ class CurrentHub {
 			}
 
 			this.lastError = null;
-			applyCurrentHubLoadedState(this, buildSmokeHubState());
-			this.loadQueueTriageState(orgId);
+			applyCurrentHubLoadedState(this, this.buildSmokeHydratedState());
+			await this.cleanupOrphanedFollowUpWorkflowStateRows({ persist: false });
 			this.isLoading = false;
 			this.loadPromise = null;
 			this.loadingOrgId = null;
@@ -646,8 +1012,19 @@ class CurrentHub {
 				return;
 			}
 
-			applyCurrentHubLoadedState(this, nextState);
-			this.loadQueueTriageState(orgId);
+			const workflowStateRows = await this.importLegacyQueueTriageIfNeeded(
+				orgId,
+				nextState.workflowStateRows
+			);
+
+			applyCurrentHubLoadedState(this, {
+				...nextState,
+				workflowStateRows,
+				queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(
+					workflowStateRows
+				)
+			});
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		})();
 
 		this.loadPromise = loadPromise;
@@ -896,6 +1273,7 @@ class CurrentHub {
 			}
 
 			await this.reconcileExecutionLedger();
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -913,6 +1291,7 @@ class CurrentHub {
 			}
 
 			await this.reconcileExecutionLedger();
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -924,6 +1303,7 @@ class CurrentHub {
 				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
 			});
 			await this.reconcileExecutionLedger();
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -935,6 +1315,7 @@ class CurrentHub {
 				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
 			});
 			await this.reconcileExecutionLedger();
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -946,6 +1327,7 @@ class CurrentHub {
 				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
 			});
 			await this.reconcileExecutionLedger();
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -963,6 +1345,7 @@ class CurrentHub {
 			this.eventAttendanceMap = nextEventState.eventAttendanceMap;
 			this.eventReminderSettingsMap = nextEventState.eventReminderSettingsMap;
 			await this.reconcileExecutionLedger();
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -1077,28 +1460,52 @@ class CurrentHub {
 		});
 	}
 
-	markExecutionQueueItemReviewed(entryId: string) {
-		this.setQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId), 'reviewed');
+	async markExecutionQueueItemReviewed(entryId: string, options?: { note?: string | null }) {
+		await this.setQueueTriageStatus(
+			buildHubExecutionQueueItemTriageKey(entryId),
+			'reviewed',
+			options
+		);
 	}
 
-	deferExecutionQueueItem(entryId: string) {
-		this.setQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId), 'deferred');
+	async deferExecutionQueueItem(entryId: string, options?: { note?: string | null }) {
+		await this.setQueueTriageStatus(
+			buildHubExecutionQueueItemTriageKey(entryId),
+			'deferred',
+			options
+		);
 	}
 
-	surfaceExecutionQueueItem(entryId: string) {
-		this.clearQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId));
+	async surfaceExecutionQueueItem(entryId: string) {
+		await this.clearQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId));
 	}
 
-	markFollowUpSignalReviewed(eventId: string, kind: HubEventFollowUpSignal['kind']) {
-		this.setQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }), 'reviewed');
+	async markFollowUpSignalReviewed(
+		eventId: string,
+		kind: HubEventFollowUpSignal['kind'],
+		options?: { note?: string | null }
+	) {
+		await this.setQueueTriageStatus(
+			buildHubExecutionFollowUpTriageKey({ eventId, kind }),
+			'reviewed',
+			options
+		);
 	}
 
-	deferFollowUpSignal(eventId: string, kind: HubEventFollowUpSignal['kind']) {
-		this.setQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }), 'deferred');
+	async deferFollowUpSignal(
+		eventId: string,
+		kind: HubEventFollowUpSignal['kind'],
+		options?: { note?: string | null }
+	) {
+		await this.setQueueTriageStatus(
+			buildHubExecutionFollowUpTriageKey({ eventId, kind }),
+			'deferred',
+			options
+		);
 	}
 
-	surfaceFollowUpSignal(eventId: string, kind: HubEventFollowUpSignal['kind']) {
-		this.clearQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }));
+	async surfaceFollowUpSignal(eventId: string, kind: HubEventFollowUpSignal['kind']) {
+		await this.clearQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }));
 	}
 
 	getBroadcastDeliveryStatus(broadcastId: string): ScheduledDeliveryStatus | null {
@@ -1201,6 +1608,7 @@ class CurrentHub {
 					currentMap: this.eventResponseMap
 				})
 			);
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -1223,6 +1631,7 @@ class CurrentHub {
 						status
 					})
 				);
+				await this.cleanupOrphanedFollowUpWorkflowStateRows({ persist: false });
 			});
 			return;
 		}
@@ -1238,6 +1647,7 @@ class CurrentHub {
 					currentMap: this.eventAttendanceMap
 				})
 			);
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -1272,6 +1682,7 @@ class CurrentHub {
 						})
 					);
 				}
+				await this.cleanupOrphanedFollowUpWorkflowStateRows({ persist: false });
 			});
 			return;
 		}
@@ -1301,6 +1712,7 @@ class CurrentHub {
 					throw bulkError;
 				}
 			}
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 
@@ -1317,6 +1729,7 @@ class CurrentHub {
 					eventId,
 					profileId
 				);
+				await this.cleanupOrphanedFollowUpWorkflowStateRows({ persist: false });
 			});
 			return;
 		}
@@ -1329,6 +1742,7 @@ class CurrentHub {
 					currentMap: this.eventAttendanceMap
 				})
 			);
+			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		});
 	}
 

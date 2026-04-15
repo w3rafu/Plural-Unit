@@ -28,7 +28,11 @@
 	const dueExecutionCount = $derived(currentHub.dueExecutionCount);
 	const recoverableExecutionCount = $derived(currentHub.visibleRecoverableExecutionCount);
 	const processedExecutionCount = $derived(currentHub.getExecutionQueueSections().processed.length);
+	const staleRecoverableExecutionCount = $derived(
+		currentHub.getExecutionQueueSections().recovery.filter((item) => item.isStaleReview).length
+	);
 	const triagedExecutionItemCount = $derived(currentHub.triagedExecutionItemCount);
+	const staleFollowUpSignalCount = $derived(currentHub.staleFollowUpSignalCount);
 	const triagedFollowUpSignalCount = $derived(currentHub.triagedFollowUpSignalCount);
 	const engagementSummary = $derived(currentHub.hubEngagementSummary);
 	const attendanceReviewCount = $derived(engagementSummary.attendanceReviewCount);
@@ -43,6 +47,10 @@
 	const attendanceReviewCopy = $derived(getHubEngagementAttendanceCopy(engagementSummary));
 	const followUpCopy = $derived.by(() => {
 		const baseCopy = getHubEngagementFollowUpCopy(engagementSummary);
+
+		if (staleFollowUpSignalCount > 0) {
+			return `${baseCopy} ${staleFollowUpSignalCount} changed since review.`;
+		}
 
 		if (engagementSummary.followUpCount === 0 && triagedFollowUpSignalCount > 0) {
 			return `${baseCopy} ${triagedFollowUpSignalCount} reviewed or deferred item${triagedFollowUpSignalCount === 1 ? '' : 's'} hidden from the default queue.`;
@@ -68,7 +76,7 @@
 				: `${triagedExecutionItemCount} reviewed or deferred execution item${triagedExecutionItemCount === 1 ? '' : 's'} hidden from the default queue.`;
 		}
 
-		return `${recoverableExecutionCount} failed or skipped row${recoverableExecutionCount === 1 ? '' : 's'} can be retried or opened for correction.`;
+		return `${recoverableExecutionCount} failed or skipped row${recoverableExecutionCount === 1 ? '' : 's'} can be retried or opened for correction.${staleRecoverableExecutionCount > 0 ? ` ${staleRecoverableExecutionCount} changed since review.` : ''}`;
 	});
 	const sectionSummary = $derived.by(() => {
 		if (activePlugins.length === 0) {

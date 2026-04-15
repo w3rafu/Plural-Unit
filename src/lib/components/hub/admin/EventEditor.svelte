@@ -9,6 +9,7 @@
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
 	import ExecutionDiagnosticsPanel from '$lib/components/hub/admin/ExecutionDiagnosticsPanel.svelte';
 	import EventAttendanceRosterPanel from '$lib/components/hub/admin/EventAttendanceRosterPanel.svelte';
+	import WorkflowSummaryPanel from '$lib/components/hub/admin/WorkflowSummaryPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -16,6 +17,11 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import * as Item from '$lib/components/ui/item';
+	import {
+		buildHubExecutionFollowUpTriageKey,
+		buildHubExecutionQueueItemTriageKey
+	} from '$lib/models/hubExecutionQueue';
+	import type { HubExecutionDiagnosticEntry } from '$lib/models/hubExecutionDiagnostics';
 	import {
 		getEventLocationLabel,
 		normalizeEventLocation
@@ -228,6 +234,51 @@
 		return deliveryStatus.state === 'scheduled'
 			? 'Delivery scheduled.'
 			: deliveryStatus.copy;
+	}
+
+	function getExecutionWorkflowSummaryEntries(entries: HubExecutionDiagnosticEntry[]) {
+		return entries.flatMap((entry) => {
+			const summary = currentHub.getWorkflowSummary(buildHubExecutionQueueItemTriageKey(entry.id));
+			if (!summary) {
+				return [];
+			}
+
+			return [
+				{
+					id: entry.id,
+					label: entry.label,
+					summary,
+					contextCopy: entry.detailCopy
+				}
+			];
+		});
+	}
+
+	function getEventWorkflowSummaryEntries(
+		eventId: string,
+		executionDiagnostics: HubExecutionDiagnosticEntry[]
+	) {
+		const executionEntries = getExecutionWorkflowSummaryEntries(executionDiagnostics);
+		const followUpEntries = currentHub
+			.getHubEventFollowUpSignals({ includeTriaged: true })
+			.filter((signal) => signal.eventId === eventId)
+			.flatMap((signal) => {
+				const summary = currentHub.getWorkflowSummary(buildHubExecutionFollowUpTriageKey(signal));
+				if (!summary) {
+					return [];
+				}
+
+				return [
+					{
+						id: `${signal.eventId}:${signal.kind}`,
+						label: signal.statusLabel,
+						summary,
+						contextCopy: signal.copy
+					}
+				];
+			});
+
+		return [...executionEntries, ...followUpEntries];
 	}
 
 	async function messageProfile(profileId: string) {
@@ -525,6 +576,7 @@
 							{@const engagementSignal = getEngagementSignal(event.id)}
 							{@const deliveryCopy = getDeliveryCopy(event.id)}
 							{@const executionDiagnostics = currentHub.getEventExecutionDiagnostics(event.id)}
+							{@const workflowSummaryEntries = getEventWorkflowSummaryEntries(event.id, executionDiagnostics)}
 							{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 							{@const responseRoster = getResponseRoster(event.id)}
 							<div class="flex flex-wrap items-center gap-2">
@@ -543,6 +595,7 @@
 								<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 							{/if}
 							<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
+							<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 							{#if reminderSummary && reminderSummary.count > 0}
 								<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 							{/if}
@@ -697,6 +750,7 @@
 								{@const engagementSignal = getEngagementSignal(event.id)}
 								{@const deliveryCopy = getDeliveryCopy(event.id)}
 								{@const executionDiagnostics = currentHub.getEventExecutionDiagnostics(event.id)}
+								{@const workflowSummaryEntries = getEventWorkflowSummaryEntries(event.id, executionDiagnostics)}
 								{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{event.title}</Item.Title>
@@ -716,6 +770,7 @@
 									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 								{/if}
 								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
+								<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 								{#if reminderSummary && reminderSummary.count > 0}
 									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 								{/if}
@@ -774,6 +829,7 @@
 								{@const engagementSignal = getEngagementSignal(event.id)}
 								{@const deliveryCopy = getDeliveryCopy(event.id)}
 								{@const executionDiagnostics = currentHub.getEventExecutionDiagnostics(event.id)}
+								{@const workflowSummaryEntries = getEventWorkflowSummaryEntries(event.id, executionDiagnostics)}
 								{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{event.title}</Item.Title>
@@ -792,6 +848,7 @@
 									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 								{/if}
 								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
+								<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 								{#if reminderSummary && reminderSummary.count > 0}
 									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 								{/if}

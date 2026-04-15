@@ -18,6 +18,7 @@ import type {
 	EventResponseRow,
 	EventRow,
 	HubExecutionLedgerRow,
+	HubOperatorWorkflowStateRow,
 	ResourceRow
 } from '$lib/repositories/hubRepository';
 import type { PluginStateMap } from '../pluginRegistry';
@@ -33,6 +34,8 @@ export type CurrentHubHydratedState = {
 	eventAttendanceMap: Record<string, EventAttendanceRow[]>;
 	eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
 	executionLedger: HubExecutionLedgerRow[];
+	workflowStateRows: HubOperatorWorkflowStateRow[];
+	queueTriageMap: HubExecutionTriageMap;
 	notificationPreferences: HubNotificationPreferences;
 	notificationReadMap: Record<string, string>;
 };
@@ -49,7 +52,6 @@ type CurrentHubResettableState = CurrentHubHydratedState & {
 	isSavingNotificationPreferences: boolean;
 	notificationReadTargetId: string;
 	isMarkingAllActivityRead: boolean;
-	queueTriageMap: HubExecutionTriageMap;
 };
 
 const DEFAULT_PLUGIN_STATE = {
@@ -74,6 +76,8 @@ export function applyCurrentHubLoadedState(
 	store.eventAttendanceMap = state.eventAttendanceMap;
 	store.eventReminderSettingsMap = state.eventReminderSettingsMap;
 	store.executionLedger = state.executionLedger;
+	store.workflowStateRows = state.workflowStateRows;
+	store.queueTriageMap = state.queueTriageMap;
 	store.notificationPreferences = state.notificationPreferences;
 	store.notificationReadMap = state.notificationReadMap;
 	store.loadedOrgId = state.loadedOrgId;
@@ -94,6 +98,7 @@ export function resetCurrentHubState(store: CurrentHubResettableState) {
 	store.eventAttendanceMap = {};
 	store.eventReminderSettingsMap = {};
 	store.executionLedger = [];
+	store.workflowStateRows = [];
 	store.executionTargetId = '';
 	store.eventResponseTargetId = '';
 	store.eventAttendanceTargetId = '';

@@ -7,6 +7,7 @@
 	import { page } from '$app/state';
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
 	import ExecutionDiagnosticsPanel from '$lib/components/hub/admin/ExecutionDiagnosticsPanel.svelte';
+	import WorkflowSummaryPanel from '$lib/components/hub/admin/WorkflowSummaryPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -14,6 +15,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Item from '$lib/components/ui/item';
 	import * as Select from '$lib/components/ui/select';
+	import { buildHubExecutionQueueItemTriageKey } from '$lib/models/hubExecutionQueue';
+	import type { HubExecutionDiagnosticEntry } from '$lib/models/hubExecutionDiagnostics';
 	import {
 		getBroadcastStateLabel,
 		isBroadcastDraft,
@@ -220,6 +223,24 @@
 		return deliveryStatus.state === 'scheduled'
 			? 'Delivery scheduled.'
 			: deliveryStatus.copy;
+	}
+
+	function getExecutionWorkflowSummaryEntries(entries: HubExecutionDiagnosticEntry[]) {
+		return entries.flatMap((entry) => {
+			const summary = currentHub.getWorkflowSummary(buildHubExecutionQueueItemTriageKey(entry.id));
+			if (!summary) {
+				return [];
+			}
+
+			return [
+				{
+					id: entry.id,
+					label: entry.label,
+					summary,
+					contextCopy: entry.detailCopy
+				}
+			];
+		});
 	}
 
 	async function submit() {
@@ -531,6 +552,7 @@
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
 								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
 								{@const executionDiagnostics = currentHub.getBroadcastExecutionDiagnostics(broadcast.id)}
+								{@const workflowSummaryEntries = getExecutionWorkflowSummaryEntries(executionDiagnostics)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{broadcast.title}</Item.Title>
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
@@ -543,6 +565,7 @@
 									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 								{/if}
 								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
+								<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 								{#if engagementSignal}
 									<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 								{/if}
@@ -593,6 +616,7 @@
 							{@const engagementSignal = getEngagementSignal(broadcast.id)}
 							{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
 							{@const executionDiagnostics = currentHub.getBroadcastExecutionDiagnostics(broadcast.id)}
+							{@const workflowSummaryEntries = getExecutionWorkflowSummaryEntries(executionDiagnostics)}
 							<div class="flex flex-wrap items-center gap-2">
 								<Item.Title>{broadcast.title}</Item.Title>
 								<Badge variant={broadcast.is_pinned ? 'secondary' : 'outline'}>
@@ -607,6 +631,7 @@
 								<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 							{/if}
 							<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
+							<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 							{#if engagementSignal}
 								<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 							{/if}
@@ -664,6 +689,7 @@
 								{@const deliveryStatus = getDeliveryStatus(broadcast.id)}
 								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
 								{@const executionDiagnostics = currentHub.getBroadcastExecutionDiagnostics(broadcast.id)}
+								{@const workflowSummaryEntries = getExecutionWorkflowSummaryEntries(executionDiagnostics)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{broadcast.title}</Item.Title>
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
@@ -677,6 +703,7 @@
 									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 								{/if}
 								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
+								<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 								{#if engagementSignal}
 									<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 								{/if}

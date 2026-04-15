@@ -30,6 +30,10 @@ export type HubEventFollowUpSignal = {
 	timingCopy: string;
 	tone: 'attention' | 'neutral';
 	completedAt: string;
+	expectedAttendanceCount: number;
+	recordedAttendanceCount: number;
+	attendedCount: number;
+	absentCount: number;
 };
 
 export type HubAdminEngagementSummary = {
@@ -161,7 +165,11 @@ function buildEventFollowUpSignal(input: {
 			copy: `${remainingCount} of ${expectedAttendanceCount} expected attendee${expectedAttendanceCount === 1 ? '' : 's'} still need final attendance outcomes.`,
 			timingCopy,
 			tone: 'attention',
-			completedAt: completedAt
+			completedAt,
+			expectedAttendanceCount,
+			recordedAttendanceCount: recordedCount,
+			attendedCount,
+			absentCount
 		};
 	}
 
@@ -174,7 +182,11 @@ function buildEventFollowUpSignal(input: {
 			copy: `All ${expectedAttendanceCount} expected attendee${expectedAttendanceCount === 1 ? '' : 's'} were marked absent.`,
 			timingCopy,
 			tone: 'attention',
-			completedAt: completedAt
+			completedAt,
+			expectedAttendanceCount,
+			recordedAttendanceCount: recordedCount,
+			attendedCount,
+			absentCount
 		};
 	}
 
@@ -187,7 +199,11 @@ function buildEventFollowUpSignal(input: {
 			copy: `${attendedCount} of ${expectedAttendanceCount} expected attendee${expectedAttendanceCount === 1 ? '' : 's'} were marked attended.${absentCount > 0 ? ` ${absentCount} marked absent.` : ''}`,
 			timingCopy,
 			tone: 'neutral',
-			completedAt: completedAt
+			completedAt,
+			expectedAttendanceCount,
+			recordedAttendanceCount: recordedCount,
+			attendedCount,
+			absentCount
 		};
 	}
 

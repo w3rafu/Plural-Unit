@@ -29,9 +29,50 @@ export type HubExecutionTriageStatus = 'reviewed' | 'deferred';
 export type HubExecutionTriageEntry = {
 	status: HubExecutionTriageStatus;
 	updatedAt: string;
+	reviewedAgainstSignature: string | null;
 };
 
 export type HubExecutionTriageMap = Record<string, HubExecutionTriageEntry>;
+
+export type HubExecutionReviewStaleReason =
+	| 'execution_state_changed'
+	| 'due_time_changed'
+	| 'recovery_family_changed'
+	| 'followup_kind_changed'
+	| 'attendance_gap_changed'
+	| 'turnout_changed'
+	| 'completion_context_changed';
+
+type HubExecutionQueueItemReviewSignaturePayload = {
+	v: 1;
+	kind: 'execution_item';
+	executionState: HubExecutionLedgerRow['execution_state'];
+	dueAt: string;
+	processedAt: string | null;
+	recoveryKey: string;
+};
+
+type HubExecutionFollowUpReviewSignaturePayload = {
+	v: 1;
+	kind: 'followup_signal';
+	signalKind: HubEventFollowUpSignal['kind'];
+	completedAt: string;
+	expectedAttendanceCount: number;
+	recordedAttendanceCount: number;
+	attendedCount: number;
+	absentCount: number;
+};
+
+type HubExecutionReviewSignaturePayload =
+	| HubExecutionQueueItemReviewSignaturePayload
+	| HubExecutionFollowUpReviewSignaturePayload;
+
+type HubExecutionResolvedReviewState = {
+	triageStatus: HubExecutionTriageStatus | null;
+	isStaleReview: boolean;
+	staleReviewReason: HubExecutionReviewStaleReason | null;
+	staleReviewCopy: string | null;
+};
 
 export const DEFAULT_HUB_EXECUTION_QUEUE_FOCUS: HubExecutionQueueFocus = {
 	bucket: 'all',
@@ -70,6 +111,10 @@ export type HubExecutionQueueItem = {
 	jobKind: HubExecutionJobKind;
 	bucket: 'due' | 'upcoming' | 'failed' | 'skipped' | 'processed';
 	triageStatus: HubExecutionTriageStatus | null;
+	reviewSignature: string;
+	isStaleReview: boolean;
+	staleReviewReason: HubExecutionReviewStaleReason | null;
+	staleReviewCopy: string | null;
 	jobLabel: string;
 	subjectKind: HubExecutionQueueSubjectKind;
 	sourceId: string;
@@ -93,20 +138,24 @@ export type HubExecutionQueueSections = {
 
 export type HubExecutionQueueFollowUpSignal = HubEventFollowUpSignal & {
 	triageStatus: HubExecutionTriageStatus | null;
+	reviewSignature: string;
+	isStaleReview: boolean;
+	staleReviewReason: HubExecutionReviewStaleReason | null;
+	staleReviewCopy: string | null;
 };
 
-function getHubExecutionQueueTriageStatus(
+function getHubExecutionQueueTriageEntry(
 	triageMap: HubExecutionTriageMap,
 	triageKey: string
-): HubExecutionTriageStatus | null {
-	return triageMap[triageKey]?.status ?? null;
+): HubExecutionTriageEntry | null {
+	return triageMap[triageKey] ?? null;
 }
 
 function shouldIncludeTriagedQueueItem(
-	triageStatus: HubExecutionTriageStatus | null,
+	reviewState: HubExecutionResolvedReviewState,
 	includeTriaged: boolean
 ) {
-	return triageStatus === null || includeTriaged;
+	return reviewState.triageStatus === null || reviewState.isStaleReview || includeTriaged;
 }
 
 export function buildHubExecutionQueueItemTriageKey(
@@ -126,13 +175,15 @@ export function setHubExecutionQueueTriage(
 	triageMap: HubExecutionTriageMap,
 	triageKey: string,
 	status: HubExecutionTriageStatus,
-	updatedAt = new Date().toISOString()
+	updatedAt = new Date().toISOString(),
+	reviewedAgainstSignature: string | null = null
 ) {
 	return {
 		...triageMap,
 		[triageKey]: {
 			status,
-			updatedAt
+			updatedAt,
+			reviewedAgainstSignature
 		}
 	};
 }
@@ -150,6 +201,249 @@ export function clearHubExecutionQueueTriage(
 	return nextMap;
 }
 
+function getExecutionRecoveryKey(input: {
+	recoveryGuidance: HubExecutionRecoveryGuidance | null;
+	lastFailureReason: string | null;
+}) {
+	if (input.lastFailureReason) {
+		if (input.recoveryGuidance && input.recoveryGuidance.family !== 'review_issue') {
+			return input.recoveryGuidance.family;
+		}
+
+		return `reason:${input.lastFailureReason.trim().toLowerCase()}`;
+	}
+
+	return input.recoveryGuidance?.family ?? 'none';
+}
+
+export function buildHubExecutionQueueItemReviewSignature(input: {
+	row: Pick<HubExecutionLedgerRow, 'execution_state' | 'due_at' | 'processed_at' | 'last_failure_reason'>;
+	recoveryGuidance: HubExecutionRecoveryGuidance | null;
+}) {
+	const payload: HubExecutionQueueItemReviewSignaturePayload = {
+		v: 1,
+		kind: 'execution_item',
+		executionState: input.row.execution_state,
+		dueAt: input.row.due_at,
+		processedAt: input.row.processed_at ?? null,
+		recoveryKey: getExecutionRecoveryKey({
+			recoveryGuidance: input.recoveryGuidance,
+			lastFailureReason: input.row.last_failure_reason
+		})
+	};
+
+	return JSON.stringify(payload);
+}
+
+export function buildHubExecutionFollowUpReviewSignature(
+	signal: Pick<
+		HubEventFollowUpSignal,
+		| 'kind'
+		| 'completedAt'
+		| 'expectedAttendanceCount'
+		| 'recordedAttendanceCount'
+		| 'attendedCount'
+		| 'absentCount'
+	>
+) {
+	const payload: HubExecutionFollowUpReviewSignaturePayload = {
+		v: 1,
+		kind: 'followup_signal',
+		signalKind: signal.kind,
+		completedAt: signal.completedAt,
+		expectedAttendanceCount: signal.expectedAttendanceCount,
+		recordedAttendanceCount: signal.recordedAttendanceCount,
+		attendedCount: signal.attendedCount,
+		absentCount: signal.absentCount
+	};
+
+	return JSON.stringify(payload);
+}
+
+function parseHubExecutionReviewSignature(
+	signature: string | null | undefined
+): HubExecutionReviewSignaturePayload | null {
+	if (!signature) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(signature) as Partial<HubExecutionReviewSignaturePayload> | null;
+		if (!parsed || parsed.v !== 1 || typeof parsed.kind !== 'string') {
+			return null;
+		}
+
+		if (
+			parsed.kind === 'execution_item' &&
+			typeof parsed.executionState === 'string' &&
+			typeof parsed.dueAt === 'string' &&
+			(parsed.processedAt === null || typeof parsed.processedAt === 'string') &&
+			typeof parsed.recoveryKey === 'string'
+		) {
+			return parsed as HubExecutionQueueItemReviewSignaturePayload;
+		}
+
+		if (
+			parsed.kind === 'followup_signal' &&
+			typeof parsed.signalKind === 'string' &&
+			typeof parsed.completedAt === 'string' &&
+			typeof parsed.expectedAttendanceCount === 'number' &&
+			typeof parsed.recordedAttendanceCount === 'number' &&
+			typeof parsed.attendedCount === 'number' &&
+			typeof parsed.absentCount === 'number'
+		) {
+			return parsed as HubExecutionFollowUpReviewSignaturePayload;
+		}
+	} catch {
+		return null;
+	}
+
+	return null;
+}
+
+function resolveExecutionItemStaleReason(
+	previous: HubExecutionQueueItemReviewSignaturePayload,
+	current: HubExecutionQueueItemReviewSignaturePayload
+): HubExecutionReviewStaleReason | null {
+	if (
+		previous.executionState !== current.executionState ||
+		previous.processedAt !== current.processedAt
+	) {
+		return 'execution_state_changed';
+	}
+
+	if (previous.dueAt !== current.dueAt) {
+		return 'due_time_changed';
+	}
+
+	if (previous.recoveryKey !== current.recoveryKey) {
+		return 'recovery_family_changed';
+	}
+
+	return null;
+}
+
+function resolveFollowUpStaleReason(
+	previous: HubExecutionFollowUpReviewSignaturePayload,
+	current: HubExecutionFollowUpReviewSignaturePayload
+): HubExecutionReviewStaleReason | null {
+	if (previous.signalKind !== current.signalKind) {
+		return 'followup_kind_changed';
+	}
+
+	if (previous.completedAt !== current.completedAt) {
+		return 'completion_context_changed';
+	}
+
+	if (
+		previous.expectedAttendanceCount !== current.expectedAttendanceCount ||
+		previous.recordedAttendanceCount !== current.recordedAttendanceCount
+	) {
+		return 'attendance_gap_changed';
+	}
+
+	if (
+		previous.attendedCount !== current.attendedCount ||
+		previous.absentCount !== current.absentCount
+	) {
+		return 'turnout_changed';
+	}
+
+	return null;
+}
+
+function getStaleReviewCopy(reason: HubExecutionReviewStaleReason | null) {
+	if (reason === null) {
+		return 'Changed since review.';
+	}
+
+	switch (reason) {
+		case 'execution_state_changed':
+			return 'Execution state changed since review.';
+		case 'due_time_changed':
+			return 'Due time changed since review.';
+		case 'recovery_family_changed':
+			return 'Recovery guidance changed since review.';
+		case 'followup_kind_changed':
+			return 'Follow-up type changed since review.';
+		case 'attendance_gap_changed':
+			return 'Attendance backlog changed since review.';
+		case 'turnout_changed':
+			return 'Turnout changed since review.';
+		case 'completion_context_changed':
+			return 'Completion context changed since review.';
+	}
+
+	return 'Changed since review.';
+}
+
+export function resolveHubExecutionReviewState(input: {
+	triageEntry: HubExecutionTriageEntry | null | undefined;
+	reviewSignature: string;
+}): HubExecutionResolvedReviewState {
+	const triageEntry = input.triageEntry ?? null;
+	if (!triageEntry) {
+		return {
+			triageStatus: null,
+			isStaleReview: false,
+			staleReviewReason: null,
+			staleReviewCopy: null
+		};
+	}
+
+	if (triageEntry.reviewedAgainstSignature === input.reviewSignature) {
+		return {
+			triageStatus: triageEntry.status,
+			isStaleReview: false,
+			staleReviewReason: null,
+			staleReviewCopy: null
+		};
+	}
+
+	const previousSignature = parseHubExecutionReviewSignature(triageEntry.reviewedAgainstSignature);
+	const currentSignature = parseHubExecutionReviewSignature(input.reviewSignature);
+	let staleReviewReason: HubExecutionReviewStaleReason | null = null;
+
+	if (
+		previousSignature?.kind === 'execution_item' &&
+		currentSignature?.kind === 'execution_item'
+	) {
+		staleReviewReason = resolveExecutionItemStaleReason(previousSignature, currentSignature);
+	} else if (
+		previousSignature?.kind === 'followup_signal' &&
+		currentSignature?.kind === 'followup_signal'
+	) {
+		staleReviewReason = resolveFollowUpStaleReason(previousSignature, currentSignature);
+	}
+
+	return {
+		triageStatus: triageEntry.status,
+		isStaleReview: true,
+		staleReviewReason,
+		staleReviewCopy: getStaleReviewCopy(staleReviewReason)
+	};
+}
+
+export function buildHubExecutionQueueTriageMapFromWorkflowStateRows(
+	rows: Array<{
+		workflow_key: string;
+		status: HubExecutionTriageStatus;
+		updated_at: string;
+		reviewed_against_signature?: string | null;
+	}>
+): HubExecutionTriageMap {
+	return Object.fromEntries(
+		rows.map((row) => [
+			row.workflow_key,
+			{
+				status: row.status,
+				updatedAt: row.updated_at,
+				reviewedAgainstSignature: row.reviewed_against_signature ?? null
+			}
+		])
+	);
+}
+
 export function buildHubExecutionQueueFollowUpSignals(input: {
 	signals: HubEventFollowUpSignal[];
 	triageMap?: HubExecutionTriageMap;
@@ -160,17 +454,36 @@ export function buildHubExecutionQueueFollowUpSignals(input: {
 
 	return input.signals
 		.map((signal) => {
-			const triageStatus = getHubExecutionQueueTriageStatus(
+			const triageEntry = getHubExecutionQueueTriageEntry(
 				triageMap,
 				buildHubExecutionFollowUpTriageKey(signal)
 			);
+			const reviewSignature = buildHubExecutionFollowUpReviewSignature(signal);
+			const reviewState = resolveHubExecutionReviewState({
+				triageEntry,
+				reviewSignature
+			});
 
 			return {
 				...signal,
-				triageStatus
+				reviewSignature,
+				triageStatus: reviewState.triageStatus,
+				isStaleReview: reviewState.isStaleReview,
+				staleReviewReason: reviewState.staleReviewReason,
+				staleReviewCopy: reviewState.staleReviewCopy
 			};
 		})
-		.filter((signal) => shouldIncludeTriagedQueueItem(signal.triageStatus, includeTriaged));
+		.filter((signal) =>
+			shouldIncludeTriagedQueueItem(
+				{
+					triageStatus: signal.triageStatus,
+					isStaleReview: signal.isStaleReview,
+					staleReviewReason: signal.staleReviewReason,
+					staleReviewCopy: signal.staleReviewCopy
+				},
+				includeTriaged
+			)
+		);
 }
 
 function setSearchParam(searchParams: URLSearchParams, key: string, value: string, defaultValue: string) {
@@ -450,6 +763,13 @@ export function buildHubExecutionQueueItem(input: {
 		jobKind: input.row.job_kind,
 		bucket,
 		triageStatus: null,
+		reviewSignature: buildHubExecutionQueueItemReviewSignature({
+			row: input.row,
+			recoveryGuidance
+		}),
+		isStaleReview: false,
+		staleReviewReason: null,
+		staleReviewCopy: null,
 		jobLabel: getJobLabel(input.row.job_kind),
 		statusLabel: getStatusLabel(bucket),
 		timingCopy: getTimingCopy(input.row, bucket, now),
@@ -487,30 +807,64 @@ export function buildHubExecutionQueueSections(input: {
 			events: input.events,
 			now
 		});
-	const applyTriage = (item: HubExecutionQueueItem) => ({
-		...item,
-		triageStatus: getHubExecutionQueueTriageStatus(
-			triageMap,
-			buildHubExecutionQueueItemTriageKey(item)
-		)
-	});
+	const applyReviewState = (item: HubExecutionQueueItem) => {
+		const reviewState = resolveHubExecutionReviewState({
+			triageEntry: getHubExecutionQueueTriageEntry(
+				triageMap,
+				buildHubExecutionQueueItemTriageKey(item)
+			),
+			reviewSignature: item.reviewSignature
+		});
+
+		return {
+			...item,
+			triageStatus: reviewState.triageStatus,
+			isStaleReview: reviewState.isStaleReview,
+			staleReviewReason: reviewState.staleReviewReason,
+			staleReviewCopy: reviewState.staleReviewCopy
+		};
+	};
 	const due = groups.due
 		.map(toItem)
+		.map(applyReviewState)
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['due']));
 	const upcoming = groups.upcoming
 		.map(toItem)
+		.map(applyReviewState)
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['upcoming']));
 	const recovery = [...groups.failed, ...groups.skipped]
 		.map(toItem)
-		.map(applyTriage)
-		.filter((item) => shouldIncludeTriagedQueueItem(item.triageStatus, includeTriaged))
+		.map(applyReviewState)
+		.filter((item) =>
+			shouldIncludeTriagedQueueItem(
+				{
+					triageStatus: item.triageStatus,
+					isStaleReview: item.isStaleReview,
+					staleReviewReason: item.staleReviewReason,
+					staleReviewCopy: item.staleReviewCopy
+				},
+				includeTriaged
+			)
+		)
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['failed', 'skipped']));
 	const processed = groups.processed
 		.map(toItem)
-		.map(applyTriage)
-		.filter((item) => shouldIncludeTriagedQueueItem(item.triageStatus, includeTriaged))
+		.map(applyReviewState)
+		.filter((item) =>
+			shouldIncludeTriagedQueueItem(
+				{
+					triageStatus: item.triageStatus,
+					isStaleReview: item.isStaleReview,
+					staleReviewReason: item.staleReviewReason,
+					staleReviewCopy: item.staleReviewCopy
+				},
+				includeTriaged
+			)
+		)
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['processed']));
-	const limitedProcessed = shouldLimitProcessedQueueItems(focus, includeTriaged)
+	const limitedProcessed =
+		shouldLimitProcessedQueueItems(focus, includeTriaged) &&
+		!processed.some((item) => item.isStaleReview)
 		? processed.slice(0, processedLimit)
 		: processed;
 

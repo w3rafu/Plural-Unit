@@ -47,6 +47,10 @@ const SCHEMA_DRIFT_GUIDANCE = [
 		copy: 'Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.'
 	},
 	{
+		pattern: /hub_operator_workflow_state(\.reviewed_against_signature)?/i,
+		copy: 'Apply 029_create_hub_operator_workflow_state.sql, then try again.'
+	},
+	{
 		pattern: /\b(public\.)?hub_notification_preferences\b/i,
 		copy: 'Apply migration 022_add_hub_notification_preferences.sql, then try again.'
 	},

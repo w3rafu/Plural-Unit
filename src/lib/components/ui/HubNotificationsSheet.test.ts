@@ -125,6 +125,10 @@ describe('HubNotificationsSheet', () => {
 						jobKind: 'event_publish',
 						bucket: 'failed',
 						triageStatus: null,
+						reviewSignature: 'sig-failed-publish',
+						isStaleReview: false,
+						staleReviewReason: null,
+						staleReviewCopy: null,
 						jobLabel: 'Event publish',
 						subjectKind: 'event',
 						sourceId: 'e1',
@@ -167,9 +171,56 @@ describe('HubNotificationsSheet', () => {
 					timingCopy: 'Completed 8 hours ago.',
 					tone: 'attention',
 					completedAt: '2026-04-15T10:00:00.000Z',
-					triageStatus: null
+					expectedAttendanceCount: 4,
+					recordedAttendanceCount: 4,
+					attendedCount: 0,
+					absentCount: 4,
+					triageStatus: null,
+					reviewSignature: 'sig-no-show',
+					isStaleReview: false,
+					staleReviewReason: null,
+					staleReviewCopy: null
 				}
 			]);
+			vi.spyOn(currentHub, 'getWorkflowSummary').mockImplementation((workflowKey) => {
+				if (workflowKey === 'execution:failed-publish') {
+					return {
+						workflowKey,
+						status: 'deferred',
+						statusLabel: 'Deferred',
+						actorLabel: 'Alex',
+						timestampCopy: '2 hours ago',
+						summaryCopy: 'Deferred by Alex 2 hours ago.',
+						note: 'Waiting on updated timing.'
+					};
+				}
+
+				if (workflowKey === 'followup:e2:attendance_review') {
+					return {
+						workflowKey,
+						status: 'reviewed',
+						statusLabel: 'Reviewed',
+						actorLabel: 'Bea',
+						timestampCopy: '1 hour ago',
+						summaryCopy: 'Reviewed by Bea 1 hour ago.',
+						note: 'Attendance backlog already assigned.'
+					};
+				}
+
+				if (workflowKey === 'followup:e3:no_show') {
+					return {
+						workflowKey,
+						status: 'reviewed',
+						statusLabel: 'Reviewed',
+						actorLabel: 'Chris',
+						timestampCopy: '30 minutes ago',
+						summaryCopy: 'Reviewed by Chris 30 minutes ago.',
+						note: 'Escalate to the event lead if nobody replies.'
+					};
+				}
+
+				return null;
+			});
 
 			render(HubNotificationsSheet, {
 				props: {
@@ -195,6 +246,12 @@ describe('HubNotificationsSheet', () => {
 			expect((screen.getByRole('link', { name: 'Review no-shows' }) as HTMLAnchorElement).getAttribute('href')).toBe(
 				'/hub/manage/content#event-e3'
 			);
+			expect(screen.getByText('Deferred by Alex 2 hours ago.')).toBeTruthy();
+			expect(screen.getByText('Waiting on updated timing.')).toBeTruthy();
+			expect(screen.getByText('Reviewed by Bea 1 hour ago.')).toBeTruthy();
+			expect(screen.getByText('Attendance backlog already assigned.')).toBeTruthy();
+			expect(screen.getByText('Reviewed by Chris 30 minutes ago.')).toBeTruthy();
+			expect(screen.getByText('Escalate to the event lead if nobody replies.')).toBeTruthy();
 		} finally {
 			vi.useRealTimers();
 		}

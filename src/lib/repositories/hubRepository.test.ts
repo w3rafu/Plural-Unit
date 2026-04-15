@@ -8,7 +8,8 @@ const mockMaybeSingle = vi.fn();
 const mockSelect = vi.fn(() => ({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq, order: mockOrder }));
 const mockInsert = vi.fn(() => ({ select: mockSelect }));
 const mockUpdate = vi.fn(() => ({ eq: mockEq }));
-const mockDelete = vi.fn(() => ({ eq: mockEq }));
+const mockMatch = vi.fn();
+const mockDelete = vi.fn(() => ({ eq: mockEq, match: mockMatch }));
 const mockUpsert = vi.fn(() => ({ select: mockSelect, error: null }));
 const mockEq = vi.fn(() => ({ maybeSingle: mockMaybeSingle, select: mockSelect, order: mockOrder, eq: mockEq }));
 const mockOrder = vi.fn(() => ({ data: [], error: null }));
@@ -20,7 +21,8 @@ const mockFrom = vi.fn(() => ({
 	update: mockUpdate,
 	delete: mockDelete,
 	upsert: mockUpsert,
-	eq: mockEq
+	eq: mockEq,
+	match: mockMatch
 }));
 
 const mockClient = {
@@ -61,6 +63,9 @@ import {
 	processDueHubReminderExecutions,
 	upsertHubExecutionLedgerEntries,
 	deleteHubExecutionLedgerEntries,
+	fetchHubOperatorWorkflowState,
+	upsertHubOperatorWorkflowStateEntries,
+	deleteHubOperatorWorkflowStateEntries,
 	fetchHubNotificationPreferences,
 	saveHubNotificationPreferences,
 	fetchHubNotificationReads,
@@ -1003,6 +1008,129 @@ describe('processDueHubReminderExecutions', () => {
 		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'reminder rpc fail' } });
 
 		await expect(processDueHubReminderExecutions('org-1')).rejects.toThrow('reminder rpc fail');
+	});
+});
+
+describe('fetchHubOperatorWorkflowState', () => {
+	it('queries shared workflow rows for an organization', async () => {
+		const rows = [
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: null,
+				created_at: '2026-04-14T08:00:00.000Z',
+				updated_at: '2026-04-14T08:00:00.000Z'
+			}
+		];
+		mockOrder.mockResolvedValueOnce({ data: rows, error: null });
+
+		const result = await fetchHubOperatorWorkflowState('org-1');
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_operator_workflow_state');
+		expect(result).toEqual(rows);
+	});
+
+	it('throws on workflow-state fetch errors', async () => {
+		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'workflow fetch fail' } });
+
+		await expect(fetchHubOperatorWorkflowState('org-1')).rejects.toThrow('workflow fetch fail');
+	});
+});
+
+describe('upsertHubOperatorWorkflowStateEntries', () => {
+	it('upserts workflow rows and returns the saved results', async () => {
+		const row = {
+			organization_id: 'org-1',
+			workflow_key: 'execution:failed-publish',
+			workflow_kind: 'execution_item',
+			status: 'reviewed',
+			reviewed_by_profile_id: 'profile-1',
+			note: '',
+			reviewed_against_signature: null,
+			created_at: '2026-04-14T08:00:00.000Z',
+			updated_at: '2026-04-14T08:00:00.000Z'
+		};
+		mockSingle.mockResolvedValueOnce({ data: row, error: null });
+
+		const result = await upsertHubOperatorWorkflowStateEntries([
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: null
+			}
+		]);
+
+		expect(mockUpsert).toHaveBeenCalledWith(
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: null
+			},
+			{ onConflict: 'organization_id,workflow_key' }
+		);
+		expect(result).toEqual([row]);
+	});
+
+	it('returns empty output for an empty workflow upsert batch', async () => {
+		await expect(upsertHubOperatorWorkflowStateEntries([])).resolves.toEqual([]);
+		expect(mockFrom).not.toHaveBeenCalledWith('hub_operator_workflow_state');
+	});
+
+	it('throws on workflow-state upsert errors', async () => {
+		mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'workflow upsert fail' } });
+
+		await expect(
+			upsertHubOperatorWorkflowStateEntries([
+				{
+					organization_id: 'org-1',
+					workflow_key: 'execution:failed-publish',
+					workflow_kind: 'execution_item',
+					status: 'reviewed',
+					reviewed_by_profile_id: 'profile-1',
+					note: '',
+					reviewed_against_signature: null
+				}
+			])
+		).rejects.toThrow('workflow upsert fail');
+	});
+});
+
+describe('deleteHubOperatorWorkflowStateEntries', () => {
+	it('deletes workflow rows by organization and key', async () => {
+		mockMatch.mockResolvedValueOnce({ error: null });
+
+		await deleteHubOperatorWorkflowStateEntries('org-1', ['execution:failed-publish']);
+
+		expect(mockFrom).toHaveBeenCalledWith('hub_operator_workflow_state');
+		expect(mockMatch).toHaveBeenCalledWith({
+			organization_id: 'org-1',
+			workflow_key: 'execution:failed-publish'
+		});
+	});
+
+	it('does nothing for an empty workflow delete batch', async () => {
+		await expect(deleteHubOperatorWorkflowStateEntries('org-1', [])).resolves.toBeUndefined();
+		expect(mockFrom).not.toHaveBeenCalledWith('hub_operator_workflow_state');
+	});
+
+	it('throws on workflow-state delete errors', async () => {
+		mockMatch.mockResolvedValueOnce({ error: { message: 'workflow delete fail' } });
+
+		await expect(
+			deleteHubOperatorWorkflowStateEntries('org-1', ['execution:failed-publish'])
+		).rejects.toThrow('workflow delete fail');
 	});
 });
 

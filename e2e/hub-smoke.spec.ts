@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 const staleHubSchemaRecoveryCopy =
 	'Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.';
+const staleWorkflowSchemaRecoveryCopy =
+	'Apply 029_create_hub_operator_workflow_state.sql, then try again.';
 
 test.describe('hub smoke routes', () => {
 	test('loads home, filters alerts, marks them read, and reaches profile alert preferences', async ({ page }) => {
@@ -29,8 +31,9 @@ test.describe('hub smoke routes', () => {
 		await expect(page.getByText('In-app alerts', { exact: true })).toBeVisible();
 	});
 
-	test('loads manage content and exercises attendance plus queue triage', async ({ page }) => {
+	test('loads manage content and exercises attendance plus workflow queue state', async ({ page }) => {
 		await page.goto('/hub/manage/content?smoke=1');
+		const operationsQueue = page.getByLabel('Operations queue');
 
 		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
 		await expect(page.getByText('Operations queue')).toBeVisible();
@@ -41,10 +44,24 @@ test.describe('hub smoke routes', () => {
 		await page.getByRole('button', { name: /Mark all \d+ attended/i }).click();
 		await expect(page.getByText(/Closeout complete for 2 expected attendees\./).first()).toBeVisible();
 
-		await page.getByRole('button', { name: 'Reviewed' }).first().click();
-		await expect(page.getByRole('button', { name: /Show triaged \(1\)/ })).toBeVisible();
-		await page.getByRole('button', { name: /Show triaged \(1\)/ }).click();
-		await expect(page.getByRole('button', { name: 'Surface again' }).first()).toBeVisible();
+		await expect(operationsQueue.getByText('Due time changed since review.')).toBeVisible();
+		await expect(
+			operationsQueue.getByText('Re-open this if the schedule shifts again.')
+		).toBeVisible();
+		await expect(
+			operationsQueue.getByRole('button', { name: /Show triaged \(1\)/ })
+		).toBeVisible();
+		await operationsQueue.getByRole('button', { name: 'Reviewed' }).first().click();
+		await expect(
+			operationsQueue.getByRole('button', { name: /Show triaged \(2\)/ })
+		).toBeVisible();
+		await operationsQueue.getByRole('button', { name: /Show triaged \(2\)/ }).click();
+		await expect(
+			operationsQueue.getByText('Confirmed after the publish run completed.')
+		).toBeVisible();
+		await expect(
+			operationsQueue.getByText(/Reviewed by You/i)
+		).toBeVisible();
 	});
 
 	test('loads manage sections with plugin controls and toggles one section', async ({ page }) => {
@@ -61,21 +78,21 @@ test.describe('hub smoke routes', () => {
 		await expect(resourcesToggle).toBeChecked();
 	});
 
-	test('surfaces stale-schema recovery guidance in smoke mode', async ({ page }) => {
-		await page.goto('/?smoke=1&smokeScenario=stale-hub-schema');
+	test('surfaces workflow-schema recovery guidance in smoke mode', async ({ page }) => {
+		await page.goto('/?smoke=1&smokeScenario=stale-workflow-schema');
 
 		await expect(page.getByRole('heading', { name: 'Harbor Unit' })).toBeVisible();
 		await expect(page.getByText('Could not load the hub')).toBeVisible();
-		await expect(page.getByRole('alert').first()).toContainText(staleHubSchemaRecoveryCopy);
+		await expect(page.getByRole('alert').first()).toContainText(staleWorkflowSchemaRecoveryCopy);
 
 		await page.getByRole('button', { name: /^alerts/i }).click();
 		await expect(page.getByRole('heading', { name: 'Alerts' })).toBeVisible();
-		await expect(page.getByRole('alert').last()).toContainText(staleHubSchemaRecoveryCopy);
+		await expect(page.getByRole('alert').last()).toContainText(staleWorkflowSchemaRecoveryCopy);
 
-		await page.goto('/hub/manage/content?smoke=1&smokeScenario=stale-hub-schema');
+		await page.goto('/hub/manage/content?smoke=1&smokeScenario=stale-workflow-schema');
 
 		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
 		await expect(page.getByText('Could not load hub tools')).toBeVisible();
-		await expect(page.getByRole('alert').first()).toContainText(staleHubSchemaRecoveryCopy);
+		await expect(page.getByRole('alert').first()).toContainText(staleWorkflowSchemaRecoveryCopy);
 	});
 });

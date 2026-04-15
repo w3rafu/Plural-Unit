@@ -14,7 +14,11 @@
 	import * as Item from '$lib/components/ui/item';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import type { HubExecutionQueueItem } from '$lib/models/hubExecutionQueue';
+	import {
+		buildHubExecutionFollowUpTriageKey,
+		buildHubExecutionQueueItemTriageKey,
+		type HubExecutionQueueItem
+	} from '$lib/models/hubExecutionQueue';
 	import {
 		countHubNotifications,
 		countUnreadHubNotifications,
@@ -138,6 +142,23 @@
 		return item.subjectKind === 'broadcast'
 			? getManageBroadcastHref(item.sourceId)
 			: getManageEventHref(item.sourceId);
+	}
+
+	function getRecoveryWorkflowSummary(item: HubExecutionQueueItem) {
+		return currentHub.getWorkflowSummary(buildHubExecutionQueueItemTriageKey(item));
+	}
+
+	function getCloseoutWorkflowSummary(eventId: string) {
+		return currentHub.getWorkflowSummary(
+			buildHubExecutionFollowUpTriageKey({ eventId, kind: 'attendance_review' })
+		);
+	}
+
+	function getFollowUpWorkflowSummary(signal: {
+		eventId: string;
+		kind: 'attendance_review' | 'no_show' | 'low_turnout';
+	}) {
+		return currentHub.getWorkflowSummary(buildHubExecutionFollowUpTriageKey(signal));
 	}
 
 	function getOperatorFollowUpActionLabel(kind: 'attendance_review' | 'no_show' | 'low_turnout') {
@@ -378,6 +399,7 @@
 										{#each operatorRecoveryItems as item (item.id)}
 											<Item.Root variant="muted" size="sm">
 												<Item.Content>
+													{@const workflowSummary = getRecoveryWorkflowSummary(item)}
 													<div class="flex flex-wrap items-center gap-2">
 														<Item.Title>{item.subjectTitle}</Item.Title>
 														<span class="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
@@ -386,11 +408,28 @@
 														<span class="rounded-full border border-border bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
 															{item.jobLabel}
 														</span>
+														{#if item.isStaleReview}
+															<span class="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-destructive">
+																Needs re-review
+															</span>
+														{/if}
 													</div>
 													<Item.Description>{item.detailCopy}</Item.Description>
 													{#if item.recoveryGuidance}
 														<p class="text-xs text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
 													{/if}
+													{#if item.staleReviewCopy}
+														<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+													{/if}
+													{#if workflowSummary}
+														<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+															<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+															{#if workflowSummary.note}
+																<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+															{/if}
+														</div>
+													{/if}
+													<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
 												</Item.Content>
 												<Item.Actions>
 													<Button href={getRecoveryHref(item)} variant="outline" size="sm" onclick={closeSheet}>
@@ -420,6 +459,7 @@
 										{#each operatorCloseoutItems as entry (entry.event.id)}
 											<Item.Root variant="muted" size="sm">
 												<Item.Content>
+													{@const workflowSummary = getCloseoutWorkflowSummary(entry.event.id)}
 													<div class="flex flex-wrap items-center gap-2">
 														<Item.Title>{entry.event.title}</Item.Title>
 														<span class="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
@@ -427,6 +467,14 @@
 														</span>
 													</div>
 													<Item.Description>{getEventAttendanceRosterSummaryCopy(entry.roster)}</Item.Description>
+													{#if workflowSummary}
+														<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+															<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+															{#if workflowSummary.note}
+																<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+															{/if}
+														</div>
+													{/if}
 												</Item.Content>
 												<Item.Actions>
 													<Button href={getManageEventHref(entry.event.id)} variant="outline" size="sm" onclick={closeSheet}>
@@ -456,6 +504,7 @@
 										{#each operatorFollowUpSignals as signal (signal.eventId)}
 											<Item.Root variant="muted" size="sm">
 												<Item.Content>
+													{@const workflowSummary = getFollowUpWorkflowSummary(signal)}
 													<div class="flex flex-wrap items-center gap-2">
 														<Item.Title>{signal.eventTitle}</Item.Title>
 														<span class="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
@@ -464,8 +513,25 @@
 														<span class="rounded-full border border-border bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
 															{signal.statusLabel}
 														</span>
+														{#if signal.isStaleReview}
+															<span class="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-destructive">
+																Needs re-review
+															</span>
+														{/if}
 													</div>
 													<Item.Description>{signal.copy}</Item.Description>
+													{#if signal.staleReviewCopy}
+														<p class="text-xs text-destructive">{signal.staleReviewCopy}</p>
+													{/if}
+													{#if workflowSummary}
+														<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+															<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+															{#if workflowSummary.note}
+																<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+															{/if}
+														</div>
+													{/if}
+													<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
 												</Item.Content>
 												<Item.Actions>
 													<Button href={getManageEventHref(signal.eventId)} variant="outline" size="sm" onclick={closeSheet}>

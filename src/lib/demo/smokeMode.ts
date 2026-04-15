@@ -7,12 +7,16 @@ const SMOKE_MODE_SCENARIO_QUERY_KEY = 'smokeScenario';
 
 export const DEFAULT_SMOKE_MODE_SCENARIO = 'default';
 export const STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO = 'stale-hub-schema';
+export const STALE_WORKFLOW_SCHEMA_SMOKE_MODE_SCENARIO = 'stale-workflow-schema';
 
 export type SmokeModeScenario =
 	| typeof DEFAULT_SMOKE_MODE_SCENARIO
-	| typeof STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO;
+	| typeof STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO
+	| typeof STALE_WORKFLOW_SCHEMA_SMOKE_MODE_SCENARIO;
 
 const STALE_HUB_SCHEMA_SMOKE_MODE_MESSAGE = 'column hub_events.delivery_state does not exist';
+const STALE_WORKFLOW_SCHEMA_SMOKE_MODE_MESSAGE =
+	'relation "public"."hub_operator_workflow_state" does not exist';
 
 function parseSmokeModeValue(value: string | null) {
 	if (value === null) {
@@ -32,6 +36,10 @@ function readExplicitSmokeMode(search: string) {
 }
 
 function normalizeSmokeModeScenario(value: string | null): SmokeModeScenario {
+	if (value === STALE_WORKFLOW_SCHEMA_SMOKE_MODE_SCENARIO) {
+		return STALE_WORKFLOW_SCHEMA_SMOKE_MODE_SCENARIO;
+	}
+
 	return value === STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO
 		? STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO
 		: DEFAULT_SMOKE_MODE_SCENARIO;
@@ -92,11 +100,23 @@ export function shouldHydrateSmokeHubState() {
 }
 
 export function getSmokeModeHubLoadError() {
-	if (!isSmokeModeEnabled() || getSmokeModeScenario() !== STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO) {
+	if (!isSmokeModeEnabled()) {
+		return null;
+	}
+
+	const scenario = getSmokeModeScenario();
+	const smokeModeMessage =
+		scenario === STALE_HUB_SCHEMA_SMOKE_MODE_SCENARIO
+			? STALE_HUB_SCHEMA_SMOKE_MODE_MESSAGE
+			: scenario === STALE_WORKFLOW_SCHEMA_SMOKE_MODE_SCENARIO
+				? STALE_WORKFLOW_SCHEMA_SMOKE_MODE_MESSAGE
+				: null;
+
+	if (!smokeModeMessage) {
 		return null;
 	}
 
 	return new Error(
-		`${STALE_HUB_SCHEMA_SMOKE_MODE_MESSAGE} ${getHubSchemaDriftRecoveryCopy(STALE_HUB_SCHEMA_SMOKE_MODE_MESSAGE)}`
+		`${smokeModeMessage} ${getHubSchemaDriftRecoveryCopy(smokeModeMessage)}`
 	);
 }

@@ -59,6 +59,12 @@
 	const manageEventsHref = $derived(
 		currentOrganization.isAdmin ? '/hub/manage/content#manage-events' : undefined
 	);
+	const manageContentHref = $derived(
+		currentOrganization.isAdmin ? '/hub/manage/content' : undefined
+	);
+	const manageSectionsHref = $derived(
+		currentOrganization.isAdmin ? '/hub/manage/sections' : undefined
+	);
 	const hasBlockingHubError = $derived(
 		Boolean(currentHub.lastError) && !currentHub.hasLoadedForCurrentOrg
 	);
@@ -77,6 +83,42 @@
 />
 
 <main class="page-stack" aria-busy={currentHub.isLoading}>
+	{#if currentOrganization.isAdmin}
+		<Card.Root class="overflow-hidden border-primary/30 bg-linear-to-br from-primary/10 via-background to-secondary/30 shadow-sm">
+			<Card.Content class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+				<div class="space-y-2">
+					<Badge
+						variant="secondary"
+						class="w-fit rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]"
+					>
+						Admin shortcut
+					</Badge>
+					<div class="space-y-1">
+						<p class="text-lg font-semibold tracking-tight text-foreground">
+							Need to publish, edit, or end a broadcast?
+						</p>
+						<p class="max-w-2xl text-sm text-muted-foreground">
+							Open hub manage to reach the broadcast editor, archive live broadcasts, and switch over to section setup when something is missing.
+						</p>
+					</div>
+				</div>
+
+				<div class="flex w-full flex-col gap-2 sm:w-auto sm:min-w-72">
+					<Button
+						href={manageContentHref}
+						size="lg"
+						class="w-full justify-center text-sm font-semibold"
+					>
+						Open Hub Manage
+					</Button>
+					<Button href={manageSectionsHref} variant="outline" size="sm" class="w-full">
+						Hub sections
+					</Button>
+				</div>
+			</Card.Content>
+		</Card.Root>
+	{/if}
+
 	<!-- Quick stats row -->
 	<Card.Root size="sm" class="border-border/70 bg-card">
 		<Card.Content class="metric-grid">

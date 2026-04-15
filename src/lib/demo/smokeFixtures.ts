@@ -3,6 +3,11 @@ import {
 	buildExpectedHubExecutionLedgerRows,
 	groupHubExecutionLedger
 } from '$lib/models/hubExecutionLedger';
+import {
+	buildHubExecutionQueueItem,
+	buildHubExecutionQueueItemTriageKey,
+	buildHubExecutionQueueTriageMapFromWorkflowStateRows
+} from '$lib/models/hubExecutionQueue';
 import { createDefaultHubNotificationPreferences } from '$lib/models/hubNotifications';
 import type {
 	OrganizationMembership,
@@ -14,7 +19,8 @@ import type {
 	BroadcastRow,
 	EventReminderSettingsRow,
 	EventRow,
-	HubExecutionLedgerRow
+	HubExecutionLedgerRow,
+	HubOperatorWorkflowStateRow
 } from '$lib/repositories/hubRepository';
 import type { CurrentHubHydratedState } from '$lib/stores/currentHub/state';
 import {
@@ -25,6 +31,10 @@ import {
 
 function toIsoFromNow(minutesFromNow: number, now: number) {
 	return new Date(now + minutesFromNow * 60_000).toISOString();
+}
+
+function shiftIsoByMinutes(value: string, minutes: number) {
+	return new Date(new Date(value).getTime() + minutes * 60_000).toISOString();
 }
 
 function cloneMembers() {
@@ -166,6 +176,74 @@ function cloneSmokeMessages() {
 	return cloneUiPreviewThreads();
 }
 
+function getSmokeWorkflowReviewerId() {
+	return (
+		uiPreviewFixtures.members.find(
+			(member) =>
+				member.role === 'admin' && member.profile_id !== uiPreviewFixtures.currentUserProfileId
+		)?.profile_id ?? uiPreviewFixtures.currentUserProfileId
+	);
+}
+
+function buildSmokeWorkflowStateRows(input: {
+	executionLedger: HubExecutionLedgerRow[];
+	broadcasts: BroadcastRow[];
+	events: EventRow[];
+	now: number;
+}) {
+	const queueItems = input.executionLedger.map((row) =>
+		buildHubExecutionQueueItem({
+			row,
+			broadcasts: input.broadcasts,
+			events: input.events,
+			now: input.now
+		})
+	);
+	const reviewedProcessedItem = queueItems.find((item) => item.bucket === 'processed');
+	const staleRecoveryItem = queueItems.find(
+		(item) => item.bucket === 'failed' || item.bucket === 'skipped'
+	);
+
+	if (!reviewedProcessedItem || !staleRecoveryItem) {
+		throw new Error(
+			'Smoke fixtures require at least one processed row and one recovery row for workflow coverage.'
+		);
+	}
+
+	const staleSignaturePayload = JSON.parse(staleRecoveryItem.reviewSignature) as {
+		dueAt: string;
+	};
+	const reviewerId = getSmokeWorkflowReviewerId();
+
+	return [
+		{
+			organization_id: uiPreviewFixtures.organizationId,
+			workflow_key: buildHubExecutionQueueItemTriageKey(reviewedProcessedItem),
+			workflow_kind: 'execution_item',
+			status: 'reviewed',
+			reviewed_by_profile_id: reviewerId,
+			note: 'Confirmed after the publish run completed.',
+			reviewed_against_signature: reviewedProcessedItem.reviewSignature,
+			created_at: toIsoFromNow(-100, input.now),
+			updated_at: toIsoFromNow(-20, input.now)
+		},
+		{
+			organization_id: uiPreviewFixtures.organizationId,
+			workflow_key: buildHubExecutionQueueItemTriageKey(staleRecoveryItem),
+			workflow_kind: 'execution_item',
+			status: 'deferred',
+			reviewed_by_profile_id: reviewerId,
+			note: 'Re-open this if the schedule shifts again.',
+			reviewed_against_signature: JSON.stringify({
+				...staleSignaturePayload,
+				dueAt: shiftIsoByMinutes(staleSignaturePayload.dueAt, -30)
+			}),
+			created_at: toIsoFromNow(-120, input.now),
+			updated_at: toIsoFromNow(-45, input.now)
+		}
+	] satisfies HubOperatorWorkflowStateRow[];
+}
+
 export function buildSmokeUserDetails(): UserDetails {
 	const currentMember = uiPreviewFixtures.members.find(
 		(member) => member.profile_id === uiPreviewFixtures.currentUserProfileId
@@ -245,6 +323,12 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 			updated_at: lastAttemptedAt ?? processedAt ?? toIsoFromNow(-30 - index, now)
 		} satisfies HubExecutionLedgerRow;
 	});
+	const workflowStateRows = buildSmokeWorkflowStateRows({
+		executionLedger,
+		broadcasts,
+		events,
+		now
+	});
 
 	return {
 		loadedOrgId: uiPreviewFixtures.organizationId,
@@ -260,6 +344,8 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 		eventAttendanceMap: {},
 		eventReminderSettingsMap,
 		executionLedger,
+		workflowStateRows,
+		queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(workflowStateRows),
 		notificationPreferences: createDefaultHubNotificationPreferences(),
 		notificationReadMap: {}
 	};

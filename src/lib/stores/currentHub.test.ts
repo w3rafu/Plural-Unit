@@ -10,6 +10,7 @@ const mockFetchEventReminderSettings = vi.fn();
 const mockFetchEventResponses = vi.fn();
 const mockFetchEventAttendanceRecords = vi.fn();
 const mockFetchHubExecutionLedger = vi.fn();
+const mockFetchHubOperatorWorkflowState = vi.fn();
 const mockProcessDueHubReminderExecutions = vi.fn();
 const mockFetchHubNotificationPreferences = vi.fn();
 const mockFetchHubNotificationReads = vi.fn();
@@ -37,19 +38,26 @@ const mockDeleteEventAttendanceRecord = vi.fn();
 const mockUpsertOwnEventResponse = vi.fn();
 const mockUpsertHubExecutionLedgerEntries = vi.fn();
 const mockDeleteHubExecutionLedgerEntries = vi.fn();
+const mockUpsertHubOperatorWorkflowStateEntries = vi.fn();
+const mockDeleteHubOperatorWorkflowStateEntries = vi.fn();
 const mockSaveHubNotificationPreferences = vi.fn();
 const mockMarkHubNotificationRead = vi.fn();
 const mockCreateResource = vi.fn();
 const mockUpdateResource = vi.fn();
 const mockSaveResourceOrder = vi.fn();
 const mockDeleteResource = vi.fn();
-const { mockCurrentOrganization } = vi.hoisted(() => ({
+const { mockCurrentOrganization, smokeModeState } = vi.hoisted(() => ({
 	mockCurrentOrganization: {
 		organization: { id: 'org-1' as string },
 		membership: { profile_id: 'profile-1', role: 'admin' as 'admin' | 'member' },
 		members: [] as any[],
 		isLoadingMembers: false,
 		isAdmin: true
+	},
+	smokeModeState: {
+		enabled: false,
+		hydrate: false,
+		loadError: null as Error | null
 	}
 }));
 
@@ -62,6 +70,7 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	fetchEventResponses: (...args: any[]) => mockFetchEventResponses(...args),
 	fetchEventAttendanceRecords: (...args: any[]) => mockFetchEventAttendanceRecords(...args),
 	fetchHubExecutionLedger: (...args: any[]) => mockFetchHubExecutionLedger(...args),
+	fetchHubOperatorWorkflowState: (...args: any[]) => mockFetchHubOperatorWorkflowState(...args),
 	processDueHubReminderExecutions: (...args: any[]) => mockProcessDueHubReminderExecutions(...args),
 	fetchHubNotificationPreferences: (...args: any[]) => mockFetchHubNotificationPreferences(...args),
 	fetchHubNotificationReads: (...args: any[]) => mockFetchHubNotificationReads(...args),
@@ -89,6 +98,10 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	upsertOwnEventResponse: (...args: any[]) => mockUpsertOwnEventResponse(...args),
 	upsertHubExecutionLedgerEntries: (...args: any[]) => mockUpsertHubExecutionLedgerEntries(...args),
 	deleteHubExecutionLedgerEntries: (...args: any[]) => mockDeleteHubExecutionLedgerEntries(...args),
+	upsertHubOperatorWorkflowStateEntries: (...args: any[]) =>
+		mockUpsertHubOperatorWorkflowStateEntries(...args),
+	deleteHubOperatorWorkflowStateEntries: (...args: any[]) =>
+		mockDeleteHubOperatorWorkflowStateEntries(...args),
 	saveHubNotificationPreferences: (...args: any[]) => mockSaveHubNotificationPreferences(...args),
 	markHubNotificationRead: (...args: any[]) => mockMarkHubNotificationRead(...args),
 	createResource: (...args: any[]) => mockCreateResource(...args),
@@ -99,6 +112,12 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 
 vi.mock('./currentOrganization.svelte', () => ({
 	currentOrganization: mockCurrentOrganization
+}));
+
+vi.mock('$lib/demo/smokeMode', () => ({
+	isSmokeModeEnabled: () => smokeModeState.enabled,
+	shouldHydrateSmokeHubState: () => smokeModeState.hydrate,
+	getSmokeModeHubLoadError: () => smokeModeState.loadError
 }));
 
 // Mock pluginRegistry
@@ -128,6 +147,10 @@ vi.mock('$lib/models/eventResponseModel', async () => {
 });
 
 import { currentHub } from './currentHub.svelte';
+import {
+	buildHubExecutionFollowUpReviewSignature,
+	buildHubExecutionQueueItemTriageKey
+} from '$lib/models/hubExecutionQueue';
 
 function makeBroadcast(
 	overrides: Partial<{
@@ -381,6 +404,32 @@ function makeExecutionLedgerRow(
 	};
 }
 
+function makeWorkflowStateRow(
+	overrides: Partial<{
+		organization_id: string;
+		workflow_key: string;
+		workflow_kind: 'execution_item' | 'followup_signal';
+		status: 'reviewed' | 'deferred';
+		reviewed_by_profile_id: string;
+		note: string;
+		reviewed_against_signature: string | null;
+		created_at: string;
+		updated_at: string;
+	}> = {}
+) {
+	return {
+		organization_id: overrides.organization_id ?? 'org-1',
+		workflow_key: overrides.workflow_key ?? 'execution:exec-1',
+		workflow_kind: overrides.workflow_kind ?? 'execution_item',
+		status: overrides.status ?? 'reviewed',
+		reviewed_by_profile_id: overrides.reviewed_by_profile_id ?? 'profile-1',
+		note: overrides.note ?? '',
+		reviewed_against_signature: overrides.reviewed_against_signature ?? null,
+		created_at: overrides.created_at ?? '2026-04-14T12:00:00.000Z',
+		updated_at: overrides.updated_at ?? '2026-04-14T12:00:00.000Z'
+	};
+}
+
 beforeEach(() => {
 	vi.resetAllMocks();
 	vi.unstubAllGlobals();
@@ -389,6 +438,9 @@ beforeEach(() => {
 	mockCurrentOrganization.members = [];
 	mockCurrentOrganization.isLoadingMembers = false;
 	mockCurrentOrganization.isAdmin = true;
+	smokeModeState.enabled = false;
+	smokeModeState.hydrate = false;
+	smokeModeState.loadError = null;
 	const localStorageState = new Map<string, string>();
 	const sessionStorageState = new Map<string, string>();
 	const sessionStorageMock = {
@@ -418,6 +470,7 @@ beforeEach(() => {
 	vi.stubGlobal('sessionStorage', sessionStorageMock);
 	mockFetchEventAttendanceRecords.mockResolvedValue([]);
 	mockFetchHubExecutionLedger.mockResolvedValue([]);
+	mockFetchHubOperatorWorkflowState.mockResolvedValue([]);
 	mockProcessDueHubReminderExecutions.mockResolvedValue([]);
 	mockUpsertHubExecutionLedgerEntries.mockImplementation(async (entries: any[]) =>
 		entries.map((entry, index) =>
@@ -428,6 +481,10 @@ beforeEach(() => {
 		)
 	);
 	mockDeleteHubExecutionLedgerEntries.mockResolvedValue(undefined);
+	mockUpsertHubOperatorWorkflowStateEntries.mockImplementation(async (entries: any[]) =>
+		entries.map((entry) => makeWorkflowStateRow(entry))
+	);
+	mockDeleteHubOperatorWorkflowStateEntries.mockResolvedValue(undefined);
 	mockDeleteEventAttendanceRecord.mockResolvedValue(undefined);
 	mockFetchHubNotificationPreferences.mockResolvedValue(null);
 	mockFetchHubNotificationReads.mockResolvedValue([]);
@@ -475,6 +532,173 @@ describe('currentHub.load', () => {
 		expect(currentHub.getOwnEventResponse('e1')).toBe('going');
 		expect(currentHub.getOwnEventAttendance('e1')).toBe('attended');
 		expect(currentHub.isLoading).toBe(false);
+	});
+
+	it('hydrates shared workflow rows into the queue triage map for admins', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([]);
+		mockFetchHubOperatorWorkflowState.mockResolvedValueOnce([
+			makeWorkflowStateRow({
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				updated_at: '2026-04-14T12:00:00.000Z'
+			})
+		]);
+
+		await currentHub.load();
+
+		expect(mockFetchHubOperatorWorkflowState).toHaveBeenCalledWith('org-1');
+		expect(currentHub.workflowStateRows).toHaveLength(1);
+		expect(currentHub.queueTriageMap).toEqual({
+			'execution:failed-publish': {
+				status: 'reviewed',
+				updatedAt: '2026-04-14T12:00:00.000Z',
+				reviewedAgainstSignature: null
+			}
+		});
+	});
+
+	it('hydrates seeded workflow fixtures during smoke loads when no local smoke state exists', async () => {
+		smokeModeState.enabled = true;
+
+		await currentHub.load();
+
+		const queueSections = currentHub.getExecutionQueueSections(undefined, {
+			includeTriaged: true
+		});
+		const reviewedProcessedItem = queueSections.processed.find(
+			(item) => item.triageStatus === 'reviewed' && !item.isStaleReview
+		);
+		const staleRecoveryItem = queueSections.recovery.find((item) => item.isStaleReview);
+
+		if (!reviewedProcessedItem || !staleRecoveryItem) {
+			throw new Error('Expected seeded smoke workflow rows to surface both a hidden reviewed item and a stale recovery item.');
+		}
+
+		expect(mockFetchActivePlugins).not.toHaveBeenCalled();
+		expect(currentHub.workflowStateRows).toHaveLength(2);
+		expect(currentHub.triagedQueueItemCount).toBe(1);
+		expect(currentHub.staleExecutionItemCount).toBe(1);
+		expect(
+			currentHub.queueTriageMap[buildHubExecutionQueueItemTriageKey(reviewedProcessedItem)]
+				?.reviewedAgainstSignature
+		).toBe(reviewedProcessedItem.reviewSignature);
+		expect(
+			currentHub.queueTriageMap[buildHubExecutionQueueItemTriageKey(staleRecoveryItem)]
+				?.reviewedAgainstSignature
+		).not.toBe(staleRecoveryItem.reviewSignature);
+	});
+
+	it('keeps smoke workflow review overwrites local across reloads', async () => {
+		smokeModeState.enabled = true;
+
+		await currentHub.load();
+
+		const recoveryItem = currentHub
+			.getExecutionQueueSections(undefined, { includeTriaged: true })
+			.recovery.find((item) => item.isStaleReview);
+
+		if (!recoveryItem) {
+			throw new Error('Expected a stale recovery item in smoke mode.');
+		}
+
+		const workflowKey = buildHubExecutionQueueItemTriageKey(recoveryItem);
+
+		await currentHub.markExecutionQueueItemReviewed(recoveryItem.id, {
+			note: '  Rechecked   after retry  '
+		});
+
+		let updatedRecoveryItem = currentHub
+			.getExecutionQueueSections(undefined, { includeTriaged: true })
+			.recovery.find((item) => item.id === recoveryItem.id);
+
+		if (!updatedRecoveryItem) {
+			throw new Error('Expected the updated recovery item to remain visible when triaged rows are included.');
+		}
+
+		expect(updatedRecoveryItem).toMatchObject({
+			triageStatus: 'reviewed',
+			isStaleReview: false
+		});
+		expect(currentHub.getWorkflowSummary(workflowKey)?.note).toBe('Rechecked after retry');
+
+		await currentHub.load();
+
+		updatedRecoveryItem = currentHub
+			.getExecutionQueueSections(undefined, { includeTriaged: true })
+			.recovery.find((item) => item.id === recoveryItem.id);
+
+		expect(updatedRecoveryItem).toMatchObject({
+			triageStatus: 'reviewed',
+			isStaleReview: false
+		});
+		expect(currentHub.getWorkflowSummary(workflowKey)?.note).toBe('Rechecked after retry');
+	});
+
+	it('keeps smoke workflow clears local across reloads', async () => {
+		smokeModeState.enabled = true;
+
+		await currentHub.load();
+
+		const processedItem = currentHub
+			.getExecutionQueueSections(undefined, { includeTriaged: true })
+			.processed.find((item) => item.triageStatus === 'reviewed' && !item.isStaleReview);
+
+		if (!processedItem) {
+			throw new Error('Expected a reviewed processed item in smoke mode.');
+		}
+
+		const workflowKey = buildHubExecutionQueueItemTriageKey(processedItem);
+
+		await currentHub.surfaceExecutionQueueItem(processedItem.id);
+
+		expect(currentHub.getWorkflowSummary(workflowKey)).toBeNull();
+		expect(currentHub.queueTriageMap[workflowKey]).toBeUndefined();
+
+		await currentHub.load();
+
+		expect(currentHub.getWorkflowSummary(workflowKey)).toBeNull();
+		expect(currentHub.queueTriageMap[workflowKey]).toBeUndefined();
+		expect(currentHub.triagedQueueItemCount).toBe(0);
+	});
+
+	it('removes orphaned follow-up workflow rows during load without touching execution triage', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([]);
+		mockFetchHubOperatorWorkflowState.mockResolvedValueOnce([
+			makeWorkflowStateRow({
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				updated_at: '2026-04-14T12:00:00.000Z'
+			}),
+			makeWorkflowStateRow({
+				workflow_key: 'followup:needs-review:attendance_review',
+				workflow_kind: 'followup_signal',
+				status: 'deferred',
+				updated_at: '2026-04-14T12:05:00.000Z'
+			})
+		]);
+
+		await currentHub.load();
+
+		expect(currentHub.workflowStateRows).toEqual([
+			makeWorkflowStateRow({
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				updated_at: '2026-04-14T12:00:00.000Z'
+			})
+		]);
+		expect(currentHub.queueTriageMap).toEqual({
+			'execution:failed-publish': {
+				status: 'reviewed',
+				updatedAt: '2026-04-14T12:00:00.000Z',
+				reviewedAgainstSignature: null
+			}
+		});
+		expect(mockDeleteHubOperatorWorkflowStateEntries).toHaveBeenCalledWith('org-1', [
+			'followup:needs-review:attendance_review'
+		]);
 	});
 
 	it('reconciles persisted delivery metadata for scheduled content when admin load detects a state change', async () => {
@@ -1036,7 +1260,7 @@ describe('currentHub execution queue actions', () => {
 });
 
 describe('currentHub queue triage', () => {
-	it('hides reviewed and deferred queue items by default until they are surfaced again', () => {
+	it('hides reviewed and deferred queue items by default until they are surfaced again', async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
 
@@ -1110,10 +1334,20 @@ describe('currentHub queue triage', () => {
 		expect(currentHub.hubEventFollowUpSignals.map((signal) => signal.kind)).toEqual([
 			'attendance_review'
 		]);
+		const failedSignature =
+			currentHub.getExecutionQueueSections(undefined, { includeTriaged: true }).recovery[0]
+				?.reviewSignature ?? null;
+		const processedSignature =
+			currentHub.getExecutionQueueSections(undefined, { includeTriaged: true }).processed[0]
+				?.reviewSignature ?? null;
+		const followUpSignal = currentHub.getHubEventFollowUpSignals({ includeTriaged: true })[0] ?? null;
+		const followUpSignature = followUpSignal
+			? buildHubExecutionFollowUpReviewSignature(followUpSignal)
+			: null;
 
-		currentHub.markExecutionQueueItemReviewed('failed-publish');
-		currentHub.deferExecutionQueueItem('processed-broadcast');
-		currentHub.markFollowUpSignalReviewed('needs-review', 'attendance_review');
+		await currentHub.markExecutionQueueItemReviewed('failed-publish');
+		await currentHub.deferExecutionQueueItem('processed-broadcast');
+		await currentHub.markFollowUpSignalReviewed('needs-review', 'attendance_review');
 
 		expect(currentHub.visibleRecoverableExecutionCount).toBe(0);
 		expect(currentHub.getExecutionQueueSections().processed).toEqual([]);
@@ -1141,22 +1375,43 @@ describe('currentHub queue triage', () => {
 			eventId: 'needs-review',
 			triageStatus: 'reviewed'
 		});
-		expect((window as any).localStorage.setItem).toHaveBeenCalledWith(
-			'plural-unit:hub-queue-triage:org-1',
-			expect.any(String)
-		);
-
-		const setItemCalls = ((window as any).localStorage.setItem as any).mock.calls;
-		const persistedTriageMap = JSON.parse(setItemCalls[setItemCalls.length - 1][1]);
-		expect(Object.keys(persistedTriageMap).sort()).toEqual([
-			'execution:failed-publish',
-			'execution:processed-broadcast',
-			'followup:needs-review:attendance_review'
+		expect(mockUpsertHubOperatorWorkflowStateEntries).toHaveBeenNthCalledWith(1, [
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: failedSignature
+			}
+		]);
+		expect(mockUpsertHubOperatorWorkflowStateEntries).toHaveBeenNthCalledWith(2, [
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:processed-broadcast',
+				workflow_kind: 'execution_item',
+				status: 'deferred',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: processedSignature
+			}
+		]);
+		expect(mockUpsertHubOperatorWorkflowStateEntries).toHaveBeenNthCalledWith(3, [
+			{
+				organization_id: 'org-1',
+				workflow_key: 'followup:needs-review:attendance_review',
+				workflow_kind: 'followup_signal',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: followUpSignature
+			}
 		]);
 
-		currentHub.surfaceExecutionQueueItem('failed-publish');
-		currentHub.surfaceExecutionQueueItem('processed-broadcast');
-		currentHub.surfaceFollowUpSignal('needs-review', 'attendance_review');
+		await currentHub.surfaceExecutionQueueItem('failed-publish');
+		await currentHub.surfaceExecutionQueueItem('processed-broadcast');
+		await currentHub.surfaceFollowUpSignal('needs-review', 'attendance_review');
 
 		expect(currentHub.visibleRecoverableExecutionCount).toBe(1);
 		expect(currentHub.getExecutionQueueSections().processed.map((item) => item.id)).toEqual([
@@ -1166,14 +1421,145 @@ describe('currentHub queue triage', () => {
 			'attendance_review'
 		]);
 		expect(currentHub.triagedQueueItemCount).toBe(0);
-		expect((window as any).localStorage.removeItem).toHaveBeenCalledWith(
-			'plural-unit:hub-queue-triage:org-1'
-		);
+		expect(mockDeleteHubOperatorWorkflowStateEntries).toHaveBeenNthCalledWith(1, 'org-1', [
+			'execution:failed-publish'
+		]);
+		expect(mockDeleteHubOperatorWorkflowStateEntries).toHaveBeenNthCalledWith(2, 'org-1', [
+			'execution:processed-broadcast'
+		]);
+		expect(mockDeleteHubOperatorWorkflowStateEntries).toHaveBeenNthCalledWith(3, 'org-1', [
+			'followup:needs-review:attendance_review'
+		]);
 
 		vi.useRealTimers();
 	});
 
-	it('rehydrates triage state from browser storage during load', async () => {
+	it('normalizes optional workflow notes before persisting review state', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
+
+		currentHub.broadcasts = [makeBroadcast({ id: 'b1', title: 'Weekly notes' })];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'processed-broadcast',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2026-04-14T10:00:00.000Z',
+				execution_state: 'processed',
+				processed_at: '2026-04-14T10:05:00.000Z'
+			})
+		];
+
+		const reviewSignature =
+			currentHub.getExecutionQueueSections(undefined, { includeTriaged: true }).processed[0]
+				?.reviewSignature ?? null;
+
+		await currentHub.markExecutionQueueItemReviewed('processed-broadcast', {
+			note: '  Bring   printed\nroster   '
+		});
+
+		expect(mockUpsertHubOperatorWorkflowStateEntries).toHaveBeenCalledWith([
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:processed-broadcast',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: 'Bring printed roster',
+				reviewed_against_signature: reviewSignature
+			}
+		]);
+		expect(currentHub.workflowStateRows[0]).toMatchObject({
+			workflow_key: 'execution:processed-broadcast',
+			note: 'Bring printed roster'
+		});
+
+		vi.useRealTimers();
+	});
+
+	it('cleans up a reviewed follow-up row when attendance changes switch the active signal kind', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
+
+		currentHub.events = [
+			makeEvent({
+				id: 'needs-review',
+				title: 'Volunteer night',
+				starts_at: '2026-04-14T08:00:00.000Z',
+				ends_at: '2026-04-14T09:00:00.000Z'
+			})
+		];
+		currentHub.eventResponseMap = {
+			'needs-review': [
+				{
+					id: 'r1',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-2',
+					response: 'going',
+					created_at: '2026-04-14T07:00:00.000Z',
+					updated_at: '2026-04-14T07:00:00.000Z'
+				},
+				{
+					id: 'r2',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-3',
+					response: 'going',
+					created_at: '2026-04-14T07:05:00.000Z',
+					updated_at: '2026-04-14T07:05:00.000Z'
+				}
+			]
+		};
+		currentHub.eventAttendanceMap = {
+			'needs-review': [
+				makeAttendanceRecord({
+					id: 'a1',
+					event_id: 'needs-review',
+					profile_id: 'profile-2',
+					status: 'attended'
+				})
+			]
+		};
+		mockUpsertEventAttendanceRecord.mockResolvedValueOnce(
+			makeAttendanceRecord({
+				id: 'a2',
+				event_id: 'needs-review',
+				profile_id: 'profile-3',
+				status: 'absent',
+				marked_by_profile_id: 'profile-1',
+				updated_at: '2026-04-14T12:10:00.000Z'
+			})
+		);
+
+		expect(currentHub.hubEventFollowUpSignals).toMatchObject([
+			{
+				eventId: 'needs-review',
+				kind: 'attendance_review'
+			}
+		]);
+
+		await currentHub.markFollowUpSignalReviewed('needs-review', 'attendance_review');
+		await currentHub.setEventAttendance('needs-review', 'profile-3', 'absent');
+
+		expect(mockDeleteHubOperatorWorkflowStateEntries).toHaveBeenCalledWith('org-1', [
+			'followup:needs-review:attendance_review'
+		]);
+		expect(currentHub.workflowStateRows).toEqual([]);
+		expect(currentHub.queueTriageMap).toEqual({});
+		expect(currentHub.hubEventFollowUpSignals).toMatchObject([
+			{
+				eventId: 'needs-review',
+				kind: 'low_turnout',
+				triageStatus: null
+			}
+		]);
+
+		vi.useRealTimers();
+	});
+
+	it('imports legacy browser triage into shared workflow state during first load', async () => {
 		mockFetchActivePlugins.mockResolvedValueOnce([]);
 		(window as any).localStorage.setItem(
 			'plural-unit:hub-queue-triage:org-1',
@@ -1187,12 +1573,37 @@ describe('currentHub queue triage', () => {
 
 		await currentHub.load();
 
+		expect(mockUpsertHubOperatorWorkflowStateEntries).toHaveBeenCalledWith([
+			{
+				organization_id: 'org-1',
+				workflow_key: 'execution:failed-publish',
+				workflow_kind: 'execution_item',
+				status: 'reviewed',
+				reviewed_by_profile_id: 'profile-1',
+				note: '',
+				reviewed_against_signature: null
+			}
+		]);
 		expect(currentHub.queueTriageMap).toEqual({
 			'execution:failed-publish': {
 				status: 'reviewed',
-				updatedAt: '2026-04-14T12:00:00.000Z'
+				updatedAt: '2026-04-14T12:00:00.000Z',
+				reviewedAgainstSignature: null
 			}
 		});
+		expect((window as any).localStorage.removeItem).toHaveBeenCalledWith(
+			'plural-unit:hub-queue-triage:org-1'
+		);
+		expect((window as any).localStorage.setItem).toHaveBeenCalledWith(
+			'plural-unit:hub-queue-triage-imported:org-1',
+			'1'
+		);
+
+		currentHub.reset();
+		mockFetchActivePlugins.mockResolvedValueOnce([]);
+		await currentHub.load();
+
+		expect(mockUpsertHubOperatorWorkflowStateEntries).toHaveBeenCalledTimes(1);
 	});
 });
 

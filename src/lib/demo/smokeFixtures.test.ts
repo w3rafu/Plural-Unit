@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	buildHubExecutionQueueItemTriageKey,
+	buildHubExecutionQueueSections
+} from '$lib/models/hubExecutionQueue';
+
+import {
 	buildSmokeHubState,
 	buildSmokeMessages,
 	buildSmokeUserDetails,
@@ -12,14 +17,62 @@ describe('smokeFixtures', () => {
 		const now = Date.parse('2026-04-15T12:00:00.000Z');
 		const state = buildSmokeHubState(now);
 		const groups = summarizeSmokeHubState(now);
+		const visibleQueue = buildHubExecutionQueueSections({
+			rows: state.executionLedger,
+			broadcasts: state.broadcasts,
+			events: state.events,
+			now,
+			triageMap: state.queueTriageMap
+		});
+		const allQueue = buildHubExecutionQueueSections({
+			rows: state.executionLedger,
+			broadcasts: state.broadcasts,
+			events: state.events,
+			now,
+			triageMap: state.queueTriageMap,
+			includeTriaged: true
+		});
 
 		expect(state.plugins).toEqual({ broadcasts: true, events: true, resources: false });
 		expect(state.broadcasts).toHaveLength(3);
 		expect(state.events).toHaveLength(4);
+		expect(state.workflowStateRows).toHaveLength(2);
+		expect(state.workflowStateRows.map((row) => row.note)).toEqual(
+			expect.arrayContaining([
+				'Confirmed after the publish run completed.',
+				'Re-open this if the schedule shifts again.'
+			])
+		);
+		expect(Object.keys(state.queueTriageMap)).toHaveLength(2);
 		expect(groups.due.length).toBeGreaterThan(0);
 		expect(groups.upcoming.length).toBeGreaterThan(0);
 		expect(groups.processed.length).toBeGreaterThan(0);
 		expect(groups.failed.length).toBeGreaterThan(0);
+
+		const reviewedProcessedItem = allQueue.processed.find(
+			(item) => item.triageStatus === 'reviewed' && !item.isStaleReview
+		);
+		const staleRecoveryItem = visibleQueue.recovery.find((item) => item.isStaleReview);
+
+		if (!reviewedProcessedItem || !staleRecoveryItem) {
+			throw new Error('Expected smoke workflow fixtures to seed one hidden triaged item and one stale recovery item.');
+		}
+
+		expect(
+			visibleQueue.processed.some((item) => item.id === reviewedProcessedItem.id)
+		).toBe(false);
+		expect(staleRecoveryItem).toMatchObject({
+			triageStatus: 'deferred',
+			staleReviewCopy: 'Due time changed since review.'
+		});
+		expect(
+			state.queueTriageMap[buildHubExecutionQueueItemTriageKey(reviewedProcessedItem)]
+				?.reviewedAgainstSignature
+		).toBe(reviewedProcessedItem.reviewSignature);
+		expect(
+			state.queueTriageMap[buildHubExecutionQueueItemTriageKey(staleRecoveryItem)]
+				?.reviewedAgainstSignature
+		).not.toBe(staleRecoveryItem.reviewSignature);
 	});
 
 	it('exposes current-user and message fixtures for smoke mode', () => {

@@ -17,6 +17,7 @@ import {
 	createDefaultHubNotificationPreferences,
 	type HubNotificationPreferences
 } from '$lib/models/hubNotifications';
+import { buildHubExecutionQueueTriageMapFromWorkflowStateRows, type HubExecutionTriageMap } from '$lib/models/hubExecutionQueue';
 import { sortHubExecutionLedgerRows } from '$lib/models/hubExecutionLedger';
 import type {
 	BroadcastRow,
@@ -27,6 +28,7 @@ import type {
 	HubExecutionLedgerRow,
 	HubNotificationPreferenceRow,
 	HubNotificationReadRow,
+	HubOperatorWorkflowStateRow,
 	ResourceRow
 } from '$lib/repositories/hubRepository';
 import {
@@ -39,6 +41,7 @@ import {
 	fetchHubExecutionLedger,
 	fetchHubNotificationPreferences,
 	fetchHubNotificationReads,
+	fetchHubOperatorWorkflowState,
 	fetchResources,
 	processDueHubReminderExecutions
 } from '$lib/repositories/hubRepository';
@@ -57,6 +60,8 @@ export type CurrentHubLoadResult = {
 	eventAttendanceMap: Record<string, EventAttendanceRow[]>;
 	eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
 	executionLedger: HubExecutionLedgerRow[];
+	workflowStateRows: HubOperatorWorkflowStateRow[];
+	queueTriageMap: HubExecutionTriageMap;
 	notificationPreferences: HubNotificationPreferences;
 	notificationReadMap: Record<string, string>;
 	loadedOrgId: string;
@@ -72,6 +77,7 @@ type CurrentHubRawLoadData = {
 	resources: ResourceRow[];
 	notificationPreferenceRow: HubNotificationPreferenceRow | null;
 	notificationReadRows: HubNotificationReadRow[];
+	workflowStateRows: HubOperatorWorkflowStateRow[];
 };
 
 async function fetchCurrentHubRawLoadData(input: {
@@ -90,7 +96,8 @@ async function fetchCurrentHubRawLoadData(input: {
 		eventReminderSettings,
 		resources,
 		notificationPreferenceRow,
-		notificationReadRows
+		notificationReadRows,
+		workflowStateRows
 	] = await Promise.all([
 		plugins.broadcasts ? fetchBroadcasts(input.orgId) : Promise.resolve([]),
 		plugins.events ? fetchEvents(input.orgId) : Promise.resolve([]),
@@ -101,7 +108,10 @@ async function fetchCurrentHubRawLoadData(input: {
 		input.profileId ? fetchHubNotificationPreferences(input.orgId, input.profileId) : Promise.resolve(null),
 		input.profileId
 			? fetchHubNotificationReads(input.orgId, input.profileId)
-			: Promise.resolve([] as HubNotificationReadRow[])
+			: Promise.resolve([] as HubNotificationReadRow[]),
+		input.isAdmin
+			? fetchHubOperatorWorkflowState(input.orgId)
+			: Promise.resolve([] as HubOperatorWorkflowStateRow[])
 	]);
 
 	return {
@@ -113,7 +123,8 @@ async function fetchCurrentHubRawLoadData(input: {
 		eventReminderSettings,
 		resources,
 		notificationPreferenceRow,
-		notificationReadRows
+		notificationReadRows,
+		workflowStateRows
 	};
 }
 
@@ -244,6 +255,8 @@ export async function loadCurrentHubState(input: {
 		eventAttendanceMap: buildEventAttendanceMap(raw.eventAttendanceRecords),
 		eventReminderSettingsMap,
 		executionLedger,
+		workflowStateRows: raw.workflowStateRows,
+		queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(raw.workflowStateRows),
 		notificationPreferences: raw.notificationPreferenceRow
 			? {
 				broadcast: raw.notificationPreferenceRow.broadcast_enabled,
