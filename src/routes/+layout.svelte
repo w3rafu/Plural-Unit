@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { ModeWatcher } from 'mode-watcher';
 	import AuthGate from '$lib/components/auth/AuthGate.svelte';
+	import { syncSmokeModeFromUrl } from '$lib/demo/smokeMode';
 	import { isLockedContentRoute as getIsLockedContentRoute } from '$lib/components/ui/contentLayoutModel';
 	import Header from '$lib/components/ui/Header.svelte';
 	import BottomNav from '$lib/components/ui/BottomNav.svelte';
@@ -18,6 +19,10 @@
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
 	const isLockedContentRoute = $derived(getIsLockedContentRoute(page.url.pathname));
+
+	$effect(() => {
+		syncSmokeModeFromUrl(page.url);
+	});
 
 	// Load messages early so the unread badge is visible before navigating to /messages.
 	let messagesLoadedForUserId = '';

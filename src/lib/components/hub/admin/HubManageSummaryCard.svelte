@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import {
@@ -6,6 +7,7 @@
 		getHubEngagementCoverageCopy,
 		getHubEngagementFollowUpCopy
 	} from '$lib/models/hubEngagementModel';
+	import { buildHubExecutionQueueFocusHref } from '$lib/models/hubExecutionQueue';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { getAllPluginsForAdmin } from '$lib/stores/pluginRegistry';
@@ -103,6 +105,20 @@
 
 		return parts.join(' ');
 	});
+
+	function getQueueFocusHref(bucket: 'due' | 'recovery') {
+		return buildHubExecutionQueueFocusHref({
+			url: page.url,
+			pathname: '/hub/manage/content',
+			hash: 'manage-operations',
+			focus: {
+				bucket,
+				jobKind: 'all',
+				subjectKind: 'all',
+				includeUpcoming: false
+			}
+		});
+	}
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
@@ -156,21 +172,21 @@
 			<p class="metric-copy">{attendanceReviewCopy}</p>
 		</div>
 
-		<div class="metric-card">
+		<a href={getQueueFocusHref('due')} class="metric-card metric-card--link no-underline">
 			<div>
 				<p class="metric-label">Due work</p>
 				<p class="metric-value">{dueExecutionCount}</p>
 			</div>
 			<p class="metric-copy">{dueExecutionCopy}</p>
-		</div>
+		</a>
 
-		<div class="metric-card">
+		<a href={getQueueFocusHref('recovery')} class="metric-card metric-card--link no-underline">
 			<div>
 				<p class="metric-label">Recovery queue</p>
 				<p class="metric-value">{recoverableExecutionCount}</p>
 			</div>
 			<p class="metric-copy">{recoveryQueueCopy}</p>
-		</div>
+		</a>
 
 		<div class="metric-card">
 			<div>

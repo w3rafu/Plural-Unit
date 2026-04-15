@@ -1,5 +1,7 @@
 import type { MessageThread } from '$lib/models/messageModel';
 import * as messageRepository from '$lib/repositories/messageRepository';
+import { buildSmokeMessages } from '$lib/demo/smokeFixtures';
+import { isSmokeModeEnabled } from '$lib/demo/smokeMode';
 
 export type MessageRepository = {
 	fetchOwnMessageThreads: typeof messageRepository.fetchOwnMessageThreads;
@@ -65,6 +67,16 @@ class CurrentMessages {
 
 	async loadForUser(ownerId: string) {
 		if (!ownerId) return;
+
+		if (isSmokeModeEnabled()) {
+			this.ownerId = ownerId;
+			this.isReady = true;
+			this.isLoading = false;
+			this.error = '';
+			this.threads = buildSmokeMessages();
+			this.activeThreadId = this.threads[0]?.id ?? '';
+			return;
+		}
 
 		this.ownerId = ownerId;
 		this.isReady = false;

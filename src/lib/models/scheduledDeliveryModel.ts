@@ -5,6 +5,7 @@ import type {
 	ScheduledDeliveryState
 } from '$lib/repositories/hubRepository';
 import { formatRelativeDateTime } from '$lib/utils/dateFormat';
+import { HUB_EXECUTION_FAILURE_REASONS } from './hubRecoveryGuidance';
 
 export type ScheduledDeliveryStatus = {
 	state: ScheduledDeliveryState;
@@ -110,11 +111,11 @@ export function getBroadcastDeliveryStatus(
 	}
 
 	if (archivedAt !== null && archivedAt <= publishAt) {
-		return buildSkippedStatus('Archived before the scheduled visibility window. Restore or edit it if it still needs to go live.');
+		return buildSkippedStatus(HUB_EXECUTION_FAILURE_REASONS.broadcastArchivedBeforeVisibility);
 	}
 
 	if (expiresAt !== null && publishAt >= expiresAt) {
-		return buildFailedStatus('The scheduled publish time lands at or after the expiry time. Edit the timing before retrying.');
+		return buildFailedStatus(HUB_EXECUTION_FAILURE_REASONS.broadcastPublishAfterExpiry);
 	}
 
 	if (publishAt > now) {
@@ -145,15 +146,15 @@ export function getEventDeliveryStatus(
 	}
 
 	if (archivedAt !== null && archivedAt <= publishAt) {
-		return buildSkippedStatus('Archived before the scheduled visibility window. Restore the event if it still needs to go live.');
+		return buildSkippedStatus(HUB_EXECUTION_FAILURE_REASONS.eventArchivedBeforeVisibility);
 	}
 
 	if (canceledAt !== null && canceledAt <= publishAt) {
-		return buildSkippedStatus('Canceled before the scheduled visibility window. Restore the event if it still needs to go live.');
+		return buildSkippedStatus(HUB_EXECUTION_FAILURE_REASONS.eventCanceledBeforeVisibility);
 	}
 
 	if (publishAt >= startsAt) {
-		return buildFailedStatus('The scheduled publish time lands at or after the event start. Edit the timing before retrying.');
+		return buildFailedStatus(HUB_EXECUTION_FAILURE_REASONS.eventPublishAfterStart);
 	}
 
 	if (publishAt > now) {

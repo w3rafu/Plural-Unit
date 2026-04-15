@@ -5,7 +5,8 @@ let client: SupabaseClient | null = null;
 
 /**
  * Returns a browser-side Supabase client.
- * Throws if env vars are missing — there is no demo mode.
+	 * Throws if env vars are missing for live Supabase-backed flows.
+	 * The browser smoke harness bypasses these calls through fixture-backed stores.
  */
 export function getSupabaseClient(): SupabaseClient {
 	if (client) return client;

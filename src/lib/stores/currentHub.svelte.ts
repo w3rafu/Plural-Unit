@@ -72,6 +72,7 @@ import { togglePlugin } from '$lib/repositories/hubRepository';
 import {
 	getCurrentHubActivityFeed,
 	getCurrentHubAllActivityFeed,
+	getCurrentHubBroadcastExecutionDiagnostics,
 	getCurrentHubBroadcastDeliveryStatus,
 	getCurrentHubBroadcastEngagementSignal,
 	getCurrentHubEngagementSummary,
@@ -79,6 +80,7 @@ import {
 	getCurrentHubEventAttendanceRoster,
 	getCurrentHubEventAttendanceStatus,
 	getCurrentHubEventAttendanceSummary,
+	getCurrentHubEventExecutionDiagnostics,
 	getCurrentHubEventDeliveryStatus,
 	getCurrentHubEventEngagementSignal,
 	getCurrentHubEventFollowUpSignals,
@@ -144,6 +146,13 @@ import {
 import { currentOrganization } from './currentOrganization.svelte';
 import type { ScheduledDeliveryStatus } from '$lib/models/scheduledDeliveryModel';
 import type { EventResponseRoster } from '$lib/models/eventResponseModel';
+import type { HubExecutionDiagnosticEntry } from '$lib/models/hubExecutionDiagnostics';
+import { buildSmokeHubState } from '$lib/demo/smokeFixtures';
+import {
+	getSmokeModeHubLoadError,
+	isSmokeModeEnabled,
+	shouldHydrateSmokeHubState
+} from '$lib/demo/smokeMode';
 
 class CurrentHub {
 	isLoading = $state(false);
@@ -177,6 +186,12 @@ class CurrentHub {
 
 	private loadPromise: Promise<void> | null = null;
 	private loadingOrgId: string | null = null;
+
+	constructor() {
+		if (typeof window !== 'undefined' && shouldHydrateSmokeHubState()) {
+			applyCurrentHubLoadedState(this, buildSmokeHubState());
+		}
+	}
 
 	private captureError(error: unknown) {
 		this.lastError = error instanceof Error ? error : new Error(String(error));
@@ -402,6 +417,24 @@ class CurrentHub {
 		const orgId = this.orgId;
 		if (!orgId) return;
 
+		if (isSmokeModeEnabled()) {
+			const smokeLoadError = getSmokeModeHubLoadError();
+			if (smokeLoadError) {
+				resetCurrentHubState(this);
+				this.lastError = smokeLoadError;
+				this.loadPromise = null;
+				this.loadingOrgId = null;
+				throw smokeLoadError;
+			}
+
+			this.lastError = null;
+			applyCurrentHubLoadedState(this, buildSmokeHubState());
+			this.isLoading = false;
+			this.loadPromise = null;
+			this.loadingOrgId = null;
+			return;
+		}
+
 		if (this.loadPromise) {
 			if (this.loadingOrgId === orgId) {
 				return this.loadPromise;
@@ -460,12 +493,22 @@ class CurrentHub {
 	}
 
 	async toggle(key: PluginKey, enabled: boolean) {
+		if (isSmokeModeEnabled()) {
+			this.plugins = { ...this.plugins, [key]: enabled };
+			return;
+		}
+
 		if (!this.orgId) return;
 		await togglePlugin(this.orgId, key, enabled);
 		this.plugins = { ...this.plugins, [key]: enabled };
 	}
 
 	async updateNotificationPreferences(nextPreferences: HubNotificationPreferences) {
+		if (isSmokeModeEnabled()) {
+			this.notificationPreferences = { ...nextPreferences };
+			return;
+		}
+
 		if (!this.orgId || !this.ownProfileId) return;
 
 		this.isSavingNotificationPreferences = true;
@@ -489,6 +532,18 @@ class CurrentHub {
 			'id' | 'kind' | 'sourceId' | 'notificationKey' | 'isRead'
 		>
 	) {
+		if (isSmokeModeEnabled()) {
+			if (notification.isRead) {
+				return;
+			}
+
+			this.notificationReadMap = {
+				...this.notificationReadMap,
+				[notification.id]: new Date().toISOString()
+			};
+			return;
+		}
+
 		if (!this.orgId || !this.ownProfileId || notification.isRead) {
 			return;
 		}
@@ -506,6 +561,15 @@ class CurrentHub {
 	}
 
 	async markAllActivityRead(items: HubNotificationItem[] = this.activityFeed) {
+		if (isSmokeModeEnabled()) {
+			const readAt = new Date().toISOString();
+			this.notificationReadMap = {
+				...this.notificationReadMap,
+				...Object.fromEntries(items.map((item) => [item.id, readAt]))
+			};
+			return;
+		}
+
 		if (!this.orgId || !this.ownProfileId) {
 			return;
 		}
@@ -839,8 +903,24 @@ class CurrentHub {
 		return getCurrentHubBroadcastDeliveryStatus(this.broadcasts, broadcastId);
 	}
 
+	getBroadcastExecutionDiagnostics(broadcastId: string): HubExecutionDiagnosticEntry[] {
+		return getCurrentHubBroadcastExecutionDiagnostics({
+			broadcasts: this.broadcasts,
+			executionLedger: this.executionLedger,
+			broadcastId
+		});
+	}
+
 	getEventDeliveryStatus(eventId: string): ScheduledDeliveryStatus | null {
 		return getCurrentHubEventDeliveryStatus(this.events, eventId);
+	}
+
+	getEventExecutionDiagnostics(eventId: string): HubExecutionDiagnosticEntry[] {
+		return getCurrentHubEventExecutionDiagnostics({
+			events: this.events,
+			executionLedger: this.executionLedger,
+			eventId
+		});
 	}
 
 	getEventAttendanceSummary(eventId: string): EventAttendanceSummary {

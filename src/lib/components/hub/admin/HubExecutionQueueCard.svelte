@@ -1,28 +1,96 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import * as Item from '$lib/components/ui/item';
-	import { buildHubExecutionQueueSections, type HubExecutionQueueItem } from '$lib/models/hubExecutionQueue';
+	import {
+		buildHubExecutionQueueFocusHref,
+		buildHubExecutionQueueSections,
+		isHubExecutionQueueFocusActive,
+		parseHubExecutionQueueFocus,
+		type HubExecutionQueueBucketFilter,
+		type HubExecutionQueueItem,
+		type HubExecutionQueueJobFilter,
+		type HubExecutionQueueSubjectFilter
+	} from '$lib/models/hubExecutionQueue';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
+
+	const bucketOptions = [
+		{ value: 'all', label: 'All' },
+		{ value: 'due', label: 'Due' },
+		{ value: 'recovery', label: 'Recovery' },
+		{ value: 'processed', label: 'Processed' }
+	] as const satisfies Array<{ value: HubExecutionQueueBucketFilter; label: string }>;
+	const jobOptions = [
+		{ value: 'all', label: 'All jobs' },
+		{ value: 'broadcast_publish', label: 'Broadcast publish' },
+		{ value: 'event_publish', label: 'Event publish' },
+		{ value: 'event_reminder', label: 'Reminders' }
+	] as const satisfies Array<{ value: HubExecutionQueueJobFilter; label: string }>;
+	const subjectOptions = [
+		{ value: 'all', label: 'All content' },
+		{ value: 'broadcast', label: 'Broadcasts' },
+		{ value: 'event', label: 'Events' }
+	] as const satisfies Array<{ value: HubExecutionQueueSubjectFilter; label: string }>;
+
+	const queueFocus = $derived(parseHubExecutionQueueFocus(page.url));
 
 	const queueSections = $derived(
 		buildHubExecutionQueueSections({
 			rows: currentHub.executionLedger,
 			broadcasts: currentHub.broadcasts,
-			events: currentHub.events
+			events: currentHub.events,
+			focus: queueFocus
 		})
 	);
 	const dueCount = $derived(queueSections.due.length);
+	const upcomingCount = $derived(currentHub.upcomingExecutionItems.length);
 	const recoveryCount = $derived(queueSections.recovery.length);
+	const visibleUpcomingCount = $derived(queueSections.upcoming.length);
 	const processedCount = $derived(currentHub.processedExecutionItems.length);
+	const visibleProcessedCount = $derived(queueSections.processed.length);
 	const followUpSignals = $derived(currentHub.hubEventFollowUpSignals);
 	const followUpCount = $derived(followUpSignals.length);
-	const hasQueueItems = $derived(
-		dueCount > 0 || recoveryCount > 0 || processedCount > 0 || followUpCount > 0
+	const hasQueueFocus = $derived(isHubExecutionQueueFocusActive(queueFocus));
+	const shouldShowFollowUpSignals = $derived(!hasQueueFocus);
+	const visibleQueueCount = $derived(
+		dueCount + visibleUpcomingCount + recoveryCount + visibleProcessedCount
+	);
+	const hasVisibleQueueItems = $derived(visibleQueueCount > 0);
+	const hasVisibleItems = $derived(
+		hasVisibleQueueItems || (shouldShowFollowUpSignals && followUpCount > 0)
 	);
 	const summaryCopy = $derived.by(() => {
-		if (!hasQueueItems) {
+		if (hasQueueFocus) {
+			if (!hasVisibleQueueItems) {
+				return 'No queue rows match the current filters.';
+			}
+
+			const parts = [];
+
+			if (dueCount > 0) {
+				parts.push(`${dueCount} due`);
+			}
+
+			if (visibleUpcomingCount > 0) {
+				parts.push(`${visibleUpcomingCount} upcoming`);
+			}
+
+			if (recoveryCount > 0) {
+				parts.push(`${recoveryCount} recovery`);
+			}
+
+			if (visibleProcessedCount > 0) {
+				parts.push(`${visibleProcessedCount} processed`);
+			}
+
+			return `Showing ${parts.join(' · ')}.`;
+		}
+
+		if (!hasVisibleItems) {
 			return 'Scheduled publishes and reminder windows will collect here once the hub has timed work to manage.';
 		}
 
@@ -47,6 +115,39 @@
 		return `${parts.join(' · ')}.`;
 	});
 
+	function updateQueueFocus(partialFocus: {
+		bucket?: HubExecutionQueueBucketFilter;
+		jobKind?: HubExecutionQueueJobFilter;
+		subjectKind?: HubExecutionQueueSubjectFilter;
+		includeUpcoming?: boolean;
+	}) {
+		const href = buildHubExecutionQueueFocusHref({
+			url: page.url,
+			focus: partialFocus,
+			hash: 'manage-operations'
+		});
+		const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+
+		if (href === currentHref) {
+			return;
+		}
+
+		void goto(href, { noScroll: true, keepFocus: true, replaceState: true });
+	}
+
+	function clearQueueFocus() {
+		updateQueueFocus({
+			bucket: 'all',
+			jobKind: 'all',
+			subjectKind: 'all',
+			includeUpcoming: false
+		});
+	}
+
+	function toggleUpcomingRows() {
+		updateQueueFocus({ includeUpcoming: !queueFocus.includeUpcoming });
+	}
+
 	function getStatusVariant(item: HubExecutionQueueItem) {
 		switch (item.bucket) {
 			case 'failed':
@@ -61,7 +162,19 @@
 	}
 
 	function getOpenHref(item: HubExecutionQueueItem) {
-		return `/hub/manage/content#${item.sectionId}`;
+		return buildHubExecutionQueueFocusHref({
+			url: page.url,
+			pathname: '/hub/manage/content',
+			hash: item.sectionId
+		});
+	}
+
+	function getOpenLabel(item: HubExecutionQueueItem) {
+		return item.recoveryGuidance?.openLabel ?? 'Open';
+	}
+
+	function getRecoveryVariant(item: HubExecutionQueueItem) {
+		return item.recoveryGuidance?.tone === 'neutral' ? 'outline' : 'destructive';
 	}
 
 	function getFollowUpVariant(tone: 'attention' | 'neutral') {
@@ -69,7 +182,11 @@
 	}
 
 	function getFollowUpOpenHref() {
-		return '/hub/manage/content#manage-events';
+		return buildHubExecutionQueueFocusHref({
+			url: page.url,
+			pathname: '/hub/manage/content',
+			hash: 'manage-events'
+		});
 	}
 
 	function getFollowUpActionLabel(kind: 'attendance_review' | 'no_show' | 'low_turnout') {
@@ -84,12 +201,101 @@
 	</Card.Header>
 
 	<Card.Content class="space-y-6">
-		{#if !hasQueueItems}
-			<Card.Root size="sm" class="border-dashed border-border/70 bg-muted/20">
-				<Card.Content>
+		<div class="space-y-3">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+				<div class="space-y-1">
+					<h3 class="text-sm font-semibold tracking-tight text-foreground">Focus queue</h3>
 					<p class="text-sm text-muted-foreground">
-						No due work, recovery items, post-event follow-up, or recent execution history needs review right now.
+						Filter queue rows by status, job, or content type without leaving manage.
 					</p>
+				</div>
+				{#if hasQueueFocus}
+					<Button type="button" variant="ghost" size="xs" onclick={clearQueueFocus}>
+						Clear filters
+					</Button>
+				{/if}
+			</div>
+
+			<div class="space-y-3">
+				<nav aria-label="Queue status filters" class="w-full">
+					<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
+						{#each bucketOptions as option (option.value)}
+							<Button
+								type="button"
+								size="sm"
+								variant="ghost"
+								class="segmented-control__button min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
+								aria-current={queueFocus.bucket === option.value ? 'page' : undefined}
+								onclick={() => updateQueueFocus({ bucket: option.value })}
+							>
+								{option.label}
+							</Button>
+						{/each}
+					</ButtonGroup.Root>
+				</nav>
+
+				<div class="flex flex-wrap items-center gap-2">
+					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+						Job
+					</p>
+					{#each jobOptions as option (option.value)}
+						<Button
+							type="button"
+							size="xs"
+							variant={queueFocus.jobKind === option.value ? 'secondary' : 'outline'}
+							onclick={() => updateQueueFocus({ jobKind: option.value })}
+						>
+							{option.label}
+						</Button>
+					{/each}
+				</div>
+
+				<div class="flex flex-wrap items-center gap-2">
+					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+						Content
+					</p>
+					{#each subjectOptions as option (option.value)}
+						<Button
+							type="button"
+							size="xs"
+							variant={queueFocus.subjectKind === option.value ? 'secondary' : 'outline'}
+							onclick={() => updateQueueFocus({ subjectKind: option.value })}
+						>
+							{option.label}
+						</Button>
+					{/each}
+					<Button
+						type="button"
+						size="xs"
+						variant={queueFocus.includeUpcoming ? 'secondary' : 'outline'}
+						disabled={upcomingCount === 0 && !queueFocus.includeUpcoming}
+						onclick={toggleUpcomingRows}
+					>
+						{#if queueFocus.includeUpcoming}
+							Hide upcoming
+						{:else if upcomingCount > 0}
+							Show upcoming ({upcomingCount})
+						{:else}
+							Show upcoming
+						{/if}
+					</Button>
+				</div>
+			</div>
+		</div>
+
+		{#if !hasVisibleItems}
+			<Card.Root size="sm" class="border-dashed border-border/70 bg-muted/20">
+				<Card.Content class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<p class="text-sm text-muted-foreground">
+						{hasQueueFocus
+							? 'No queue rows match the current filters right now.'
+							: 'No due work, recovery items, post-event follow-up, or recent execution history needs review right now.'}
+					</p>
+					{#if hasQueueFocus}
+						<Button type="button" variant="outline" size="xs" onclick={clearQueueFocus}>
+							Clear filters
+						</Button>
+					{/if}
 				</Card.Content>
 			</Card.Root>
 		{:else}
@@ -132,16 +338,16 @@
 				</div>
 			{/if}
 
-			{#if queueSections.recovery.length > 0}
+			{#if queueSections.upcoming.length > 0}
 				<div class="space-y-3">
 					<div class="space-y-1">
-						<h3 class="text-sm font-semibold tracking-tight text-foreground">Needs recovery</h3>
+						<h3 class="text-sm font-semibold tracking-tight text-foreground">Upcoming work</h3>
 						<p class="text-sm text-muted-foreground">
-							Retry queue evaluation after a fix, or jump straight into the related content to correct it.
+							Scheduled publish and reminder windows that are not due yet, but are worth scanning before they roll forward.
 						</p>
 					</div>
 					<Item.Group>
-						{#each queueSections.recovery as item (item.id)}
+						{#each queueSections.upcoming as item (item.id)}
 							<Item.Root variant="muted" size="sm">
 								<Item.Content>
 									<div class="flex flex-wrap items-center gap-2">
@@ -153,16 +359,6 @@
 									<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
 								</Item.Content>
 								<Item.Actions>
-									{#if item.canRetry}
-										<Button
-											variant="ghost"
-											size="xs"
-											disabled={currentHub.executionTargetId === item.id}
-											onclick={() => currentHub.retryExecutionEntry(item.id)}
-										>
-											{currentHub.executionTargetId === item.id ? 'Retrying...' : 'Retry'}
-										</Button>
-									{/if}
 									{#if item.canRunNow}
 										<Button
 											variant="ghost"
@@ -181,7 +377,68 @@
 				</div>
 			{/if}
 
-			{#if followUpSignals.length > 0}
+			{#if queueSections.recovery.length > 0}
+				<div class="space-y-3">
+					<div class="space-y-1">
+						<h3 class="text-sm font-semibold tracking-tight text-foreground">Needs recovery</h3>
+						<p class="text-sm text-muted-foreground">
+							Each row now points toward the next operator move, so you can fix timing, restore content, or confirm an intentional skip without guesswork.
+						</p>
+					</div>
+					<Item.Group>
+						{#each queueSections.recovery as item (item.id)}
+							<Item.Root variant="muted" size="sm">
+								<Item.Content>
+									<div class="flex flex-wrap items-center gap-2">
+										<Item.Title>{item.subjectTitle}</Item.Title>
+										<Badge variant={getStatusVariant(item)}>{item.statusLabel}</Badge>
+										<Badge variant="outline">{item.jobLabel}</Badge>
+										{#if item.recoveryGuidance}
+											<Badge variant={getRecoveryVariant(item)}>{item.recoveryGuidance.label}</Badge>
+										{/if}
+									</div>
+									<Item.Description>{item.detailCopy}</Item.Description>
+									<div class="space-y-1">
+										{#if item.recoveryGuidance}
+											<p class="text-xs text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
+										{/if}
+										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+									</div>
+								</Item.Content>
+								<Item.Actions>
+									{#if item.canRetry}
+										<Button
+											variant="ghost"
+											size="xs"
+											disabled={currentHub.executionTargetId === item.id}
+											onclick={() => currentHub.retryExecutionEntry(item.id)}
+										>
+											{currentHub.executionTargetId === item.id
+												? 'Checking...'
+												: item.recoveryGuidance?.retryLabel ?? 'Re-check'}
+										</Button>
+									{/if}
+									{#if item.canRunNow}
+										<Button
+											variant="ghost"
+											size="xs"
+											disabled={currentHub.executionTargetId === item.id}
+											onclick={() => currentHub.runExecutionEntryNow(item.id)}
+										>
+											{currentHub.executionTargetId === item.id ? 'Running...' : 'Run now'}
+										</Button>
+									{/if}
+									<Button href={getOpenHref(item)} variant="outline" size="xs">
+										{getOpenLabel(item)}
+									</Button>
+								</Item.Actions>
+							</Item.Root>
+						{/each}
+					</Item.Group>
+				</div>
+			{/if}
+
+			{#if shouldShowFollowUpSignals && followUpSignals.length > 0}
 				<div class="space-y-3">
 					<div class="space-y-1">
 						<h3 class="text-sm font-semibold tracking-tight text-foreground">Follow-up now</h3>
@@ -238,7 +495,7 @@
 						{/each}
 					</Item.Group>
 
-					{#if processedCount > queueSections.processed.length}
+					{#if !hasQueueFocus && processedCount > queueSections.processed.length}
 						<p class="text-xs text-muted-foreground">
 							+{processedCount - queueSections.processed.length} more processed item{processedCount - queueSections.processed.length === 1 ? '' : 's'} retained in the execution ledger.
 						</p>

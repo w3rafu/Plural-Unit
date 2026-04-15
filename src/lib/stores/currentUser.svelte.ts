@@ -39,6 +39,8 @@ import {
 	shouldResetCachedBrowserSession,
 	clearCachedBrowserSession
 } from '$lib/services/sessionCache';
+import { buildSmokeUserDetails } from '$lib/demo/smokeFixtures';
+import { isSmokeModeEnabled } from '$lib/demo/smokeMode';
 import { currentOrganization } from './currentOrganization.svelte';
 import { currentHub } from './currentHub.svelte';
 import { currentMessages } from './currentMessages.svelte';
@@ -62,6 +64,11 @@ class CurrentUser {
 
 	constructor() {
 		if (typeof window !== 'undefined') {
+			if (isSmokeModeEnabled()) {
+				this.applySmokeSession();
+				return;
+			}
+
 			this.stopAuth = subscribeToAuthStateChange((_event, user) => {
 				if (user) {
 					this.syncFromAuthUser(user.id, user.email ?? '');
@@ -72,6 +79,14 @@ class CurrentUser {
 			});
 			void this.checkSession();
 		}
+	}
+
+	private applySmokeSession() {
+		this.lastError = null;
+		this.isLoggedIn = true;
+		this.isLoggingIn = false;
+		this.hasResolvedSession = true;
+		this.details = buildSmokeUserDetails();
 	}
 
 	// ── Internal state helpers ──

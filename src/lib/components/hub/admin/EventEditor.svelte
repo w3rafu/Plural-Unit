@@ -6,6 +6,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
+	import ExecutionDiagnosticsPanel from '$lib/components/hub/admin/ExecutionDiagnosticsPanel.svelte';
 	import EventAttendanceRosterPanel from '$lib/components/hub/admin/EventAttendanceRosterPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -504,6 +505,7 @@
 							{@const locationLabel = getEventLocationLabel(event.location)}
 							{@const engagementSignal = getEngagementSignal(event.id)}
 							{@const deliveryCopy = getDeliveryCopy(event.id)}
+							{@const executionDiagnostics = currentHub.getEventExecutionDiagnostics(event.id)}
 							{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 							{@const responseRoster = getResponseRoster(event.id)}
 							<div class="flex flex-wrap items-center gap-2">
@@ -521,6 +523,7 @@
 							{#if deliveryCopy}
 								<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 							{/if}
+							<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 							{#if reminderSummary && reminderSummary.count > 0}
 								<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 							{/if}
@@ -672,6 +675,7 @@
 								{@const locationLabel = getEventLocationLabel(event.location)}
 								{@const engagementSignal = getEngagementSignal(event.id)}
 								{@const deliveryCopy = getDeliveryCopy(event.id)}
+								{@const executionDiagnostics = currentHub.getEventExecutionDiagnostics(event.id)}
 								{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{event.title}</Item.Title>
@@ -690,6 +694,7 @@
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 								{/if}
+								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 								{#if reminderSummary && reminderSummary.count > 0}
 									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 								{/if}
@@ -745,6 +750,7 @@
 								{@const locationLabel = getEventLocationLabel(event.location)}
 								{@const engagementSignal = getEngagementSignal(event.id)}
 								{@const deliveryCopy = getDeliveryCopy(event.id)}
+								{@const executionDiagnostics = currentHub.getEventExecutionDiagnostics(event.id)}
 								{@const reminderSummary = currentHub.getEventReminderSummary(event.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{event.title}</Item.Title>
@@ -762,6 +768,7 @@
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 								{/if}
+								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 								{#if reminderSummary && reminderSummary.count > 0}
 									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 								{/if}

@@ -37,6 +37,11 @@ import {
 	type HubNotificationPreferences
 } from '$lib/models/hubNotifications';
 import {
+	buildBroadcastExecutionDiagnostics,
+	buildEventExecutionDiagnostics,
+	type HubExecutionDiagnosticEntry
+} from '$lib/models/hubExecutionDiagnostics';
+import {
 	summarizeEventReminderSchedule,
 	type EventReminderSummary
 } from '$lib/models/eventReminderModel';
@@ -188,12 +193,44 @@ export function getCurrentHubBroadcastDeliveryStatus(
 	return broadcast ? getBroadcastDeliveryStatus(broadcast) : null;
 }
 
+export function getCurrentHubBroadcastExecutionDiagnostics(input: {
+	broadcasts: BroadcastRow[];
+	executionLedger: HubExecutionLedgerRow[];
+	broadcastId: string;
+}): HubExecutionDiagnosticEntry[] {
+	const broadcast = findBroadcastById(input.broadcasts, input.broadcastId);
+	if (!broadcast) {
+		return [];
+	}
+
+	return buildBroadcastExecutionDiagnostics({
+		broadcast,
+		executionLedger: input.executionLedger
+	});
+}
+
 export function getCurrentHubEventDeliveryStatus(
 	events: EventRow[],
 	eventId: string
 ): ScheduledDeliveryStatus | null {
 	const event = findEventById({ events, eventId });
 	return event ? getEventDeliveryStatus(event) : null;
+}
+
+export function getCurrentHubEventExecutionDiagnostics(input: {
+	events: EventRow[];
+	executionLedger: HubExecutionLedgerRow[];
+	eventId: string;
+}): HubExecutionDiagnosticEntry[] {
+	const event = findEventById({ events: input.events, eventId: input.eventId });
+	if (!event) {
+		return [];
+	}
+
+	return buildEventExecutionDiagnostics({
+		event,
+		executionLedger: input.executionLedger
+	});
 }
 
 export function getCurrentHubEventAttendanceSummary(

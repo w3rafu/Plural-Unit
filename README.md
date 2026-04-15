@@ -31,7 +31,9 @@ supabase db push          # if using Supabase CLI
 If you pull newer hub code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, 026, and 027, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `column hub_events.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, or `relation "public.hub_event_attendances" does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts.
 
 If you need an operational recovery checklist instead of a feature roadmap, use [docs/hub-schema-recovery.md](/Users/rafa/Desktop/plural-unit/docs/hub-schema-recovery.md).
-If you are actively rolling out `0.1.29`, use [docs/rollout-0.1.29-checklist.md](/Users/rafa/Desktop/plural-unit/docs/rollout-0.1.29-checklist.md).
+If you are working on the current release batch, start with [docs/roadmap-0.1.30.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30.md) and [docs/roadmap-0.1.30-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30-checklist.md).
+If you need the prior rollout runbook, use [docs/rollout-0.1.29-checklist.md](/Users/rafa/Desktop/plural-unit/docs/rollout-0.1.29-checklist.md).
+If you need the prior release handoff context, use [docs/agent-handoff-0.1.29.md](/Users/rafa/Desktop/plural-unit/docs/agent-handoff-0.1.29.md).
 
 ---
 
@@ -40,6 +42,8 @@ If you are actively rolling out `0.1.29`, use [docs/rollout-0.1.29-checklist.md]
 These are the best starting points for junior developers:
 
 - Start with the newest roadmap, then work backward only if you need older implementation context.
+- [docs/roadmap-0.1.30.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30.md)
+- [docs/roadmap-0.1.30-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30-checklist.md)
 - [docs/roadmap-0.1.28.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28.md)
 - [docs/roadmap-0.1.28-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28-checklist.md)
 - [docs/roadmap-0.1.27.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.27.md)
@@ -292,7 +296,13 @@ Admin capabilities:
 ```sh
 npm test          # Run all unit tests
 npm run test:watch # Watch mode
+npm run test:smoke:install # Install Chromium for Playwright once per machine
+npm run test:smoke # Run the browser smoke harness against local routes
 ```
+
+The browser smoke harness runs the real app routes in a fixture-backed smoke mode via `?smoke=1`. It covers home, Alerts, manage content, manage sections, and profile alert preferences without requiring a live signed-in Supabase session, but it is still a release-safety harness rather than a replacement for normal Supabase-backed development.
+
+For manual failure-path checks, `?smoke=1&smokeScenario=stale-hub-schema` simulates the old hub delivery-column schema drift and should surface the targeted migration guidance in both home and manage load states.
 
 Tests cover:
 - Auth validation and error mapping (`authHelpers.test.ts`)
@@ -317,7 +327,7 @@ Apply in order. Each migration is additive — never drops existing tables.
 ## Design decisions
 
 - **No styles.** This is a structural wireframe. Add your own CSS/Tailwind/etc.
-- **No demo mode.** Supabase env vars are required. If missing, the app throws.
+- **Normal app flows stay Supabase-backed.** A narrow fixture-backed smoke mode exists only for browser rollout checks; it does not replace local Supabase setup.
 - **Stores are singletons.** Each store is a class instance exported as a module-level `const`. Svelte 5 `$state` and `$derived` make them reactive.
 - **Repositories are the Supabase boundary.** Only `src/lib/repositories/` files know table names, column shapes, or RPC names.
 - **Models are pure.** No side effects, no imports from Supabase or Svelte.

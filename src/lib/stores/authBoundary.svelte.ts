@@ -31,6 +31,7 @@ import {
 	mapPasswordResetErrorMessage,
 	mapOrganizationErrorMessage
 } from '$lib/models/authHelpers';
+import { syncSmokeModeFromUrl } from '$lib/demo/smokeMode';
 import { subscribeToAuthStateChange } from '$lib/repositories/profileRepository';
 
 export type LoginFieldName = 'email' | 'password' | 'confirmPassword' | 'phoneNumber' | 'otpCode';
@@ -71,7 +72,12 @@ class AuthBoundary {
 
 	constructor() {
 		if (typeof window !== 'undefined') {
+			const isSmokeMode = syncSmokeModeFromUrl(window.location);
 			this.syncAuthModeFromLocation();
+			if (isSmokeMode) {
+				return;
+			}
+
 			this.stopAuth = subscribeToAuthStateChange((event) => {
 				if (event === 'PASSWORD_RECOVERY') {
 					this.enterPasswordRecoveryMode();

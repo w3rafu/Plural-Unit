@@ -73,11 +73,11 @@ If you are unsure whether the environment is fully caught up, run this SQL in th
 select table_name, column_name
 from information_schema.columns
 where table_schema = 'public'
-	and (
-		(table_name = 'hub_broadcasts' and column_name in ('delivery_state', 'delivered_at', 'delivery_failure_reason'))
-		or (table_name = 'hub_events' and column_name in ('delivery_state', 'delivered_at', 'delivery_failure_reason'))
-		or (table_name = 'hub_notification_reads' and column_name = 'notification_key')
-	)
+    and (
+        (table_name = 'hub_broadcasts' and column_name in ('delivery_state', 'delivered_at', 'delivery_failure_reason'))
+        or (table_name = 'hub_events' and column_name in ('delivery_state', 'delivered_at', 'delivery_failure_reason'))
+        or (table_name = 'hub_notification_reads' and column_name = 'notification_key')
+    )
 order by table_name, column_name;
 ```
 
@@ -91,6 +91,11 @@ You should also confirm these relations exist:
 ---
 
 ## Application smoke pass
+
+Optional local preflight before checking a deployed environment:
+
+- [ ] Run `npm run test:smoke` to cover the local home, Alerts, manage content, manage sections, and profile alert-preferences routes through the fixture-backed smoke harness
+- [ ] Confirm the smoke harness still covers the simulated stale-schema recovery path before relying on it for rollout confidence
 
 Run these checks in the updated environment:
 

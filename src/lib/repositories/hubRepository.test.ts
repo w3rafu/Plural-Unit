@@ -460,7 +460,7 @@ describe('fetchEvents', () => {
 		});
 
 		await expect(fetchEvents('org-1')).rejects.toThrow(
-			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+			'column hub_events.delivery_state does not exist Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.'
 		);
 	});
 });

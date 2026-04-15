@@ -502,6 +502,73 @@ describe('currentHub.load', () => {
 		vi.useRealTimers();
 	});
 
+	it('builds execution diagnostics for broadcasts and events from the current ledger state', () => {
+		currentHub.broadcasts = [
+			makeBroadcast({
+				id: 'b1',
+				title: 'Weekly notes',
+				publish_at: '2026-04-18T12:00:00.000Z',
+				expires_at: '2026-04-18T11:00:00.000Z'
+			})
+		];
+		currentHub.events = [
+			makeEvent({
+				id: 'e1',
+				title: 'Volunteer night',
+				publish_at: '2026-04-18T10:00:00.000Z',
+				starts_at: '2026-04-20T16:00:00.000Z'
+			})
+		];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'broadcast-publish',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2026-04-18T12:00:00.000Z',
+				execution_state: 'failed',
+				last_attempted_at: '2026-04-18T12:05:00.000Z',
+				attempt_count: 2,
+				last_failure_reason:
+					'The scheduled publish time lands at or after the expiry time. Edit the timing before retrying.'
+			}),
+			makeExecutionLedgerRow({
+				id: 'event-publish',
+				job_kind: 'event_publish',
+				source_id: 'e1',
+				execution_key: 'publish',
+				due_at: '2026-04-18T10:00:00.000Z',
+				execution_state: 'processed',
+				processed_at: '2026-04-18T10:00:00.000Z',
+				attempt_count: 1
+			}),
+			makeExecutionLedgerRow({
+				id: 'event-reminder',
+				job_kind: 'event_reminder',
+				source_id: 'e1',
+				execution_key: '120',
+				due_at: '2026-04-20T14:00:00.000Z',
+				execution_state: 'processed',
+				processed_at: '2026-04-20T14:01:00.000Z',
+				attempt_count: 1
+			})
+		];
+
+		expect(currentHub.getBroadcastExecutionDiagnostics('b1')[0]).toMatchObject({
+			label: 'Publish execution',
+			statusLabel: 'Failed',
+			guidanceLabel: 'Fix timing'
+		});
+		expect(currentHub.getEventExecutionDiagnostics('e1').map((entry) => entry.id)).toEqual([
+			'event-publish',
+			'event-reminder'
+		]);
+		expect(currentHub.getEventExecutionDiagnostics('e1')[1]).toMatchObject({
+			label: 'Reminder · 2 hours before',
+			statusLabel: 'Processed'
+		});
+	});
+
 	it('skips fetching data for disabled plugins', async () => {
 		mockFetchActivePlugins.mockResolvedValueOnce([
 			{ plugin_key: 'broadcasts', is_enabled: false },
@@ -634,16 +701,16 @@ describe('currentHub.load', () => {
 		mockFetchActivePlugins.mockResolvedValueOnce([{ plugin_key: 'events', is_enabled: true }]);
 		mockFetchEvents.mockRejectedValueOnce(
 			new Error(
-				'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+				'column hub_events.delivery_state does not exist Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.'
 			)
 		);
 		mockFetchEventResponses.mockResolvedValueOnce([]);
 
 		await expect(currentHub.load()).rejects.toThrow(
-			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+			'column hub_events.delivery_state does not exist Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.'
 		);
 		expect(currentHub.lastError?.message).toBe(
-			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+			'column hub_events.delivery_state does not exist Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.'
 		);
 		expect(currentHub.isLoading).toBe(false);
 		expect(currentHub.hasLoadedForCurrentOrg).toBe(false);

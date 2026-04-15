@@ -34,6 +34,12 @@ import {
 	removeOrganizationMember
 } from '$lib/repositories/organizationRepository';
 import { subscribeToAuthStateChange, getAuthenticatedUser } from '$lib/repositories/profileRepository';
+import {
+	buildSmokeMembers,
+	buildSmokeMembership,
+	buildSmokeOrganization
+} from '$lib/demo/smokeFixtures';
+import { isSmokeModeEnabled } from '$lib/demo/smokeMode';
 
 const REFRESH_TIMEOUT_MS = 8_000;
 
@@ -61,12 +67,30 @@ class CurrentOrganization {
 
 	constructor() {
 		if (typeof window !== 'undefined') {
+			if (isSmokeModeEnabled()) {
+				this.applySmokeState();
+				return;
+			}
+
 			this.stopAuth = subscribeToAuthStateChange((_event, user) => {
 				if (user) void this.refresh(user.id);
 				else this.clear();
 			});
 			void this.init();
 		}
+	}
+
+	private applySmokeState() {
+		this.lastError = null;
+		this.isLoading = false;
+		this.isMutating = false;
+		this.hasResolvedMembership = true;
+		this.organization = buildSmokeOrganization();
+		this.membership = buildSmokeMembership();
+		this.invitations = [];
+		this.members = buildSmokeMembers();
+		this.memberCount = this.members.length;
+		this.isLoadingMembers = false;
 	}
 
 	get isMember() {
@@ -100,6 +124,11 @@ class CurrentOrganization {
 	}
 
 	async refresh(userId?: string) {
+		if (isSmokeModeEnabled()) {
+			this.applySmokeState();
+			return;
+		}
+
 		const uid = userId ?? (await getAuthenticatedUser())?.id;
 		if (!uid) { this.clear(); return; }
 
@@ -231,11 +260,22 @@ class CurrentOrganization {
 	}
 
 	async loadMemberCount() {
+		if (isSmokeModeEnabled()) {
+			this.memberCount = this.members.length;
+			return;
+		}
+
 		if (!this.organization) return;
 		this.memberCount = await fetchMemberCount(this.organization.id);
 	}
 
 	async loadMembers() {
+		if (isSmokeModeEnabled()) {
+			this.members = buildSmokeMembers();
+			this.isLoadingMembers = false;
+			return;
+		}
+
 		// The directory is member-visible, so any signed-in organization member can load the roster.
 		if (!this.organization) {
 			this.members = [];

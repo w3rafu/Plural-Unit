@@ -22,7 +22,17 @@ describe('throwRepositoryError', () => {
 	it('adds migration guidance for schema drift errors', () => {
 		const pgError = { message: 'column hub_events.delivery_state does not exist', code: '42703' };
 		expect(() => throwRepositoryError(pgError, 'fallback')).toThrowError(
-			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+			'column hub_events.delivery_state does not exist Apply the 0.1.29 hub delivery migrations (021 through 027), then try again.'
+		);
+	});
+
+	it('adds targeted migration guidance for known missing hub relations', () => {
+		const pgError = {
+			message: 'relation "public"."hub_notification_preferences" does not exist',
+			code: '42P01'
+		};
+		expect(() => throwRepositoryError(pgError, 'fallback')).toThrowError(
+			'relation "public"."hub_notification_preferences" does not exist Apply migration 022_add_hub_notification_preferences.sql, then try again.'
 		);
 	});
 

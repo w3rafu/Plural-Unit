@@ -163,7 +163,7 @@
 			</Sheet.Description>
 		</Sheet.Header>
 
-		<ScrollArea class="h-[calc(100vh-9rem)] px-5 py-4">
+		<ScrollArea class="min-h-0 flex-1 px-5 py-4">
 			{#if loadError}
 				<p
 					role="alert"

@@ -9,6 +9,7 @@ import type {
 	ScheduledDeliveryState
 } from '$lib/repositories/hubRepository';
 import { normalizeEventReminderOffsets, resolveEventReminderSendAt } from './eventReminderModel';
+import { HUB_EXECUTION_FAILURE_REASONS } from './hubRecoveryGuidance';
 import { getBroadcastDeliveryStatus, getEventDeliveryStatus } from './scheduledDeliveryModel';
 
 export type HubExecutionLedgerBucket = 'due' | 'upcoming' | 'processed' | 'failed' | 'skipped';
@@ -153,17 +154,16 @@ function buildEventReminderExpectedRows(
 
 			if (publishAtTime !== null && dueAtTime !== null && publishAtTime > dueAtTime) {
 				executionState = 'failed';
-				lastFailureReason =
-					'Reminder window lands before event visibility. Adjust the publish time or reminder plan.';
+				lastFailureReason = HUB_EXECUTION_FAILURE_REASONS.reminderBeforeVisibility;
 			} else if (archivedAtTime !== null && archivedAtTime <= now) {
 				executionState = 'skipped';
-				lastFailureReason = 'Event was archived before this reminder could be processed.';
+				lastFailureReason = HUB_EXECUTION_FAILURE_REASONS.reminderArchivedBeforeProcessing;
 			} else if (canceledAtTime !== null && canceledAtTime <= now) {
 				executionState = 'skipped';
-				lastFailureReason = 'Event was canceled before this reminder could be processed.';
+				lastFailureReason = HUB_EXECUTION_FAILURE_REASONS.reminderCanceledBeforeProcessing;
 			} else if (startsAtTime !== null && startsAtTime <= now) {
 				executionState = 'skipped';
-				lastFailureReason = 'Reminder window passed before the event started.';
+				lastFailureReason = HUB_EXECUTION_FAILURE_REASONS.reminderWindowPassed;
 			}
 
 			return {

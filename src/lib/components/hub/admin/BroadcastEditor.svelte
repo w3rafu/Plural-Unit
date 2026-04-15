@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
+	import ExecutionDiagnosticsPanel from '$lib/components/hub/admin/ExecutionDiagnosticsPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -519,6 +520,7 @@
 							<Item.Content>
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
 								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
+								{@const executionDiagnostics = currentHub.getBroadcastExecutionDiagnostics(broadcast.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{broadcast.title}</Item.Title>
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
@@ -530,6 +532,7 @@
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 								{/if}
+								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 								{#if engagementSignal}
 									<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 								{/if}
@@ -577,6 +580,7 @@
 						<Item.Content>
 							{@const engagementSignal = getEngagementSignal(broadcast.id)}
 							{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
+							{@const executionDiagnostics = currentHub.getBroadcastExecutionDiagnostics(broadcast.id)}
 							<div class="flex flex-wrap items-center gap-2">
 								<Item.Title>{broadcast.title}</Item.Title>
 								<Badge variant={broadcast.is_pinned ? 'secondary' : 'outline'}>
@@ -590,6 +594,7 @@
 							{#if deliveryCopy}
 								<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 							{/if}
+							<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 							{#if engagementSignal}
 								<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 							{/if}
@@ -644,6 +649,7 @@
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
 								{@const deliveryStatus = getDeliveryStatus(broadcast.id)}
 								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
+								{@const executionDiagnostics = currentHub.getBroadcastExecutionDiagnostics(broadcast.id)}
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{broadcast.title}</Item.Title>
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
@@ -656,6 +662,7 @@
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 								{/if}
+								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 								{#if engagementSignal}
 									<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 								{/if}
