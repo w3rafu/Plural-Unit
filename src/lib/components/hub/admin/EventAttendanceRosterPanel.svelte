@@ -19,9 +19,24 @@
 	let { event }: { event: EventRow } = $props();
 
 	let openingConversationForProfileId = $state('');
+	let attendanceActionTargetId = $state('');
+	let attendanceActionLabel = $state('');
 	const attendanceRoster = $derived(currentHub.getEventAttendanceRoster(event.id));
 	const attendanceOutcomeSummary = $derived(currentHub.getEventAttendanceOutcomeSummary(event.id));
 	const isAttendanceWindowVisible = $derived.by(() => isEventAttendanceWindowOpen(event));
+	const isUpdatingAttendance = $derived(currentHub.eventAttendanceTargetId !== '');
+	const attendanceMutationStatus = $derived.by(() => {
+		if (!attendanceActionTargetId || !attendanceRoster) {
+			return '';
+		}
+
+		const profileId = attendanceActionTargetId.split(':')[1] ?? '';
+		const entry = [...attendanceRoster.pendingEntries, ...attendanceRoster.recordedEntries].find(
+			(item) => item.member.profile_id === profileId
+		);
+		const memberName = entry?.member.name?.trim() || 'member';
+		return `${attendanceActionLabel} ${memberName}...`;
+	});
 
 	function getTargetId(profileId: string) {
 		return `${event.id}:${profileId}`;
@@ -54,6 +69,10 @@
 	}
 
 	async function setAttendance(profileId: string, status: EventAttendanceStatus) {
+		const targetId = getTargetId(profileId);
+		attendanceActionTargetId = targetId;
+		attendanceActionLabel = status === 'attended' ? 'Recording attendance for' : 'Marking absent';
+
 		try {
 			await currentHub.setEventAttendance(event.id, profileId, status);
 		} catch (error) {
@@ -63,10 +82,19 @@
 					error instanceof Error ? error.message : 'Failed to record attendance for this member.',
 				variant: 'error'
 			});
+		} finally {
+			if (attendanceActionTargetId === targetId) {
+				attendanceActionTargetId = '';
+				attendanceActionLabel = '';
+			}
 		}
 	}
 
 	async function clearAttendance(profileId: string) {
+		const targetId = getTargetId(profileId);
+		attendanceActionTargetId = targetId;
+		attendanceActionLabel = 'Clearing attendance for';
+
 		try {
 			await currentHub.clearEventAttendance(event.id, profileId);
 		} catch (error) {
@@ -76,12 +104,17 @@
 					error instanceof Error ? error.message : 'Failed to clear the saved attendance status.',
 				variant: 'error'
 			});
+		} finally {
+			if (attendanceActionTargetId === targetId) {
+				attendanceActionTargetId = '';
+				attendanceActionLabel = '';
+			}
 		}
 	}
 </script>
 
 {#if isAttendanceWindowVisible && attendanceRoster}
-	<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+	<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm" aria-busy={isUpdatingAttendance}>
 		<div class="space-y-1">
 			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				Day-of attendance
@@ -93,6 +126,15 @@
 				<p class="text-xs text-muted-foreground">
 					{formatEventAttendanceOutcomeSummary(attendanceOutcomeSummary)} · {attendanceOutcomeSummary.recorded}
 					recorded.
+				</p>
+			{/if}
+			{#if isUpdatingAttendance && attendanceMutationStatus}
+				<p
+					role="status"
+					aria-live="polite"
+					class="rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
+				>
+					{attendanceMutationStatus}
 				</p>
 			{/if}
 		</div>
@@ -133,7 +175,7 @@
 									disabled={currentHub.eventAttendanceTargetId === targetId}
 									onclick={() => setAttendance(entry.member.profile_id, 'attended')}
 								>
-									{currentHub.eventAttendanceTargetId === targetId ? 'Saving...' : 'Attended'}
+									{currentHub.eventAttendanceTargetId === targetId ? 'Recording...' : 'Attended'}
 								</Button>
 								<Button
 									type="button"
@@ -142,7 +184,7 @@
 									disabled={currentHub.eventAttendanceTargetId === targetId}
 									onclick={() => setAttendance(entry.member.profile_id, 'absent')}
 								>
-									Absent
+									{currentHub.eventAttendanceTargetId === targetId ? 'Recording...' : 'Absent'}
 								</Button>
 								{#if !entry.isCurrentUser}
 									<Button
@@ -205,7 +247,7 @@
 										disabled={currentHub.eventAttendanceTargetId === targetId}
 										onclick={() => setAttendance(entry.member.profile_id, 'attended')}
 									>
-										Mark attended
+										{currentHub.eventAttendanceTargetId === targetId ? 'Saving...' : 'Mark attended'}
 									</Button>
 								{/if}
 								{#if entry.attendanceStatus !== 'absent'}
@@ -216,7 +258,7 @@
 										disabled={currentHub.eventAttendanceTargetId === targetId}
 										onclick={() => setAttendance(entry.member.profile_id, 'absent')}
 									>
-										Mark absent
+										{currentHub.eventAttendanceTargetId === targetId ? 'Saving...' : 'Mark absent'}
 									</Button>
 								{/if}
 								<Button
@@ -226,7 +268,7 @@
 									disabled={currentHub.eventAttendanceTargetId === targetId}
 									onclick={() => clearAttendance(entry.member.profile_id)}
 								>
-									Clear
+									{currentHub.eventAttendanceTargetId === targetId ? 'Clearing...' : 'Clear'}
 								</Button>
 								{#if !entry.isCurrentUser}
 									<Button

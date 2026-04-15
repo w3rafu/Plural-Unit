@@ -12,9 +12,34 @@
 	import { getAllPluginsForAdmin, type PluginKey } from '$lib/stores/pluginRegistry';
 
 	const plugins = getAllPluginsForAdmin();
+	let pendingPluginKey = $state<PluginKey | null>(null);
+	let feedback = $state('');
+
+	const isTogglingPlugin = $derived(pendingPluginKey !== null);
+	const pluginMutationStatus = $derived.by(() => {
+		if (!pendingPluginKey) {
+			return '';
+		}
+
+		const plugin = plugins.find((entry) => entry.key === pendingPluginKey);
+		const nextState = currentHub.plugins[pendingPluginKey] ? 'off' : 'on';
+		return `Turning ${plugin?.title ?? 'section'} ${nextState}...`;
+	});
 
 	async function toggle(key: PluginKey, currentValue: boolean) {
-		await currentHub.toggle(key, !currentValue);
+		feedback = '';
+		pendingPluginKey = key;
+
+		try {
+			await currentHub.toggle(key, !currentValue);
+		} catch (error) {
+			feedback =
+				error instanceof Error ? error.message : 'Could not update the hub section right now.';
+		} finally {
+			if (pendingPluginKey === key) {
+				pendingPluginKey = null;
+			}
+		}
 	}
 </script>
 
@@ -24,7 +49,26 @@
 		<Card.Description>Turn sections on or off for your members.</Card.Description>
 	</Card.Header>
 
-	<Card.Content>
+	<Card.Content class="space-y-4" aria-busy={isTogglingPlugin}>
+		{#if isTogglingPlugin}
+			<p
+				role="status"
+				aria-live="polite"
+				class="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
+			>
+				{pluginMutationStatus}
+			</p>
+		{/if}
+
+		{#if feedback}
+			<p
+				role="alert"
+				class="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+			>
+				{feedback}
+			</p>
+		{/if}
+
 		<Item.Group>
 			{#each plugins as plugin (plugin.key)}
 				<Item.Root variant="muted" size="sm" class="bg-muted/20">
@@ -33,13 +77,21 @@
 							<Checkbox
 								id={`plugin-${plugin.key}`}
 								checked={currentHub.plugins[plugin.key]}
+								disabled={isTogglingPlugin}
 								onCheckedChange={() => toggle(plugin.key, currentHub.plugins[plugin.key])}
 							/>
 							<Field.Content>
 								<Field.Label for={`plugin-${plugin.key}`}>
 									<strong>{plugin.title}</strong>
 								</Field.Label>
-								<Field.Description>{plugin.description}</Field.Description>
+								<Field.Description>
+									{plugin.description}
+									{#if pendingPluginKey === plugin.key}
+										<span class="block pt-1 text-foreground">
+											{currentHub.plugins[plugin.key] ? 'Turning off...' : 'Turning on...'}
+										</span>
+									{/if}
+								</Field.Description>
 							</Field.Content>
 						</Field.Field>
 					</Item.Content>

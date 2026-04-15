@@ -19,6 +19,13 @@ describe('throwRepositoryError', () => {
 		);
 	});
 
+	it('adds migration guidance for schema drift errors', () => {
+		const pgError = { message: 'column hub_events.delivery_state does not exist', code: '42703' };
+		expect(() => throwRepositoryError(pgError, 'fallback')).toThrowError(
+			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+		);
+	});
+
 	it('uses fallback when plain object has empty message', () => {
 		expect(() => throwRepositoryError({ message: '' }, 'fallback')).toThrowError('fallback');
 	});

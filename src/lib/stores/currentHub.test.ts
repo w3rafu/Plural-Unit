@@ -630,6 +630,25 @@ describe('currentHub.load', () => {
 		expect(currentHub.hasLoadedForCurrentOrg).toBe(false);
 	});
 
+	it('surfaces schema drift guidance when alerts load against an older hub_events schema', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([{ plugin_key: 'events', is_enabled: true }]);
+		mockFetchEvents.mockRejectedValueOnce(
+			new Error(
+				'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+			)
+		);
+		mockFetchEventResponses.mockResolvedValueOnce([]);
+
+		await expect(currentHub.load()).rejects.toThrow(
+			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+		);
+		expect(currentHub.lastError?.message).toBe(
+			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+		);
+		expect(currentHub.isLoading).toBe(false);
+		expect(currentHub.hasLoadedForCurrentOrg).toBe(false);
+	});
+
 	it('reuses an in-flight load for the same organization', async () => {
 		let resolvePlugins: ((rows: Array<{ plugin_key: string; is_enabled: boolean }>) => void) | undefined;
 		mockFetchActivePlugins.mockImplementationOnce(

@@ -93,6 +93,22 @@
 	const activeBroadcasts = $derived(currentHub.activeBroadcasts);
 	const inactiveBroadcasts = $derived(currentHub.inactiveBroadcasts);
 	const isBroadcastDirty = $derived(currentBroadcastSnapshot !== initialBroadcastSnapshot);
+	const isBroadcastMutating = $derived(currentHub.broadcastTargetId !== '');
+	const broadcastMutationStatus = $derived.by(() => {
+		if (!isBroadcastMutating) {
+			return '';
+		}
+
+		if (currentHub.broadcastTargetId === 'draft') {
+			return isEditing ? 'Saving broadcast changes...' : 'Saving broadcast...';
+		}
+
+		if (editingId && currentHub.broadcastTargetId === editingId) {
+			return 'Saving changes to this broadcast...';
+		}
+
+		return 'Updating broadcast list...';
+	});
 	const visibilityDescription = $derived.by(() => {
 		switch (deliveryMode) {
 			case 'draft':
@@ -332,7 +348,7 @@
 		<Card.Description>Write a short update that all members can scan quickly.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-6">
+	<Card.Content class="space-y-6" aria-busy={isBroadcastMutating}>
 		<form
 			class="space-y-5"
 			use:syncUnsavedChanges={{
@@ -345,68 +361,80 @@
 				submit();
 			}}
 		>
-			<Field.Group class="gap-4">
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="broadcast-title">Title</Field.Label>
-						<Field.Description>Keep it short so the broadcast is easy to scan.</Field.Description>
-						<Input id="broadcast-title" type="text" bind:value={title} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="broadcast-visibility">Visibility</Field.Label>
-						<Field.Description>{visibilityDescription}</Field.Description>
-						<Select.Root type="single" bind:value={deliveryMode} name="broadcastVisibility">
-							<Select.Trigger id="broadcast-visibility">
-								{BROADCAST_DELIVERY_OPTIONS.find((option) => option.value === deliveryMode)?.label ?? 'Publish now'}
-							</Select.Trigger>
-							<Select.Content>
-								{#each BROADCAST_DELIVERY_OPTIONS as option (option.value)}
-									<Select.Item value={option.value}>{option.label}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</Field.Content>
-				</Field.Field>
-				{#if deliveryMode === 'schedule'}
+			<Field.Set disabled={isBroadcastMutating}>
+				<Field.Group class="gap-4">
 					<Field.Field>
 						<Field.Content>
-							<Field.Label for="broadcast-publish-at">Publish at</Field.Label>
-							<Field.Description>
-								Members will not see this broadcast until the scheduled publish time.
-							</Field.Description>
-							<Input id="broadcast-publish-at" type="datetime-local" bind:value={publishAt} />
+							<Field.Label for="broadcast-title">Title</Field.Label>
+							<Field.Description>Keep it short so the broadcast is easy to scan.</Field.Description>
+							<Input id="broadcast-title" type="text" bind:value={title} disabled={isBroadcastMutating} />
 						</Field.Content>
 					</Field.Field>
-				{/if}
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="broadcast-expires-at">Expire at</Field.Label>
-						<Field.Description>
-							Optional. After this time the broadcast moves out of the live member view.
-						</Field.Description>
-						<Input id="broadcast-expires-at" type="datetime-local" bind:value={expiresAt} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="broadcast-message">Message</Field.Label>
-						<Textarea id="broadcast-message" bind:value={body} />
-					</Field.Content>
-				</Field.Field>
-			</Field.Group>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="broadcast-visibility">Visibility</Field.Label>
+							<Field.Description>{visibilityDescription}</Field.Description>
+							<Select.Root type="single" bind:value={deliveryMode} name="broadcastVisibility" disabled={isBroadcastMutating}>
+								<Select.Trigger id="broadcast-visibility" disabled={isBroadcastMutating}>
+									{BROADCAST_DELIVERY_OPTIONS.find((option) => option.value === deliveryMode)?.label ?? 'Publish now'}
+								</Select.Trigger>
+								<Select.Content>
+									{#each BROADCAST_DELIVERY_OPTIONS as option (option.value)}
+										<Select.Item value={option.value}>{option.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</Field.Content>
+					</Field.Field>
+					{#if deliveryMode === 'schedule'}
+						<Field.Field>
+							<Field.Content>
+								<Field.Label for="broadcast-publish-at">Publish at</Field.Label>
+								<Field.Description>
+									Members will not see this broadcast until the scheduled publish time.
+								</Field.Description>
+								<Input id="broadcast-publish-at" type="datetime-local" bind:value={publishAt} disabled={isBroadcastMutating} />
+							</Field.Content>
+						</Field.Field>
+					{/if}
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="broadcast-expires-at">Expire at</Field.Label>
+							<Field.Description>
+								Optional. After this time the broadcast moves out of the live member view.
+							</Field.Description>
+							<Input id="broadcast-expires-at" type="datetime-local" bind:value={expiresAt} disabled={isBroadcastMutating} />
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="broadcast-message">Message</Field.Label>
+							<Textarea id="broadcast-message" bind:value={body} disabled={isBroadcastMutating} />
+						</Field.Content>
+					</Field.Field>
+				</Field.Group>
+			</Field.Set>
 			<div class="flex flex-wrap justify-start gap-2">
-				<Button type="submit" disabled={currentHub.broadcastTargetId !== ''}>
+				<Button type="submit" disabled={isBroadcastMutating}>
 					{submitLabel}
 				</Button>
 				{#if isEditing}
-					<Button type="button" variant="ghost" onclick={resetForm} disabled={currentHub.broadcastTargetId !== ''}>
+					<Button type="button" variant="ghost" onclick={resetForm} disabled={isBroadcastMutating}>
 						Cancel
 					</Button>
 				{/if}
 			</div>
 		</form>
+
+		{#if isBroadcastMutating}
+			<p
+				role="status"
+				aria-live="polite"
+				class="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
+			>
+				{broadcastMutationStatus}
+			</p>
+		{/if}
 
 		{#if feedback}
 			<p
@@ -434,7 +462,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Item.Group>
+				<Item.Group aria-busy={isBroadcastMutating}>
 					{#each draftBroadcasts as broadcast (broadcast.id)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
@@ -452,14 +480,14 @@
 								{/if}
 							</Item.Content>
 							<Item.Actions>
-								<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
+								<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={isBroadcastMutating}>
 									Edit
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => publishNow(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Publish now
+								<Button variant="ghost" size="sm" onclick={() => publishNow(broadcast)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Publishing...' : 'Publish now'}
 								</Button>
-								<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Delete
+								<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
 						</Item.Root>
@@ -485,7 +513,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Item.Group>
+				<Item.Group aria-busy={isBroadcastMutating}>
 					{#each scheduledBroadcasts as broadcast (broadcast.id)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
@@ -507,17 +535,17 @@
 								{/if}
 							</Item.Content>
 							<Item.Actions>
-								<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
+								<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={isBroadcastMutating}>
 									Edit
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => publishNow(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Publish now
+								<Button variant="ghost" size="sm" onclick={() => publishNow(broadcast)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Publishing...' : 'Publish now'}
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => moveToDraft(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Save as draft
+								<Button variant="ghost" size="sm" onclick={() => moveToDraft(broadcast)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Saving...' : 'Save as draft'}
 								</Button>
-								<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Delete
+								<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
 						</Item.Root>
@@ -543,7 +571,7 @@
 				</Card.Content>
 			</Card.Root>
 		{:else}
-			<Item.Group>
+			<Item.Group aria-busy={isBroadcastMutating}>
 				{#each activeBroadcasts as broadcast (broadcast.id)}
 					<Item.Root variant="muted" size="sm">
 						<Item.Content>
@@ -567,17 +595,23 @@
 							{/if}
 						</Item.Content>
 						<Item.Actions>
-							<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
+							<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={isBroadcastMutating}>
 								Edit
 							</Button>
-							<Button variant="ghost" size="sm" onclick={() => togglePin(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-								{broadcast.is_pinned ? 'Unpin' : 'Pin'}
+							<Button variant="ghost" size="sm" onclick={() => togglePin(broadcast)} disabled={isBroadcastMutating}>
+								{currentHub.broadcastTargetId === broadcast.id
+									? broadcast.is_pinned
+										? 'Unpinning...'
+										: 'Pinning...'
+									: broadcast.is_pinned
+										? 'Unpin'
+										: 'Pin'}
 							</Button>
-							<Button variant="ghost" size="sm" onclick={() => archive(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-								Archive
+							<Button variant="ghost" size="sm" onclick={() => archive(broadcast.id)} disabled={isBroadcastMutating}>
+								{currentHub.broadcastTargetId === broadcast.id ? 'Archiving...' : 'Archive'}
 							</Button>
-							<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-								Delete
+							<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={isBroadcastMutating}>
+								{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 							</Button>
 						</Item.Actions>
 					</Item.Root>
@@ -603,7 +637,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Item.Group>
+				<Item.Group aria-busy={isBroadcastMutating}>
 					{#each inactiveBroadcasts as broadcast (broadcast.id)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
@@ -628,15 +662,15 @@
 							</Item.Content>
 							<Item.Actions>
 								{#if getDeliveryStatus(broadcast.id)}
-									<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={currentHub.broadcastTargetId === broadcast.id}>
+									<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={isBroadcastMutating}>
 										Edit
 									</Button>
 								{/if}
-								<Button variant="ghost" size="sm" onclick={() => restore(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Restore
+								<Button variant="ghost" size="sm" onclick={() => restore(broadcast.id)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Restoring...' : 'Restore'}
 								</Button>
-								<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={currentHub.broadcastTargetId === broadcast.id}>
-									Delete
+								<Button variant="destructive" size="sm" onclick={() => remove(broadcast.id)} disabled={isBroadcastMutating}>
+									{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
 						</Item.Root>

@@ -28,7 +28,7 @@ supabase db push          # if using Supabase CLI
 # or paste each file in supabase/migrations/ into the SQL editor
 ```
 
-If you pull newer hub code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, and 026, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, or `relation "public.hub_event_attendances" does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts.
+If you pull newer hub code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, 026, and 027, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `column hub_events.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, or `relation "public.hub_event_attendances" does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts.
 
 ---
 
@@ -86,13 +86,29 @@ src/
     repositories/
       profileRepository.ts      ← Auth + profile CRUD
       organizationRepository.ts ← Org CRUD, join, invite
-      hubRepository.ts          ← Plugin data + activation rows
+      hubRepository.ts          ← Barrel exports for hub repository domains
+      hubRepository/
+        broadcasts.ts           ← Broadcast lifecycle queries and mutations
+        events.ts               ← Event, RSVP, attendance, and reminder queries
+        executionLedger.ts      ← Scheduled delivery and reminder execution data
+        notifications.ts        ← Alert preferences and read-state queries
+        resources.ts            ← Hub resource CRUD and ordering
+        plugins.ts              ← Plugin activation queries and mutations
     stores/
       currentUser.svelte.ts     ← Reactive auth + profile state
       currentOrganization.svelte.ts ← Reactive org membership state
       authBoundary.svelte.ts    ← Login/onboarding gate logic
       pluginRegistry.ts         ← Plugin definitions + helpers
-      currentHub.svelte.ts      ← Reactive hub content + toggles
+      currentHub.svelte.ts      ← Hub coordinator store public API
+      currentHub/
+        broadcasts.ts           ← Broadcast-focused store mutations
+        events.ts               ← Event, RSVP, attendance, and reminder store mutations
+        notifications.ts        ← Alert preference and read-state store mutations
+        resources.ts            ← Resource store mutations and reordering
+        load.ts                 ← Hub load pipeline and hydration helpers
+        derived.ts              ← Read-only selectors and derived hub summaries
+        sync.ts                 ← Delivery metadata and execution-ledger synchronization
+        state.ts                ← Shared reset/default/hydration state helpers
     components/
       auth/
         AuthGate.svelte         ← Top-level access controller
@@ -104,15 +120,15 @@ src/
         ProfileDetailsCard.svelte    ← Profile details editor
         ProfileSecurityCard.svelte   ← Security editor
       organization/
-        OrganizationSummaryCard.svelte ← Org summary header card
         OrganizationOverviewCard.svelte ← Org overview content
         OrganizationAccessCard.svelte   ← Join code + invitations
       hub/
         member/
-          HubOverviewCard.svelte     ← Member hub summary
           HubActivityFeed.svelte     ← Mixed recent activity feed
+          MemberCommitmentsCard.svelte ← Member commitments and recent events
           BroadcastsSection.svelte   ← Member broadcast list
           EventsSection.svelte       ← Member event list
+          ResourcesSection.svelte    ← Shared links and documents
         admin/
           HubManageSummaryCard.svelte ← Admin hub summary
           PluginActivationCard.svelte ← Toggle plugins on/off
@@ -208,6 +224,31 @@ export const PLUGIN_REGISTRY: Record<PluginKey, PluginDefinition> = {
 - `hub_plugins` table stores `(organization_id, plugin_key, is_enabled)`.
 - Missing row = disabled.
 - Admin toggles go through `currentHub.toggle()` → `hubRepository.togglePlugin()`.
+
+---
+
+## Hub Data Flow
+
+The hub now follows a small coordinator pattern instead of keeping all behavior in one giant store file.
+
+1. Routes and components call the public API on `currentHub.svelte.ts`.
+2. `currentHub/load.ts` fetches and hydrates hub state for the active organization.
+3. `currentHub/derived.ts` computes read-only views like activity feeds, delivery status, and engagement summaries.
+4. `currentHub/broadcasts.ts`, `events.ts`, `notifications.ts`, and `resources.ts` own mutation logic by domain.
+5. `currentHub/sync.ts` keeps scheduled delivery metadata and the execution ledger aligned with the latest content state.
+6. `hubRepository/` files stay focused on Supabase reads/writes by table domain.
+
+This keeps the dependency direction the same as the rest of the app:
+
+`components/routes -> currentHub store -> hubRepository -> Supabase`
+
+When you are debugging a hub issue, use this shortcut:
+
+- Load or hydration bug: start in `currentHub/load.ts`
+- Wrong UI summary or label: start in `currentHub/derived.ts`
+- Mutation bug: start in the matching `currentHub/<domain>.ts`
+- Missing/stale delivery or queue state: start in `currentHub/sync.ts`
+- SQL or query bug: start in `src/lib/repositories/hubRepository/`
 
 ### Adding a new plugin
 

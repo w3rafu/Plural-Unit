@@ -87,6 +87,9 @@ describe('fetchBroadcasts', () => {
 		const result = await fetchBroadcasts('org-1');
 
 		expect(mockFrom).toHaveBeenCalledWith('hub_broadcasts');
+		expect(mockSelect).toHaveBeenCalledWith(
+			expect.stringContaining('delivery_state, delivered_at, delivery_failure_reason')
+		);
 		expect(result).toEqual([{ id: 'b1', title: 'Hello' }]);
 	});
 
@@ -438,6 +441,9 @@ describe('fetchEvents', () => {
 		const result = await fetchEvents('org-1');
 
 		expect(mockFrom).toHaveBeenCalledWith('hub_events');
+		expect(mockSelect).toHaveBeenCalledWith(
+			expect.stringContaining('delivery_state, delivered_at, delivery_failure_reason')
+		);
 		expect(result).toEqual([{ id: 'e1', title: 'Meeting' }]);
 	});
 
@@ -445,6 +451,17 @@ describe('fetchEvents', () => {
 		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'events fail' } });
 
 		await expect(fetchEvents('org-1')).rejects.toThrow('events fail');
+	});
+
+	it('adds migration guidance when the schema is missing delivery metadata columns', async () => {
+		mockOrder.mockResolvedValueOnce({
+			data: null,
+			error: { message: 'column hub_events.delivery_state does not exist', code: '42703' }
+		});
+
+		await expect(fetchEvents('org-1')).rejects.toThrow(
+			'column hub_events.delivery_state does not exist Run the latest Supabase migrations, then try again.'
+		);
 	});
 });
 

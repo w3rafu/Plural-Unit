@@ -15,87 +15,41 @@ import {
 	sortDraftBroadcasts,
 	sortScheduledBroadcasts,
 	replaceBroadcastRow,
-	removeBroadcastRow,
 	sortActiveBroadcasts,
 	sortInactiveBroadcasts
 } from '$lib/models/broadcastLifecycleModel';
 import {
-	removeEventRow,
 	replaceEventRow,
-	sortEventRows,
 	sortInactiveEvents,
 	sortLiveEvents,
 	sortScheduledEvents
 } from '$lib/models/eventLifecycleModel';
+import { type EventReminderSummary } from '$lib/models/eventReminderModel';
+import { type EventAttendanceSummary } from '$lib/models/eventResponseModel';
 import {
-	normalizeEventReminderOffsets,
-	summarizeEventReminderSchedule,
-	type EventReminderSummary
-} from '$lib/models/eventReminderModel';
-import {
-	getBroadcastDeliveryPatch,
-	getBroadcastDeliveryStatus,
-	getEventDeliveryPatch,
-	getEventDeliveryStatus,
-	type ScheduledDeliveryStatus
-} from '$lib/models/scheduledDeliveryModel';
-import {
-	buildEventResponseRoster,
-	buildEventResponseMap,
-	type EventResponseRoster,
-	getOwnEventResponseForProfile,
-	summarizeEventResponses,
-	upsertEventResponseMap,
-	type EventAttendanceSummary
-} from '$lib/models/eventResponseModel';
-import {
-	buildEventAttendanceMap,
-	buildEventAttendanceRoster,
-	getEventAttendanceForProfile,
-	isEventAttendanceWindowOpen,
-	removeEventAttendanceFromMap,
-	summarizeEventAttendance,
 	type EventAttendanceRoster,
-	type EventAttendanceOutcomeSummary,
-	upsertEventAttendanceMap
+	type EventAttendanceOutcomeSummary
 } from '$lib/models/eventAttendanceModel';
-import {
-	buildHubAdminEngagementSummary,
-	buildHubEventFollowUpSignals,
-	getBroadcastEngagementSignal as buildBroadcastEngagementSignal,
-	getEventEngagementSignal as buildEventEngagementSignal,
-	type HubAdminEngagementSummary,
-	type HubEventFollowUpSignal,
-	type HubEngagementSignal
+import type {
+	HubAdminEngagementSummary,
+	HubEventFollowUpSignal,
+	HubEngagementSignal
 } from '$lib/models/hubEngagementModel';
 import {
-	moveResourceRows,
-	removeResourceRow,
-	replaceResourceRow,
 	sortResourceRows,
 	type ResourceMoveDirection
 } from '$lib/models/resourcesModel';
 import {
 	type PluginKey,
-	type PluginStateMap,
-	buildPluginStateMap
+	type PluginStateMap
 } from './pluginRegistry';
 import {
-	buildExpectedHubExecutionLedgerRows,
-	buildHubExecutionLedgerSyncPlan,
 	countDueHubExecutionLedgerRows,
 	countRecoverableHubExecutionLedgerRows,
-	getHubExecutionLedgerKey,
-	groupHubExecutionLedger,
-	mergeHubExecutionLedgerRows,
-	sortHubExecutionLedgerRows
+	groupHubExecutionLedger
 } from '$lib/models/hubExecutionLedger';
 import {
-	buildHubNotificationReadMap,
-	buildHubNotifications,
-	countUnreadHubNotifications,
 	createDefaultHubNotificationPreferences,
-	upsertHubNotificationReadMap,
 	type HubNotificationItem,
 	type HubNotificationPreferences
 } from '$lib/models/hubNotifications';
@@ -111,59 +65,90 @@ import type {
 	EventResponseRow,
 	EventResponseStatus,
 	EventRow,
-	HubNotificationReadRow,
 	ResourceRow,
 	ResourceType
 } from '$lib/repositories/hubRepository';
+import { togglePlugin } from '$lib/repositories/hubRepository';
 import {
-	fetchBroadcasts,
-	fetchEvents,
-	fetchEventAttendanceRecords,
-	fetchEventReminderSettings,
-	fetchEventResponses,
-	fetchHubExecutionLedger,
-	processDueHubReminderExecutions,
-	fetchHubNotificationPreferences,
-	fetchHubNotificationReads,
-	fetchResources,
-	fetchActivePlugins,
-	togglePlugin,
-	createBroadcast,
-	saveBroadcastDraft,
-	scheduleBroadcast,
-	publishBroadcastNow,
-	updateBroadcastDeliveryState,
-	updateBroadcast,
-	setBroadcastPinned,
-	archiveBroadcast,
-	restoreBroadcast,
-	deleteBroadcast,
-	createEvent,
-	deleteEventAttendanceRecord,
-	saveEventReminderSettings,
-	updateEventDeliveryState,
-	updateEvent,
-	cancelEvent,
-	archiveEvent,
-	restoreEvent,
-	deleteEvent,
-	upsertEventAttendanceRecord,
-	upsertOwnEventResponse,
-	upsertHubExecutionLedgerEntries,
-	deleteHubExecutionLedgerEntries,
-	markHubNotificationRead,
-	saveHubNotificationPreferences,
-	createResource,
-	updateResource,
-	saveResourceOrder,
-	deleteResource
-} from '$lib/repositories/hubRepository';
+	getCurrentHubActivityFeed,
+	getCurrentHubAllActivityFeed,
+	getCurrentHubBroadcastDeliveryStatus,
+	getCurrentHubBroadcastEngagementSignal,
+	getCurrentHubEngagementSummary,
+	getCurrentHubEventAttendanceOutcomeSummary,
+	getCurrentHubEventAttendanceRoster,
+	getCurrentHubEventAttendanceStatus,
+	getCurrentHubEventAttendanceSummary,
+	getCurrentHubEventDeliveryStatus,
+	getCurrentHubEventEngagementSignal,
+	getCurrentHubEventFollowUpSignals,
+	getCurrentHubEventReminderOffsets,
+	getCurrentHubEventReminderSettings,
+	getCurrentHubEventReminderSummary,
+	getCurrentHubEventResponseRoster,
+	getCurrentHubOwnEventAttendance,
+	getCurrentHubOwnEventResponse,
+	getCurrentHubUnreadActivityCount
+} from './currentHub/derived';
+import {
+	deleteCurrentHubExecutionLedgerEntry,
+	getCurrentHubExpectedExecutionLedgerRow,
+	syncCurrentHubBroadcastDeliveryRow,
+	syncCurrentHubEventDeliveryRow,
+	syncCurrentHubExecutionLedgerRows,
+	upsertCurrentHubExecutionLedgerEntry
+} from './currentHub/sync';
+import {
+	addCurrentHubBroadcast,
+	archiveCurrentHubBroadcast,
+	publishCurrentHubBroadcastNow,
+	removeCurrentHubBroadcast,
+	restoreCurrentHubBroadcast,
+	saveCurrentHubBroadcastDraft,
+	scheduleCurrentHubBroadcast,
+	setCurrentHubBroadcastPinned,
+	updateCurrentHubBroadcast
+} from './currentHub/broadcasts';
+import {
+	addCurrentHubEvent,
+	archiveCurrentHubEvent,
+	cancelCurrentHubEvent,
+	clearCurrentHubEventAttendance,
+	persistCurrentHubEventReminderSettings,
+	removeCurrentHubEvent,
+	restoreCurrentHubEvent,
+	setCurrentHubEventAttendance,
+	setCurrentHubEventResponse,
+	updateCurrentHubEvent
+} from './currentHub/events';
+import {
+	markAllCurrentHubActivityRead,
+	markCurrentHubActivityRead,
+	updateCurrentHubNotificationPreferences
+} from './currentHub/notifications';
+import {
+	addCurrentHubResource,
+	moveCurrentHubResource,
+	removeCurrentHubResource,
+	updateCurrentHubResource
+} from './currentHub/resources';
+import {
+	loadCurrentHubState,
+	type CurrentHubLoadResult
+} from './currentHub/load';
+import {
+	applyCurrentHubLoadedState,
+	createDefaultCurrentHubPluginState,
+	resetCurrentHubState
+} from './currentHub/state';
 import { currentOrganization } from './currentOrganization.svelte';
+import type { ScheduledDeliveryStatus } from '$lib/models/scheduledDeliveryModel';
+import type { EventResponseRoster } from '$lib/models/eventResponseModel';
 
 class CurrentHub {
 	isLoading = $state(false);
 	loadedOrgId = $state('');
-	plugins = $state<PluginStateMap>({ broadcasts: false, events: false, resources: false });
+	plugins = $state<PluginStateMap>(createDefaultCurrentHubPluginState());
 	broadcasts = $state<BroadcastRow[]>([]);
 	events = $state<EventRow[]>([]);
 	resources = $state<ResourceRow[]>([]);
@@ -195,6 +180,101 @@ class CurrentHub {
 
 	private captureError(error: unknown) {
 		this.lastError = error instanceof Error ? error : new Error(String(error));
+	}
+
+	private async withCapturedError<T>(work: () => Promise<T>) {
+		this.lastError = null;
+
+		try {
+			return await work();
+		} catch (error) {
+			this.captureError(error);
+			throw error;
+		}
+	}
+
+	private async withBroadcastTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.broadcastTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.broadcastTargetId === targetId) {
+				this.broadcastTargetId = '';
+			}
+		}
+	}
+
+	private async withEventTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.eventTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.eventTargetId === targetId) {
+				this.eventTargetId = '';
+			}
+		}
+	}
+
+	private async withResourceTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.resourceTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.resourceTargetId === targetId) {
+				this.resourceTargetId = '';
+			}
+		}
+	}
+
+	private async withExecutionTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.executionTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.executionTargetId === targetId) {
+				this.executionTargetId = '';
+			}
+		}
+	}
+
+	private async withEventResponseTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.eventResponseTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.eventResponseTargetId === targetId) {
+				this.eventResponseTargetId = '';
+			}
+		}
+	}
+
+	private async withEventAttendanceTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.eventAttendanceTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.eventAttendanceTargetId === targetId) {
+				this.eventAttendanceTargetId = '';
+			}
+		}
+	}
+
+	private async withNotificationReadTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.notificationReadTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.notificationReadTargetId === targetId) {
+				this.notificationReadTargetId = '';
+			}
+		}
 	}
 
 	get orgId(): string | null {
@@ -238,33 +318,19 @@ class CurrentHub {
 	}
 
 	get hubEngagementSummary(): HubAdminEngagementSummary {
-		const eventAttendances = Object.fromEntries(
-			this.events.map((event) => [event.id, this.getEventAttendanceSummary(event.id)])
-		);
-		const eventAttendanceOutcomes = Object.fromEntries(
-			this.events.map((event) => [event.id, this.getEventAttendanceOutcomeSummary(event.id)])
-		);
-
-		return buildHubAdminEngagementSummary({
+		return getCurrentHubEngagementSummary({
 			events: this.events,
 			broadcasts: this.broadcasts,
-			eventAttendances,
-			eventAttendanceOutcomes
+			eventResponseMap: this.eventResponseMap,
+			eventAttendanceMap: this.eventAttendanceMap
 		});
 	}
 
 	get hubEventFollowUpSignals(): HubEventFollowUpSignal[] {
-		const eventAttendances = Object.fromEntries(
-			this.events.map((event) => [event.id, this.getEventAttendanceSummary(event.id)])
-		);
-		const eventAttendanceOutcomes = Object.fromEntries(
-			this.events.map((event) => [event.id, this.getEventAttendanceOutcomeSummary(event.id)])
-		);
-
-		return buildHubEventFollowUpSignals({
+		return getCurrentHubEventFollowUpSignals({
 			events: this.events,
-			eventAttendances,
-			eventAttendanceOutcomes
+			eventResponseMap: this.eventResponseMap,
+			eventAttendanceMap: this.eventAttendanceMap
 		});
 	}
 
@@ -309,48 +375,25 @@ class CurrentHub {
 	}
 
 	get allActivityFeed() {
-		return buildHubNotifications({
-			broadcasts: this.activeBroadcasts,
+		return getCurrentHubAllActivityFeed({
+			activeBroadcasts: this.activeBroadcasts,
 			events: this.events,
-			reminderExecutions: this.processedReminderExecutionItems,
-			readMap: this.notificationReadMap
+			processedReminderExecutionItems: this.processedReminderExecutionItems,
+			notificationReadMap: this.notificationReadMap
 		});
 	}
 
 	get activityFeed() {
-		return this.allActivityFeed.filter(
-			(item) => this.notificationPreferences[item.kind === 'broadcast' ? 'broadcast' : 'event']
-		);
+		return getCurrentHubActivityFeed(this.allActivityFeed, this.notificationPreferences);
 	}
 
 	get unreadActivityCount() {
-		return countUnreadHubNotifications(this.activityFeed);
+		return getCurrentHubUnreadActivityCount(this.activityFeed);
 	}
 
 	/** Clear all state. Called on logout. */
 	reset() {
-		this.lastError = null;
-		this.isLoading = false;
-		this.loadedOrgId = '';
-		this.plugins = { broadcasts: false, events: false, resources: false };
-		this.broadcasts = [];
-		this.events = [];
-		this.resources = [];
-		this.broadcastTargetId = '';
-		this.eventTargetId = '';
-		this.resourceTargetId = '';
-		this.eventResponseMap = {};
-		this.eventAttendanceMap = {};
-		this.eventReminderSettingsMap = {};
-		this.executionLedger = [];
-		this.executionTargetId = '';
-		this.eventResponseTargetId = '';
-		this.eventAttendanceTargetId = '';
-		this.notificationPreferences = createDefaultHubNotificationPreferences();
-		this.notificationReadMap = {};
-		this.isSavingNotificationPreferences = false;
-		this.notificationReadTargetId = '';
-		this.isMarkingAllActivityRead = false;
+		resetCurrentHubState(this);
 		this.loadPromise = null;
 		this.loadingOrgId = null;
 	}
@@ -380,94 +423,20 @@ class CurrentHub {
 		this.loadingOrgId = orgId;
 
 		const loadPromise = (async () => {
-			const profileId = this.ownProfileId;
-			const rows = await fetchActivePlugins(orgId);
-			const plugins = buildPluginStateMap(rows);
+			const nextState = await loadCurrentHubState({
+				orgId,
+				profileId: this.ownProfileId,
+				isAdmin: currentOrganization.isAdmin,
+				currentOrgStillMatches: () => this.orgId === orgId,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row),
+				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
+			});
 
-			// Only fetch data for active plugins.
-			const [
-				broadcasts,
-				events,
-				eventResponses,
-				eventAttendanceRecords,
-				eventReminderSettings,
-				resources,
-				notificationPreferenceRow,
-				notificationReadRows
-			] = await Promise.all([
-				plugins.broadcasts ? fetchBroadcasts(orgId) : Promise.resolve([]),
-				plugins.events ? fetchEvents(orgId) : Promise.resolve([]),
-				plugins.events ? fetchEventResponses(orgId) : Promise.resolve([]),
-				plugins.events && profileId ? fetchEventAttendanceRecords(orgId) : Promise.resolve([]),
-				plugins.events && currentOrganization.isAdmin
-					? fetchEventReminderSettings(orgId)
-					: Promise.resolve([]),
-				plugins.resources ? fetchResources(orgId) : Promise.resolve([]),
-				profileId ? fetchHubNotificationPreferences(orgId, profileId) : Promise.resolve(null),
-				profileId
-					? fetchHubNotificationReads(orgId, profileId)
-					: Promise.resolve([] as HubNotificationReadRow[])
-			]);
-
-			const [syncedBroadcasts, syncedEvents] =
-				plugins.broadcasts || plugins.events
-					? await Promise.all([
-						plugins.broadcasts && currentOrganization.isAdmin
-							? Promise.all(broadcasts.map((broadcast) => this.syncBroadcastDeliveryRow(broadcast)))
-							: Promise.resolve(broadcasts),
-						plugins.events && currentOrganization.isAdmin
-							? Promise.all(events.map((event) => this.syncEventDeliveryRow(event)))
-							: Promise.resolve(events)
-					])
-					: [broadcasts, events];
-
-			if (this.orgId !== orgId) {
+			if (!nextState) {
 				return;
 			}
 
-			if (plugins.events && profileId) {
-				await processDueHubReminderExecutions(orgId);
-			}
-
-			const executionLedgerRows =
-				plugins.broadcasts || plugins.events
-					? currentOrganization.isAdmin || (plugins.events && profileId)
-						? await fetchHubExecutionLedger(orgId)
-						: ([] as HubExecutionLedgerRow[])
-					: ([] as HubExecutionLedgerRow[]);
-
-			const reminderSettingsMap = Object.fromEntries(
-				eventReminderSettings.map((settings) => [settings.event_id, settings])
-			);
-
-			const syncedExecutionLedger =
-				plugins.broadcasts || plugins.events
-					? currentOrganization.isAdmin
-						? await this.syncExecutionLedgerRows({
-							broadcasts: syncedBroadcasts,
-							events: sortEventRows(syncedEvents),
-							eventReminderSettingsMap: reminderSettingsMap,
-							currentRows: executionLedgerRows
-						})
-						: sortHubExecutionLedgerRows(executionLedgerRows)
-					: [];
-
-			this.plugins = plugins;
-			this.broadcasts = syncedBroadcasts;
-			this.events = sortEventRows(syncedEvents);
-			this.eventResponseMap = buildEventResponseMap(eventResponses);
-			this.eventAttendanceMap = buildEventAttendanceMap(eventAttendanceRecords);
-			this.eventReminderSettingsMap = reminderSettingsMap;
-			this.executionLedger = syncedExecutionLedger;
-			this.resources = resources;
-			this.notificationPreferences = notificationPreferenceRow
-				? {
-					broadcast: notificationPreferenceRow.broadcast_enabled,
-					event: notificationPreferenceRow.event_enabled
-				}
-				: createDefaultHubNotificationPreferences();
-			this.notificationReadMap = buildHubNotificationReadMap(notificationReadRows);
-			this.loadedOrgId = orgId;
+			applyCurrentHubLoadedState(this, nextState);
 		})();
 
 		this.loadPromise = loadPromise;
@@ -499,22 +468,16 @@ class CurrentHub {
 	async updateNotificationPreferences(nextPreferences: HubNotificationPreferences) {
 		if (!this.orgId || !this.ownProfileId) return;
 
-		this.lastError = null;
 		this.isSavingNotificationPreferences = true;
 
 		try {
-			const row = await saveHubNotificationPreferences(this.orgId, this.ownProfileId, {
-				broadcast_enabled: nextPreferences.broadcast,
-				event_enabled: nextPreferences.event
-			});
-
-			this.notificationPreferences = {
-				broadcast: row.broadcast_enabled,
-				event: row.event_enabled
-			};
-		} catch (error) {
-			this.captureError(error);
-			throw error;
+			this.notificationPreferences = await this.withCapturedError(() =>
+				updateCurrentHubNotificationPreferences({
+					orgId: this.orgId as string,
+					ownProfileId: this.ownProfileId as string,
+					nextPreferences
+				})
+			);
 		} finally {
 			this.isSavingNotificationPreferences = false;
 		}
@@ -530,66 +493,33 @@ class CurrentHub {
 			return;
 		}
 
-		this.lastError = null;
-		this.notificationReadTargetId = notification.id;
-
-		try {
-			const row = await markHubNotificationRead({
-				organizationId: this.orgId,
-				profileId: this.ownProfileId,
-				notificationKind: notification.kind,
-				sourceId: notification.sourceId,
-				notificationKey: notification.notificationKey
-			});
-
-			this.notificationReadMap = upsertHubNotificationReadMap(this.notificationReadMap, row);
-		} catch (error) {
-			this.captureError(error);
-			throw error;
-		} finally {
-			if (this.notificationReadTargetId === notification.id) {
-				this.notificationReadTargetId = '';
-			}
-		}
+		await this.withNotificationReadTarget(notification.id, async () => {
+			this.notificationReadMap = await this.withCapturedError(() =>
+				markCurrentHubActivityRead({
+					orgId: this.orgId as string,
+					ownProfileId: this.ownProfileId as string,
+					notification,
+					currentReadMap: this.notificationReadMap
+				})
+			);
+		});
 	}
 
 	async markAllActivityRead(items: HubNotificationItem[] = this.activityFeed) {
 		if (!this.orgId || !this.ownProfileId) {
 			return;
 		}
-
-		const unreadItems = items.filter((item) => !item.isRead);
-		if (unreadItems.length === 0) {
-			return;
-		}
-
-		this.lastError = null;
 		this.isMarkingAllActivityRead = true;
 
 		try {
-			const readAt = new Date().toISOString();
-			const rows = await Promise.all(
-				unreadItems.map((item) =>
-					markHubNotificationRead({
-						organizationId: this.orgId as string,
-						profileId: this.ownProfileId as string,
-						notificationKind: item.kind,
-						sourceId: item.sourceId,
-						notificationKey: item.notificationKey,
-						readAt
-					})
-				)
+			this.notificationReadMap = await this.withCapturedError(() =>
+				markAllCurrentHubActivityRead({
+					orgId: this.orgId as string,
+					ownProfileId: this.ownProfileId as string,
+					items,
+					currentReadMap: this.notificationReadMap
+				})
 			);
-
-			let nextReadMap = this.notificationReadMap;
-			for (const row of rows) {
-				nextReadMap = upsertHubNotificationReadMap(nextReadMap, row);
-			}
-
-			this.notificationReadMap = nextReadMap;
-		} catch (error) {
-			this.captureError(error);
-			throw error;
 		} finally {
 			this.isMarkingAllActivityRead = false;
 		}
@@ -599,250 +529,222 @@ class CurrentHub {
 
 	async addBroadcast(payload: BroadcastMutationPayload) {
 		if (!this.orgId) return;
-		this.broadcastTargetId = 'draft';
 
-		try {
-			const row = await createBroadcast(this.orgId, payload);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget('draft', async () => {
+			this.broadcasts = await addCurrentHubBroadcast({
+				orgId: this.orgId as string,
+				payload,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async updateBroadcast(broadcastId: string, payload: BroadcastMutationPayload) {
-		this.broadcastTargetId = broadcastId;
-
-		try {
-			const row = await updateBroadcast(broadcastId, payload);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await updateCurrentHubBroadcast({
+				broadcastId,
+				payload,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async saveBroadcastDraft(broadcastId: string) {
-		this.broadcastTargetId = broadcastId;
-
-		try {
-			const row = await saveBroadcastDraft(broadcastId);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await saveCurrentHubBroadcastDraft({
+				broadcastId,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async scheduleBroadcast(broadcastId: string, publishAt: string) {
-		this.broadcastTargetId = broadcastId;
-
-		try {
-			const row = await scheduleBroadcast(broadcastId, publishAt);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await scheduleCurrentHubBroadcast({
+				broadcastId,
+				publishAt,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async publishBroadcastNow(broadcastId: string) {
-		this.broadcastTargetId = broadcastId;
-
-		try {
-			const row = await publishBroadcastNow(broadcastId);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await publishCurrentHubBroadcastNow({
+				broadcastId,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async setBroadcastPinned(broadcastId: string, isPinned: boolean) {
 		if (!this.orgId) return;
-		this.broadcastTargetId = broadcastId;
 
-		try {
-			const row = await setBroadcastPinned(this.orgId, broadcastId, isPinned);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			const nextRows = this.broadcasts.map((broadcast) =>
-				broadcast.organization_id === this.orgId ? { ...broadcast, is_pinned: false } : broadcast
-			);
-			this.broadcasts = replaceBroadcastRow(nextRows, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await setCurrentHubBroadcastPinned({
+				orgId: this.orgId as string,
+				broadcastId,
+				isPinned,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async archiveBroadcast(broadcastId: string) {
-		this.broadcastTargetId = broadcastId;
-
-		try {
-			const row = await archiveBroadcast(broadcastId);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await archiveCurrentHubBroadcast({
+				broadcastId,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async restoreBroadcast(broadcastId: string) {
-		this.broadcastTargetId = broadcastId;
-
-		try {
-			const row = await restoreBroadcast(broadcastId);
-			const syncedRow = await this.syncBroadcastDeliveryRow(row);
-			this.broadcasts = replaceBroadcastRow(this.broadcasts, syncedRow);
+		await this.withBroadcastTarget(broadcastId, async () => {
+			this.broadcasts = await restoreCurrentHubBroadcast({
+				broadcastId,
+				currentRows: this.broadcasts,
+				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	async removeBroadcast(id: string) {
-		this.broadcastTargetId = id;
-
-		try {
-			await deleteBroadcast(id);
-			this.broadcasts = removeBroadcastRow(this.broadcasts, id);
+		await this.withBroadcastTarget(id, async () => {
+			this.broadcasts = await removeCurrentHubBroadcast({
+				broadcastId: id,
+				currentRows: this.broadcasts
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.broadcastTargetId = '';
-		}
+		});
 	}
 
 	// ── Event actions ──
 
 	async addEvent(payload: EventMutationPayload, reminderOffsets?: number[]) {
 		if (!this.orgId) return;
-		this.eventTargetId = 'draft';
 
-		try {
-			const row = await createEvent(this.orgId, payload);
-			const syncedRow = await this.syncEventDeliveryRow(row);
-			this.events = replaceEventRow(this.events, syncedRow);
+		await this.withEventTarget('draft', async () => {
+			const nextEventState = await addCurrentHubEvent({
+				orgId: this.orgId as string,
+				payload,
+				currentRows: this.events,
+				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
+			});
+
+			this.events = nextEventState.events;
 
 			if (reminderOffsets) {
-				await this.persistEventReminderSettings(row.id, reminderOffsets);
+				await this.persistEventReminderSettings(nextEventState.createdEventId, reminderOffsets);
 			}
 
 			await this.reconcileExecutionLedger();
-		} finally {
-			if (this.eventTargetId === 'draft') {
-				this.eventTargetId = '';
-			}
-		}
+		});
 	}
 
 	async updateEvent(eventId: string, payload: EventMutationPayload, reminderOffsets?: number[]) {
-		this.eventTargetId = eventId;
-
-		try {
-			const row = await updateEvent(eventId, payload);
-			const syncedRow = await this.syncEventDeliveryRow(row);
-			this.events = replaceEventRow(this.events, syncedRow);
+		await this.withEventTarget(eventId, async () => {
+			this.events = await updateCurrentHubEvent({
+				eventId,
+				payload,
+				currentRows: this.events,
+				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
+			});
 
 			if (reminderOffsets !== undefined) {
 				await this.persistEventReminderSettings(eventId, reminderOffsets);
 			}
 
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.eventTargetId = '';
-		}
+		});
 	}
 
 	async cancelEvent(eventId: string) {
-		this.eventTargetId = eventId;
-
-		try {
-			const row = await cancelEvent(eventId);
-			const syncedRow = await this.syncEventDeliveryRow(row);
-			this.events = replaceEventRow(this.events, syncedRow);
+		await this.withEventTarget(eventId, async () => {
+			this.events = await cancelCurrentHubEvent({
+				eventId,
+				currentRows: this.events,
+				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.eventTargetId = '';
-		}
+		});
 	}
 
 	async archiveEvent(eventId: string) {
-		this.eventTargetId = eventId;
-
-		try {
-			const row = await archiveEvent(eventId);
-			const syncedRow = await this.syncEventDeliveryRow(row);
-			this.events = replaceEventRow(this.events, syncedRow);
+		await this.withEventTarget(eventId, async () => {
+			this.events = await archiveCurrentHubEvent({
+				eventId,
+				currentRows: this.events,
+				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.eventTargetId = '';
-		}
+		});
 	}
 
 	async restoreEvent(eventId: string) {
-		this.eventTargetId = eventId;
-
-		try {
-			const row = await restoreEvent(eventId);
-			const syncedRow = await this.syncEventDeliveryRow(row);
-			this.events = replaceEventRow(this.events, syncedRow);
+		await this.withEventTarget(eventId, async () => {
+			this.events = await restoreCurrentHubEvent({
+				eventId,
+				currentRows: this.events,
+				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
+			});
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.eventTargetId = '';
-		}
+		});
 	}
 
 	async removeEvent(id: string) {
-		this.eventTargetId = id;
-
-		try {
-			await deleteEvent(id);
-			this.events = removeEventRow(this.events, id);
-			const nextEventResponseMap = { ...this.eventResponseMap };
-			const nextEventAttendanceMap = { ...this.eventAttendanceMap };
-			const nextEventReminderSettingsMap = { ...this.eventReminderSettingsMap };
-			delete nextEventResponseMap[id];
-			delete nextEventAttendanceMap[id];
-			delete nextEventReminderSettingsMap[id];
-			this.eventResponseMap = nextEventResponseMap;
-			this.eventAttendanceMap = nextEventAttendanceMap;
-			this.eventReminderSettingsMap = nextEventReminderSettingsMap;
+		await this.withEventTarget(id, async () => {
+			const nextEventState = await removeCurrentHubEvent({
+				eventId: id,
+				currentRows: this.events,
+				eventResponseMap: this.eventResponseMap,
+				eventAttendanceMap: this.eventAttendanceMap,
+				eventReminderSettingsMap: this.eventReminderSettingsMap
+			});
+			this.events = nextEventState.events;
+			this.eventResponseMap = nextEventState.eventResponseMap;
+			this.eventAttendanceMap = nextEventState.eventAttendanceMap;
+			this.eventReminderSettingsMap = nextEventState.eventReminderSettingsMap;
 			await this.reconcileExecutionLedger();
-		} finally {
-			this.eventTargetId = '';
-		}
+		});
 	}
 
 	getEventReminderSettings(eventId: string): EventReminderSettingsRow | null {
-		return this.eventReminderSettingsMap[eventId] ?? null;
+		return getCurrentHubEventReminderSettings(this.eventReminderSettingsMap, eventId);
 	}
 
 	getEventReminderOffsets(eventId: string) {
-		return this.getEventReminderSettings(eventId)?.reminder_offsets ?? [];
+		return getCurrentHubEventReminderOffsets(this.eventReminderSettingsMap, eventId);
 	}
 
 	getEventReminderSummary(eventId: string): EventReminderSummary | null {
-		const event = this.events.find((entry) => entry.id === eventId);
-		if (!event) {
-			return null;
-		}
-
-		return summarizeEventReminderSchedule(event, this.getEventReminderOffsets(eventId));
+		return getCurrentHubEventReminderSummary({
+			events: this.events,
+			eventReminderSettingsMap: this.eventReminderSettingsMap,
+			eventId
+		});
 	}
 
 	async retryExecutionEntry(entryId: string) {
 		const row = this.executionLedger.find((entry) => entry.id === entryId);
 		if (!row) return;
 
-		this.executionTargetId = entryId;
-
-		try {
+		await this.withExecutionTarget(entryId, async () => {
 			if (row.job_kind === 'broadcast_publish') {
 				const broadcast = this.broadcasts.find((entry) => entry.id === row.source_id);
 				if (broadcast) {
@@ -879,20 +781,14 @@ class CurrentHub {
 				attempt_count: Math.max(row.attempt_count + 1, expectedRow.execution_state === 'processed' ? 1 : 0),
 				last_failure_reason: expectedRow.last_failure_reason
 			});
-		} finally {
-			if (this.executionTargetId === entryId) {
-				this.executionTargetId = '';
-			}
-		}
+		});
 	}
 
 	async runExecutionEntryNow(entryId: string) {
 		const row = this.executionLedger.find((entry) => entry.id === entryId);
 		if (!row || row.job_kind === 'event_reminder') return;
 
-		this.executionTargetId = entryId;
-
-		try {
+		await this.withExecutionTarget(entryId, async () => {
 			if (row.job_kind === 'broadcast_publish') {
 				await this.publishBroadcastNow(row.source_id);
 			} else {
@@ -936,177 +832,131 @@ class CurrentHub {
 				attempt_count: Math.max(row.attempt_count + 1, 1),
 				last_failure_reason: null
 			});
-		} finally {
-			if (this.executionTargetId === entryId) {
-				this.executionTargetId = '';
-			}
-		}
+		});
 	}
 
 	getBroadcastDeliveryStatus(broadcastId: string): ScheduledDeliveryStatus | null {
-		const broadcast = this.broadcasts.find((entry) => entry.id === broadcastId);
-		return broadcast ? getBroadcastDeliveryStatus(broadcast) : null;
+		return getCurrentHubBroadcastDeliveryStatus(this.broadcasts, broadcastId);
 	}
 
 	getEventDeliveryStatus(eventId: string): ScheduledDeliveryStatus | null {
-		const event = this.events.find((entry) => entry.id === eventId);
-		return event ? getEventDeliveryStatus(event) : null;
+		return getCurrentHubEventDeliveryStatus(this.events, eventId);
 	}
 
 	getEventAttendanceSummary(eventId: string): EventAttendanceSummary {
-		return summarizeEventResponses(this.eventResponseMap[eventId] ?? []);
+		return getCurrentHubEventAttendanceSummary(this.eventResponseMap, eventId);
 	}
 
 	getEventAttendanceOutcomeSummary(eventId: string): EventAttendanceOutcomeSummary {
-		return summarizeEventAttendance(this.eventAttendanceMap[eventId] ?? []);
+		return getCurrentHubEventAttendanceOutcomeSummary(this.eventAttendanceMap, eventId);
 	}
 
 	getEventAttendanceRoster(eventId: string): EventAttendanceRoster | null {
-		const event = this.events.find((entry) => entry.id === eventId);
-		if (!event || !isEventAttendanceWindowOpen(event)) {
-			return null;
-		}
-
-		return buildEventAttendanceRoster(
-			currentOrganization.members,
-			this.eventResponseMap[eventId] ?? [],
-			this.eventAttendanceMap[eventId] ?? [],
-			this.ownProfileId ?? ''
-		);
+		return getCurrentHubEventAttendanceRoster({
+			events: this.events,
+			members: currentOrganization.members,
+			eventResponseMap: this.eventResponseMap,
+			eventAttendanceMap: this.eventAttendanceMap,
+			eventId,
+			ownProfileId: this.ownProfileId
+		});
 	}
 
 	getEventResponseRoster(eventId: string): EventResponseRoster | null {
-		const event = this.events.find((entry) => entry.id === eventId);
-		if (!event) {
-			return null;
-		}
-
-		return buildEventResponseRoster(
-			currentOrganization.members,
-			this.eventResponseMap[eventId] ?? [],
-			this.ownProfileId ?? ''
-		);
+		return getCurrentHubEventResponseRoster({
+			events: this.events,
+			members: currentOrganization.members,
+			eventResponseMap: this.eventResponseMap,
+			eventId,
+			ownProfileId: this.ownProfileId
+		});
 	}
 
 	getEventEngagementSignal(eventId: string): HubEngagementSignal | null {
-		const event = this.events.find((entry) => entry.id === eventId);
-		if (!event) {
-			return null;
-		}
-
-		return buildEventEngagementSignal(
-			event,
-			this.getEventAttendanceSummary(eventId),
-			this.getEventReminderSummary(eventId)
-		);
+		return getCurrentHubEventEngagementSignal({
+			events: this.events,
+			eventResponseMap: this.eventResponseMap,
+			eventReminderSettingsMap: this.eventReminderSettingsMap,
+			eventId
+		});
 	}
 
 	getBroadcastEngagementSignal(broadcastId: string): HubEngagementSignal | null {
-		const broadcast = this.broadcasts.find((entry) => entry.id === broadcastId);
-		if (!broadcast) {
-			return null;
-		}
-
-		return buildBroadcastEngagementSignal(broadcast);
+		return getCurrentHubBroadcastEngagementSignal(this.broadcasts, broadcastId);
 	}
 
 	getEventAttendanceStatus(eventId: string, profileId: string): EventAttendanceStatus | null {
-		return getEventAttendanceForProfile(this.eventAttendanceMap[eventId] ?? [], profileId);
+		return getCurrentHubEventAttendanceStatus(this.eventAttendanceMap, eventId, profileId);
 	}
 
 	getOwnEventAttendance(eventId: string): EventAttendanceStatus | null {
-		if (!this.ownProfileId) {
-			return null;
-		}
-
-		return this.getEventAttendanceStatus(eventId, this.ownProfileId);
+		return getCurrentHubOwnEventAttendance({
+			eventAttendanceMap: this.eventAttendanceMap,
+			eventId,
+			ownProfileId: this.ownProfileId
+		});
 	}
 
 	getOwnEventResponse(eventId: string): EventResponseStatus | null {
-		if (!this.ownProfileId) {
-			return null;
-		}
-
-		return getOwnEventResponseForProfile(this.eventResponseMap[eventId] ?? [], this.ownProfileId);
+		return getCurrentHubOwnEventResponse({
+			eventResponseMap: this.eventResponseMap,
+			eventId,
+			ownProfileId: this.ownProfileId
+		});
 	}
 
 	async setEventResponse(eventId: string, response: EventResponseStatus) {
 		if (!this.orgId || !this.ownProfileId) return;
 		if (this.getOwnEventResponse(eventId) === response) return;
 
-		this.lastError = null;
-		this.eventResponseTargetId = eventId;
-
-		try {
-			const row = await upsertOwnEventResponse({
-				eventId,
-				organizationId: this.orgId,
-				profileId: this.ownProfileId,
-				response
-			});
-
-			this.eventResponseMap = upsertEventResponseMap(this.eventResponseMap, row);
-		} catch (error) {
-			this.captureError(error);
-			throw error;
-		} finally {
-			if (this.eventResponseTargetId === eventId) {
-				this.eventResponseTargetId = '';
-			}
-		}
+		await this.withEventResponseTarget(eventId, async () => {
+			this.eventResponseMap = await this.withCapturedError(() =>
+				setCurrentHubEventResponse({
+					orgId: this.orgId as string,
+					ownProfileId: this.ownProfileId as string,
+					eventId,
+					response,
+					currentMap: this.eventResponseMap
+				})
+			);
+		});
 	}
 
 	async setEventAttendance(eventId: string, profileId: string, status: EventAttendanceStatus) {
 		if (!this.orgId || !this.ownProfileId || !currentOrganization.isAdmin) return;
 		if (this.getEventAttendanceStatus(eventId, profileId) === status) return;
 
-		this.lastError = null;
 		const targetId = `${eventId}:${profileId}`;
-		this.eventAttendanceTargetId = targetId;
 
-		try {
-			const row = await upsertEventAttendanceRecord({
-				eventId,
-				organizationId: this.orgId,
-				profileId,
-				status,
-				markedByProfileId: this.ownProfileId
-			});
-
-			this.eventAttendanceMap = upsertEventAttendanceMap(this.eventAttendanceMap, row);
-		} catch (error) {
-			this.captureError(error);
-			throw error;
-		} finally {
-			if (this.eventAttendanceTargetId === targetId) {
-				this.eventAttendanceTargetId = '';
-			}
-		}
+		await this.withEventAttendanceTarget(targetId, async () => {
+			this.eventAttendanceMap = await this.withCapturedError(() =>
+				setCurrentHubEventAttendance({
+					orgId: this.orgId as string,
+					ownProfileId: this.ownProfileId as string,
+					eventId,
+					profileId,
+					status,
+					currentMap: this.eventAttendanceMap
+				})
+			);
+		});
 	}
 
 	async clearEventAttendance(eventId: string, profileId: string) {
 		if (!currentOrganization.isAdmin) return;
 		if (this.getEventAttendanceStatus(eventId, profileId) === null) return;
 
-		this.lastError = null;
 		const targetId = `${eventId}:${profileId}`;
-		this.eventAttendanceTargetId = targetId;
 
-		try {
-			await deleteEventAttendanceRecord(eventId, profileId);
-			this.eventAttendanceMap = removeEventAttendanceFromMap(
-				this.eventAttendanceMap,
-				eventId,
-				profileId
+		await this.withEventAttendanceTarget(targetId, async () => {
+			this.eventAttendanceMap = await this.withCapturedError(() =>
+				clearCurrentHubEventAttendance({
+					eventId,
+					profileId,
+					currentMap: this.eventAttendanceMap
+				})
 			);
-		} catch (error) {
-			this.captureError(error);
-			throw error;
-		} finally {
-			if (this.eventAttendanceTargetId === targetId) {
-				this.eventAttendanceTargetId = '';
-			}
-		}
+		});
 	}
 
 	private async persistEventReminderSettings(eventId: string, reminderOffsets: number[]) {
@@ -1114,19 +964,18 @@ class CurrentHub {
 			return;
 		}
 
-		const row = await saveEventReminderSettings(eventId, this.orgId, {
-			delivery_channel: 'in_app',
-			reminder_offsets: normalizeEventReminderOffsets(reminderOffsets)
+		this.eventReminderSettingsMap = await persistCurrentHubEventReminderSettings({
+			orgId: this.orgId,
+			eventId,
+			reminderOffsets,
+			currentMap: this.eventReminderSettingsMap
 		});
-
-		this.eventReminderSettingsMap = {
-			...this.eventReminderSettingsMap,
-			[eventId]: row
-		};
 	}
 
 	private async reconcileExecutionLedger() {
-		this.executionLedger = await this.syncExecutionLedgerRows({
+		this.executionLedger = await syncCurrentHubExecutionLedgerRows({
+			orgId: this.orgId,
+			isAdmin: currentOrganization.isAdmin,
 			broadcasts: this.broadcasts,
 			events: this.events,
 			eventReminderSettingsMap: this.eventReminderSettingsMap,
@@ -1134,82 +983,31 @@ class CurrentHub {
 		});
 	}
 
-	private async syncExecutionLedgerRows(input: {
-		broadcasts: BroadcastRow[];
-		events: EventRow[];
-		eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
-		currentRows: HubExecutionLedgerRow[];
-	}) {
-		if (!this.orgId || !currentOrganization.isAdmin) {
-			return [];
-		}
-
-		const { upsertEntries, deleteEntryIds } = buildHubExecutionLedgerSyncPlan({
-			broadcasts: input.broadcasts,
-			events: input.events,
-			eventReminderSettings: input.eventReminderSettingsMap,
-			currentRows: input.currentRows
-		});
-
-		if (upsertEntries.length === 0 && deleteEntryIds.length === 0) {
-			return sortHubExecutionLedgerRows(input.currentRows);
-		}
-
-		const upsertedRows = upsertEntries.length
-			? await upsertHubExecutionLedgerEntries(upsertEntries)
-			: [];
-
-		if (deleteEntryIds.length > 0) {
-			await deleteHubExecutionLedgerEntries(deleteEntryIds);
-		}
-
-		return mergeHubExecutionLedgerRows(input.currentRows, upsertedRows, deleteEntryIds);
-	}
-
 	private getExpectedExecutionLedgerRow(
 		row: Pick<HubExecutionLedgerRow, 'job_kind' | 'source_id' | 'execution_key'>
 	) {
-		return (
-			buildExpectedHubExecutionLedgerRows({
-				broadcasts: this.broadcasts,
-				events: this.events,
-				eventReminderSettings: this.eventReminderSettingsMap
-			}).find(
-				(entry) =>
-					getHubExecutionLedgerKey(entry.job_kind, entry.source_id, entry.execution_key) ===
-					getHubExecutionLedgerKey(row.job_kind, row.source_id, row.execution_key)
-			) ?? null
-		);
+		return getCurrentHubExpectedExecutionLedgerRow({
+			broadcasts: this.broadcasts,
+			events: this.events,
+			eventReminderSettingsMap: this.eventReminderSettingsMap,
+			row
+		});
 	}
 
 	private async upsertExecutionLedgerEntry(entry: HubExecutionLedgerMutationPayload) {
-		const [upsertedRow] = await upsertHubExecutionLedgerEntries([entry]);
-		this.executionLedger = mergeHubExecutionLedgerRows(this.executionLedger, [upsertedRow], []);
+		this.executionLedger = await upsertCurrentHubExecutionLedgerEntry(this.executionLedger, entry);
 	}
 
 	private async deleteExecutionLedgerEntry(entryId: string) {
-		await deleteHubExecutionLedgerEntries([entryId]);
-		this.executionLedger = sortHubExecutionLedgerRows(
-			this.executionLedger.filter((entry) => entry.id !== entryId)
-		);
+		this.executionLedger = await deleteCurrentHubExecutionLedgerEntry(this.executionLedger, entryId);
 	}
 
 	private async syncBroadcastDeliveryRow(row: BroadcastRow) {
-		const patch = getBroadcastDeliveryPatch(row);
-		if (!patch) {
-			return row;
-		}
-
-		return updateBroadcastDeliveryState(row.id, patch);
+		return syncCurrentHubBroadcastDeliveryRow(row);
 	}
 
 	private async syncEventDeliveryRow(row: EventRow) {
-		const patch = getEventDeliveryPatch(row);
-		if (!patch) {
-			return row;
-		}
-
-		return updateEventDeliveryState(row.id, patch);
+		return syncCurrentHubEventDeliveryRow(row);
 	}
 
 	// ── Resource actions ──
@@ -1221,17 +1019,14 @@ class CurrentHub {
 		resource_type: ResourceType;
 	}) {
 		if (!this.orgId) return;
-		this.resourceTargetId = 'draft';
 
-		try {
-			const row = await createResource(this.orgId, {
-				...payload,
-				sort_order: this.orderedResources.length
+		await this.withResourceTarget('draft', async () => {
+			this.resources = await addCurrentHubResource({
+				orgId: this.orgId as string,
+				currentRows: this.resources,
+				payload
 			});
-			this.resources = replaceResourceRow(this.resources, row);
-		} finally {
-			this.resourceTargetId = '';
-		}
+		});
 	}
 
 	async updateResource(
@@ -1243,52 +1038,32 @@ class CurrentHub {
 			resource_type: ResourceType;
 		}
 	) {
-		this.resourceTargetId = resourceId;
-
-		try {
-			const sortOrder = this.resources.find((resource) => resource.id === resourceId)?.sort_order ?? 0;
-			const row = await updateResource(resourceId, { ...payload, sort_order: sortOrder });
-			this.resources = replaceResourceRow(this.resources, row);
-		} finally {
-			this.resourceTargetId = '';
-		}
+		await this.withResourceTarget(resourceId, async () => {
+			this.resources = await updateCurrentHubResource({
+				resourceId,
+				currentRows: this.resources,
+				payload
+			});
+		});
 	}
 
 	async moveResource(resourceId: string, direction: ResourceMoveDirection) {
-		this.resourceTargetId = resourceId;
-
-		try {
-			const currentRows = this.orderedResources;
-			const nextRows = moveResourceRows(currentRows, resourceId, direction);
-			if (currentRows.map((row) => row.id).join('|') === nextRows.map((row) => row.id).join('|')) {
-				return;
-			}
-
-			await saveResourceOrder(
-				nextRows.map((row) => ({ id: row.id, sort_order: row.sort_order }))
-			);
-			this.resources = nextRows;
-		} finally {
-			this.resourceTargetId = '';
-		}
+		await this.withResourceTarget(resourceId, async () => {
+			this.resources = await moveCurrentHubResource({
+				resourceId,
+				direction,
+				currentRows: this.resources
+			});
+		});
 	}
 
 	async removeResource(resourceId: string) {
-		this.resourceTargetId = resourceId;
-
-		try {
-			await deleteResource(resourceId);
-			const nextRows = removeResourceRow(this.resources, resourceId).map((row, index) => ({
-				...row,
-				sort_order: index
-			}));
-			await saveResourceOrder(
-				nextRows.map((row) => ({ id: row.id, sort_order: row.sort_order }))
-			);
-			this.resources = nextRows;
-		} finally {
-			this.resourceTargetId = '';
-		}
+		await this.withResourceTarget(resourceId, async () => {
+			this.resources = await removeCurrentHubResource({
+				resourceId,
+				currentRows: this.resources
+			});
+		});
 	}
 }
 

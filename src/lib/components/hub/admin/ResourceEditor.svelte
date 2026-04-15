@@ -56,6 +56,22 @@
 	const isEditing = $derived(!!editingResource);
 	const orderedResources = $derived(currentHub.orderedResources);
 	const isResourceDirty = $derived(currentResourceSnapshot !== initialResourceSnapshot);
+	const isResourceMutating = $derived(currentHub.resourceTargetId !== '');
+	const resourceMutationStatus = $derived.by(() => {
+		if (!isResourceMutating) {
+			return '';
+		}
+
+		if (currentHub.resourceTargetId === 'draft') {
+			return isEditing ? 'Saving resource changes...' : 'Saving resource...';
+		}
+
+		if (editingId && currentHub.resourceTargetId === editingId) {
+			return 'Saving changes to this resource...';
+		}
+
+		return 'Updating resource list...';
+	});
 	const hrefDescription = $derived.by(() => {
 		switch (resourceType) {
 			case 'form':
@@ -169,7 +185,7 @@
 		<Card.Description>Save the stable links and references members reopen most often.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-6">
+	<Card.Content class="space-y-6" aria-busy={isResourceMutating}>
 		<form
 			class="space-y-5"
 			onsubmit={(event) => {
@@ -177,60 +193,78 @@
 				submit();
 			}}
 		>
-			<Field.Group class="gap-4">
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="resource-title">Title</Field.Label>
-						<Field.Description>Keep it specific so members know exactly what will open.</Field.Description>
-						<Input id="resource-title" type="text" bind:value={title} />
-					</Field.Content>
-				</Field.Field>
+			<Field.Set disabled={isResourceMutating}>
+				<Field.Group class="gap-4">
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="resource-title">Title</Field.Label>
+							<Field.Description>Keep it specific so members know exactly what will open.</Field.Description>
+							<Input id="resource-title" type="text" bind:value={title} disabled={isResourceMutating} />
+						</Field.Content>
+					</Field.Field>
 
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="resource-type">Type</Field.Label>
-						<Field.Description>Choose the kind of resource members should expect.</Field.Description>
-						<Select.Root type="single" bind:value={resourceType} name="resourceType">
-							<Select.Trigger id="resource-type">
-								{getResourceTypeLabel(resourceType)}
-							</Select.Trigger>
-							<Select.Content>
-								{#each HUB_RESOURCE_TYPE_OPTIONS as option (option.value)}
-									<Select.Item value={option.value}>{option.label}</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</Field.Content>
-				</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="resource-type">Type</Field.Label>
+							<Field.Description>Choose the kind of resource members should expect.</Field.Description>
+							<Select.Root type="single" bind:value={resourceType} name="resourceType" disabled={isResourceMutating}>
+								<Select.Trigger id="resource-type" disabled={isResourceMutating}>
+									{getResourceTypeLabel(resourceType)}
+								</Select.Trigger>
+								<Select.Content>
+									{#each HUB_RESOURCE_TYPE_OPTIONS as option (option.value)}
+										<Select.Item value={option.value}>{option.label}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+						</Field.Content>
+					</Field.Field>
 
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="resource-href">Destination</Field.Label>
-						<Field.Description>{hrefDescription}</Field.Description>
-						<Input id="resource-href" type="text" placeholder={hrefPlaceholder} bind:value={href} />
-					</Field.Content>
-				</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="resource-href">Destination</Field.Label>
+							<Field.Description>{hrefDescription}</Field.Description>
+							<Input
+								id="resource-href"
+								type="text"
+								placeholder={hrefPlaceholder}
+								bind:value={href}
+								disabled={isResourceMutating}
+							/>
+						</Field.Content>
+					</Field.Field>
 
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="resource-description">Description</Field.Label>
-						<Field.Description>Optional context that helps members decide when to use it.</Field.Description>
-						<Textarea id="resource-description" bind:value={description} />
-					</Field.Content>
-				</Field.Field>
-			</Field.Group>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="resource-description">Description</Field.Label>
+							<Field.Description>Optional context that helps members decide when to use it.</Field.Description>
+							<Textarea id="resource-description" bind:value={description} disabled={isResourceMutating} />
+						</Field.Content>
+					</Field.Field>
+				</Field.Group>
+			</Field.Set>
 
 			<div class="flex flex-wrap justify-start gap-2">
-				<Button type="submit" disabled={currentHub.resourceTargetId !== ''}>
+				<Button type="submit" disabled={isResourceMutating}>
 					{isEditing ? 'Save changes' : 'Add resource'}
 				</Button>
 				{#if isEditing}
-					<Button type="button" variant="ghost" onclick={resetForm} disabled={currentHub.resourceTargetId !== ''}>
+					<Button type="button" variant="ghost" onclick={resetForm} disabled={isResourceMutating}>
 						Cancel
 					</Button>
 				{/if}
 			</div>
 		</form>
+
+		{#if isResourceMutating}
+			<p
+				role="status"
+				aria-live="polite"
+				class="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
+			>
+				{resourceMutationStatus}
+			</p>
+		{/if}
 
 		{#if feedback}
 			<p
@@ -258,7 +292,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Item.Group>
+				<Item.Group aria-busy={isResourceMutating}>
 					{#each orderedResources as resource, index (resource.id)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
@@ -278,7 +312,7 @@
 									variant="ghost"
 									size="icon-xs"
 									aria-label={`Move ${resource.title} up`}
-									disabled={currentHub.resourceTargetId !== '' || index === 0}
+									disabled={isResourceMutating || index === 0}
 									onclick={() => move(resource, 'up')}
 								>
 									<ArrowUp class="size-3.5" />
@@ -287,12 +321,12 @@
 									variant="ghost"
 									size="icon-xs"
 									aria-label={`Move ${resource.title} down`}
-									disabled={currentHub.resourceTargetId !== '' || index === orderedResources.length - 1}
+									disabled={isResourceMutating || index === orderedResources.length - 1}
 									onclick={() => move(resource, 'down')}
 								>
 									<ArrowDown class="size-3.5" />
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => startEditing(resource)} disabled={currentHub.resourceTargetId !== ''}>
+								<Button variant="ghost" size="sm" onclick={() => startEditing(resource)} disabled={isResourceMutating}>
 									Edit
 								</Button>
 								<Button
@@ -301,7 +335,7 @@
 									size="sm"
 									target="_blank"
 									rel="noreferrer"
-									disabled={currentHub.resourceTargetId !== ''}
+									disabled={isResourceMutating}
 								>
 									{getResourceActionLabel(resource.resource_type)}
 									<ExternalLink class="size-4" />
@@ -310,9 +344,9 @@
 									variant="destructive"
 									size="sm"
 									onclick={() => remove(resource)}
-									disabled={currentHub.resourceTargetId !== ''}
+									disabled={isResourceMutating}
 								>
-									Delete
+									{currentHub.resourceTargetId === resource.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
 						</Item.Root>

@@ -94,6 +94,22 @@
 			: `Selected: ${normalizedSelectedReminderOffsets.map((offset) => formatEventReminderOffset(offset)).join(' · ')}.`
 	);
 	const isEventDirty = $derived(currentEventSnapshot !== initialEventSnapshot);
+	const isEventMutating = $derived(currentHub.eventTargetId !== '');
+	const eventMutationStatus = $derived.by(() => {
+		if (!isEventMutating) {
+			return '';
+		}
+
+		if (currentHub.eventTargetId === 'draft') {
+			return isEditing ? 'Saving event changes...' : 'Saving event...';
+		}
+
+		if (editingId && currentHub.eventTargetId === editingId) {
+			return 'Saving changes to this event...';
+		}
+
+		return 'Updating event list...';
+	});
 
 	function resetForm() {
 		editingId = null;
@@ -344,7 +360,7 @@
 		<Card.Description>Manage live, scheduled, and historical event visibility from one place.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-6">
+	<Card.Content class="space-y-6" aria-busy={isEventMutating}>
 		<form
 			class="space-y-5"
 			use:syncUnsavedChanges={{
@@ -357,91 +373,103 @@
 				submit();
 			}}
 		>
-			<Field.Group class="gap-4">
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="event-title">Title</Field.Label>
-						<Input id="event-title" type="text" bind:value={title} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="event-description">Description</Field.Label>
-						<Field.Description>Optional details for people who open the event.</Field.Description>
-						<Textarea id="event-description" bind:value={description} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="event-starts-at">Starts at</Field.Label>
-						<Field.Description>Choose the local date and time members should see.</Field.Description>
-						<Input id="event-starts-at" type="datetime-local" bind:value={startsAt} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="event-ends-at">Ends at</Field.Label>
-						<Field.Description>
-							Optional. Add an end time so calendar exports land with a real duration.
-						</Field.Description>
-						<Input id="event-ends-at" type="datetime-local" bind:value={endsAt} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="event-publish-at">Visible at</Field.Label>
-						<Field.Description>
-							Optional. Delay member visibility until this date and time.
-						</Field.Description>
-						<Input id="event-publish-at" type="datetime-local" bind:value={publishAt} />
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label>Reminder plan</Field.Label>
-						<Field.Description>
-							Optional. Queue simple in-app reminder windows before the event starts.
-						</Field.Description>
-						<div class="grid gap-2 sm:grid-cols-3">
-							{#each EVENT_REMINDER_OPTIONS as option (option.value)}
-								<label
-									class={`flex items-start gap-3 rounded-xl border px-3 py-3 shadow-sm transition-colors ${normalizedSelectedReminderOffsets.includes(option.value) ? 'border-primary/35 bg-primary/5' : 'border-border/70 bg-background'}`}
-								>
-									<Checkbox
-										id={`event-reminder-${option.value}`}
-										checked={normalizedSelectedReminderOffsets.includes(option.value)}
-										disabled={currentHub.eventTargetId !== ''}
-										onCheckedChange={() => toggleReminderOffset(option.value)}
-									/>
-									<div class="space-y-1">
-										<p class="text-sm font-medium text-foreground">{option.label}</p>
-										<p class="text-xs text-muted-foreground">{option.description}</p>
-									</div>
-								</label>
-							{/each}
-						</div>
-						<p class="text-xs text-muted-foreground">{selectedReminderPlanCopy}</p>
-					</Field.Content>
-				</Field.Field>
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="event-location">Location</Field.Label>
-						<Field.Description>Optional room, address, or short call-in detail.</Field.Description>
-						<Input id="event-location" type="text" bind:value={location} />
-					</Field.Content>
-				</Field.Field>
-			</Field.Group>
+			<Field.Set disabled={isEventMutating}>
+				<Field.Group class="gap-4">
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="event-title">Title</Field.Label>
+							<Input id="event-title" type="text" bind:value={title} disabled={isEventMutating} />
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="event-description">Description</Field.Label>
+							<Field.Description>Optional details for people who open the event.</Field.Description>
+							<Textarea id="event-description" bind:value={description} disabled={isEventMutating} />
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="event-starts-at">Starts at</Field.Label>
+							<Field.Description>Choose the local date and time members should see.</Field.Description>
+							<Input id="event-starts-at" type="datetime-local" bind:value={startsAt} disabled={isEventMutating} />
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="event-ends-at">Ends at</Field.Label>
+							<Field.Description>
+								Optional. Add an end time so calendar exports land with a real duration.
+							</Field.Description>
+							<Input id="event-ends-at" type="datetime-local" bind:value={endsAt} disabled={isEventMutating} />
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="event-publish-at">Visible at</Field.Label>
+							<Field.Description>
+								Optional. Delay member visibility until this date and time.
+							</Field.Description>
+							<Input id="event-publish-at" type="datetime-local" bind:value={publishAt} disabled={isEventMutating} />
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label>Reminder plan</Field.Label>
+							<Field.Description>
+								Optional. Queue simple in-app reminder windows before the event starts.
+							</Field.Description>
+							<div class="grid gap-2 sm:grid-cols-3">
+								{#each EVENT_REMINDER_OPTIONS as option (option.value)}
+									<label
+										class={`flex items-start gap-3 rounded-xl border px-3 py-3 shadow-sm transition-colors ${normalizedSelectedReminderOffsets.includes(option.value) ? 'border-primary/35 bg-primary/5' : 'border-border/70 bg-background'} ${isEventMutating ? 'cursor-not-allowed opacity-70' : ''}`}
+									>
+										<Checkbox
+											id={`event-reminder-${option.value}`}
+											checked={normalizedSelectedReminderOffsets.includes(option.value)}
+											disabled={isEventMutating}
+											onCheckedChange={() => toggleReminderOffset(option.value)}
+										/>
+										<div class="space-y-1">
+											<p class="text-sm font-medium text-foreground">{option.label}</p>
+											<p class="text-xs text-muted-foreground">{option.description}</p>
+										</div>
+									</label>
+								{/each}
+							</div>
+							<p class="text-xs text-muted-foreground">{selectedReminderPlanCopy}</p>
+						</Field.Content>
+					</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="event-location">Location</Field.Label>
+							<Field.Description>Optional room, address, or short call-in detail.</Field.Description>
+							<Input id="event-location" type="text" bind:value={location} disabled={isEventMutating} />
+						</Field.Content>
+					</Field.Field>
+				</Field.Group>
+			</Field.Set>
 			<div class="flex flex-wrap justify-start gap-2">
-				<Button type="submit" disabled={currentHub.eventTargetId !== ''}>
+				<Button type="submit" disabled={isEventMutating}>
 					{isEditing ? 'Save changes' : 'Create event'}
 				</Button>
 				{#if isEditing}
-					<Button type="button" variant="ghost" onclick={resetForm} disabled={currentHub.eventTargetId !== ''}>
+					<Button type="button" variant="ghost" onclick={resetForm} disabled={isEventMutating}>
 						Cancel
 					</Button>
 				{/if}
 			</div>
 		</form>
+
+		{#if isEventMutating}
+			<p
+				role="status"
+				aria-live="polite"
+				class="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
+			>
+				{eventMutationStatus}
+			</p>
+		{/if}
 
 		{#if feedback}
 			<p
@@ -469,7 +497,7 @@
 				</Card.Content>
 			</Card.Root>
 		{:else}
-			<Item.Group>
+			<Item.Group aria-busy={isEventMutating}>
 				{#each liveEvents as event (event.id)}
 					<Item.Root variant="muted" size="sm">
 						<Item.Content>
@@ -601,17 +629,17 @@
 							<EventAttendanceRosterPanel {event} />
 						</Item.Content>
 						<Item.Actions>
-							<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={currentHub.eventTargetId === event.id}>
+							<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={isEventMutating}>
 								Edit
 							</Button>
-							<Button variant="ghost" size="sm" onclick={() => cancelLifecycle(event.id)} disabled={currentHub.eventTargetId === event.id}>
-								Cancel
+							<Button variant="ghost" size="sm" onclick={() => cancelLifecycle(event.id)} disabled={isEventMutating}>
+								{currentHub.eventTargetId === event.id ? 'Canceling...' : 'Cancel'}
 							</Button>
-							<Button variant="ghost" size="sm" onclick={() => archive(event.id)} disabled={currentHub.eventTargetId === event.id}>
-								Archive
+							<Button variant="ghost" size="sm" onclick={() => archive(event.id)} disabled={isEventMutating}>
+								{currentHub.eventTargetId === event.id ? 'Archiving...' : 'Archive'}
 							</Button>
-							<Button variant="destructive" size="sm" onclick={() => remove(event.id)} disabled={currentHub.eventTargetId === event.id}>
-								Delete
+							<Button variant="destructive" size="sm" onclick={() => remove(event.id)} disabled={isEventMutating}>
+								{currentHub.eventTargetId === event.id ? 'Deleting...' : 'Delete'}
 							</Button>
 						</Item.Actions>
 					</Item.Root>
@@ -637,7 +665,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Item.Group>
+				<Item.Group aria-busy={isEventMutating}>
 					{#each scheduledEvents as event (event.id)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
@@ -671,20 +699,20 @@
 								<EventAttendanceRosterPanel {event} />
 							</Item.Content>
 							<Item.Actions>
-								<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={currentHub.eventTargetId === event.id}>
+								<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={isEventMutating}>
 									Edit
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => publishNow(event)} disabled={currentHub.eventTargetId === event.id}>
-									Publish now
+								<Button variant="ghost" size="sm" onclick={() => publishNow(event)} disabled={isEventMutating}>
+									{currentHub.eventTargetId === event.id ? 'Publishing...' : 'Publish now'}
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => cancelLifecycle(event.id)} disabled={currentHub.eventTargetId === event.id}>
-									Cancel
+								<Button variant="ghost" size="sm" onclick={() => cancelLifecycle(event.id)} disabled={isEventMutating}>
+									{currentHub.eventTargetId === event.id ? 'Canceling...' : 'Cancel'}
 								</Button>
-								<Button variant="ghost" size="sm" onclick={() => archive(event.id)} disabled={currentHub.eventTargetId === event.id}>
-									Archive
+								<Button variant="ghost" size="sm" onclick={() => archive(event.id)} disabled={isEventMutating}>
+									{currentHub.eventTargetId === event.id ? 'Archiving...' : 'Archive'}
 								</Button>
-								<Button variant="destructive" size="sm" onclick={() => remove(event.id)} disabled={currentHub.eventTargetId === event.id}>
-									Delete
+								<Button variant="destructive" size="sm" onclick={() => remove(event.id)} disabled={isEventMutating}>
+									{currentHub.eventTargetId === event.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
 						</Item.Root>
@@ -710,7 +738,7 @@
 					</Card.Content>
 				</Card.Root>
 			{:else}
-				<Item.Group>
+				<Item.Group aria-busy={isEventMutating}>
 					{#each inactiveEvents as event (event.id)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
@@ -743,16 +771,16 @@
 								<EventAttendanceRosterPanel {event} />
 							</Item.Content>
 							<Item.Actions>
-								<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={currentHub.eventTargetId === event.id}>
+								<Button variant="ghost" size="sm" onclick={() => startEditing(event)} disabled={isEventMutating}>
 									Edit
 								</Button>
 								{#if event.archived_at || event.canceled_at}
-									<Button variant="ghost" size="sm" onclick={() => restore(event.id)} disabled={currentHub.eventTargetId === event.id}>
-										Restore
+									<Button variant="ghost" size="sm" onclick={() => restore(event.id)} disabled={isEventMutating}>
+										{currentHub.eventTargetId === event.id ? 'Restoring...' : 'Restore'}
 									</Button>
 								{/if}
-								<Button variant="destructive" size="sm" onclick={() => remove(event.id)} disabled={currentHub.eventTargetId === event.id}>
-									Delete
+								<Button variant="destructive" size="sm" onclick={() => remove(event.id)} disabled={isEventMutating}>
+									{currentHub.eventTargetId === event.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
 						</Item.Root>

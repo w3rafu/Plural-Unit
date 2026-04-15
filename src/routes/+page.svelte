@@ -21,6 +21,18 @@
 
 	let loadedHubOrgId = '';
 
+	async function loadHubData() {
+		try {
+			await currentHub.load();
+		} catch {
+			// `currentHub` captures the real error for the page-level UI.
+		}
+	}
+
+	function retryHubLoad() {
+		void loadHubData();
+	}
+
 	$effect(() => {
 		const organizationId = currentOrganization.organization?.id ?? '';
 
@@ -29,7 +41,7 @@
 		}
 
 		loadedHubOrgId = organizationId;
-		void currentHub.load();
+		void loadHubData();
 	});
 
 	$effect(() => {
@@ -47,6 +59,9 @@
 	const manageEventsHref = $derived(
 		currentOrganization.isAdmin ? '/hub/manage/content#manage-events' : undefined
 	);
+	const hasBlockingHubError = $derived(
+		Boolean(currentHub.lastError) && !currentHub.hasLoadedForCurrentOrg
+	);
 
 	const hubActions = $derived.by(() => [
 		...(currentOrganization.isAdmin
@@ -61,7 +76,7 @@
 	actions={hubActions}
 />
 
-<main class="page-stack">
+<main class="page-stack" aria-busy={currentHub.isLoading}>
 	<!-- Quick stats row -->
 	<Card.Root size="sm" class="border-border/70 bg-card">
 		<Card.Content class="metric-grid">
@@ -113,44 +128,80 @@
 		</Card.Content>
 	</Card.Root>
 
-	<MemberCommitmentsCard eventHref="#hub-events" />
-
-	<HubActivityFeed
-		broadcastHref="#hub-broadcasts"
-		eventHref="#hub-events"
-		{manageBroadcastsHref}
-		{manageEventsHref}
-	/>
-
-	{#if currentHub.isLoading}
-		<Card.Root size="sm" class="border-border/70 bg-card">
-			<Card.Content>
-				<p class="text-sm text-muted-foreground">Loading the hub...</p>
+	{#if hasBlockingHubError}
+		<Card.Root class="border-destructive/30 bg-destructive/5">
+			<Card.Header>
+				<Card.Title class="text-lg font-semibold tracking-tight">Could not load the hub</Card.Title>
+				<Card.Description role="alert" class="text-destructive">
+					{currentHub.lastError?.message ??
+						'The hub content could not be loaded right now. Try again in a moment.'}
+				</Card.Description>
+			</Card.Header>
+			<Card.Content class="flex flex-wrap items-center gap-3 pt-0">
+				<Button type="button" variant="outline" size="sm" onclick={retryHubLoad}>
+					Try again
+				</Button>
+				<p class="text-xs text-muted-foreground">
+					Organization stats are still available above while the hub content reconnects.
+				</p>
 			</Card.Content>
 		</Card.Root>
-	{:else if activePlugins.length === 0}
-		<Card.Root class="border-dashed border-border/70 bg-muted/20">
-			<Card.Header>
-				<Card.Title class="text-lg font-semibold tracking-tight">The hub is ready for setup</Card.Title>
-				<Card.Description>No sections are live yet.</Card.Description>
-			</Card.Header>
-			{#if currentOrganization.isAdmin}
-				<Card.Content class="pt-0">
-					<Button href="/hub/manage" variant="outline" size="sm">Open hub manage</Button>
-				</Card.Content>
-			{/if}
-		</Card.Root>
 	{:else}
-		<div class="card-grid">
-			{#each activePlugins as plugin (plugin.key)}
-				{#if plugin.key === 'broadcasts'}
-					<BroadcastsSection sectionId="hub-broadcasts" />
-				{:else if plugin.key === 'events'}
-					<EventsSection sectionId="hub-events" />
-				{:else if plugin.key === 'resources'}
-					<ResourcesSection sectionId="hub-resources" />
+		{#if currentHub.lastError}
+			<Card.Root class="border-destructive/30 bg-destructive/5">
+				<Card.Content class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+					<div class="space-y-1">
+						<p class="text-sm font-medium text-foreground">Hub content may be out of date</p>
+						<p role="alert" class="text-sm text-destructive">
+							{currentHub.lastError.message}
+						</p>
+					</div>
+					<Button type="button" variant="outline" size="sm" onclick={retryHubLoad}>
+						Refresh hub
+					</Button>
+				</Card.Content>
+			</Card.Root>
+		{/if}
+
+		<MemberCommitmentsCard eventHref="#hub-events" />
+
+		<HubActivityFeed
+			broadcastHref="#hub-broadcasts"
+			eventHref="#hub-events"
+			{manageBroadcastsHref}
+			{manageEventsHref}
+		/>
+
+		{#if currentHub.isLoading}
+			<Card.Root size="sm" class="border-border/70 bg-card">
+				<Card.Content>
+					<p class="text-sm text-muted-foreground">Loading the hub...</p>
+				</Card.Content>
+			</Card.Root>
+		{:else if activePlugins.length === 0}
+			<Card.Root class="border-dashed border-border/70 bg-muted/20">
+				<Card.Header>
+					<Card.Title class="text-lg font-semibold tracking-tight">The hub is ready for setup</Card.Title>
+					<Card.Description>No sections are live yet.</Card.Description>
+				</Card.Header>
+				{#if currentOrganization.isAdmin}
+					<Card.Content class="pt-0">
+						<Button href="/hub/manage" variant="outline" size="sm">Open hub manage</Button>
+					</Card.Content>
 				{/if}
-			{/each}
-		</div>
+			</Card.Root>
+		{:else}
+			<div class="card-grid">
+				{#each activePlugins as plugin (plugin.key)}
+					{#if plugin.key === 'broadcasts'}
+						<BroadcastsSection sectionId="hub-broadcasts" />
+					{:else if plugin.key === 'events'}
+						<EventsSection sectionId="hub-events" />
+					{:else if plugin.key === 'resources'}
+						<ResourcesSection sectionId="hub-resources" />
+					{/if}
+				{/each}
+			</div>
+		{/if}
 	{/if}
 </main>

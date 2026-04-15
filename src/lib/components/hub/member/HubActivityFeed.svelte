@@ -98,9 +98,10 @@
 		</div>
 	</Card.Header>
 
-	<Card.Content class="space-y-3">
+	<Card.Content class="space-y-3" aria-busy={resolvedIsLoading}>
 		{#if resolvedIsLoading && totalItems.length === 0}
-			<div class="space-y-3">
+			<div role="status" aria-live="polite" class="space-y-3">
+				<span class="sr-only">Loading recent activity.</span>
 				{#each Array.from({ length: 3 }) as _, index (`hub-activity-loading-${index}`)}
 					<div class="animate-pulse rounded-2xl border border-border/70 bg-muted/20 px-4 py-3.5">
 						<div class="mb-3 flex items-center justify-between gap-3">

@@ -165,17 +165,21 @@
 
 		<ScrollArea class="h-[calc(100vh-9rem)] px-5 py-4">
 			{#if loadError}
-				<p role="alert" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+				<p
+					role="alert"
+					class="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+				>
 					{loadError}
 				</p>
 			{:else if currentHub.isLoading && notifications.length === 0}
-				<div class="space-y-3">
+				<div role="status" aria-live="polite" class="space-y-3">
+					<span class="sr-only">Loading alerts.</span>
 					{#each Array.from({ length: 3 }) as _, index (`loading-${index}`)}
-						<div class="animate-pulse rounded-2xl border border-border bg-card p-4">
-							<div class="mb-3 h-3 w-16 rounded bg-zinc-200"></div>
-							<div class="mb-2 h-4 w-2/3 rounded bg-zinc-300"></div>
-							<div class="mb-2 h-3 w-full rounded bg-zinc-200"></div>
-							<div class="h-3 w-1/2 rounded bg-zinc-200"></div>
+						<div class="animate-pulse rounded-2xl border border-border bg-card/80 p-4">
+							<div class="mb-3 h-3 w-16 rounded-full bg-muted/80"></div>
+							<div class="mb-2 h-4 w-2/3 rounded-full bg-muted"></div>
+							<div class="mb-2 h-3 w-full rounded-full bg-muted/75"></div>
+							<div class="h-3 w-1/2 rounded-full bg-muted/75"></div>
 						</div>
 					{/each}
 				</div>
@@ -191,6 +195,7 @@
 							size="sm"
 							variant={filter === 'all' ? 'secondary' : 'outline'}
 							class="rounded-full"
+							aria-pressed={filter === 'all'}
 							onclick={() => (filter = 'all')}
 						>
 							All {notificationCounts.all}
@@ -200,6 +205,7 @@
 							size="sm"
 							variant={filter === 'broadcast' ? 'secondary' : 'outline'}
 							class="rounded-full"
+							aria-pressed={filter === 'broadcast'}
 							onclick={() => (filter = 'broadcast')}
 						>
 							Broadcasts {notificationCounts.broadcast}
@@ -209,6 +215,7 @@
 							size="sm"
 							variant={filter === 'event' ? 'secondary' : 'outline'}
 							class="rounded-full"
+							aria-pressed={filter === 'event'}
 							onclick={() => (filter = 'event')}
 						>
 							Events {notificationCounts.event}

@@ -178,4 +178,39 @@ describe('scheduledDeliveryModel', () => {
 			delivery_state: 'failed'
 		});
 	});
+
+	it('persists failure reasons in stale patches for unrecoverable scheduling conflicts', () => {
+		const now = new Date('2026-04-13T12:00:00.000Z').getTime();
+
+		expect(
+			getBroadcastDeliveryPatch(
+				makeBroadcast({
+					publish_at: '2026-04-13T18:00:00.000Z',
+					expires_at: '2026-04-13T17:00:00.000Z'
+				}),
+				now
+			)
+		).toEqual({
+			delivery_state: 'failed',
+			delivered_at: null,
+			delivery_failure_reason:
+				'The scheduled publish time lands at or after the expiry time. Edit the timing before retrying.'
+		});
+
+		expect(
+			getEventDeliveryPatch(
+				makeEvent({
+					publish_at: '2026-04-13T18:00:00.000Z',
+					starts_at: '2026-04-14T18:00:00.000Z',
+					canceled_at: '2026-04-13T17:00:00.000Z'
+				}),
+				now
+			)
+		).toEqual({
+			delivery_state: 'skipped',
+			delivered_at: null,
+			delivery_failure_reason:
+				'Canceled before the scheduled visibility window. Restore the event if it still needs to go live.'
+		});
+	});
 });

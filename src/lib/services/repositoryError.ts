@@ -6,6 +6,18 @@
  * an understandable message.
  */
 
+const SCHEMA_DRIFT_CODES = new Set(['42703', '42P01', '42704', '42883']);
+const SCHEMA_DRIFT_MESSAGE_PATTERN =
+	/\b(column|relation|function|constraint)\b[\s\S]*\bdoes not exist\b/i;
+
+function buildRepositoryErrorMessage(fallback: string, message: string, code?: string | null) {
+	if (SCHEMA_DRIFT_CODES.has(code ?? '') || SCHEMA_DRIFT_MESSAGE_PATTERN.test(message)) {
+		return `${message} Run the latest Supabase migrations, then try again.`;
+	}
+
+	return message || fallback;
+}
+
 /**
  * Extract a readable message from an unknown error and throw a new Error.
  *
@@ -14,12 +26,13 @@
  */
 export function throwRepositoryError(error: unknown, fallback: string): never {
 	if (error instanceof Error) {
-		throw new Error(error.message || fallback);
+		throw new Error(buildRepositoryErrorMessage(fallback, error.message));
 	}
 
-	if (typeof error === 'object' && error !== null && 'message' in error) {
-		const message = String((error as { message: unknown }).message);
-		if (message) throw new Error(message);
+	if (typeof error === 'object' && error !== null) {
+		const message = 'message' in error ? String((error as { message: unknown }).message) : '';
+		const code = 'code' in error ? String((error as { code: unknown }).code) : null;
+		if (message) throw new Error(buildRepositoryErrorMessage(fallback, message, code));
 	}
 
 	throw new Error(fallback);
