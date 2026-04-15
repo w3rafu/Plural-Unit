@@ -26,8 +26,10 @@
 	const publishedCount = $derived(liveBroadcastCount + liveEventCount + liveResourceCount);
 	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount);
 	const dueExecutionCount = $derived(currentHub.dueExecutionCount);
-	const recoverableExecutionCount = $derived(currentHub.recoverableExecutionCount);
-	const processedExecutionCount = $derived(currentHub.processedExecutionItems.length);
+	const recoverableExecutionCount = $derived(currentHub.visibleRecoverableExecutionCount);
+	const processedExecutionCount = $derived(currentHub.getExecutionQueueSections().processed.length);
+	const triagedExecutionItemCount = $derived(currentHub.triagedExecutionItemCount);
+	const triagedFollowUpSignalCount = $derived(currentHub.triagedFollowUpSignalCount);
 	const engagementSummary = $derived(currentHub.hubEngagementSummary);
 	const attendanceReviewCount = $derived(engagementSummary.attendanceReviewCount);
 	const responseCoverageValue = $derived.by(() => {
@@ -39,11 +41,21 @@
 	});
 	const responseCoverageCopy = $derived(getHubEngagementCoverageCopy(engagementSummary));
 	const attendanceReviewCopy = $derived(getHubEngagementAttendanceCopy(engagementSummary));
-	const followUpCopy = $derived(getHubEngagementFollowUpCopy(engagementSummary));
+	const followUpCopy = $derived.by(() => {
+		const baseCopy = getHubEngagementFollowUpCopy(engagementSummary);
+
+		if (engagementSummary.followUpCount === 0 && triagedFollowUpSignalCount > 0) {
+			return `${baseCopy} ${triagedFollowUpSignalCount} reviewed or deferred item${triagedFollowUpSignalCount === 1 ? '' : 's'} hidden from the default queue.`;
+		}
+
+		return baseCopy;
+	});
 	const dueExecutionCopy = $derived.by(() => {
 		if (dueExecutionCount === 0) {
 			return processedExecutionCount === 0
-				? 'Scheduled publishes and reminder windows are clear right now.'
+				? triagedExecutionItemCount === 0
+					? 'Scheduled publishes and reminder windows are clear right now.'
+					: `${triagedExecutionItemCount} reviewed or deferred execution item${triagedExecutionItemCount === 1 ? '' : 's'} hidden from the default queue.`
 				: `${processedExecutionCount} execution item${processedExecutionCount === 1 ? '' : 's'} already processed and retained in the ledger.`;
 		}
 
@@ -51,7 +63,9 @@
 	});
 	const recoveryQueueCopy = $derived.by(() => {
 		if (recoverableExecutionCount === 0) {
-			return 'No failed or skipped execution rows need recovery.';
+			return triagedExecutionItemCount === 0
+				? 'No failed or skipped execution rows need recovery.'
+				: `${triagedExecutionItemCount} reviewed or deferred execution item${triagedExecutionItemCount === 1 ? '' : 's'} hidden from the default queue.`;
 		}
 
 		return `${recoverableExecutionCount} failed or skipped row${recoverableExecutionCount === 1 ? '' : 's'} can be retried or opened for correction.`;

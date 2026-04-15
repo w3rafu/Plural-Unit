@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
 	DEFAULT_HUB_EXECUTION_QUEUE_FOCUS,
 	buildHubExecutionQueueFocusHref,
+	buildHubExecutionQueueFollowUpSignals,
 	buildHubExecutionQueueItem,
+	buildHubExecutionQueueItemTriageKey,
 	buildHubExecutionQueueSections,
+	buildHubExecutionFollowUpTriageKey,
+	clearHubExecutionQueueTriage,
 	isHubExecutionQueueFocusActive,
-	parseHubExecutionQueueFocus
+	parseHubExecutionQueueFocus,
+	setHubExecutionQueueTriage
 } from './hubExecutionQueue';
 
 function makeBroadcast(
@@ -188,6 +193,162 @@ describe('hubExecutionQueue', () => {
 			statusLabel: 'Upcoming',
 			detailCopy: 'Weekly notes is scheduled to go live later.'
 		});
+	});
+
+	it('hides triaged recovery and processed rows by default', () => {
+		const triageMap = setHubExecutionQueueTriage(
+			setHubExecutionQueueTriage(
+				{},
+				buildHubExecutionQueueItemTriageKey('failed-publish'),
+				'reviewed',
+				'2026-04-14T12:00:00.000Z'
+			),
+			buildHubExecutionQueueItemTriageKey('processed-broadcast'),
+			'deferred',
+			'2026-04-14T12:05:00.000Z'
+		);
+
+		const hiddenSections = buildHubExecutionQueueSections({
+			rows: [
+				makeExecutionRow({
+					id: 'failed-publish',
+					job_kind: 'event_publish',
+					source_id: 'e1',
+					execution_key: 'publish',
+					execution_state: 'failed',
+					last_failure_reason:
+						'The scheduled publish time lands at or after the event start. Edit the timing before retrying.'
+				}),
+				makeExecutionRow({
+					id: 'processed-broadcast',
+					job_kind: 'broadcast_publish',
+					source_id: 'b1',
+					execution_key: 'publish',
+					execution_state: 'processed',
+					processed_at: '2026-04-14T10:30:00.000Z'
+				})
+			],
+			broadcasts: [makeBroadcast({ id: 'b1', title: 'Weekly notes' })],
+			events: [makeEvent({ id: 'e1', title: 'Volunteer night' })],
+			triageMap,
+			now: new Date('2026-04-14T12:00:00.000Z').getTime()
+		});
+
+		expect(hiddenSections.recovery).toEqual([]);
+		expect(hiddenSections.processed).toEqual([]);
+
+		const visibleSections = buildHubExecutionQueueSections({
+			rows: [
+				makeExecutionRow({
+					id: 'failed-publish',
+					job_kind: 'event_publish',
+					source_id: 'e1',
+					execution_key: 'publish',
+					execution_state: 'failed',
+					last_failure_reason:
+						'The scheduled publish time lands at or after the event start. Edit the timing before retrying.'
+				}),
+				makeExecutionRow({
+					id: 'processed-broadcast',
+					job_kind: 'broadcast_publish',
+					source_id: 'b1',
+					execution_key: 'publish',
+					execution_state: 'processed',
+					processed_at: '2026-04-14T10:30:00.000Z'
+				})
+			],
+			broadcasts: [makeBroadcast({ id: 'b1', title: 'Weekly notes' })],
+			events: [makeEvent({ id: 'e1', title: 'Volunteer night' })],
+			triageMap,
+			includeTriaged: true,
+			now: new Date('2026-04-14T12:00:00.000Z').getTime()
+		});
+
+		expect(visibleSections.recovery[0]).toMatchObject({
+			id: 'failed-publish',
+			triageStatus: 'reviewed'
+		});
+		expect(visibleSections.processed[0]).toMatchObject({
+			id: 'processed-broadcast',
+			triageStatus: 'deferred'
+		});
+	});
+
+	it('filters triaged follow-up signals unless surfaced', () => {
+		const signal = {
+			eventId: 'e1',
+			eventTitle: 'Volunteer night',
+			kind: 'attendance_review' as const,
+			statusLabel: 'Attendance review',
+			copy: '2 RSVP-positive attendees still need attendance decisions.',
+			timingCopy: 'Ended 3 hours ago.',
+			tone: 'attention' as const,
+			completedAt: '2026-04-14T09:00:00.000Z'
+		};
+		const triageKey = buildHubExecutionFollowUpTriageKey(signal);
+		const triageMap = setHubExecutionQueueTriage(
+			{},
+			triageKey,
+			'reviewed',
+			'2026-04-14T12:00:00.000Z'
+		);
+
+		expect(buildHubExecutionQueueFollowUpSignals({ signals: [signal], triageMap })).toEqual([]);
+		expect(
+			buildHubExecutionQueueFollowUpSignals({
+				signals: [signal],
+				triageMap,
+				includeTriaged: true
+			})[0]
+		).toMatchObject({
+			eventId: 'e1',
+			triageStatus: 'reviewed'
+		});
+		expect(clearHubExecutionQueueTriage(triageMap, triageKey)).toEqual({});
+	});
+
+	it('does not cap processed rows when triaged items are explicitly surfaced', () => {
+		const rows = ['processed-1', 'processed-2', 'processed-3', 'processed-4'].map((id, index) =>
+			makeExecutionRow({
+				id,
+				job_kind: 'broadcast_publish',
+				source_id: `b${index + 1}`,
+				execution_key: 'publish',
+				execution_state: 'processed',
+				processed_at: `2026-04-14T1${index}:00:00.000Z`
+			})
+		);
+		const triageMap = rows.reduce(
+			(map, row, index) =>
+				setHubExecutionQueueTriage(
+					map,
+					buildHubExecutionQueueItemTriageKey(row.id),
+					index % 2 === 0 ? 'reviewed' : 'deferred',
+					`2026-04-14T12:0${index}:00.000Z`
+				),
+			{} as Record<string, { status: 'reviewed' | 'deferred'; updatedAt: string }>
+		);
+
+		const sections = buildHubExecutionQueueSections({
+			rows,
+			broadcasts: [
+				makeBroadcast({ id: 'b1', title: 'Weekly notes' }),
+				makeBroadcast({ id: 'b2', title: 'Volunteer highlights' }),
+				makeBroadcast({ id: 'b3', title: 'Community update' }),
+				makeBroadcast({ id: 'b4', title: 'Next steps' })
+			],
+			events: [],
+			triageMap,
+			includeTriaged: true,
+			now: new Date('2026-04-14T12:30:00.000Z').getTime()
+		});
+
+		expect(sections.processed.map((item) => item.id)).toEqual([
+			'processed-4',
+			'processed-3',
+			'processed-2',
+			'processed-1'
+		]);
 	});
 
 	it('filters queue sections by bucket, job kind, and subject kind', () => {

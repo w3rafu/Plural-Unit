@@ -79,7 +79,7 @@ describe('hubActivityModel', () => {
 				destinations
 			)
 		).toEqual({
-			label: 'Open events',
+			label: "Open today's event",
 			href: '#hub-events',
 			description: "Jump to today's event details below."
 		});
@@ -101,7 +101,7 @@ describe('hubActivityModel', () => {
 				destinations
 			)
 		).toEqual({
-			label: 'Open events',
+			label: 'Open recent event',
 			href: '#hub-events',
 			description: 'Jump to the recent event details below and review what just wrapped.'
 		});
@@ -111,17 +111,39 @@ describe('hubActivityModel', () => {
 		expect(
 			getHubActivitySecondaryAction(makeNotification('broadcast', 'b1'), destinations)
 		).toEqual({
-			label: 'Manage broadcasts',
-			href: '/hub/manage/content#manage-broadcasts',
-			description: 'Jump straight to the broadcast editor and publishing tools.'
+			label: 'Review broadcast',
+			href: '/hub/manage/content#broadcast-b1',
+			description: 'Jump straight to this broadcast card and publishing tools.'
 		});
 
 		expect(
 			getHubActivitySecondaryAction(makeNotification('event', 'e1'), destinations)
 		).toEqual({
-			label: 'Manage events',
-			href: '/hub/manage/content#manage-events',
-			description: 'Jump straight to the event editor and scheduling tools.'
+			label: 'Review event',
+			href: '/hub/manage/content#event-e1',
+			description: 'Jump straight to this event card and scheduling tools.'
+		});
+
+		expect(
+			getHubActivitySecondaryAction(
+				makeNotification('event', 'e2', 'default', 'recently_completed'),
+				destinations
+			)
+		).toEqual({
+			label: 'Close out event',
+			href: '/hub/manage/content#event-e2',
+			description: 'Jump straight to this event card and finish closeout or follow-up.'
+		});
+
+		expect(
+			getHubActivitySecondaryAction(
+				makeNotification('event_reminder', 'e3', '120', 'today'),
+				destinations
+			)
+		).toEqual({
+			label: 'Review attendance',
+			href: '/hub/manage/content#event-e3',
+			description: 'Jump straight to this event card and roster for attendance closeout.'
 		});
 	});
 
@@ -136,9 +158,9 @@ describe('hubActivityModel', () => {
 				}
 			)
 		).toEqual({
-			label: 'Manage broadcasts',
-			href: '/hub/manage/content',
-			description: 'Jump straight to the broadcast editor and publishing tools.'
+			label: 'Review broadcast',
+			href: '/hub/manage/content#broadcast-b1',
+			description: 'Jump straight to this broadcast card and publishing tools.'
 		});
 	});
 

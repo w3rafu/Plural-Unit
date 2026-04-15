@@ -6,6 +6,7 @@ import type {
 } from '$lib/repositories/hubRepository';
 import { formatRelativeDateTime } from '$lib/utils/dateFormat';
 import { getHubExecutionLedgerBucket, groupHubExecutionLedger } from './hubExecutionLedger';
+import type { HubEventFollowUpSignal } from './hubEngagementModel';
 import {
 	getHubExecutionRecoveryGuidance,
 	type HubExecutionRecoveryGuidance
@@ -22,6 +23,15 @@ export type HubExecutionQueueFocus = {
 	subjectKind: HubExecutionQueueSubjectFilter;
 	includeUpcoming: boolean;
 };
+
+export type HubExecutionTriageStatus = 'reviewed' | 'deferred';
+
+export type HubExecutionTriageEntry = {
+	status: HubExecutionTriageStatus;
+	updatedAt: string;
+};
+
+export type HubExecutionTriageMap = Record<string, HubExecutionTriageEntry>;
 
 export const DEFAULT_HUB_EXECUTION_QUEUE_FOCUS: HubExecutionQueueFocus = {
 	bucket: 'all',
@@ -59,6 +69,7 @@ export type HubExecutionQueueItem = {
 	id: string;
 	jobKind: HubExecutionJobKind;
 	bucket: 'due' | 'upcoming' | 'failed' | 'skipped' | 'processed';
+	triageStatus: HubExecutionTriageStatus | null;
 	jobLabel: string;
 	subjectKind: HubExecutionQueueSubjectKind;
 	sourceId: string;
@@ -79,6 +90,88 @@ export type HubExecutionQueueSections = {
 	recovery: HubExecutionQueueItem[];
 	processed: HubExecutionQueueItem[];
 };
+
+export type HubExecutionQueueFollowUpSignal = HubEventFollowUpSignal & {
+	triageStatus: HubExecutionTriageStatus | null;
+};
+
+function getHubExecutionQueueTriageStatus(
+	triageMap: HubExecutionTriageMap,
+	triageKey: string
+): HubExecutionTriageStatus | null {
+	return triageMap[triageKey]?.status ?? null;
+}
+
+function shouldIncludeTriagedQueueItem(
+	triageStatus: HubExecutionTriageStatus | null,
+	includeTriaged: boolean
+) {
+	return triageStatus === null || includeTriaged;
+}
+
+export function buildHubExecutionQueueItemTriageKey(
+	item: Pick<HubExecutionQueueItem, 'id'> | string
+) {
+	const id = typeof item === 'string' ? item : item.id;
+	return `execution:${id}`;
+}
+
+export function buildHubExecutionFollowUpTriageKey(
+	signal: Pick<HubEventFollowUpSignal, 'eventId' | 'kind'>
+) {
+	return `followup:${signal.eventId}:${signal.kind}`;
+}
+
+export function setHubExecutionQueueTriage(
+	triageMap: HubExecutionTriageMap,
+	triageKey: string,
+	status: HubExecutionTriageStatus,
+	updatedAt = new Date().toISOString()
+) {
+	return {
+		...triageMap,
+		[triageKey]: {
+			status,
+			updatedAt
+		}
+	};
+}
+
+export function clearHubExecutionQueueTriage(
+	triageMap: HubExecutionTriageMap,
+	triageKey: string
+) {
+	if (!(triageKey in triageMap)) {
+		return triageMap;
+	}
+
+	const nextMap = { ...triageMap };
+	delete nextMap[triageKey];
+	return nextMap;
+}
+
+export function buildHubExecutionQueueFollowUpSignals(input: {
+	signals: HubEventFollowUpSignal[];
+	triageMap?: HubExecutionTriageMap;
+	includeTriaged?: boolean;
+}): HubExecutionQueueFollowUpSignal[] {
+	const triageMap = input.triageMap ?? {};
+	const includeTriaged = input.includeTriaged ?? false;
+
+	return input.signals
+		.map((signal) => {
+			const triageStatus = getHubExecutionQueueTriageStatus(
+				triageMap,
+				buildHubExecutionFollowUpTriageKey(signal)
+			);
+
+			return {
+				...signal,
+				triageStatus
+			};
+		})
+		.filter((signal) => shouldIncludeTriagedQueueItem(signal.triageStatus, includeTriaged));
+}
 
 function setSearchParam(searchParams: URLSearchParams, key: string, value: string, defaultValue: string) {
 	if (value === defaultValue) {
@@ -113,8 +206,11 @@ function shouldIncludeQueueItem(
 	return true;
 }
 
-function shouldLimitProcessedQueueItems(focus: HubExecutionQueueFocus) {
-	return !isHubExecutionQueueFocusActive(focus);
+function shouldLimitProcessedQueueItems(
+	focus: HubExecutionQueueFocus,
+	includeTriaged: boolean
+) {
+	return !includeTriaged && !isHubExecutionQueueFocusActive(focus);
 }
 
 export function normalizeHubExecutionQueueFocus(
@@ -353,6 +449,7 @@ export function buildHubExecutionQueueItem(input: {
 		id: input.row.id,
 		jobKind: input.row.job_kind,
 		bucket,
+		triageStatus: null,
 		jobLabel: getJobLabel(input.row.job_kind),
 		statusLabel: getStatusLabel(bucket),
 		timingCopy: getTimingCopy(input.row, bucket, now),
@@ -374,10 +471,14 @@ export function buildHubExecutionQueueSections(input: {
 	now?: number;
 	processedLimit?: number;
 	focus?: Partial<HubExecutionQueueFocus>;
+	triageMap?: HubExecutionTriageMap;
+	includeTriaged?: boolean;
 }): HubExecutionQueueSections {
 	const now = input.now ?? Date.now();
 	const processedLimit = input.processedLimit ?? 3;
 	const focus = normalizeHubExecutionQueueFocus(input.focus ?? {});
+	const triageMap = input.triageMap ?? {};
+	const includeTriaged = input.includeTriaged ?? false;
 	const groups = groupHubExecutionLedger(input.rows, now);
 	const toItem = (row: HubExecutionLedgerRow) =>
 		buildHubExecutionQueueItem({
@@ -386,6 +487,13 @@ export function buildHubExecutionQueueSections(input: {
 			events: input.events,
 			now
 		});
+	const applyTriage = (item: HubExecutionQueueItem) => ({
+		...item,
+		triageStatus: getHubExecutionQueueTriageStatus(
+			triageMap,
+			buildHubExecutionQueueItemTriageKey(item)
+		)
+	});
 	const due = groups.due
 		.map(toItem)
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['due']));
@@ -394,11 +502,15 @@ export function buildHubExecutionQueueSections(input: {
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['upcoming']));
 	const recovery = [...groups.failed, ...groups.skipped]
 		.map(toItem)
+		.map(applyTriage)
+		.filter((item) => shouldIncludeTriagedQueueItem(item.triageStatus, includeTriaged))
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['failed', 'skipped']));
 	const processed = groups.processed
 		.map(toItem)
+		.map(applyTriage)
+		.filter((item) => shouldIncludeTriagedQueueItem(item.triageStatus, includeTriaged))
 		.filter((item) => shouldIncludeQueueItem(item, focus, ['processed']));
-	const limitedProcessed = shouldLimitProcessedQueueItems(focus)
+	const limitedProcessed = shouldLimitProcessedQueueItems(focus, includeTriaged)
 		? processed.slice(0, processedLimit)
 		: processed;
 

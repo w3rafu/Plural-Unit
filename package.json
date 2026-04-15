@@ -1,7 +1,7 @@
 {
 	"name": "plural-unit",
 	"private": true,
-	"version": "0.1.30",
+	"version": "0.1.31",
 	"type": "module",
 	"dependencies": {
 		"@supabase/supabase-js": "^2.57.0",
@@ -21,18 +21,20 @@
 		"test:coverage": "vitest run --coverage"
 	},
 	"devDependencies": {
-		"@playwright/test": "^1.55.0",
 		"@fontsource-variable/instrument-sans": "^5.2.8",
 		"@internationalized/date": "^3.12.0",
 		"@lucide/svelte": "^1.7.0",
+		"@playwright/test": "^1.55.0",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.48.5",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/vite": "^4.1.18",
 		"@tanstack/table-core": "^8.21.3",
+		"@testing-library/svelte": "^5.3.1",
 		"@vitest/coverage-v8": "^4.1.4",
 		"bits-ui": "^2.17.2",
 		"clsx": "^2.1.1",
+		"jsdom": "^29.0.2",
 		"layerchart": "^2.0.0-next.48",
 		"shadcn-svelte": "^1.2.7",
 		"svelte": "^5.34.0",

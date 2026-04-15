@@ -31,6 +31,11 @@ import {
 	type HubEngagementSignal
 } from '$lib/models/hubEngagementModel';
 import {
+	buildHubExecutionQueueFollowUpSignals,
+	type HubExecutionQueueFollowUpSignal,
+	type HubExecutionTriageMap
+} from '$lib/models/hubExecutionQueue';
+import {
 	buildHubNotifications,
 	countUnreadHubNotifications,
 	type HubNotificationItem,
@@ -103,28 +108,45 @@ export function getCurrentHubEngagementSummary(input: {
 	broadcasts: BroadcastRow[];
 	eventResponseMap: Record<string, EventResponseRow[]>;
 	eventAttendanceMap: Record<string, EventAttendanceRow[]>;
+	queueTriageMap?: HubExecutionTriageMap;
 }): HubAdminEngagementSummary {
 	const eventAttendances = buildEventAttendanceSummaryMap(input);
 	const eventAttendanceOutcomes = buildEventAttendanceOutcomeSummaryMap(input);
+	const followUpSignals = buildHubExecutionQueueFollowUpSignals({
+		signals: buildHubEventFollowUpSignals({
+			events: input.events,
+			eventAttendances,
+			eventAttendanceOutcomes
+		}),
+		triageMap: input.queueTriageMap
+	});
 
 	return buildHubAdminEngagementSummary({
 		events: input.events,
 		broadcasts: input.broadcasts,
 		eventAttendances,
-		eventAttendanceOutcomes
+		eventAttendanceOutcomes,
+		followUpSignals
 	});
 }
 
 export function getCurrentHubEventFollowUpSignals(
-	input: CurrentHubEventSummaryInput
-): HubEventFollowUpSignal[] {
+	input: CurrentHubEventSummaryInput & {
+		queueTriageMap?: HubExecutionTriageMap;
+		includeTriaged?: boolean;
+	}
+): HubExecutionQueueFollowUpSignal[] {
 	const eventAttendances = buildEventAttendanceSummaryMap(input);
 	const eventAttendanceOutcomes = buildEventAttendanceOutcomeSummaryMap(input);
 
-	return buildHubEventFollowUpSignals({
-		events: input.events,
-		eventAttendances,
-		eventAttendanceOutcomes
+	return buildHubExecutionQueueFollowUpSignals({
+		signals: buildHubEventFollowUpSignals({
+			events: input.events,
+			eventAttendances,
+			eventAttendanceOutcomes
+		}),
+		triageMap: input.queueTriageMap,
+		includeTriaged: input.includeTriaged
 	});
 }
 

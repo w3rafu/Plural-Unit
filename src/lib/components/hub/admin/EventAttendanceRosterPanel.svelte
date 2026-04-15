@@ -23,11 +23,19 @@
 	let attendanceActionLabel = $state('');
 	const attendanceRoster = $derived(currentHub.getEventAttendanceRoster(event.id));
 	const attendanceOutcomeSummary = $derived(currentHub.getEventAttendanceOutcomeSummary(event.id));
+	const pendingProfileIds = $derived(
+		attendanceRoster ? attendanceRoster.pendingEntries.map((entry) => entry.member.profile_id) : []
+	);
+	const canBulkUpdateAttendance = $derived(pendingProfileIds.length > 1);
 	const isAttendanceWindowVisible = $derived.by(() => isEventAttendanceWindowOpen(event));
 	const isUpdatingAttendance = $derived(currentHub.eventAttendanceTargetId !== '');
 	const attendanceMutationStatus = $derived.by(() => {
 		if (!attendanceActionTargetId || !attendanceRoster) {
 			return '';
+		}
+
+		if (attendanceActionTargetId.startsWith('bulk:')) {
+			return attendanceActionLabel;
 		}
 
 		const profileId = attendanceActionTargetId.split(':')[1] ?? '';
@@ -40,6 +48,14 @@
 
 	function getTargetId(profileId: string) {
 		return `${event.id}:${profileId}`;
+	}
+
+	function getBulkTargetId(status: EventAttendanceStatus) {
+		return `bulk:${status}`;
+	}
+
+	function getExpectedAttendeeCopy(count: number) {
+		return `${count} expected attendee${count === 1 ? '' : 's'}`;
 	}
 
 	function getResponseBadgeVariant(response: string | null) {
@@ -111,6 +127,42 @@
 			}
 		}
 	}
+
+	async function setBulkAttendance(status: EventAttendanceStatus) {
+		if (pendingProfileIds.length < 2) {
+			return;
+		}
+
+		const targetId = getBulkTargetId(status);
+		const expectedAttendeeCopy = getExpectedAttendeeCopy(pendingProfileIds.length);
+		attendanceActionTargetId = targetId;
+		attendanceActionLabel =
+			status === 'attended'
+				? `Recording attendance for ${expectedAttendeeCopy}...`
+				: `Marking ${expectedAttendeeCopy} absent...`;
+
+		try {
+			await currentHub.setEventAttendanceForProfiles(event.id, pendingProfileIds, status);
+		} catch (error) {
+			const isPartialSave =
+				error instanceof Error &&
+				/^Saved \d+ of \d+ attendance updates before the bulk action stopped\./.test(
+					error.message
+				);
+
+			toast({
+				title: isPartialSave ? 'Bulk attendance partially saved' : 'Could not save bulk attendance',
+				description:
+					error instanceof Error ? error.message : 'Failed to record attendance for this group.',
+				variant: 'error'
+			});
+		} finally {
+			if (attendanceActionTargetId === targetId) {
+				attendanceActionTargetId = '';
+				attendanceActionLabel = '';
+			}
+		}
+	}
 </script>
 
 {#if isAttendanceWindowVisible && attendanceRoster}
@@ -128,6 +180,11 @@
 					recorded.
 				</p>
 			{/if}
+			{#if attendanceRoster.externalAttendanceCount > 0}
+				<p class="text-xs text-muted-foreground">
+					{attendanceRoster.externalAttendanceCount} saved attendance outcome{attendanceRoster.externalAttendanceCount === 1 ? '' : 's'} belong{attendanceRoster.externalAttendanceCount === 1 ? 's' : ''} to people no longer on the current roster.
+				</p>
+			{/if}
 			{#if isUpdatingAttendance && attendanceMutationStatus}
 				<p
 					role="status"
@@ -141,6 +198,32 @@
 
 		<div class="space-y-2">
 			<p class="text-xs font-medium text-foreground">Needs attendance update</p>
+			{#if canBulkUpdateAttendance}
+				<div class="flex flex-wrap items-center gap-2">
+					<Button
+						type="button"
+						variant="secondary"
+						size="xs"
+						disabled={isUpdatingAttendance}
+						onclick={() => setBulkAttendance('attended')}
+					>
+						{attendanceActionTargetId === getBulkTargetId('attended')
+							? `Recording ${getExpectedAttendeeCopy(pendingProfileIds.length)}...`
+							: `Mark all ${pendingProfileIds.length} attended`}
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						size="xs"
+						disabled={isUpdatingAttendance}
+						onclick={() => setBulkAttendance('absent')}
+					>
+						{attendanceActionTargetId === getBulkTargetId('absent')
+							? `Marking ${getExpectedAttendeeCopy(pendingProfileIds.length)} absent...`
+							: `Mark all ${pendingProfileIds.length} absent`}
+					</Button>
+				</div>
+			{/if}
 			{#if attendanceRoster.pendingEntries.length === 0}
 				<p class="text-xs text-muted-foreground">
 					No expected attendees still need a day-of decision.
@@ -172,19 +255,19 @@
 									type="button"
 									variant="secondary"
 									size="xs"
-									disabled={currentHub.eventAttendanceTargetId === targetId}
+									disabled={isUpdatingAttendance}
 									onclick={() => setAttendance(entry.member.profile_id, 'attended')}
 								>
-									{currentHub.eventAttendanceTargetId === targetId ? 'Recording...' : 'Attended'}
+									{attendanceActionTargetId === targetId ? 'Recording...' : 'Attended'}
 								</Button>
 								<Button
 									type="button"
 									variant="outline"
 									size="xs"
-									disabled={currentHub.eventAttendanceTargetId === targetId}
+									disabled={isUpdatingAttendance}
 									onclick={() => setAttendance(entry.member.profile_id, 'absent')}
 								>
-									{currentHub.eventAttendanceTargetId === targetId ? 'Recording...' : 'Absent'}
+									{attendanceActionTargetId === targetId ? 'Recording...' : 'Absent'}
 								</Button>
 								{#if !entry.isCurrentUser}
 									<Button
@@ -244,10 +327,10 @@
 										type="button"
 										variant="secondary"
 										size="xs"
-										disabled={currentHub.eventAttendanceTargetId === targetId}
+										disabled={isUpdatingAttendance}
 										onclick={() => setAttendance(entry.member.profile_id, 'attended')}
 									>
-										{currentHub.eventAttendanceTargetId === targetId ? 'Saving...' : 'Mark attended'}
+										{attendanceActionTargetId === targetId ? 'Saving...' : 'Mark attended'}
 									</Button>
 								{/if}
 								{#if entry.attendanceStatus !== 'absent'}
@@ -255,20 +338,20 @@
 										type="button"
 										variant="outline"
 										size="xs"
-										disabled={currentHub.eventAttendanceTargetId === targetId}
+										disabled={isUpdatingAttendance}
 										onclick={() => setAttendance(entry.member.profile_id, 'absent')}
 									>
-										{currentHub.eventAttendanceTargetId === targetId ? 'Saving...' : 'Mark absent'}
+										{attendanceActionTargetId === targetId ? 'Saving...' : 'Mark absent'}
 									</Button>
 								{/if}
 								<Button
 									type="button"
 									variant="ghost"
 									size="xs"
-									disabled={currentHub.eventAttendanceTargetId === targetId}
+									disabled={isUpdatingAttendance}
 									onclick={() => clearAttendance(entry.member.profile_id)}
 								>
-									{currentHub.eventAttendanceTargetId === targetId ? 'Clearing...' : 'Clear'}
+									{attendanceActionTargetId === targetId ? 'Clearing...' : 'Clear'}
 								</Button>
 								{#if !entry.isCurrentUser}
 									<Button

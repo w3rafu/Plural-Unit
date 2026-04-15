@@ -8,7 +8,6 @@
 	import * as Item from '$lib/components/ui/item';
 	import {
 		buildHubExecutionQueueFocusHref,
-		buildHubExecutionQueueSections,
 		isHubExecutionQueueFocusActive,
 		parseHubExecutionQueueFocus,
 		type HubExecutionQueueBucketFilter,
@@ -36,14 +35,12 @@
 		{ value: 'event', label: 'Events' }
 	] as const satisfies Array<{ value: HubExecutionQueueSubjectFilter; label: string }>;
 
+	let showTriagedItems = $state(false);
 	const queueFocus = $derived(parseHubExecutionQueueFocus(page.url));
 
 	const queueSections = $derived(
-		buildHubExecutionQueueSections({
-			rows: currentHub.executionLedger,
-			broadcasts: currentHub.broadcasts,
-			events: currentHub.events,
-			focus: queueFocus
+		currentHub.getExecutionQueueSections(queueFocus, {
+			includeTriaged: showTriagedItems
 		})
 	);
 	const dueCount = $derived(queueSections.due.length);
@@ -52,7 +49,11 @@
 	const visibleUpcomingCount = $derived(queueSections.upcoming.length);
 	const processedCount = $derived(currentHub.processedExecutionItems.length);
 	const visibleProcessedCount = $derived(queueSections.processed.length);
-	const followUpSignals = $derived(currentHub.hubEventFollowUpSignals);
+	const triagedItemCount = $derived(currentHub.triagedQueueItemCount);
+	const hasTriagedItems = $derived(triagedItemCount > 0);
+	const followUpSignals = $derived(
+		currentHub.getHubEventFollowUpSignals({ includeTriaged: showTriagedItems })
+	);
 	const followUpCount = $derived(followUpSignals.length);
 	const hasQueueFocus = $derived(isHubExecutionQueueFocusActive(queueFocus));
 	const shouldShowFollowUpSignals = $derived(!hasQueueFocus);
@@ -66,7 +67,9 @@
 	const summaryCopy = $derived.by(() => {
 		if (hasQueueFocus) {
 			if (!hasVisibleQueueItems) {
-				return 'No queue rows match the current filters.';
+				return hasTriagedItems && !showTriagedItems
+					? 'No active queue rows match the current filters. Reviewed or deferred rows are hidden.'
+					: 'No queue rows match the current filters.';
 			}
 
 			const parts = [];
@@ -91,6 +94,10 @@
 		}
 
 		if (!hasVisibleItems) {
+			if (hasTriagedItems && !showTriagedItems) {
+				return `${triagedItemCount} reviewed or deferred item${triagedItemCount === 1 ? '' : 's'} hidden from the default queue view.`;
+			}
+
 			return 'Scheduled publishes and reminder windows will collect here once the hub has timed work to manage.';
 		}
 
@@ -104,12 +111,16 @@
 			parts.push(`${recoveryCount} needing recovery`);
 		}
 
-		if (processedCount > 0) {
-			parts.push(`${processedCount} already processed`);
+		if (visibleProcessedCount > 0) {
+			parts.push(`${visibleProcessedCount} already processed`);
 		}
 
 		if (followUpCount > 0) {
 			parts.push(`${followUpCount} needing follow-up`);
+		}
+
+		if (hasTriagedItems && !showTriagedItems) {
+			parts.push(`${triagedItemCount} triaged`);
 		}
 
 		return `${parts.join(' · ')}.`;
@@ -148,6 +159,10 @@
 		updateQueueFocus({ includeUpcoming: !queueFocus.includeUpcoming });
 	}
 
+	function toggleTriagedItems() {
+		showTriagedItems = !showTriagedItems;
+	}
+
 	function getStatusVariant(item: HubExecutionQueueItem) {
 		switch (item.bucket) {
 			case 'failed':
@@ -179,6 +194,14 @@
 
 	function getFollowUpVariant(tone: 'attention' | 'neutral') {
 		return tone === 'attention' ? 'destructive' : 'outline';
+	}
+
+	function getTriageVariant(status: 'reviewed' | 'deferred') {
+		return status === 'reviewed' ? 'secondary' : 'outline';
+	}
+
+	function getTriageLabel(status: 'reviewed' | 'deferred') {
+		return status === 'reviewed' ? 'Reviewed' : 'Deferred';
 	}
 
 	function getFollowUpOpenHref() {
@@ -279,6 +302,16 @@
 							Show upcoming
 						{/if}
 					</Button>
+					{#if hasTriagedItems}
+						<Button
+							type="button"
+							size="xs"
+							variant={showTriagedItems ? 'secondary' : 'outline'}
+							onclick={toggleTriagedItems}
+						>
+							{showTriagedItems ? 'Hide triaged' : `Show triaged (${triagedItemCount})`}
+						</Button>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -294,6 +327,11 @@
 					{#if hasQueueFocus}
 						<Button type="button" variant="outline" size="xs" onclick={clearQueueFocus}>
 							Clear filters
+						</Button>
+					{/if}
+					{#if hasTriagedItems && !showTriagedItems}
+						<Button type="button" variant="outline" size="xs" onclick={toggleTriagedItems}>
+							Show triaged
 						</Button>
 					{/if}
 				</Card.Content>
@@ -396,6 +434,11 @@
 										{#if item.recoveryGuidance}
 											<Badge variant={getRecoveryVariant(item)}>{item.recoveryGuidance.label}</Badge>
 										{/if}
+										{#if item.triageStatus}
+											<Badge variant={getTriageVariant(item.triageStatus)}>
+												{getTriageLabel(item.triageStatus)}
+											</Badge>
+										{/if}
 									</div>
 									<Item.Description>{item.detailCopy}</Item.Description>
 									<div class="space-y-1">
@@ -431,6 +474,33 @@
 									<Button href={getOpenHref(item)} variant="outline" size="xs">
 										{getOpenLabel(item)}
 									</Button>
+									{#if item.triageStatus}
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.surfaceExecutionQueueItem(item.id)}
+										>
+											Surface again
+										</Button>
+									{:else}
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.markExecutionQueueItemReviewed(item.id)}
+										>
+											Reviewed
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.deferExecutionQueueItem(item.id)}
+										>
+											Defer
+										</Button>
+									{/if}
 								</Item.Actions>
 							</Item.Root>
 						{/each}
@@ -453,6 +523,11 @@
 									<div class="flex flex-wrap items-center gap-2">
 										<Item.Title>{signal.eventTitle}</Item.Title>
 										<Badge variant={getFollowUpVariant(signal.tone)}>{signal.statusLabel}</Badge>
+										{#if signal.triageStatus}
+											<Badge variant={getTriageVariant(signal.triageStatus)}>
+												{getTriageLabel(signal.triageStatus)}
+											</Badge>
+										{/if}
 									</div>
 									<Item.Description>{signal.copy}</Item.Description>
 									<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
@@ -461,6 +536,33 @@
 									<Button href={getFollowUpOpenHref()} variant="outline" size="xs">
 										{getFollowUpActionLabel(signal.kind)}
 									</Button>
+									{#if signal.triageStatus}
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.surfaceFollowUpSignal(signal.eventId, signal.kind)}
+										>
+											Surface again
+										</Button>
+									{:else}
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.markFollowUpSignalReviewed(signal.eventId, signal.kind)}
+										>
+											Reviewed
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.deferFollowUpSignal(signal.eventId, signal.kind)}
+										>
+											Defer
+										</Button>
+									{/if}
 								</Item.Actions>
 							</Item.Root>
 						{/each}
@@ -484,12 +586,44 @@
 										<Item.Title>{item.subjectTitle}</Item.Title>
 										<Badge variant={getStatusVariant(item)}>{item.statusLabel}</Badge>
 										<Badge variant="outline">{item.jobLabel}</Badge>
+										{#if item.triageStatus}
+											<Badge variant={getTriageVariant(item.triageStatus)}>
+												{getTriageLabel(item.triageStatus)}
+											</Badge>
+										{/if}
 									</div>
 									<Item.Description>{item.detailCopy}</Item.Description>
 									<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
 								</Item.Content>
 								<Item.Actions>
 									<Button href={getOpenHref(item)} variant="outline" size="xs">Open</Button>
+									{#if item.triageStatus}
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.surfaceExecutionQueueItem(item.id)}
+										>
+											Surface again
+										</Button>
+									{:else}
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.markExecutionQueueItemReviewed(item.id)}
+										>
+											Reviewed
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="xs"
+											onclick={() => currentHub.deferExecutionQueueItem(item.id)}
+										>
+											Defer
+										</Button>
+									{/if}
 								</Item.Actions>
 							</Item.Root>
 						{/each}

@@ -4,6 +4,7 @@
   Rendered by the hub manage page when the `broadcasts` plugin is active.
 -->
 <script lang="ts">
+	import { page } from '$app/state';
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
 	import ExecutionDiagnosticsPanel from '$lib/components/hub/admin/ExecutionDiagnosticsPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -150,6 +151,12 @@
 			deliveryMode === 'schedule' ? toBroadcastDateTimeLocalValue(broadcast.publish_at) : '';
 		expiresAt = toBroadcastDateTimeLocalValue(broadcast.expires_at);
 		feedback = '';
+	}
+
+	function getBroadcastItemClass(broadcastId: string) {
+		return page.url.hash === `#broadcast-${broadcastId}`
+			? 'border-primary/35 bg-primary/5 ring-2 ring-primary/20'
+			: '';
 	}
 
 	function getMetaCopy(broadcast: BroadcastRow) {
@@ -465,7 +472,8 @@
 			{:else}
 				<Item.Group aria-busy={isBroadcastMutating}>
 					{#each draftBroadcasts as broadcast (broadcast.id)}
-						<Item.Root variant="muted" size="sm">
+						<div id={`broadcast-${broadcast.id}`} class="scroll-mt-28">
+							<Item.Root variant="muted" size="sm" class={getBroadcastItemClass(broadcast.id)}>
 							<Item.Content>
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
 								<div class="flex flex-wrap items-center gap-2">
@@ -491,7 +499,8 @@
 									{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
-						</Item.Root>
+							</Item.Root>
+						</div>
 					{/each}
 				</Item.Group>
 			{/if}
@@ -516,7 +525,8 @@
 			{:else}
 				<Item.Group aria-busy={isBroadcastMutating}>
 					{#each scheduledBroadcasts as broadcast (broadcast.id)}
-						<Item.Root variant="muted" size="sm">
+						<div id={`broadcast-${broadcast.id}`} class="scroll-mt-28">
+							<Item.Root variant="muted" size="sm" class={getBroadcastItemClass(broadcast.id)}>
 							<Item.Content>
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
 								{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
@@ -551,7 +561,8 @@
 									{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
-						</Item.Root>
+							</Item.Root>
+						</div>
 					{/each}
 				</Item.Group>
 			{/if}
@@ -576,7 +587,8 @@
 		{:else}
 			<Item.Group aria-busy={isBroadcastMutating}>
 				{#each activeBroadcasts as broadcast (broadcast.id)}
-					<Item.Root variant="muted" size="sm">
+					<div id={`broadcast-${broadcast.id}`} class="scroll-mt-28">
+						<Item.Root variant="muted" size="sm" class={getBroadcastItemClass(broadcast.id)}>
 						<Item.Content>
 							{@const engagementSignal = getEngagementSignal(broadcast.id)}
 							{@const deliveryCopy = getDeliveryCopy(broadcast.id)}
@@ -619,7 +631,8 @@
 								{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 							</Button>
 						</Item.Actions>
-					</Item.Root>
+						</Item.Root>
+					</div>
 				{/each}
 			</Item.Group>
 		{/if}
@@ -644,7 +657,8 @@
 			{:else}
 				<Item.Group aria-busy={isBroadcastMutating}>
 					{#each inactiveBroadcasts as broadcast (broadcast.id)}
-						<Item.Root variant="muted" size="sm">
+						<div id={`broadcast-${broadcast.id}`} class="scroll-mt-28">
+							<Item.Root variant="muted" size="sm" class={getBroadcastItemClass(broadcast.id)}>
 							<Item.Content>
 								{@const engagementSignal = getEngagementSignal(broadcast.id)}
 								{@const deliveryStatus = getDeliveryStatus(broadcast.id)}
@@ -680,7 +694,8 @@
 									{currentHub.broadcastTargetId === broadcast.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
-						</Item.Root>
+							</Item.Root>
+						</div>
 					{/each}
 				</Item.Group>
 			{/if}

@@ -241,6 +241,7 @@ export function buildHubAdminEngagementSummary(
 		broadcasts: BroadcastRow[];
 		eventAttendances: Record<string, EventAttendanceSummary>;
 		eventAttendanceOutcomes: Record<string, EventAttendanceOutcomeSummary>;
+		followUpSignals?: HubEventFollowUpSignal[];
 	},
 	now = Date.now()
 ): HubAdminEngagementSummary {
@@ -323,7 +324,7 @@ export function buildHubAdminEngagementSummary(
 	}
 
 	const deliveryIssueCount = failedDeliveryCount + skippedDeliveryCount;
-	const followUpSignals = buildHubEventFollowUpSignals(input, now);
+	const followUpSignals = input.followUpSignals ?? buildHubEventFollowUpSignals(input, now);
 	const noShowEventCount = followUpSignals.filter((signal) => signal.kind === 'no_show').length;
 	const lowTurnoutEventCount = followUpSignals.filter(
 		(signal) => signal.kind === 'low_turnout'

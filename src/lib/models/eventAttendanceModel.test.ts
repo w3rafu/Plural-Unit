@@ -232,7 +232,58 @@ describe('eventAttendanceModel', () => {
 			'profile-2'
 		]);
 		expect(getEventAttendanceRosterSummaryCopy(roster)).toBe(
-			'1 of 3 expected attendees still needs a day-of status. 1 marked attended. 1 marked absent.'
+			'Closeout in progress: 1 of 3 expected attendees still needs a day-of status.'
+		);
+	});
+
+	it('summarizes fully closed attendance follow-up', () => {
+		const roster = buildEventAttendanceRoster(baseMembers, baseResponseRows, [
+			{
+				id: 'a1',
+				event_id: 'event-1',
+				organization_id: 'org-1',
+				profile_id: 'profile-1',
+				status: 'attended',
+				marked_by_profile_id: 'profile-admin',
+				created_at: '2026-04-14T10:30:00.000Z',
+				updated_at: '2026-04-14T10:30:00.000Z'
+			},
+			{
+				id: 'a2',
+				event_id: 'event-1',
+				organization_id: 'org-1',
+				profile_id: 'profile-2',
+				status: 'absent',
+				marked_by_profile_id: 'profile-admin',
+				created_at: '2026-04-14T11:00:00.000Z',
+				updated_at: '2026-04-14T11:00:00.000Z'
+			}
+		]);
+
+		expect(getEventAttendanceRosterSummaryCopy(roster)).toBe(
+			'Closeout complete for 2 expected attendees.'
+		);
+	});
+
+	it('summarizes when no RSVP-positive attendees need closeout', () => {
+		const roster = buildEventAttendanceRoster(
+			baseMembers,
+			[
+				{
+					id: 'r3',
+					event_id: 'event-1',
+					organization_id: 'org-1',
+					profile_id: 'profile-3',
+					response: 'cannot_attend',
+					created_at: '2026-04-14T09:00:00.000Z',
+					updated_at: '2026-04-14T09:00:00.000Z'
+				}
+			],
+			[]
+		);
+
+		expect(getEventAttendanceRosterSummaryCopy(roster)).toBe(
+			'No RSVP-positive attendees need day-of closeout yet.'
 		);
 	});
 

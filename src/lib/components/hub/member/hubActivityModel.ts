@@ -14,6 +14,20 @@ export type HubActivityAction = {
 	description: string;
 };
 
+function replaceHrefHash(href: string, hash: string) {
+	return `${href.split('#')[0]}#${hash}`;
+}
+
+function getManageBroadcastHref(destinations: HubActivityDestinations, sourceId: string) {
+	const baseHref = destinations.manageContentHref ?? destinations.manageBroadcastsHref;
+	return baseHref ? replaceHrefHash(baseHref, `broadcast-${sourceId}`) : null;
+}
+
+function getManageEventHref(destinations: HubActivityDestinations, sourceId: string) {
+	const baseHref = destinations.manageContentHref ?? destinations.manageEventsHref;
+	return baseHref ? replaceHrefHash(baseHref, `event-${sourceId}`) : null;
+}
+
 function getEventActionDescription(item: HubNotificationItem) {
 	if (item.eventTimingState === 'today') {
 		return item.kind === 'event_reminder'
@@ -52,16 +66,50 @@ export function getHubActivityPrimaryAction(
 
 	return {
 		label:
-			item.kind === 'event_reminder'
+			item.eventTimingState === 'today'
+				? "Open today's event"
+				: item.kind === 'event_reminder'
 				? item.eventTimingState === 'in_progress'
 					? 'Open live event'
 					: item.eventTimingState === 'recently_completed'
 						? 'Open recent event'
 						: 'Open event details'
+				: item.eventTimingState === 'in_progress'
+					? 'Open live event'
+					: item.eventTimingState === 'recently_completed'
+						? 'Open recent event'
 				: 'Open events',
 		href: destinations.eventHref,
 		description: getEventActionDescription(item)
 	};
+}
+
+function getEventManageActionLabel(item: HubNotificationItem) {
+	if (item.eventTimingState === 'today' || item.eventTimingState === 'in_progress') {
+		return 'Review attendance';
+	}
+
+	if (item.eventTimingState === 'recently_completed') {
+		return item.kind === 'event_reminder' ? 'Review follow-up' : 'Close out event';
+	}
+
+	return item.kind === 'event_reminder' ? 'Review reminder plan' : 'Review event';
+}
+
+function getEventManageActionDescription(item: HubNotificationItem) {
+	if (item.eventTimingState === 'today' || item.eventTimingState === 'in_progress') {
+		return 'Jump straight to this event card and roster for attendance closeout.';
+	}
+
+	if (item.eventTimingState === 'recently_completed') {
+		return item.kind === 'event_reminder'
+			? 'Jump straight to this event card and review the recent follow-up context.'
+			: 'Jump straight to this event card and finish closeout or follow-up.';
+	}
+
+	return item.kind === 'event_reminder'
+		? 'Jump straight to this event card and review the reminder plan.'
+		: 'Jump straight to this event card and scheduling tools.';
 }
 
 export function getHubActivitySecondaryAction(
@@ -69,28 +117,28 @@ export function getHubActivitySecondaryAction(
 	destinations: HubActivityDestinations
 ): HubActivityAction | null {
 	if (item.kind === 'broadcast') {
-		const href = destinations.manageBroadcastsHref ?? destinations.manageContentHref;
+		const href = getManageBroadcastHref(destinations, item.sourceId);
 
 		if (!href) {
 			return null;
 		}
 
 		return {
-			label: 'Manage broadcasts',
+			label: 'Review broadcast',
 			href,
-			description: 'Jump straight to the broadcast editor and publishing tools.'
+			description: 'Jump straight to this broadcast card and publishing tools.'
 		};
 	}
 
-	const href = destinations.manageEventsHref ?? destinations.manageContentHref;
+	const href = getManageEventHref(destinations, item.sourceId);
 
 	if (!href) {
 		return null;
 	}
 
 	return {
-		label: 'Manage events',
+		label: getEventManageActionLabel(item),
 		href,
-		description: 'Jump straight to the event editor and scheduling tools.'
+		description: getEventManageActionDescription(item)
 	};
 }

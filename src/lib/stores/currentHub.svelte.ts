@@ -28,13 +28,27 @@ import { type EventReminderSummary } from '$lib/models/eventReminderModel';
 import { type EventAttendanceSummary } from '$lib/models/eventResponseModel';
 import {
 	type EventAttendanceRoster,
-	type EventAttendanceOutcomeSummary
+	type EventAttendanceOutcomeSummary,
+	removeEventAttendanceFromMap,
+	upsertEventAttendanceMap
 } from '$lib/models/eventAttendanceModel';
 import type {
 	HubAdminEngagementSummary,
 	HubEventFollowUpSignal,
 	HubEngagementSignal
 } from '$lib/models/hubEngagementModel';
+import {
+	buildHubExecutionFollowUpTriageKey,
+	buildHubExecutionQueueItemTriageKey,
+	buildHubExecutionQueueSections,
+	clearHubExecutionQueueTriage,
+	setHubExecutionQueueTriage,
+	type HubExecutionQueueFocus,
+	type HubExecutionQueueFollowUpSignal,
+	type HubExecutionQueueSections,
+	type HubExecutionTriageMap,
+	type HubExecutionTriageStatus
+} from '$lib/models/hubExecutionQueue';
 import {
 	sortResourceRows,
 	type ResourceMoveDirection
@@ -154,6 +168,106 @@ import {
 	shouldHydrateSmokeHubState
 } from '$lib/demo/smokeMode';
 
+const HUB_EXECUTION_QUEUE_TRIAGE_STORAGE_KEY_PREFIX = 'plural-unit:hub-queue-triage:';
+
+function getHubExecutionQueueTriageStorageKey(orgId: string) {
+	return `${HUB_EXECUTION_QUEUE_TRIAGE_STORAGE_KEY_PREFIX}${orgId}`;
+}
+
+function loadHubExecutionQueueTriageMap(orgId: string | null): HubExecutionTriageMap {
+	if (typeof window === 'undefined' || !orgId) {
+		return {};
+	}
+
+	try {
+		const rawValue = window.localStorage.getItem(getHubExecutionQueueTriageStorageKey(orgId));
+		if (!rawValue) {
+			return {};
+		}
+
+		const parsed = JSON.parse(rawValue);
+		if (!parsed || typeof parsed !== 'object') {
+			return {};
+		}
+
+		return Object.fromEntries(
+			Object.entries(parsed).filter((entry): entry is [string, { status: HubExecutionTriageStatus; updatedAt: string }] => {
+				const value = entry[1];
+				const triageValue = value as { status?: unknown; updatedAt?: unknown } | null;
+				return (
+					value !== null &&
+					typeof value === 'object' &&
+					(triageValue?.status === 'reviewed' || triageValue?.status === 'deferred') &&
+					typeof triageValue?.updatedAt === 'string'
+				);
+			})
+		);
+	} catch {
+		return {};
+	}
+}
+
+function persistHubExecutionQueueTriageMap(
+	orgId: string | null,
+	triageMap: HubExecutionTriageMap
+) {
+	if (typeof window === 'undefined' || !orgId) {
+		return;
+	}
+
+	const storageKey = getHubExecutionQueueTriageStorageKey(orgId);
+	if (Object.keys(triageMap).length === 0) {
+		window.localStorage.removeItem(storageKey);
+		return;
+	}
+
+	window.localStorage.setItem(storageKey, JSON.stringify(triageMap));
+}
+
+function buildSmokeEventAttendanceRow(input: {
+	currentMap: Record<string, EventAttendanceRow[]>;
+	orgId: string;
+	ownProfileId: string;
+	eventId: string;
+	profileId: string;
+	status: EventAttendanceStatus;
+}): EventAttendanceRow {
+	const existingRow = input.currentMap[input.eventId]?.find(
+		(row) => row.profile_id === input.profileId
+	);
+	const timestamp = new Date().toISOString();
+
+	return {
+		id: existingRow?.id ?? `smoke-attendance:${input.eventId}:${input.profileId}`,
+		event_id: input.eventId,
+		organization_id: input.orgId,
+		profile_id: input.profileId,
+		status: input.status,
+		marked_by_profile_id: input.ownProfileId,
+		created_at: existingRow?.created_at ?? timestamp,
+		updated_at: timestamp
+	};
+}
+
+function buildBulkAttendanceMutationError(
+	error: unknown,
+	completedCount: number,
+	totalCount: number
+) {
+	if (completedCount === 0) {
+		return error instanceof Error
+			? error
+			: new Error('Failed to record attendance for this group.');
+	}
+
+	const baseMessage =
+		error instanceof Error ? error.message : 'Failed to record attendance for this group.';
+
+	return new Error(
+		`Saved ${completedCount} of ${totalCount} attendance updates before the bulk action stopped. ${baseMessage}`
+	);
+}
+
 class CurrentHub {
 	isLoading = $state(false);
 	loadedOrgId = $state('');
@@ -178,6 +292,7 @@ class CurrentHub {
 	isSavingNotificationPreferences = $state(false);
 	notificationReadTargetId = $state('');
 	isMarkingAllActivityRead = $state(false);
+	queueTriageMap = $state<HubExecutionTriageMap>({});
 	lastError = $state<Error | null>(null);
 
 	clearError() {
@@ -191,6 +306,24 @@ class CurrentHub {
 		if (typeof window !== 'undefined' && shouldHydrateSmokeHubState()) {
 			applyCurrentHubLoadedState(this, buildSmokeHubState());
 		}
+	}
+
+	private loadQueueTriageState(orgId: string | null = this.orgId) {
+		this.queueTriageMap = loadHubExecutionQueueTriageMap(orgId);
+	}
+
+	private persistQueueTriageState(orgId: string | null = this.orgId) {
+		persistHubExecutionQueueTriageMap(orgId, this.queueTriageMap);
+	}
+
+	private setQueueTriageStatus(triageKey: string, status: HubExecutionTriageStatus) {
+		this.queueTriageMap = setHubExecutionQueueTriage(this.queueTriageMap, triageKey, status);
+		this.persistQueueTriageState();
+	}
+
+	private clearQueueTriageStatus(triageKey: string) {
+		this.queueTriageMap = clearHubExecutionQueueTriage(this.queueTriageMap, triageKey);
+		this.persistQueueTriageState();
 	}
 
 	private captureError(error: unknown) {
@@ -337,15 +470,22 @@ class CurrentHub {
 			events: this.events,
 			broadcasts: this.broadcasts,
 			eventResponseMap: this.eventResponseMap,
-			eventAttendanceMap: this.eventAttendanceMap
+			eventAttendanceMap: this.eventAttendanceMap,
+			queueTriageMap: this.queueTriageMap
 		});
 	}
 
-	get hubEventFollowUpSignals(): HubEventFollowUpSignal[] {
+	get hubEventFollowUpSignals(): HubExecutionQueueFollowUpSignal[] {
+		return this.getHubEventFollowUpSignals();
+	}
+
+	getHubEventFollowUpSignals(options?: { includeTriaged?: boolean }): HubExecutionQueueFollowUpSignal[] {
 		return getCurrentHubEventFollowUpSignals({
 			events: this.events,
 			eventResponseMap: this.eventResponseMap,
-			eventAttendanceMap: this.eventAttendanceMap
+			eventAttendanceMap: this.eventAttendanceMap,
+			queueTriageMap: this.queueTriageMap,
+			includeTriaged: options?.includeTriaged
 		});
 	}
 
@@ -355,6 +495,20 @@ class CurrentHub {
 
 	get executionLedgerGroups() {
 		return groupHubExecutionLedger(this.executionLedger);
+	}
+
+	getExecutionQueueSections(
+		focus?: Partial<HubExecutionQueueFocus>,
+		options?: { includeTriaged?: boolean }
+	): HubExecutionQueueSections {
+		return buildHubExecutionQueueSections({
+			rows: this.executionLedger,
+			broadcasts: this.broadcasts,
+			events: this.events,
+			focus,
+			triageMap: this.queueTriageMap,
+			includeTriaged: options?.includeTriaged
+		});
 	}
 
 	get dueExecutionItems() {
@@ -383,6 +537,28 @@ class CurrentHub {
 
 	get recoverableExecutionCount() {
 		return countRecoverableHubExecutionLedgerRows(this.executionLedger);
+	}
+
+	get visibleRecoverableExecutionCount() {
+		return this.getExecutionQueueSections().recovery.length;
+	}
+
+	get triagedExecutionItemCount() {
+		const sections = this.getExecutionQueueSections(undefined, { includeTriaged: true });
+
+		return [...sections.recovery, ...sections.processed].filter(
+			(item) => item.triageStatus !== null
+		).length;
+	}
+
+	get triagedFollowUpSignalCount() {
+		return this.getHubEventFollowUpSignals({ includeTriaged: true }).filter(
+			(signal) => signal.triageStatus !== null
+		).length;
+	}
+
+	get triagedQueueItemCount() {
+		return this.triagedExecutionItemCount + this.triagedFollowUpSignalCount;
 	}
 
 	get processedReminderExecutionItems() {
@@ -429,6 +605,7 @@ class CurrentHub {
 
 			this.lastError = null;
 			applyCurrentHubLoadedState(this, buildSmokeHubState());
+			this.loadQueueTriageState(orgId);
 			this.isLoading = false;
 			this.loadPromise = null;
 			this.loadingOrgId = null;
@@ -470,6 +647,7 @@ class CurrentHub {
 			}
 
 			applyCurrentHubLoadedState(this, nextState);
+			this.loadQueueTriageState(orgId);
 		})();
 
 		this.loadPromise = loadPromise;
@@ -899,6 +1077,30 @@ class CurrentHub {
 		});
 	}
 
+	markExecutionQueueItemReviewed(entryId: string) {
+		this.setQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId), 'reviewed');
+	}
+
+	deferExecutionQueueItem(entryId: string) {
+		this.setQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId), 'deferred');
+	}
+
+	surfaceExecutionQueueItem(entryId: string) {
+		this.clearQueueTriageStatus(buildHubExecutionQueueItemTriageKey(entryId));
+	}
+
+	markFollowUpSignalReviewed(eventId: string, kind: HubEventFollowUpSignal['kind']) {
+		this.setQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }), 'reviewed');
+	}
+
+	deferFollowUpSignal(eventId: string, kind: HubEventFollowUpSignal['kind']) {
+		this.setQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }), 'deferred');
+	}
+
+	surfaceFollowUpSignal(eventId: string, kind: HubEventFollowUpSignal['kind']) {
+		this.clearQueueTriageStatus(buildHubExecutionFollowUpTriageKey({ eventId, kind }));
+	}
+
 	getBroadcastDeliveryStatus(broadcastId: string): ScheduledDeliveryStatus | null {
 		return getCurrentHubBroadcastDeliveryStatus(this.broadcasts, broadcastId);
 	}
@@ -1008,6 +1210,23 @@ class CurrentHub {
 
 		const targetId = `${eventId}:${profileId}`;
 
+		if (isSmokeModeEnabled()) {
+			await this.withEventAttendanceTarget(targetId, async () => {
+				this.eventAttendanceMap = upsertEventAttendanceMap(
+					this.eventAttendanceMap,
+					buildSmokeEventAttendanceRow({
+						currentMap: this.eventAttendanceMap,
+						orgId: this.orgId as string,
+						ownProfileId: this.ownProfileId as string,
+						eventId,
+						profileId,
+						status
+					})
+				);
+			});
+			return;
+		}
+
 		await this.withEventAttendanceTarget(targetId, async () => {
 			this.eventAttendanceMap = await this.withCapturedError(() =>
 				setCurrentHubEventAttendance({
@@ -1022,11 +1241,85 @@ class CurrentHub {
 		});
 	}
 
+
+	async setEventAttendanceForProfiles(
+		eventId: string,
+		profileIds: string[],
+		status: EventAttendanceStatus
+	) {
+		if (!this.orgId || !this.ownProfileId || !currentOrganization.isAdmin) return;
+
+		const nextProfileIds = [...new Set(profileIds)].filter(
+			(profileId) => this.getEventAttendanceStatus(eventId, profileId) !== status
+		);
+
+		if (nextProfileIds.length === 0) return;
+
+		const targetId = `${eventId}:bulk:${status}`;
+
+		if (isSmokeModeEnabled()) {
+			await this.withEventAttendanceTarget(targetId, async () => {
+				for (const profileId of nextProfileIds) {
+					this.eventAttendanceMap = upsertEventAttendanceMap(
+						this.eventAttendanceMap,
+						buildSmokeEventAttendanceRow({
+							currentMap: this.eventAttendanceMap,
+							orgId: this.orgId as string,
+							ownProfileId: this.ownProfileId as string,
+							eventId,
+							profileId,
+							status
+						})
+					);
+				}
+			});
+			return;
+		}
+
+		await this.withEventAttendanceTarget(targetId, async () => {
+			this.lastError = null;
+			let completedCount = 0;
+
+			for (const profileId of nextProfileIds) {
+				try {
+					this.eventAttendanceMap = await setCurrentHubEventAttendance({
+						orgId: this.orgId as string,
+						ownProfileId: this.ownProfileId as string,
+						eventId,
+						profileId,
+						status,
+						currentMap: this.eventAttendanceMap
+					});
+					completedCount += 1;
+				} catch (error) {
+					const bulkError = buildBulkAttendanceMutationError(
+						error,
+						completedCount,
+						nextProfileIds.length
+					);
+					this.captureError(bulkError);
+					throw bulkError;
+				}
+			}
+		});
+	}
+
 	async clearEventAttendance(eventId: string, profileId: string) {
 		if (!currentOrganization.isAdmin) return;
 		if (this.getEventAttendanceStatus(eventId, profileId) === null) return;
 
 		const targetId = `${eventId}:${profileId}`;
+
+		if (isSmokeModeEnabled()) {
+			await this.withEventAttendanceTarget(targetId, async () => {
+				this.eventAttendanceMap = removeEventAttendanceFromMap(
+					this.eventAttendanceMap,
+					eventId,
+					profileId
+				);
+			});
+			return;
+		}
 
 		await this.withEventAttendanceTarget(targetId, async () => {
 			this.eventAttendanceMap = await this.withCapturedError(() =>

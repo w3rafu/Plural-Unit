@@ -267,36 +267,14 @@ export function getEventAttendanceRosterSummaryCopy(roster: EventAttendanceRoste
 	}
 
 	if (roster.pendingCount === 0 && roster.recordedCount === 0) {
-		return 'No day-of attendance updates need attention yet.';
+		return 'No RSVP-positive attendees need day-of closeout yet.';
 	}
-
-	const parts = [];
 
 	if (roster.pendingCount > 0) {
-		parts.push(
-			`${roster.pendingCount} of ${roster.expectedCount} expected attendee${roster.expectedCount === 1 ? '' : 's'} still need${roster.pendingCount === 1 ? 's' : ''} a day-of status.`
-		);
-	} else {
-		parts.push(
-			`Attendance recorded for ${roster.recordedCount} attendee${roster.recordedCount === 1 ? '' : 's'}.`
-		);
+		return `Closeout in progress: ${roster.pendingCount} of ${roster.expectedCount} expected attendee${roster.expectedCount === 1 ? '' : 's'} still need${roster.pendingCount === 1 ? 's' : ''} a day-of status.`;
 	}
 
-	if (roster.attendedCount > 0) {
-		parts.push(`${roster.attendedCount} marked attended.`);
-	}
-
-	if (roster.absentCount > 0) {
-		parts.push(`${roster.absentCount} marked absent.`);
-	}
-
-	if (roster.externalAttendanceCount > 0) {
-		parts.push(
-			`${roster.externalAttendanceCount} saved attendance outcome${roster.externalAttendanceCount === 1 ? '' : 's'} belong${roster.externalAttendanceCount === 1 ? 's' : ''} to people no longer on the current roster.`
-		);
-	}
-
-	return parts.join(' ');
+	return `Closeout complete for ${roster.recordedCount} expected attendee${roster.recordedCount === 1 ? '' : 's'}.`;
 }
 
 export function isEventAttendanceWindowOpen(

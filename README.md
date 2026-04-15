@@ -28,10 +28,10 @@ supabase db push          # if using Supabase CLI
 # or paste each file in supabase/migrations/ into the SQL editor
 ```
 
-If you pull newer hub code into an existing database, run migrations before restarting the app. Recent hub work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, 026, and 027, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `column hub_events.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, or `relation "public.hub_event_attendances" does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts.
+If you pull newer hub code into an existing database, run migrations before restarting the app. Recent app work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, 026, 027, and 028, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `column hub_events.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, `relation "public.hub_event_attendances" does not exist`, or `column reference "profile_id" is ambiguous`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts, and missing `028_fix_get_organization_members_ambiguity.sql` can break member-directory and admin roster views.
 
 If you need an operational recovery checklist instead of a feature roadmap, use [docs/hub-schema-recovery.md](/Users/rafa/Desktop/plural-unit/docs/hub-schema-recovery.md).
-If you are working on the current release batch, start with [docs/roadmap-0.1.30.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30.md) and [docs/roadmap-0.1.30-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30-checklist.md).
+If you are working on the current release batch, start with [docs/roadmap-0.1.31.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.31.md) and [docs/roadmap-0.1.31-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.31-checklist.md).
 If you need the prior rollout runbook, use [docs/rollout-0.1.29-checklist.md](/Users/rafa/Desktop/plural-unit/docs/rollout-0.1.29-checklist.md).
 If you need the prior release handoff context, use [docs/agent-handoff-0.1.29.md](/Users/rafa/Desktop/plural-unit/docs/agent-handoff-0.1.29.md).
 
@@ -42,6 +42,8 @@ If you need the prior release handoff context, use [docs/agent-handoff-0.1.29.md
 These are the best starting points for junior developers:
 
 - Start with the newest roadmap, then work backward only if you need older implementation context.
+- [docs/roadmap-0.1.31.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.31.md)
+- [docs/roadmap-0.1.31-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.31-checklist.md)
 - [docs/roadmap-0.1.30.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30.md)
 - [docs/roadmap-0.1.30-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30-checklist.md)
 - [docs/roadmap-0.1.28.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28.md)
@@ -301,6 +303,10 @@ npm run test:smoke # Run the browser smoke harness against local routes
 ```
 
 The browser smoke harness runs the real app routes in a fixture-backed smoke mode via `?smoke=1`. It covers home, Alerts, manage content, manage sections, and profile alert preferences without requiring a live signed-in Supabase session, but it is still a release-safety harness rather than a replacement for normal Supabase-backed development.
+
+The smoke flows intentionally stay narrow. They currently cover one happy-path plugin toggle, one alert filter/read interaction, one attendance closeout mutation, and one queue triage interaction. They do not try to exhaustively cover every editor path, reminder edge case, or multi-user synchronization scenario.
+
+Smoke mode is also intentionally local-only. Plugin toggles, alert read state, attendance closeout, and queue triage all mutate in-memory or browser-local state during smoke runs so the harness remains safe under blank `PUBLIC_SUPABASE_*` env vars.
 
 For manual failure-path checks, `?smoke=1&smokeScenario=stale-hub-schema` simulates the old hub delivery-column schema drift and should surface the targeted migration guidance in both home and manage load states.
 

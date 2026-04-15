@@ -10,6 +10,7 @@ import {
 	createDefaultHubNotificationPreferences,
 	type HubNotificationPreferences
 } from '$lib/models/hubNotifications';
+import type { HubExecutionTriageMap } from '$lib/models/hubExecutionQueue';
 import type {
 	BroadcastRow,
 	EventAttendanceRow,
@@ -48,6 +49,7 @@ type CurrentHubResettableState = CurrentHubHydratedState & {
 	isSavingNotificationPreferences: boolean;
 	notificationReadTargetId: string;
 	isMarkingAllActivityRead: boolean;
+	queueTriageMap: HubExecutionTriageMap;
 };
 
 const DEFAULT_PLUGIN_STATE = {
@@ -100,4 +102,5 @@ export function resetCurrentHubState(store: CurrentHubResettableState) {
 	store.isSavingNotificationPreferences = false;
 	store.notificationReadTargetId = '';
 	store.isMarkingAllActivityRead = false;
+	store.queueTriageMap = {};
 }

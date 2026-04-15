@@ -383,11 +383,39 @@ function makeExecutionLedgerRow(
 
 beforeEach(() => {
 	vi.resetAllMocks();
+	vi.unstubAllGlobals();
 	mockCurrentOrganization.organization = { id: 'org-1' };
 	mockCurrentOrganization.membership = { profile_id: 'profile-1', role: 'admin' };
 	mockCurrentOrganization.members = [];
 	mockCurrentOrganization.isLoadingMembers = false;
 	mockCurrentOrganization.isAdmin = true;
+	const localStorageState = new Map<string, string>();
+	const sessionStorageState = new Map<string, string>();
+	const sessionStorageMock = {
+		getItem: vi.fn((key: string) => sessionStorageState.get(key) ?? null),
+		setItem: vi.fn((key: string, value: string) => {
+			sessionStorageState.set(key, value);
+		}),
+		removeItem: vi.fn((key: string) => {
+			sessionStorageState.delete(key);
+		})
+	};
+	vi.stubGlobal('window', {
+		location: {
+			search: ''
+		},
+		sessionStorage: sessionStorageMock,
+		localStorage: {
+			getItem: vi.fn((key: string) => localStorageState.get(key) ?? null),
+			setItem: vi.fn((key: string, value: string) => {
+				localStorageState.set(key, value);
+			}),
+			removeItem: vi.fn((key: string) => {
+				localStorageState.delete(key);
+			})
+		}
+	});
+	vi.stubGlobal('sessionStorage', sessionStorageMock);
 	mockFetchEventAttendanceRecords.mockResolvedValue([]);
 	mockFetchHubExecutionLedger.mockResolvedValue([]);
 	mockProcessDueHubReminderExecutions.mockResolvedValue([]);
@@ -1004,6 +1032,167 @@ describe('currentHub execution queue actions', () => {
 		});
 		expect(currentHub.executionLedger[0]?.processed_at).toBeTruthy();
 		expect(currentHub.executionTargetId).toBe('');
+	});
+});
+
+describe('currentHub queue triage', () => {
+	it('hides reviewed and deferred queue items by default until they are surfaced again', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
+
+		currentHub.broadcasts = [makeBroadcast({ id: 'b1', title: 'Weekly notes' })];
+		currentHub.events = [
+			makeEvent({
+				id: 'needs-review',
+				title: 'Volunteer night',
+				starts_at: '2026-04-14T08:00:00.000Z',
+				ends_at: '2026-04-14T09:00:00.000Z'
+			})
+		];
+		currentHub.executionLedger = [
+			makeExecutionLedgerRow({
+				id: 'failed-publish',
+				job_kind: 'event_publish',
+				source_id: 'needs-review',
+				execution_key: 'publish',
+				due_at: '2026-04-14T08:00:00.000Z',
+				execution_state: 'failed',
+				last_failure_reason:
+					'The scheduled publish time lands at or after the event start. Edit the timing before retrying.'
+			}),
+			makeExecutionLedgerRow({
+				id: 'processed-broadcast',
+				job_kind: 'broadcast_publish',
+				source_id: 'b1',
+				execution_key: 'publish',
+				due_at: '2026-04-14T10:00:00.000Z',
+				execution_state: 'processed',
+				processed_at: '2026-04-14T10:05:00.000Z'
+			})
+		];
+		currentHub.eventResponseMap = {
+			'needs-review': [
+				{
+					id: 'r1',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-2',
+					response: 'going',
+					created_at: '2026-04-14T07:00:00.000Z',
+					updated_at: '2026-04-14T07:00:00.000Z'
+				},
+				{
+					id: 'r2',
+					event_id: 'needs-review',
+					organization_id: 'org-1',
+					profile_id: 'profile-3',
+					response: 'going',
+					created_at: '2026-04-14T07:05:00.000Z',
+					updated_at: '2026-04-14T07:05:00.000Z'
+				}
+			]
+		};
+		currentHub.eventAttendanceMap = {
+			'needs-review': [
+				makeAttendanceRecord({
+					id: 'a1',
+					event_id: 'needs-review',
+					profile_id: 'profile-2',
+					status: 'attended'
+				})
+			]
+		};
+
+		expect(currentHub.visibleRecoverableExecutionCount).toBe(1);
+		expect(currentHub.getExecutionQueueSections().processed.map((item) => item.id)).toEqual([
+			'processed-broadcast'
+		]);
+		expect(currentHub.hubEventFollowUpSignals.map((signal) => signal.kind)).toEqual([
+			'attendance_review'
+		]);
+
+		currentHub.markExecutionQueueItemReviewed('failed-publish');
+		currentHub.deferExecutionQueueItem('processed-broadcast');
+		currentHub.markFollowUpSignalReviewed('needs-review', 'attendance_review');
+
+		expect(currentHub.visibleRecoverableExecutionCount).toBe(0);
+		expect(currentHub.getExecutionQueueSections().processed).toEqual([]);
+		expect(currentHub.hubEventFollowUpSignals).toEqual([]);
+		expect(currentHub.hubEngagementSummary).toMatchObject({
+			postEventFollowUpCount: 0,
+			followUpCount: 0
+		});
+		expect(currentHub.triagedQueueItemCount).toBe(3);
+		expect(
+			currentHub.getExecutionQueueSections(undefined, { includeTriaged: true }).recovery[0]
+		).toMatchObject({
+			id: 'failed-publish',
+			triageStatus: 'reviewed'
+		});
+		expect(
+			currentHub.getExecutionQueueSections(undefined, { includeTriaged: true }).processed[0]
+		).toMatchObject({
+			id: 'processed-broadcast',
+			triageStatus: 'deferred'
+		});
+		expect(
+			currentHub.getHubEventFollowUpSignals({ includeTriaged: true })[0]
+		).toMatchObject({
+			eventId: 'needs-review',
+			triageStatus: 'reviewed'
+		});
+		expect((window as any).localStorage.setItem).toHaveBeenCalledWith(
+			'plural-unit:hub-queue-triage:org-1',
+			expect.any(String)
+		);
+
+		const setItemCalls = ((window as any).localStorage.setItem as any).mock.calls;
+		const persistedTriageMap = JSON.parse(setItemCalls[setItemCalls.length - 1][1]);
+		expect(Object.keys(persistedTriageMap).sort()).toEqual([
+			'execution:failed-publish',
+			'execution:processed-broadcast',
+			'followup:needs-review:attendance_review'
+		]);
+
+		currentHub.surfaceExecutionQueueItem('failed-publish');
+		currentHub.surfaceExecutionQueueItem('processed-broadcast');
+		currentHub.surfaceFollowUpSignal('needs-review', 'attendance_review');
+
+		expect(currentHub.visibleRecoverableExecutionCount).toBe(1);
+		expect(currentHub.getExecutionQueueSections().processed.map((item) => item.id)).toEqual([
+			'processed-broadcast'
+		]);
+		expect(currentHub.hubEventFollowUpSignals.map((signal) => signal.kind)).toEqual([
+			'attendance_review'
+		]);
+		expect(currentHub.triagedQueueItemCount).toBe(0);
+		expect((window as any).localStorage.removeItem).toHaveBeenCalledWith(
+			'plural-unit:hub-queue-triage:org-1'
+		);
+
+		vi.useRealTimers();
+	});
+
+	it('rehydrates triage state from browser storage during load', async () => {
+		mockFetchActivePlugins.mockResolvedValueOnce([]);
+		(window as any).localStorage.setItem(
+			'plural-unit:hub-queue-triage:org-1',
+			JSON.stringify({
+				'execution:failed-publish': {
+					status: 'reviewed',
+					updatedAt: '2026-04-14T12:00:00.000Z'
+				}
+			})
+		);
+
+		await currentHub.load();
+
+		expect(currentHub.queueTriageMap).toEqual({
+			'execution:failed-publish': {
+				status: 'reviewed',
+				updatedAt: '2026-04-14T12:00:00.000Z'
+			}
+		});
 	});
 });
 
@@ -1697,6 +1886,96 @@ describe('currentHub.setEventAttendance', () => {
 			absent: 0,
 			recorded: 1
 		});
+		expect(currentHub.eventAttendanceTargetId).toBe('');
+	});
+});
+
+describe('currentHub.setEventAttendanceForProfiles', () => {
+	it('upserts bulk attendance outcomes for unresolved attendees only', async () => {
+		currentHub.eventAttendanceMap = {
+			e1: [makeAttendanceRecord({ event_id: 'e1', profile_id: 'profile-2', status: 'attended' })]
+		};
+		mockUpsertEventAttendanceRecord
+			.mockResolvedValueOnce(
+				makeAttendanceRecord({
+					id: 'att-3',
+					event_id: 'e1',
+					profile_id: 'profile-3',
+					status: 'attended',
+					marked_by_profile_id: 'profile-1',
+					updated_at: '2026-04-14T12:00:00.000Z'
+				})
+			)
+			.mockResolvedValueOnce(
+				makeAttendanceRecord({
+					id: 'att-4',
+					event_id: 'e1',
+					profile_id: 'profile-4',
+					status: 'attended',
+					marked_by_profile_id: 'profile-1',
+					updated_at: '2026-04-14T12:05:00.000Z'
+				})
+			);
+
+		await currentHub.setEventAttendanceForProfiles(
+			'e1',
+			['profile-2', 'profile-3', 'profile-4', 'profile-4'],
+			'attended'
+		);
+
+		expect(mockUpsertEventAttendanceRecord).toHaveBeenCalledTimes(2);
+		expect(mockUpsertEventAttendanceRecord).toHaveBeenNthCalledWith(1, {
+			eventId: 'e1',
+			organizationId: 'org-1',
+			profileId: 'profile-3',
+			status: 'attended',
+			markedByProfileId: 'profile-1'
+		});
+		expect(mockUpsertEventAttendanceRecord).toHaveBeenNthCalledWith(2, {
+			eventId: 'e1',
+			organizationId: 'org-1',
+			profileId: 'profile-4',
+			status: 'attended',
+			markedByProfileId: 'profile-1'
+		});
+		expect(currentHub.getEventAttendanceOutcomeSummary('e1')).toMatchObject({
+			attended: 3,
+			absent: 0,
+			recorded: 3
+		});
+		expect(currentHub.eventAttendanceTargetId).toBe('');
+	});
+
+	it('surfaces partial bulk attendance saves accurately when a later mutation fails', async () => {
+		currentHub.eventAttendanceMap = { e1: [] };
+		mockUpsertEventAttendanceRecord
+			.mockResolvedValueOnce(
+				makeAttendanceRecord({
+					id: 'att-2',
+					event_id: 'e1',
+					profile_id: 'profile-2',
+					status: 'attended',
+					marked_by_profile_id: 'profile-1',
+					updated_at: '2026-04-14T12:00:00.000Z'
+				})
+			)
+			.mockRejectedValueOnce(new Error('Network request failed.'));
+
+		await expect(
+			currentHub.setEventAttendanceForProfiles(
+				'e1',
+				['profile-2', 'profile-3'],
+				'attended'
+			)
+		).rejects.toThrow(
+			'Saved 1 of 2 attendance updates before the bulk action stopped. Network request failed.'
+		);
+
+		expect(currentHub.getEventAttendanceStatus('e1', 'profile-2')).toBe('attended');
+		expect(currentHub.getEventAttendanceStatus('e1', 'profile-3')).toBeNull();
+		expect(currentHub.lastError?.message).toBe(
+			'Saved 1 of 2 attendance updates before the bulk action stopped. Network request failed.'
+		);
 		expect(currentHub.eventAttendanceTargetId).toBe('');
 	});
 });

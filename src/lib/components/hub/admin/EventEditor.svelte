@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { syncUnsavedChanges } from '$lib/actions/unsavedChanges';
 	import ExecutionDiagnosticsPanel from '$lib/components/hub/admin/ExecutionDiagnosticsPanel.svelte';
 	import EventAttendanceRosterPanel from '$lib/components/hub/admin/EventAttendanceRosterPanel.svelte';
@@ -25,6 +26,10 @@
 		getEventReminderSummaryCopy,
 		normalizeEventReminderOffsets
 	} from '$lib/models/eventReminderModel';
+	import {
+		getEventAttendanceRosterSummaryCopy,
+		isEventAttendanceWindowOpen
+		} from '$lib/models/eventAttendanceModel';
 	import {
 		getEventStateLabel,
 		parseEventDateTimeLocalValue,
@@ -170,8 +175,21 @@
 		return 'Moved to history after the start time passed.';
 	}
 
-	function getAttendanceCopy(eventId: string) {
-		const attendance = currentHub.getEventAttendanceSummary(eventId);
+	function getEventItemClass(eventId: string) {
+		return page.url.hash === `#event-${eventId}`
+			? 'border-primary/35 bg-primary/5 ring-2 ring-primary/20'
+			: '';
+	}
+
+	function getAttendanceCopy(event: EventRow) {
+		if (isEventAttendanceWindowOpen(event)) {
+			const attendanceRoster = currentHub.getEventAttendanceRoster(event.id);
+			if (attendanceRoster) {
+				return getEventAttendanceRosterSummaryCopy(attendanceRoster);
+			}
+		}
+
+		const attendance = currentHub.getEventAttendanceSummary(event.id);
 		return attendance.total === 0
 			? 'No responses yet.'
 			: `${formatEventAttendanceSummary(attendance)} · ${formatEventResponseTotal(attendance.total)}`;
@@ -500,7 +518,8 @@
 		{:else}
 			<Item.Group aria-busy={isEventMutating}>
 				{#each liveEvents as event (event.id)}
-					<Item.Root variant="muted" size="sm">
+					<div id={`event-${event.id}`} class="scroll-mt-28">
+						<Item.Root variant="muted" size="sm" class={getEventItemClass(event.id)}>
 						<Item.Content>
 							{@const locationLabel = getEventLocationLabel(event.location)}
 							{@const engagementSignal = getEngagementSignal(event.id)}
@@ -519,7 +538,7 @@
 									<p>{locationLabel}</p>
 								{/if}
 							</div>
-							<p class="text-xs text-muted-foreground">{getAttendanceCopy(event.id)}</p>
+							<p class="text-xs text-muted-foreground">{getAttendanceCopy(event)}</p>
 							{#if deliveryCopy}
 								<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 							{/if}
@@ -645,7 +664,8 @@
 								{currentHub.eventTargetId === event.id ? 'Deleting...' : 'Delete'}
 							</Button>
 						</Item.Actions>
-					</Item.Root>
+						</Item.Root>
+					</div>
 				{/each}
 			</Item.Group>
 		{/if}
@@ -670,7 +690,8 @@
 			{:else}
 				<Item.Group aria-busy={isEventMutating}>
 					{#each scheduledEvents as event (event.id)}
-						<Item.Root variant="muted" size="sm">
+						<div id={`event-${event.id}`} class="scroll-mt-28">
+							<Item.Root variant="muted" size="sm" class={getEventItemClass(event.id)}>
 							<Item.Content>
 								{@const locationLabel = getEventLocationLabel(event.location)}
 								{@const engagementSignal = getEngagementSignal(event.id)}
@@ -720,7 +741,8 @@
 									{currentHub.eventTargetId === event.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
-						</Item.Root>
+							</Item.Root>
+						</div>
 					{/each}
 				</Item.Group>
 			{/if}
@@ -745,7 +767,8 @@
 			{:else}
 				<Item.Group aria-busy={isEventMutating}>
 					{#each inactiveEvents as event (event.id)}
-						<Item.Root variant="muted" size="sm">
+						<div id={`event-${event.id}`} class="scroll-mt-28">
+							<Item.Root variant="muted" size="sm" class={getEventItemClass(event.id)}>
 							<Item.Content>
 								{@const locationLabel = getEventLocationLabel(event.location)}
 								{@const engagementSignal = getEngagementSignal(event.id)}
@@ -764,7 +787,7 @@
 									{/if}
 								</div>
 								<p class="text-xs text-muted-foreground">{getHistoryCopy(event)}</p>
-								<p class="text-xs text-muted-foreground">{getAttendanceCopy(event.id)}</p>
+								<p class="text-xs text-muted-foreground">{getAttendanceCopy(event)}</p>
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 								{/if}
@@ -790,7 +813,8 @@
 									{currentHub.eventTargetId === event.id ? 'Deleting...' : 'Delete'}
 								</Button>
 							</Item.Actions>
-						</Item.Root>
+							</Item.Root>
+						</div>
 					{/each}
 				</Item.Group>
 			{/if}
