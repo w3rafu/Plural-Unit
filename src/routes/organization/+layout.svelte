@@ -1,85 +1,9 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import { Button } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import * as Card from '$lib/components/ui/card';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
 	let { children } = $props();
-	const organizationPath = $derived(page.url.pathname);
-	let loadedMemberCountOrgId = '';
-	let loadedInvitationsOrgId = '';
-	let loadedMembersOrgId = '';
-
-	$effect(() => {
-		if (!currentOrganization.organization) {
-			loadedMemberCountOrgId = '';
-			loadedInvitationsOrgId = '';
-			loadedMembersOrgId = '';
-		}
-
-		if (!currentOrganization.isAdmin) {
-			loadedInvitationsOrgId = '';
-		}
-	});
-
-	$effect(() => {
-		const organizationId = currentOrganization.organization?.id ?? '';
-
-		if (!organizationId || loadedMemberCountOrgId === organizationId) {
-			return;
-		}
-
-		loadedMemberCountOrgId = organizationId;
-		void currentOrganization.loadMemberCount();
-	});
-
-	$effect(() => {
-		const organizationId = currentOrganization.isAdmin
-			? (currentOrganization.organization?.id ?? '')
-			: '';
-
-		if (!organizationId || loadedInvitationsOrgId === organizationId) {
-			return;
-		}
-
-		loadedInvitationsOrgId = organizationId;
-		void currentOrganization.loadInvitations();
-	});
-
-	$effect(() => {
-		const organizationId =
-			organizationPath.startsWith('/organization/members')
-				? (currentOrganization.organization?.id ?? '')
-				: '';
-
-		if (!organizationId || loadedMembersOrgId === organizationId) {
-			return;
-		}
-
-		loadedMembersOrgId = organizationId;
-		void currentOrganization.loadMembers();
-	});
-
-	function isActiveOrganizationSubroute(pathname: string) {
-		if (pathname === '/organization/members') {
-			return organizationPath.startsWith(pathname);
-		}
-
-		return organizationPath === pathname;
-	}
-
-	function goToOrganizationSubroute(pathname: string) {
-		void goto(pathname, { noScroll: true, keepFocus: true });
-	}
-
-	const organizationSections = $derived.by(() => [
-		{ href: '/organization/overview', label: 'Overview' },
-		{ href: '/organization/access', label: 'Access' },
-		...(currentOrganization.isAdmin ? [{ href: '/organization/members', label: 'Members' }] : [])
-	]);
 </script>
 
 <PageHeader preset="section" title="Organization" subtitle="Join code, invitations, and membership" />
@@ -92,37 +16,6 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<Card.Root size="sm" class="border-border/70 bg-card">
-			<Card.Content class="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
-				<div class="space-y-1">
-					<p class="text-sm font-medium text-foreground">Choose a section</p>
-					<p class="text-sm text-muted-foreground">
-						Switch between overview, access tools, and member management.
-					</p>
-				</div>
-
-				<nav aria-label="Organization sections" class="w-full">
-					<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
-						{#each organizationSections as section (section.href)}
-							<Button
-								href={section.href}
-								size="sm"
-								variant="ghost"
-								class="segmented-control__button min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
-								aria-current={isActiveOrganizationSubroute(section.href) ? 'page' : undefined}
-								onclick={(event) => {
-									event.preventDefault();
-									goToOrganizationSubroute(section.href);
-								}}
-							>
-								{section.label}
-							</Button>
-						{/each}
-					</ButtonGroup.Root>
-				</nav>
-			</Card.Content>
-		</Card.Root>
-
 		{@render children()}
 	{/if}
 </main>

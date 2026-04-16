@@ -40,7 +40,7 @@
 		triggerClass = '',
 		broadcastHref = '/#hub-broadcasts',
 		eventHref = '/#hub-events',
-		settingsHref = '/profile/details#notification-preferences',
+		settingsHref = '/profile#notification-preferences',
 		manageContentHref = undefined as string | undefined,
 		manageBroadcastsHref = undefined as string | undefined,
 		manageEventsHref = undefined as string | undefined

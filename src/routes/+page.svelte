@@ -151,7 +151,7 @@
 			</a>
 
 			{#if currentOrganization.isAdmin}
-				<a href="/organization/access" class="metric-card metric-card--link">
+				<a href="/organization" class="metric-card metric-card--link">
 					<div>
 						<p class="metric-label">Pending invites</p>
 						<p class="metric-value">{pendingInvites}</p>

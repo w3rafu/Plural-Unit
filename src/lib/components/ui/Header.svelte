@@ -130,7 +130,7 @@
 				<div role="group" aria-label="Header controls" class="shell-header__control-group">
 					{#if showOrganizationControl}
 						<Button
-							href="/organization/access"
+							href="/organization"
 							type="button"
 							variant="outline"
 							size="sm"
