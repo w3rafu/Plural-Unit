@@ -10,9 +10,15 @@
 	import ConfirmActionSheet from '$lib/components/ui/ConfirmActionSheet.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
+	import { formatShortDateTime } from '$lib/utils/dateFormat';
 
 	let confirmOpen = $state(false);
 	let isSubmitting = $state(false);
+
+	const deletionRequestedAt = $derived(currentUser.details.deletion_requested_at);
+	const deletionReviewedAt = $derived(currentUser.details.deletion_reviewed_at);
+	const hasPendingDeletionRequest = $derived(!!deletionRequestedAt && !deletionReviewedAt);
+	const hasReviewedDeletionRequest = $derived(!!deletionReviewedAt);
 
 	async function handleConfirm() {
 		isSubmitting = true;
@@ -43,13 +49,29 @@
 	</Card.Header>
 
 	<Card.Content class="space-y-3">
-		<p class="text-sm text-muted-foreground">
-			Requesting account deletion will flag your profile for removal. An admin will review and process
-			the request. This action cannot be undone.
-		</p>
-		<Button type="button" variant="destructive" size="sm" onclick={() => (confirmOpen = true)}>
-			Delete my account
-		</Button>
+		{#if hasPendingDeletionRequest && deletionRequestedAt}
+			<div class="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4">
+				<p class="text-sm font-medium text-foreground">Deletion request pending</p>
+				<p class="mt-1 text-sm text-muted-foreground">
+					Requested {formatShortDateTime(deletionRequestedAt)}. An admin still needs to review this request.
+				</p>
+			</div>
+		{:else if hasReviewedDeletionRequest && deletionRequestedAt && deletionReviewedAt}
+			<div class="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4">
+				<p class="text-sm font-medium text-foreground">Deletion request reviewed</p>
+				<p class="mt-1 text-sm text-muted-foreground">
+					Requested {formatShortDateTime(deletionRequestedAt)} and reviewed {formatShortDateTime(deletionReviewedAt)}. Final account removal is handled outside the app.
+				</p>
+			</div>
+		{:else}
+			<p class="text-sm text-muted-foreground">
+				Requesting account deletion will flag your profile for removal. An admin will review and process
+				the request. This action cannot be undone.
+			</p>
+			<Button type="button" variant="destructive" size="sm" onclick={() => (confirmOpen = true)}>
+				Delete my account
+			</Button>
+		{/if}
 	</Card.Content>
 </Card.Root>
 

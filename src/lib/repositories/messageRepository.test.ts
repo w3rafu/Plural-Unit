@@ -41,6 +41,7 @@ import {
 	sendMessageToThread,
 	uploadMessageImage,
 	sendImageMessageToThread,
+	softDeleteMessage,
 	markMessageThreadRead
 } from './messageRepository';
 
@@ -256,6 +257,31 @@ describe('sendImageMessageToThread', () => {
 		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'image send fail' } });
 
 		await expect(sendImageMessageToThread('thread-1', 'https://x.com/img.jpg')).rejects.toThrow('image send fail');
+	});
+});
+
+// ── softDeleteMessage ──
+
+describe('softDeleteMessage', () => {
+	it('calls soft_delete_message RPC', async () => {
+		mockRpc.mockResolvedValueOnce({ data: '2026-04-16T12:00:00.000Z', error: null });
+
+		const result = await softDeleteMessage('msg-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('soft_delete_message', {
+			target_message_id: 'msg-1'
+		});
+		expect(result).toBe('2026-04-16T12:00:00.000Z');
+	});
+
+	it('throws when id is empty', async () => {
+		await expect(softDeleteMessage('')).rejects.toThrow('Message id is required.');
+	});
+
+	it('throws on RPC error', async () => {
+		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'delete fail' } });
+
+		await expect(softDeleteMessage('msg-1')).rejects.toThrow('delete fail');
 	});
 });
 

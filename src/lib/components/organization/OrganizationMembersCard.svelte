@@ -29,6 +29,7 @@
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
+	import DeletionRequestsCard from './DeletionRequestsCard.svelte';
 	import MemberRow from './MemberRow.svelte';
 
 	const organizationMembers = $derived(currentOrganization.members);
@@ -202,6 +203,8 @@
 		</Card.Content>
 	{:else}
 		<Card.Content class="space-y-3.5">
+			<DeletionRequestsCard />
+
 			<div class="metric-grid">
 				<div class="metric-card">
 					<div>

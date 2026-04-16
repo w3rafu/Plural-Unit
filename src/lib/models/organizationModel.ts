@@ -42,6 +42,11 @@ export type OrganizationMember = {
 	joined_at: string;
 };
 
+/** Pending account deletion request visible to organization admins. */
+export type OrganizationDeletionRequest = OrganizationMember & {
+	deletion_requested_at: string;
+};
+
 /** Convenience alias for the role union used in member management. */
 export type OrganizationMemberRole = OrganizationMember['role'];
 

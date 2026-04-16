@@ -18,6 +18,7 @@
 	const event = $derived(currentHub.events.find((e) => e.id === data.eventId) ?? null);
 
 	let loadedHubOrgId = '';
+	let loadedMembersOrgId = '';
 
 	async function loadHubData() {
 		try {
@@ -30,12 +31,25 @@
 	$effect(() => {
 		const organizationId = currentOrganization.organization?.id ?? '';
 
-		if (!organizationId || loadedHubOrgId === organizationId) {
+		if (!organizationId) {
+			loadedHubOrgId = '';
+			loadedMembersOrgId = '';
 			return;
 		}
 
-		loadedHubOrgId = organizationId;
-		void loadHubData();
+		if (loadedHubOrgId !== organizationId) {
+			loadedHubOrgId = organizationId;
+			void loadHubData();
+		}
+
+		if (
+			currentOrganization.isAdmin &&
+			loadedMembersOrgId !== organizationId &&
+			!currentOrganization.isLoadingMembers
+		) {
+			loadedMembersOrgId = organizationId;
+			void currentOrganization.loadMembers();
+		}
 	});
 
 	function goBack() {

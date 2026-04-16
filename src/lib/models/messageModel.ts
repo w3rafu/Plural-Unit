@@ -16,6 +16,8 @@ export type MessageEntry = {
 	body: string;
 	imageUrl: string;
 	sentAt: string;
+	deletedAt?: string | null;
+	isDeleted?: boolean;
 };
 
 export type MessageThread = {
@@ -55,7 +57,10 @@ export type MessageRow = {
 	image_url: string | null;
 	sent_at: string;
 	created_at: string;
+	deleted_at?: string | null;
 };
+
+export const DELETED_MESSAGE_PLACEHOLDER = 'This message was deleted.';
 
 export function normalizeMessageBody(body: string | null | undefined) {
 	return (body ?? '').replace(/\s+/g, ' ').trim();
@@ -91,7 +96,56 @@ export function getThreadPreview(thread: MessageThread) {
 		return 'No messages yet.';
 	}
 
+	if (lastMessage.isDeleted) {
+		return DELETED_MESSAGE_PLACEHOLDER;
+	}
+
 	return lastMessage.kind === 'image' ? 'Photo' : lastMessage.body;
+}
+
+export function markMessageEntryDeleted(
+	message: MessageEntry,
+	deletedAt = message.deletedAt ?? new Date().toISOString()
+): MessageEntry {
+	return {
+		...message,
+		body: DELETED_MESSAGE_PLACEHOLDER,
+		imageUrl: '',
+		deletedAt,
+		isDeleted: true
+	};
+}
+
+export function mapMessageRowToEntry(input: {
+	row: MessageRow;
+	ownerId: string;
+	contactSenderId: string;
+}): MessageEntry | null {
+	const { row } = input;
+	const normalizedBody = normalizeMessageBody(row.body);
+	const normalizedImageUrl = normalizeMessageImageUrl(row.image_url);
+	const kind = row.message_kind === 'image' ? 'image' : 'text';
+	const isDeleted = Boolean(row.deleted_at);
+	const isValidText = kind === 'text' && normalizedBody;
+	const isValidImage = kind === 'image' && normalizedImageUrl;
+	if (!row.id || !row.thread_id || !row.sent_at || (!isDeleted && !isValidText && !isValidImage)) {
+		return null;
+	}
+
+	const entry = {
+		id: row.id,
+		threadId: row.thread_id,
+		senderId: row.sender_kind === 'owner' ? input.ownerId : input.contactSenderId,
+		senderKind: row.sender_kind,
+		kind,
+		body: normalizedBody,
+		imageUrl: normalizedImageUrl,
+		sentAt: row.sent_at,
+		deletedAt: row.deleted_at ?? null,
+		isDeleted
+	} satisfies MessageEntry;
+
+	return isDeleted ? markMessageEntryDeleted(entry, row.deleted_at ?? row.sent_at) : entry;
 }
 
 export function sortThreadsByRecent(threads: MessageThread[]) {
@@ -194,26 +248,17 @@ export function mapMessageThreads(input: {
 	const messagesByThread = new Map<string, MessageEntry[]>();
 
 	for (const row of input.messages) {
-		const normalizedBody = normalizeMessageBody(row.body);
-		const normalizedImageUrl = normalizeMessageImageUrl(row.image_url);
-		const kind = row.message_kind === 'image' ? 'image' : 'text';
-		const isValidText = kind === 'text' && normalizedBody;
-		const isValidImage = kind === 'image' && normalizedImageUrl;
-		if (!row.id || !row.thread_id || !row.sent_at || (!isValidText && !isValidImage)) {
+		const entry = mapMessageRowToEntry({
+			row,
+			ownerId: input.ownerId,
+			contactSenderId: `contact:${row.thread_id}`
+		});
+		if (!entry) {
 			continue;
 		}
 
 		const list = messagesByThread.get(row.thread_id) ?? [];
-		list.push({
-			id: row.id,
-			threadId: row.thread_id,
-			senderId: row.sender_kind === 'owner' ? input.ownerId : `contact:${row.thread_id}`,
-			senderKind: row.sender_kind,
-			kind,
-			body: normalizedBody,
-			imageUrl: normalizedImageUrl,
-			sentAt: row.sent_at
-		});
+		list.push(entry);
 		messagesByThread.set(row.thread_id, list);
 	}
 

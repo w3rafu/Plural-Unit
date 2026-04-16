@@ -259,7 +259,10 @@ export function buildSmokeUserDetails(): UserDetails {
 		email: currentMember.email,
 		phone_number: currentMember.phone_number,
 		avatar_url: currentMember.avatar_url,
-		bio: ''
+		bio: currentMember.bio ?? '',
+		deletion_requested_at: null,
+		deletion_reviewed_at: null,
+		deletion_reviewed_by: null
 	};
 }
 

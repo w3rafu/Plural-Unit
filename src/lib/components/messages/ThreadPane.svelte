@@ -10,7 +10,7 @@
 	import { groupMessagesByDay, formatMessageTime } from './messageUi';
 	import MessageComposer from './MessageComposer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft, RotateCcw } from '@lucide/svelte';
+	import { ArrowLeft, RotateCcw, Trash2 } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -18,9 +18,11 @@
 		isSending = false,
 		isResetting = false,
 		isLoadingOlderMessages = false,
+		deletingMessageId = '',
 		contactTyping = false,
 		onSendMessage,
 		onSendImage,
+		onDeleteMessage,
 		onTyping,
 		onBack,
 		onResetDemo,
@@ -30,9 +32,11 @@
 		isSending?: boolean;
 		isResetting?: boolean;
 		isLoadingOlderMessages?: boolean;
+		deletingMessageId?: string;
 		contactTyping?: boolean;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onDeleteMessage?: (messageId: string) => void;
 		onTyping?: () => void;
 		onBack?: () => void;
 		onResetDemo?: () => void;
@@ -173,39 +177,63 @@
 						message.senderKind === 'owner' ? 'justify-end' : 'justify-start'
 					)}
 				>
-					<div
-						class={cn(
-							'max-w-[82%] rounded-2xl border px-3 py-2.5 shadow-sm',
-							message.senderKind === 'owner'
-								? 'border-primary/80 bg-primary text-primary-foreground'
-								: 'border-border/70 bg-background text-foreground'
-						)}
-					>
-						{#if message.kind === 'image' && message.imageUrl}
-							<div class="space-y-2">
-								<img
-									src={message.imageUrl}
-									alt={message.body.trim() || 'Shared photo'}
-									class="max-h-60 rounded-xl object-contain"
-									loading="lazy"
-								/>
-								{#if message.body.trim()}
-									<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
-								{/if}
+					<div class="max-w-[82%]">
+						{#if message.senderKind === 'owner' && !message.isDeleted && onDeleteMessage}
+							<div class="mb-1 flex justify-end">
+								<Button
+									type="button"
+									variant="ghost"
+									size="xs"
+									class="h-auto px-2 py-1 text-[0.65rem] text-muted-foreground"
+									disabled={deletingMessageId === message.id}
+									onclick={() => onDeleteMessage(message.id)}
+								>
+									<Trash2 class="mr-1 h-3.5 w-3.5" />
+									{deletingMessageId === message.id ? 'Deleting...' : 'Delete'}
+								</Button>
 							</div>
-						{:else}
-							<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
 						{/if}
-						<p
+
+						<div
 							class={cn(
-								'mt-0.5 text-right text-[0.65rem]',
-								message.senderKind === 'owner'
-									? 'text-primary-foreground/70'
-									: 'text-muted-foreground'
+								'rounded-2xl border px-3 py-2.5 shadow-sm',
+								message.isDeleted
+									? 'border-border/70 bg-muted/30 text-muted-foreground'
+									: message.senderKind === 'owner'
+										? 'border-primary/80 bg-primary text-primary-foreground'
+										: 'border-border/70 bg-background text-foreground'
 							)}
 						>
-							{formatMessageTime(message.sentAt)}
-						</p>
+							{#if message.isDeleted}
+								<p class="text-sm italic whitespace-pre-wrap wrap-break-word">{message.body}</p>
+							{:else if message.kind === 'image' && message.imageUrl}
+								<div class="space-y-2">
+									<img
+										src={message.imageUrl}
+										alt={message.body.trim() || 'Shared photo'}
+										class="max-h-60 rounded-xl object-contain"
+										loading="lazy"
+									/>
+									{#if message.body.trim()}
+										<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
+									{/if}
+								</div>
+							{:else}
+								<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
+							{/if}
+							<p
+								class={cn(
+									'mt-0.5 text-right text-[0.65rem]',
+									message.isDeleted
+										? 'text-muted-foreground'
+										: message.senderKind === 'owner'
+											? 'text-primary-foreground/70'
+											: 'text-muted-foreground'
+								)}
+							>
+								{formatMessageTime(message.sentAt)}
+							</p>
+						</div>
 					</div>
 				</div>
 				{#if message.id === lastSeenMessageId}

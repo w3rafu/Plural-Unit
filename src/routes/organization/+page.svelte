@@ -14,16 +14,19 @@
 	let loadedMemberCountOrgId = '';
 	let loadedInvitationsOrgId = '';
 	let loadedMembersOrgId = '';
+	let loadedDeletionRequestsOrgId = '';
 
 	$effect(() => {
 		if (!currentOrganization.organization) {
 			loadedMemberCountOrgId = '';
 			loadedInvitationsOrgId = '';
 			loadedMembersOrgId = '';
+			loadedDeletionRequestsOrgId = '';
 		}
 
 		if (!currentOrganization.isAdmin) {
 			loadedInvitationsOrgId = '';
+			loadedDeletionRequestsOrgId = '';
 		}
 	});
 
@@ -63,6 +66,20 @@
 
 		loadedMembersOrgId = organizationId;
 		void currentOrganization.loadMembers();
+	});
+
+	$effect(() => {
+		const organizationId =
+			activeSection === 'members' && currentOrganization.isAdmin
+				? (currentOrganization.organization?.id ?? '')
+				: '';
+
+		if (!organizationId || loadedDeletionRequestsOrgId === organizationId) {
+			return;
+		}
+
+		loadedDeletionRequestsOrgId = organizationId;
+		void currentOrganization.loadPendingDeletionRequests();
 	});
 
 	const sections = $derived.by(() => {

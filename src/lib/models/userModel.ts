@@ -11,6 +11,9 @@ export type UserDetails = {
 	phone_number: string;
 	avatar_url: string;
 	bio: string;
+	deletion_requested_at: string | null;
+	deletion_reviewed_at: string | null;
+	deletion_reviewed_by: string | null;
 };
 
 /** Empty placeholder used before the real profile is loaded from Supabase. */
@@ -20,5 +23,8 @@ export const INITIAL_DETAILS: UserDetails = {
 	email: '',
 	phone_number: '',
 	avatar_url: '',
-	bio: ''
+	bio: '',
+	deletion_requested_at: null,
+	deletion_reviewed_at: null,
+	deletion_reviewed_by: null
 };

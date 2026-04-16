@@ -42,6 +42,7 @@ const mockResetDemoMessageThread = vi.fn();
 const mockSendMessageToThread = vi.fn();
 const mockUploadMessageImage = vi.fn();
 const mockSendImageMessageToThread = vi.fn();
+const mockSoftDeleteMessage = vi.fn();
 const mockMarkMessageThreadRead = vi.fn();
 const mockFetchOlderMessages = vi.fn();
 
@@ -53,6 +54,7 @@ const mockRepository = {
 	sendMessageToThread: mockSendMessageToThread,
 	uploadMessageImage: mockUploadMessageImage,
 	sendImageMessageToThread: mockSendImageMessageToThread,
+	softDeleteMessage: mockSoftDeleteMessage,
 	markMessageThreadRead: mockMarkMessageThreadRead,
 	fetchOlderMessages: mockFetchOlderMessages
 };
@@ -571,8 +573,113 @@ describe('reset', () => {
 		expect(store.isLoading).toBe(false);
 		expect(store.threads).toEqual([]);
 		expect(store.activeThreadId).toBe('');
+		expect(store.deletingMessageId).toBe('');
 		expect(store.error).toBe('');
 		expect(store.totalUnreadCount).toBe(0);
+	});
+});
+
+// ── deleteMessage ──
+
+describe('deleteMessage', () => {
+	it('optimistically marks an owner message as deleted and refreshes on success', async () => {
+		const thread = makeThread({
+			messages: [
+				{
+					...makeThread().messages[0],
+					id: 'msg-delete',
+					body: 'Remove me'
+				}
+			]
+		});
+		const refreshedThread = makeThread({
+			messages: [
+				{
+					...thread.messages[0],
+					body: 'This message was deleted.',
+					imageUrl: '',
+					deletedAt: '2026-04-10T12:05:00Z',
+					isDeleted: true
+				}
+			]
+		});
+
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		let resolveDelete: (value: string) => void;
+		mockSoftDeleteMessage.mockImplementationOnce(
+			() =>
+				new Promise<string>((resolve) => {
+					resolveDelete = resolve;
+				})
+		);
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([refreshedThread]);
+
+		const pendingDelete = store.deleteMessage('msg-delete');
+
+		expect(store.activeThread?.messages[0].isDeleted).toBe(true);
+		expect(store.activeThread?.messages[0].body).toBe('This message was deleted.');
+		expect(store.deletingMessageId).toBe('msg-delete');
+
+		resolveDelete!('2026-04-10T12:05:00Z');
+		await pendingDelete;
+
+		expect(mockSoftDeleteMessage).toHaveBeenCalledWith('msg-delete');
+		expect(store.activeThread?.messages[0].deletedAt).toBe('2026-04-10T12:05:00Z');
+		expect(store.deletingMessageId).toBe('');
+	});
+
+	it('reverts the optimistic change when delete fails', async () => {
+		const thread = makeThread({
+			messages: [
+				{
+					...makeThread().messages[0],
+					id: 'msg-delete',
+					body: 'Keep me'
+				}
+			]
+		});
+
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSoftDeleteMessage.mockRejectedValueOnce(new Error('delete fail'));
+
+		await store.deleteMessage('msg-delete');
+
+		expect(store.activeThread?.messages[0].body).toBe('Keep me');
+		expect(store.activeThread?.messages[0].isDeleted).not.toBe(true);
+		expect(store.error).toBe('delete fail');
+		expect(store.deletingMessageId).toBe('');
+	});
+
+	it('does not attempt to delete contact messages', async () => {
+		const thread = makeThread({
+			messages: [
+				{
+					...makeThread().messages[0],
+					id: 'msg-contact',
+					senderKind: 'contact',
+					senderId: 'contact-1',
+					body: 'Not yours'
+				}
+			]
+		});
+
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		await store.deleteMessage('msg-contact');
+
+		expect(mockSoftDeleteMessage).not.toHaveBeenCalled();
+		expect(store.activeThread?.messages[0].body).toBe('Not yours');
 	});
 });
 

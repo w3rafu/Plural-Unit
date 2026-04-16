@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const { mockIsSmokeModeEnabled } = vi.hoisted(() => ({
+	mockIsSmokeModeEnabled: vi.fn(() => false)
+}));
+
 // ── Mock profile repository ──
 
 const mockSignInWithPassword = vi.fn();
@@ -15,6 +19,7 @@ const mockFetchOwnProfile = vi.fn();
 const mockUpsertOwnProfile = vi.fn();
 const mockUploadProfileAvatar = vi.fn();
 const mockDeleteProfileAvatar = vi.fn();
+const mockRequestAccountDeletion = vi.fn();
 
 vi.mock('$lib/repositories/profileRepository', () => ({
 	signInWithPassword: (...args: any[]) => mockSignInWithPassword(...args),
@@ -30,7 +35,8 @@ vi.mock('$lib/repositories/profileRepository', () => ({
 	fetchOwnProfile: (...args: any[]) => mockFetchOwnProfile(...args),
 	upsertOwnProfile: (...args: any[]) => mockUpsertOwnProfile(...args),
 	uploadProfileAvatar: (...args: any[]) => mockUploadProfileAvatar(...args),
-	deleteProfileAvatar: (...args: any[]) => mockDeleteProfileAvatar(...args)
+	deleteProfileAvatar: (...args: any[]) => mockDeleteProfileAvatar(...args),
+	requestAccountDeletion: (...args: any[]) => mockRequestAccountDeletion(...args)
 }));
 
 // Mock session cache
@@ -43,14 +49,24 @@ vi.mock('$lib/services/sessionCache', () => ({
 	clearCachedBrowserSession: () => {}
 }));
 
+vi.mock('$lib/demo/smokeMode', () => ({
+	isSmokeModeEnabled: () => mockIsSmokeModeEnabled(),
+	shouldHydrateSmokeHubState: () => false,
+	getSmokeModeHubLoadError: () => null
+}));
+
 // Mock dependent stores
 const mockOrgReset = vi.fn();
 const mockHubReset = vi.fn();
+const mockMessagesReset = vi.fn();
 vi.mock('./currentOrganization.svelte', () => ({
 	currentOrganization: { reset: () => mockOrgReset() }
 }));
 vi.mock('./currentHub.svelte', () => ({
 	currentHub: { reset: () => mockHubReset() }
+}));
+vi.mock('./currentMessages.svelte', () => ({
+	currentMessages: { reset: () => mockMessagesReset() }
 }));
 
 import { currentUser } from './currentUser.svelte';
@@ -58,6 +74,7 @@ import { INITIAL_DETAILS } from '$lib/models/userModel';
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockIsSmokeModeEnabled.mockReturnValue(false);
 	// Reset to logged-out state
 	(currentUser as any).isLoggedIn = false;
 	(currentUser as any).isLoggingIn = false;
@@ -199,6 +216,22 @@ describe('currentUser.updateProfileDetails', () => {
 		expect(mockUpsertOwnProfile).toHaveBeenCalledWith('u1', { name: 'Bob', phone_number: '+1555', avatar_url: '', bio: 'Hello' });
 		expect(currentUser.details.name).toBe('Bob');
 	});
+
+	it('stays local in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+		(currentUser as any).details = { ...INITIAL_DETAILS, id: 'u1' };
+
+		await currentUser.updateProfileDetails({
+			name: 'Smoke Bob',
+			phone_number: '+1555',
+			avatar_url: '',
+			bio: 'Local smoke bio'
+		});
+
+		expect(mockUpsertOwnProfile).not.toHaveBeenCalled();
+		expect(currentUser.details.name).toBe('Smoke Bob');
+		expect(currentUser.details.bio).toBe('Local smoke bio');
+	});
 });
 
 describe('currentUser.uploadProfileAvatar', () => {
@@ -233,6 +266,34 @@ describe('currentUser.removeProfileAvatar', () => {
 	});
 });
 
+describe('currentUser.requestAccountDeletion', () => {
+	it('stores the pending deletion timestamp locally', async () => {
+		(currentUser as any).details = { ...INITIAL_DETAILS, id: 'u1' };
+		mockRequestAccountDeletion.mockResolvedValueOnce('2026-04-16T10:00:00.000Z');
+
+		await currentUser.requestAccountDeletion();
+
+		expect(currentUser.details.deletion_requested_at).toBe('2026-04-16T10:00:00.000Z');
+		expect(currentUser.details.deletion_reviewed_at).toBeNull();
+	});
+
+	it('stays local in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-04-16T12:30:00.000Z'));
+		(currentUser as any).details = { ...INITIAL_DETAILS, id: 'u1' };
+
+		try {
+			await currentUser.requestAccountDeletion();
+
+			expect(mockRequestAccountDeletion).not.toHaveBeenCalled();
+			expect(currentUser.details.deletion_requested_at).toBe('2026-04-16T12:30:00.000Z');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
 describe('currentUser.logout', () => {
 	it('signs out and resets all stores', async () => {
 		(currentUser as any).isLoggedIn = true;
@@ -245,6 +306,7 @@ describe('currentUser.logout', () => {
 		expect(currentUser.details.id).toBe('');
 		expect(mockOrgReset).toHaveBeenCalled();
 		expect(mockHubReset).toHaveBeenCalled();
+		expect(mockMessagesReset).toHaveBeenCalled();
 	});
 
 	it('captures error but still resets on signOut failure', async () => {
@@ -257,5 +319,6 @@ describe('currentUser.logout', () => {
 		expect(currentUser.lastError?.message).toBe('network');
 		expect(mockOrgReset).toHaveBeenCalled();
 		expect(mockHubReset).toHaveBeenCalled();
+		expect(mockMessagesReset).toHaveBeenCalled();
 	});
 });

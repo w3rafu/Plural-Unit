@@ -13,6 +13,8 @@ const mockRevokeInvitation = vi.fn();
 const mockRegenerateJoinCode = vi.fn();
 const mockFetchMemberCount = vi.fn();
 const mockFetchOrganizationMembers = vi.fn();
+const mockFetchPendingDeletionRequests = vi.fn();
+const mockResolveDeletionRequest = vi.fn();
 const mockSetOrganizationMemberRole = vi.fn();
 const mockRemoveOrganizationMember = vi.fn();
 const mockUpdateOrganizationName = vi.fn();
@@ -29,6 +31,8 @@ vi.mock('$lib/repositories/organizationRepository', () => ({
 	regenerateJoinCode: (...args: any[]) => mockRegenerateJoinCode(...args),
 	fetchMemberCount: (...args: any[]) => mockFetchMemberCount(...args),
 	fetchOrganizationMembers: (...args: any[]) => mockFetchOrganizationMembers(...args),
+	fetchPendingDeletionRequests: (...args: any[]) => mockFetchPendingDeletionRequests(...args),
+	resolveDeletionRequest: (...args: any[]) => mockResolveDeletionRequest(...args),
 	setOrganizationMemberRole: (...args: any[]) => mockSetOrganizationMemberRole(...args),
 	removeOrganizationMember: (...args: any[]) => mockRemoveOrganizationMember(...args),
 	updateOrganizationName: (...args: any[]) => mockUpdateOrganizationName(...args)
@@ -272,6 +276,61 @@ describe('currentOrganization.loadMembers', () => {
 	});
 });
 
+describe('currentOrganization.loadPendingDeletionRequests', () => {
+	it('fetches pending deletion requests when admin', async () => {
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(ORG_CTX);
+		await currentOrganization.refresh('u1');
+
+		const requests = [
+			{ profile_id: 'u2', name: 'Bea', deletion_requested_at: '2026-04-16T10:00:00.000Z' }
+		];
+		mockFetchPendingDeletionRequests.mockResolvedValueOnce(requests);
+
+		await currentOrganization.loadPendingDeletionRequests();
+
+		expect(currentOrganization.deletionRequests).toEqual(requests);
+		expect(mockFetchPendingDeletionRequests).toHaveBeenCalledWith('org-1');
+	});
+
+	it('clears pending deletion requests for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+		currentOrganization.deletionRequests = [{ profile_id: 'u2' } as any];
+
+		await currentOrganization.loadPendingDeletionRequests();
+
+		expect(currentOrganization.deletionRequests).toEqual([]);
+		expect(mockFetchPendingDeletionRequests).not.toHaveBeenCalled();
+	});
+});
+
+describe('currentOrganization.resolvePendingDeletionRequest', () => {
+	it('resolves the request and reloads the queue', async () => {
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(ORG_CTX);
+		await currentOrganization.refresh('u1');
+
+		mockResolveDeletionRequest.mockResolvedValueOnce('2026-04-16T12:00:00.000Z');
+		mockFetchPendingDeletionRequests.mockResolvedValueOnce([]);
+
+		await currentOrganization.resolvePendingDeletionRequest('u2');
+
+		expect(mockResolveDeletionRequest).toHaveBeenCalledWith('org-1', 'u2');
+		expect(currentOrganization.deletionRequests).toEqual([]);
+	});
+
+	it('blocks resolving requests for non-admin members', async () => {
+		const memberCtx = { ...ORG_CTX, membership: { ...ORG_CTX.membership, role: 'member' as const } };
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		await expect(currentOrganization.resolvePendingDeletionRequest('u2')).rejects.toThrow(
+			'Organization admin access required.'
+		);
+		expect(mockResolveDeletionRequest).not.toHaveBeenCalled();
+	});
+});
+
 describe('currentOrganization.updateMemberRole', () => {
 	it('updates role and refreshes', async () => {
 		mockFetchOwnOrganizationContext.mockResolvedValueOnce(ORG_CTX);
@@ -339,6 +398,7 @@ describe('currentOrganization.reset', () => {
 		expect(currentOrganization.membership).toBeNull();
 		expect(currentOrganization.invitations).toEqual([]);
 		expect(currentOrganization.members).toEqual([]);
+		expect(currentOrganization.deletionRequests).toEqual([]);
 		expect(currentOrganization.memberCount).toBeNull();
 		expect(currentOrganization.lastError).toBeNull();
 	});

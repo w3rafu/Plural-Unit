@@ -51,6 +51,8 @@ import {
 	regenerateJoinCode,
 	fetchMemberCount,
 	fetchOrganizationMembers,
+	fetchPendingDeletionRequests,
+	resolveDeletionRequest,
 	setOrganizationMemberRole,
 	removeOrganizationMember
 } from './organizationRepository';
@@ -334,6 +336,48 @@ describe('fetchOrganizationMembers', () => {
 		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'members fail' } });
 
 		await expect(fetchOrganizationMembers('org-1')).rejects.toThrow('members fail');
+	});
+});
+
+describe('fetchPendingDeletionRequests', () => {
+	it('calls the pending deletion requests RPC', async () => {
+		const requests = [
+			{ profile_id: 'u1', name: 'Alice', deletion_requested_at: '2026-04-16T10:00:00.000Z' }
+		];
+		mockRpc.mockResolvedValueOnce({ data: requests, error: null });
+
+		const result = await fetchPendingDeletionRequests('org-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('get_pending_account_deletion_requests', {
+			p_organization_id: 'org-1'
+		});
+		expect(result).toEqual(requests);
+	});
+
+	it('throws on error', async () => {
+		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'deletion fail' } });
+
+		await expect(fetchPendingDeletionRequests('org-1')).rejects.toThrow('deletion fail');
+	});
+});
+
+describe('resolveDeletionRequest', () => {
+	it('calls the resolve deletion request RPC', async () => {
+		mockRpc.mockResolvedValueOnce({ data: '2026-04-16T12:00:00.000Z', error: null });
+
+		const reviewedAt = await resolveDeletionRequest('org-1', 'u1');
+
+		expect(mockRpc).toHaveBeenCalledWith('resolve_account_deletion_request', {
+			p_organization_id: 'org-1',
+			p_profile_id: 'u1'
+		});
+		expect(reviewedAt).toBe('2026-04-16T12:00:00.000Z');
+	});
+
+	it('throws on RPC error', async () => {
+		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'resolve fail' } });
+
+		await expect(resolveDeletionRequest('org-1', 'u1')).rejects.toThrow('resolve fail');
 	});
 });
 

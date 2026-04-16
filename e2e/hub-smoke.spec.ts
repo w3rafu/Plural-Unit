@@ -10,7 +10,7 @@ test.describe('hub smoke routes', () => {
 		await page.goto('/?smoke=1');
 
 		await expect(page.getByRole('heading', { name: 'Harbor Unit' })).toBeVisible();
-		await expect(page.getByText('Members', { exact: true })).toBeVisible();
+		await expect(page.getByRole('button', { name: /^alerts/i })).toBeVisible();
 
 		await page.getByRole('button', { name: /^alerts/i }).click();
 		await expect(page.getByRole('heading', { name: 'Alerts' })).toBeVisible();
@@ -26,9 +26,22 @@ test.describe('hub smoke routes', () => {
 
 		await page.getByRole('link', { name: 'Settings' }).click();
 
-		await expect(page).toHaveURL(/\/profile\/details#notification-preferences$/);
+		await expect(page).toHaveURL(/\/profile#notification-preferences$/);
 		await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
 		await expect(page.getByText('In-app alerts', { exact: true })).toBeVisible();
+	});
+
+	test('navigates from the hub event list into event detail admin context', async ({ page }) => {
+		await page.goto('/?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Harbor Unit' })).toBeVisible();
+		await page.getByRole('link', { name: 'Prayer breakfast' }).click();
+
+		await expect(page).toHaveURL(/\/hub\/event\/event-3$/);
+		await expect(page.locator('main').getByRole('heading', { name: 'Prayer breakfast' })).toBeVisible();
+		await expect(page.getByText('Admin context')).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Open in manage' })).toBeVisible();
+		await expect(page.getByText('RSVP follow-up')).toBeVisible();
 	});
 
 	test('loads manage content and exercises attendance plus workflow queue state', async ({ page }) => {

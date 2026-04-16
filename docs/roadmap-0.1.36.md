@@ -4,7 +4,7 @@
 
 ## Status
 
-Not started.
+Implemented locally and validated. Slice `a` is already committed; slices `b` through `e` plus migration replay hardening for `037` and `039` remain in the working tree.
 
 ## Product constraints
 

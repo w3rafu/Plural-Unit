@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+	DELETED_MESSAGE_PLACEHOLDER,
 	normalizeMessageBody,
 	normalizeMessageImageUrl,
 	getParticipantInitials,
@@ -41,6 +42,8 @@ function makeMessage(overrides: Partial<MessageEntry> = {}): MessageEntry {
 		body: 'Hello',
 		imageUrl: '',
 		sentAt: '2026-04-10T12:00:00Z',
+		deletedAt: null,
+		isDeleted: false,
 		...overrides
 	};
 }
@@ -146,6 +149,14 @@ describe('getThreadPreview', () => {
 
 	it('returns placeholder for empty thread', () => {
 		expect(getThreadPreview(makeThread({ messages: [] }))).toBe('No messages yet.');
+	});
+
+	it('returns deleted placeholder for deleted messages', () => {
+		const thread = makeThread({
+			messages: [makeMessage({ body: DELETED_MESSAGE_PLACEHOLDER, isDeleted: true })]
+		});
+
+		expect(getThreadPreview(thread)).toBe(DELETED_MESSAGE_PLACEHOLDER);
 	});
 });
 
@@ -445,6 +456,39 @@ describe('mapMessageThreads', () => {
 		const result = mapMessageThreads({ ownerId: 'user-1', threads, messages });
 		expect(result[0].messages[0].kind).toBe('image');
 		expect(result[0].messages[0].imageUrl).toBe('https://example.com/img.jpg');
+	});
+
+	it('maps deleted messages to placeholders without preserving image content', () => {
+		const threads: MessageThreadRow[] = [
+			{
+				id: 'thread-1',
+				contact_id: 'contact-1',
+				last_read_at: null,
+				created_at: '2026-04-10T10:00:00Z',
+				updated_at: '2026-04-10T12:00:00Z',
+				contact: { id: 'contact-1', profile_id: null, name: 'Alice', avatar_url: '', subtitle: '', is_demo: false }
+			}
+		];
+		const messages: MessageRow[] = [
+			{
+				id: 'msg-1',
+				thread_id: 'thread-1',
+				sender_kind: 'owner',
+				message_kind: 'image',
+				body: 'Vacation photo',
+				image_url: 'https://example.com/private.jpg',
+				sent_at: '2026-04-10T11:00:00Z',
+				created_at: '2026-04-10T11:00:00Z',
+				deleted_at: '2026-04-10T12:00:00Z'
+			}
+		];
+
+		const result = mapMessageThreads({ ownerId: 'user-1', threads, messages });
+
+		expect(result[0].messages[0].body).toBe(DELETED_MESSAGE_PLACEHOLDER);
+		expect(result[0].messages[0].imageUrl).toBe('');
+		expect(result[0].messages[0].isDeleted).toBe(true);
+		expect(result[0].messages[0].deletedAt).toBe('2026-04-10T12:00:00Z');
 	});
 
 	it('skips invalid messages (empty body for text kind)', () => {

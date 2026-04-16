@@ -243,6 +243,12 @@ class CurrentUser {
 	async updateProfileDetails(updates: Pick<UserDetails, 'name' | 'phone_number' | 'avatar_url' | 'bio'>) {
 		this.isLoggingIn = true;
 		try {
+			if (isSmokeModeEnabled()) {
+				this.details = { ...this.details, ...updates };
+				this.saveSession();
+				return;
+			}
+
 			await upsertOwnProfile(this.details.id, updates);
 			this.details = { ...this.details, ...updates };
 			this.saveSession();
@@ -293,7 +299,24 @@ class CurrentUser {
 	}
 
 	async requestAccountDeletion() {
-		await requestAccountDeletionRpc();
+		const requestedAt = isSmokeModeEnabled()
+			? this.details.deletion_requested_at && !this.details.deletion_reviewed_at
+				? this.details.deletion_requested_at
+				: new Date().toISOString()
+			: await requestAccountDeletionRpc();
+		this.details = {
+			...this.details,
+			deletion_requested_at: requestedAt,
+			deletion_reviewed_at:
+				this.details.deletion_requested_at === requestedAt
+					? this.details.deletion_reviewed_at
+					: null,
+			deletion_reviewed_by:
+				this.details.deletion_requested_at === requestedAt
+					? this.details.deletion_reviewed_by
+					: null
+		};
+		this.saveSession();
 	}
 
 	async logout() {

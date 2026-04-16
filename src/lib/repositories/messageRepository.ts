@@ -45,7 +45,7 @@ export async function fetchOwnMessageThreads(userId: string): Promise<MessageThr
 			async () =>
 				await supabase
 					.from(MESSAGES_TABLE)
-					.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at')
+					.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at, deleted_at')
 					.in('thread_id', threadIds)
 					.order('sent_at', { ascending: false })
 					.limit(MESSAGE_PAGE_SIZE * threadIds.length)
@@ -173,6 +173,26 @@ export async function sendImageMessageToThread(threadId: string, imageUrl: strin
 	return String(data ?? '');
 }
 
+export async function softDeleteMessage(messageId: string) {
+	const supabase = requireClient();
+	if (!messageId) {
+		throw new Error('Message id is required.');
+	}
+
+	const { data, error } = await withRetry(
+		async () =>
+			await supabase.rpc('soft_delete_message', {
+				target_message_id: messageId
+			})
+	);
+
+	if (error) {
+		throwRepositoryError(error, 'Could not delete message.');
+	}
+
+	return typeof data === 'string' ? data : '';
+}
+
 export async function markMessageThreadRead(threadId: string) {
 	const supabase = requireClient();
 	const { error } = await withRetry(
@@ -223,7 +243,7 @@ export async function fetchOlderMessages(
 		async () =>
 			await supabase
 				.from(MESSAGES_TABLE)
-				.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at')
+				.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at, deleted_at')
 				.eq('thread_id', threadId)
 				.lt('sent_at', beforeSentAt)
 				.order('sent_at', { ascending: false })

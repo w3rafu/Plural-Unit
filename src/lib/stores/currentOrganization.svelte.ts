@@ -16,7 +16,8 @@ import type {
 	OrganizationPayload,
 	OrganizationMembership,
 	OrganizationInvitation,
-	OrganizationMember
+	OrganizationMember,
+	OrganizationDeletionRequest
 } from '$lib/models/organizationModel';
 import {
 	fetchOwnOrganizationContext,
@@ -30,6 +31,8 @@ import {
 	regenerateJoinCode,
 	fetchMemberCount,
 	fetchOrganizationMembers,
+	fetchPendingDeletionRequests,
+	resolveDeletionRequest,
 	setOrganizationMemberRole,
 	removeOrganizationMember,
 	updateOrganizationName
@@ -52,8 +55,10 @@ class CurrentOrganization {
 	membership = $state<OrganizationMembership | null>(null);
 	invitations = $state<OrganizationInvitation[]>([]);
 	members = $state<OrganizationMember[]>([]);
+	deletionRequests = $state<OrganizationDeletionRequest[]>([]);
 	memberCount = $state<number | null>(null);
 	isLoadingMembers = $state(false);
+	isLoadingDeletionRequests = $state(false);
 	lastError = $state<Error | null>(null);
 
 	clearError() {
@@ -90,8 +95,10 @@ class CurrentOrganization {
 		this.membership = buildSmokeMembership();
 		this.invitations = [];
 		this.members = buildSmokeMembers();
+		this.deletionRequests = [];
 		this.memberCount = this.members.length;
 		this.isLoadingMembers = false;
+		this.isLoadingDeletionRequests = false;
 	}
 
 	get isMember() {
@@ -113,8 +120,10 @@ class CurrentOrganization {
 		this.membership = null;
 		this.invitations = [];
 		this.members = [];
+		this.deletionRequests = [];
 		this.memberCount = null;
 		this.isLoadingMembers = false;
+		this.isLoadingDeletionRequests = false;
 		this.hasResolvedMembership = true;
 	}
 
@@ -146,18 +155,21 @@ class CurrentOrganization {
 				if (previousOrganizationId !== ctx.organization.id) {
 					this.invitations = [];
 					this.members = [];
+					this.deletionRequests = [];
 					this.memberCount = null;
 				}
 				this.organization = ctx.organization;
 				this.membership = ctx.membership;
 				if (ctx.membership.role !== 'admin') {
 					this.invitations = [];
+					this.deletionRequests = [];
 				}
 			} else {
 				this.organization = null;
 				this.membership = null;
 				this.invitations = [];
 				this.members = [];
+				this.deletionRequests = [];
 				this.memberCount = null;
 			}
 		} catch (error) {
@@ -288,6 +300,40 @@ class CurrentOrganization {
 			this.members = await fetchOrganizationMembers(this.organization.id);
 		} finally {
 			this.isLoadingMembers = false;
+		}
+	}
+
+	async loadPendingDeletionRequests() {
+		if (isSmokeModeEnabled()) {
+			this.deletionRequests = [];
+			this.isLoadingDeletionRequests = false;
+			return;
+		}
+
+		if (!this.organization || !this.isAdmin) {
+			this.deletionRequests = [];
+			return;
+		}
+
+		this.isLoadingDeletionRequests = true;
+		try {
+			this.deletionRequests = await fetchPendingDeletionRequests(this.organization.id);
+		} finally {
+			this.isLoadingDeletionRequests = false;
+		}
+	}
+
+	async resolvePendingDeletionRequest(profileId: string) {
+		if (!this.organization || !this.isAdmin) {
+			throw new Error('Organization admin access required.');
+		}
+
+		this.isMutating = true;
+		try {
+			await resolveDeletionRequest(this.organization.id, profileId);
+			await this.loadPendingDeletionRequests();
+		} finally {
+			this.isMutating = false;
 		}
 	}
 

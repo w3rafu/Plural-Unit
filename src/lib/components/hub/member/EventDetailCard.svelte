@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
 	import { CalendarPlus, Download, MapPin, Clock } from '@lucide/svelte';
+	import EventAttendanceRosterPanel from '$lib/components/hub/admin/EventAttendanceRosterPanel.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -16,9 +17,11 @@
 		getEventLocationLabel
 	} from '$lib/models/eventCalendarModel';
 	import { getEventStateLabel } from '$lib/models/eventLifecycleModel';
+	import { getEventReminderSummaryCopy } from '$lib/models/eventReminderModel';
 	import {
 		EVENT_RESPONSE_OPTIONS,
-		formatEventAttendanceSummary
+		formatEventAttendanceSummary,
+		getEventResponseRosterSummaryCopy
 	} from '$lib/models/eventResponseModel';
 	import type { EventResponseStatus, EventRow } from '$lib/repositories/hubRepository';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
@@ -33,11 +36,49 @@
 	const attendance = $derived(currentHub.getEventAttendanceSummary(event.id));
 	const ownResponse = $derived(currentHub.getOwnEventResponse(event.id));
 	const isSavingResponse = $derived(currentHub.eventResponseTargetId === event.id);
+	const isAdmin = $derived(currentOrganization.isAdmin);
 	const organizationName = $derived(currentOrganization.organization?.name ?? undefined);
+	const deliveryStatus = $derived(currentHub.getEventDeliveryStatus(event.id));
+	const reminderSummary = $derived(currentHub.getEventReminderSummary(event.id));
+	const responseRoster = $derived(currentHub.getEventResponseRoster(event.id));
+	const isLoadingMemberRoster = $derived(
+		currentOrganization.isAdmin &&
+			currentOrganization.isLoadingMembers &&
+			currentOrganization.members.length === 0
+	);
+	const manageHref = $derived(`/hub/manage/content#event-${event.id}`);
 	const googleCalendarHref = $derived(buildGoogleCalendarHref(event, { organizationName }));
 	const calendarDownloadHref = $derived(
 		buildEventCalendarDataUrl(event, { organizationName })
 	);
+	const deliveryCopy = $derived.by(() => {
+		if (!event.publish_at) {
+			return 'This event is still a draft and is not scheduled for member visibility yet.';
+		}
+
+		return deliveryStatus?.copy ?? 'Delivery status is not available for this event.';
+	});
+	const reminderCopy = $derived.by(() =>
+		reminderSummary ? getEventReminderSummaryCopy(reminderSummary) : 'No reminders planned.'
+	);
+	const reminderLabel = $derived.by(() => {
+		if (!reminderSummary || reminderSummary.count === 0) {
+			return 'None planned';
+		}
+
+		return reminderSummary.count === 1 ? '1 reminder planned' : `${reminderSummary.count} reminders planned`;
+	});
+	const responseRosterCopy = $derived.by(() => {
+		if (isLoadingMemberRoster) {
+			return 'Loading current member roster for admin follow-up...';
+		}
+
+		if (!responseRoster) {
+			return 'Current member roster unavailable.';
+		}
+
+		return getEventResponseRosterSummaryCopy(responseRoster);
+	});
 
 	async function respondToEvent(response: EventResponseStatus) {
 		try {
@@ -123,5 +164,52 @@
 				</Button>
 			</div>
 		</div>
+
+		{#if isAdmin}
+			<div class="space-y-3 border-t border-border/70 pt-4">
+				<div class="flex flex-wrap items-start justify-between gap-3">
+					<div class="space-y-1">
+						<h2 class="text-sm font-semibold text-foreground">Admin context</h2>
+						<p class="text-xs text-muted-foreground">
+							Delivery, reminder, and roster context for this event.
+						</p>
+					</div>
+					<Button href={manageHref} variant="outline" size="sm">
+						Open in manage
+					</Button>
+				</div>
+
+				<div class="grid gap-3 sm:grid-cols-2">
+					<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+							Visibility
+						</p>
+						<p class="text-sm font-medium text-foreground">{deliveryStatus?.label ?? 'Draft'}</p>
+						<p class="text-xs text-muted-foreground">{deliveryCopy}</p>
+					</div>
+
+					<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+							Reminders
+						</p>
+						<p class="text-sm font-medium text-foreground">{reminderLabel}</p>
+						<p class="text-xs text-muted-foreground">{reminderCopy}</p>
+					</div>
+				</div>
+
+				<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+						RSVP follow-up
+					</p>
+					<p class="text-xs text-muted-foreground">{responseRosterCopy}</p>
+				</div>
+
+				{#if isLoadingMemberRoster}
+					<p class="text-xs text-muted-foreground">Loading member roster for admin actions...</p>
+				{:else}
+					<EventAttendanceRosterPanel {event} />
+				{/if}
+			</div>
+		{/if}
 	</Card.Content>
 </Card.Root>

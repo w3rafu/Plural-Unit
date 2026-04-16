@@ -1,5 +1,9 @@
-import type { MessageThread, MessageEntry } from '$lib/models/messageModel';
-import { MESSAGE_PAGE_SIZE, normalizeMessageBody, normalizeMessageImageUrl } from '$lib/models/messageModel';
+import type { MessageThread } from '$lib/models/messageModel';
+import {
+	MESSAGE_PAGE_SIZE,
+	mapMessageRowToEntry,
+	markMessageEntryDeleted
+} from '$lib/models/messageModel';
 import * as messageRepository from '$lib/repositories/messageRepository';
 import {
 	subscribeToMessages,
@@ -21,6 +25,7 @@ export type MessageRepository = {
 	sendMessageToThread: typeof messageRepository.sendMessageToThread;
 	uploadMessageImage: typeof messageRepository.uploadMessageImage;
 	sendImageMessageToThread: typeof messageRepository.sendImageMessageToThread;
+	softDeleteMessage: typeof messageRepository.softDeleteMessage;
 	markMessageThreadRead: typeof messageRepository.markMessageThreadRead;
 	fetchOlderMessages: typeof messageRepository.fetchOlderMessages;
 };
@@ -33,6 +38,7 @@ const defaultMessageRepository: MessageRepository = {
 	sendMessageToThread: messageRepository.sendMessageToThread,
 	uploadMessageImage: messageRepository.uploadMessageImage,
 	sendImageMessageToThread: messageRepository.sendImageMessageToThread,
+	softDeleteMessage: messageRepository.softDeleteMessage,
 	markMessageThreadRead: messageRepository.markMessageThreadRead,
 	fetchOlderMessages: messageRepository.fetchOlderMessages
 };
@@ -46,6 +52,7 @@ class CurrentMessages {
 	isLoadingOlderMessages = $state(false);
 	isSending = $state(false);
 	isResetting = $state(false);
+	deletingMessageId = $state('');
 	error = $state('');
 	lastSentAt = $state(0);
 	recentIncomingThreadId = $state('');
@@ -237,6 +244,47 @@ class CurrentMessages {
 		}
 	}
 
+	async deleteMessage(messageId: string) {
+		const thread = this.activeThread;
+		if (!thread || !messageId) return;
+
+		const existingMessage = thread.messages.find((message) => message.id === messageId);
+		if (!existingMessage || existingMessage.senderKind !== 'owner' || existingMessage.isDeleted) {
+			return;
+		}
+
+		this.error = '';
+		this.deletingMessageId = messageId;
+		const previousThreads = this.threads;
+		this.threads = this.threads.map((entry) =>
+			entry.id === thread.id
+				? {
+					...entry,
+					messages: entry.messages.map((message) =>
+						message.id === messageId ? markMessageEntryDeleted(message) : message
+					)
+				}
+				: entry
+		);
+
+		if (isSmokeModeEnabled()) {
+			this.deletingMessageId = '';
+			return;
+		}
+
+		try {
+			await this.repository.softDeleteMessage(messageId);
+			await this.refresh();
+		} catch (err) {
+			this.threads = previousThreads;
+			this.error = err instanceof Error ? err.message : 'Could not delete message.';
+		} finally {
+			if (this.deletingMessageId === messageId) {
+				this.deletingMessageId = '';
+			}
+		}
+	}
+
 	async loadOlderMessages() {
 		const thread = this.activeThread;
 		if (!thread || !thread.hasMoreMessages || this.isLoadingOlderMessages) return;
@@ -252,29 +300,15 @@ class CurrentMessages {
 				oldestMessage.sentAt
 			);
 
-			const olderEntries: MessageEntry[] = olderRows
-				.map((row) => {
-					const body = normalizeMessageBody(row.body);
-					const imageUrl = normalizeMessageImageUrl(row.image_url);
-					const kind = row.message_kind === 'image' ? 'image' as const : 'text' as const;
-					const isValid = kind === 'text' ? Boolean(body) : Boolean(imageUrl);
-					if (!isValid) return null;
-
-					return {
-						id: row.id,
-						threadId: row.thread_id,
-						senderId:
-							row.sender_kind === 'owner'
-								? this.ownerId
-								: thread.participant.id,
-						senderKind: row.sender_kind,
-						kind,
-						body,
-						imageUrl: imageUrl,
-						sentAt: row.sent_at
-					} satisfies MessageEntry;
-				})
-				.filter((entry): entry is MessageEntry => entry !== null)
+			const olderEntries = olderRows
+				.map((row) =>
+					mapMessageRowToEntry({
+						row,
+						ownerId: this.ownerId,
+						contactSenderId: thread.participant.id
+					})
+				)
+				.filter((entry): entry is NonNullable<typeof entry> => entry !== null)
 				.sort((a, b) => a.sentAt.localeCompare(b.sentAt));
 
 			const hasMore = olderRows.length >= MESSAGE_PAGE_SIZE;
@@ -301,6 +335,7 @@ class CurrentMessages {
 		this.isLoadingOlderMessages = false;
 		this.isSending = false;
 		this.isResetting = false;
+		this.deletingMessageId = '';
 		this.error = '';
 		this.lastSentAt = 0;
 		this.recentIncomingThreadId = '';

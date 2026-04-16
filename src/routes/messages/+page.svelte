@@ -30,6 +30,10 @@
 		void currentMessages.sendImage(file);
 	}
 
+	function handleDeleteMessage(messageId: string) {
+		void currentMessages.deleteMessage(messageId);
+	}
+
 	function handleTyping() {
 		currentMessages.notifyTyping();
 	}
@@ -74,10 +78,12 @@
 			isSending={currentMessages.isSending}
 			isResetting={currentMessages.isResetting}
 			isLoadingOlderMessages={currentMessages.isLoadingOlderMessages}
+			deletingMessageId={currentMessages.deletingMessageId}
 			contactTyping={currentMessages.contactTyping}
 			onSelectThread={handleSelectThread}
 			onSendMessage={handleSendMessage}
 			onSendImage={handleSendImage}
+			onDeleteMessage={handleDeleteMessage}
 			onTyping={handleTyping}
 			onBack={handleBack}
 			onResetDemo={handleResetDemo}

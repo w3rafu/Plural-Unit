@@ -13,6 +13,7 @@ import type {
 	OrganizationMembership,
 	OrganizationInvitation,
 	OrganizationMember,
+	OrganizationDeletionRequest,
 	OrganizationMemberRole
 } from '$lib/models/organizationModel';
 
@@ -221,6 +222,29 @@ export async function fetchOrganizationMembers(
 
 	if (error) throwRepositoryError(error, 'Could not load organization members.');
 	return (data ?? []) as OrganizationMember[];
+}
+
+/** Fetch pending account deletion requests for an organization. Admin only. */
+export async function fetchPendingDeletionRequests(
+	organizationId: string
+): Promise<OrganizationDeletionRequest[]> {
+	const { data, error } = await getSupabaseClient().rpc('get_pending_account_deletion_requests', {
+		p_organization_id: organizationId
+	});
+
+	if (error) throwRepositoryError(error, 'Could not load pending deletion requests.');
+	return (data ?? []) as OrganizationDeletionRequest[];
+}
+
+/** Mark a pending account deletion request as reviewed. Admin only. */
+export async function resolveDeletionRequest(organizationId: string, profileId: string) {
+	const { data, error } = await getSupabaseClient().rpc('resolve_account_deletion_request', {
+		p_organization_id: organizationId,
+		p_profile_id: profileId
+	});
+
+	if (error) throwRepositoryError(error, 'Could not resolve the deletion request.');
+	return data as string;
 }
 
 /** Change a member's role (admin ↔ member) within the organization. */

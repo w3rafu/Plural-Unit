@@ -1,6 +1,8 @@
 -- Migration 037: include profile bio in the organization member roster RPC.
 
-create or replace function public.get_organization_members(p_organization_id uuid)
+drop function if exists public.get_organization_members(uuid);
+
+create function public.get_organization_members(p_organization_id uuid)
 returns table (
 	profile_id uuid,
 	name text,
@@ -14,6 +16,7 @@ returns table (
 )
 language plpgsql
 security definer
+set search_path = ''
 as $$
 begin
 	if not exists (
@@ -46,3 +49,6 @@ begin
 		m.created_at;
 end;
 $$;
+
+revoke all on function public.get_organization_members(uuid) from public;
+grant execute on function public.get_organization_members(uuid) to authenticated;

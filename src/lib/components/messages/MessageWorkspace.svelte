@@ -12,10 +12,12 @@
 		isSending = false,
 		isResetting = false,
 		isLoadingOlderMessages = false,
+		deletingMessageId = '',
 		contactTyping = false,
 		onSelectThread,
 		onSendMessage,
 		onSendImage,
+		onDeleteMessage,
 		onTyping,
 		onBack,
 		onResetDemo,
@@ -28,10 +30,12 @@
 		isSending?: boolean;
 		isResetting?: boolean;
 		isLoadingOlderMessages?: boolean;
+		deletingMessageId?: string;
 		contactTyping?: boolean;
 		onSelectThread: (threadId: string) => void;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onDeleteMessage?: (messageId: string) => void;
 		onTyping?: () => void;
 		onBack: () => void;
 		onResetDemo?: () => void;
@@ -54,9 +58,11 @@
 				{isSending}
 				{isResetting}
 				{isLoadingOlderMessages}
+				{deletingMessageId}
 				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
+				{onDeleteMessage}
 				{onTyping}
 				{onResetDemo}
 				{onLoadOlderMessages}
@@ -85,9 +91,11 @@
 				{isSending}
 				{isResetting}
 				{isLoadingOlderMessages}
+				{deletingMessageId}
 				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
+				{onDeleteMessage}
 				{onTyping}
 				{onBack}
 				{onResetDemo}
