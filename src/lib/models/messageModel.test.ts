@@ -52,6 +52,7 @@ function makeThread(overrides: Partial<MessageThread> = {}): MessageThread {
 		messages: [makeMessage()],
 		unreadCount: 0,
 		lastReadAt: '2026-04-10T12:00:00Z',
+		contactLastReadAt: null,
 		...overrides
 	};
 }

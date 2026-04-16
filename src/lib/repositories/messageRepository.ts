@@ -40,23 +40,27 @@ export async function fetchOwnMessageThreads(userId: string): Promise<MessageThr
 	}
 
 	const threadIds = threads.map((thread) => thread.id);
-	const { data: messageRows, error: messageError } = await withRetry(
-		async () =>
-			await supabase
-				.from(MESSAGES_TABLE)
-				.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at')
-				.in('thread_id', threadIds)
-				.order('sent_at', { ascending: true })
-	);
+	const [messageResult, contactReadResult] = await Promise.all([
+		withRetry(
+			async () =>
+				await supabase
+					.from(MESSAGES_TABLE)
+					.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at')
+					.in('thread_id', threadIds)
+					.order('sent_at', { ascending: true })
+		),
+		fetchContactLastReadAtMap(threadIds)
+	]);
 
-	if (messageError) {
-		throwRepositoryError(messageError, 'Could not load messages.');
+	if (messageResult.error) {
+		throwRepositoryError(messageResult.error, 'Could not load messages.');
 	}
 
 	return mapMessageThreads({
 		ownerId: userId,
 		threads,
-		messages: (messageRows ?? []) as MessageRow[]
+		messages: (messageResult.data ?? []) as MessageRow[],
+		contactLastReadAtMap: contactReadResult
 	});
 }
 
@@ -178,5 +182,31 @@ export async function markMessageThreadRead(threadId: string) {
 
 	if (error) {
 		throwRepositoryError(error, 'Could not mark thread as read.');
+	}
+}
+
+async function fetchContactLastReadAtMap(
+	threadIds: string[]
+): Promise<Record<string, string | null>> {
+	if (threadIds.length === 0) return {};
+
+	try {
+		const supabase = requireClient();
+		const { data, error } = await withRetry(
+			async () =>
+				await supabase.rpc('get_contact_last_read_at', {
+					target_thread_ids: threadIds
+				})
+		);
+
+		if (error) return {};
+
+		const map: Record<string, string | null> = {};
+		for (const row of data ?? []) {
+			map[row.thread_id] = row.contact_last_read_at ?? null;
+		}
+		return map;
+	} catch {
+		return {};
 	}
 }

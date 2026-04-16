@@ -24,6 +24,7 @@ export type MessageThread = {
 	messages: MessageEntry[];
 	unreadCount: number;
 	lastReadAt: string | null;
+	contactLastReadAt: string | null;
 };
 
 export type MessageContactRow = {
@@ -178,6 +179,7 @@ export function mapMessageThreads(input: {
 	ownerId: string;
 	threads: MessageThreadRow[];
 	messages: MessageRow[];
+	contactLastReadAtMap?: Record<string, string | null>;
 }): MessageThread[] {
 	const messagesByThread = new Map<string, MessageEntry[]>();
 
@@ -229,7 +231,8 @@ export function mapMessageThreads(input: {
 							: message
 					),
 					unreadCount: countUnreadMessages(threadMessages, thread.last_read_at),
-					lastReadAt: thread.last_read_at
+					lastReadAt: thread.last_read_at,
+					contactLastReadAt: input.contactLastReadAtMap?.[thread.id] ?? null
 				} satisfies MessageThread;
 			})
 			.filter((thread): thread is MessageThread => thread !== null)

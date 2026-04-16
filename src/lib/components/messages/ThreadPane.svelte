@@ -38,6 +38,17 @@
 	const dayGroups = $derived(groupMessagesByDay(thread.messages));
 	const initials = $derived(getParticipantInitials(thread.participant.name));
 
+	const lastSeenMessageId = $derived.by(() => {
+		if (!thread.contactLastReadAt) return null;
+		let lastId: string | null = null;
+		for (const message of thread.messages) {
+			if (message.senderKind === 'owner' && message.sentAt <= thread.contactLastReadAt) {
+				lastId = message.id;
+			}
+		}
+		return lastId;
+	});
+
 	function keepScrolledToBottom(_trigger: string) {
 		return (node: HTMLElement) => {
 		node.scrollTop = node.scrollHeight;
@@ -160,6 +171,9 @@
 						</p>
 					</div>
 				</div>
+				{#if message.id === lastSeenMessageId}
+					<p class="mb-2 text-right text-[0.65rem] text-muted-foreground">Seen</p>
+				{/if}
 			{/each}
 		{/each}
 
