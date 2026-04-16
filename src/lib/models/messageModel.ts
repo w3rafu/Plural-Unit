@@ -25,6 +25,7 @@ export type MessageThread = {
 	unreadCount: number;
 	lastReadAt: string | null;
 	contactLastReadAt: string | null;
+	hasMoreMessages: boolean;
 };
 
 export type MessageContactRow = {
@@ -175,11 +176,14 @@ export function getInboxThreadSections(
 	};
 }
 
+export const MESSAGE_PAGE_SIZE = 50;
+
 export function mapMessageThreads(input: {
 	ownerId: string;
 	threads: MessageThreadRow[];
 	messages: MessageRow[];
 	contactLastReadAtMap?: Record<string, string | null>;
+	pageSize?: number;
 }): MessageThread[] {
 	const messagesByThread = new Map<string, MessageEntry[]>();
 
@@ -207,6 +211,8 @@ export function mapMessageThreads(input: {
 		messagesByThread.set(row.thread_id, list);
 	}
 
+	const pageSize = input.pageSize ?? 0;
+
 	return sortThreadsByRecent(
 		input.threads
 			.map((thread) => {
@@ -215,9 +221,14 @@ export function mapMessageThreads(input: {
 					return null;
 				}
 
-				const threadMessages = (messagesByThread.get(thread.id) ?? []).sort((left, right) =>
+				const allMessages = (messagesByThread.get(thread.id) ?? []).sort((left, right) =>
 					left.sentAt.localeCompare(right.sentAt)
 				);
+
+				const threadMessages =
+					pageSize > 0 && allMessages.length > pageSize
+						? allMessages.slice(-pageSize)
+						: allMessages;
 
 				return {
 					id: thread.id,
@@ -232,7 +243,8 @@ export function mapMessageThreads(input: {
 					),
 					unreadCount: countUnreadMessages(threadMessages, thread.last_read_at),
 					lastReadAt: thread.last_read_at,
-					contactLastReadAt: input.contactLastReadAtMap?.[thread.id] ?? null
+					contactLastReadAt: input.contactLastReadAtMap?.[thread.id] ?? null,
+					hasMoreMessages: pageSize > 0 && allMessages.length >= pageSize
 				} satisfies MessageThread;
 			})
 			.filter((thread): thread is MessageThread => thread !== null)

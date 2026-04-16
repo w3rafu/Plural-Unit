@@ -25,15 +25,15 @@
 
 ## b — Message pagination
 
-- [ ] Add `fetchOlderMessages(threadId, beforeSentAt, limit)` to `messageRepository.ts`
-- [ ] Limit initial message fetch to most recent 50 per thread in `fetchOwnMessageThreads`
-- [ ] Add `loadOlderMessages()` method to `currentMessages.svelte.ts`
-- [ ] Track `hasMoreMessages` flag per thread in the store
-- [ ] Detect scroll-to-top in `ThreadPane.svelte` and trigger `loadOlderMessages`
-- [ ] Show compact loading indicator while fetching older messages
-- [ ] Fix `keepScrolledToBottom` — auto-scroll on new message only when user is near bottom
-- [ ] Preserve existing inbox search behavior with paginated backing
-- [ ] Add focused repository and store tests for pagination
+- [x] Add `fetchOlderMessages(threadId, beforeSentAt, limit)` to `messageRepository.ts`
+- [x] Limit initial message fetch to most recent 50 per thread in `fetchOwnMessageThreads`
+- [x] Add `loadOlderMessages()` method to `currentMessages.svelte.ts`
+- [x] Track `hasMoreMessages` flag per thread in the store
+- [x] Detect scroll-to-top in `ThreadPane.svelte` and trigger `loadOlderMessages`
+- [x] Show compact loading indicator while fetching older messages
+- [x] Fix `keepScrolledToBottom` — auto-scroll on new message only when user is near bottom
+- [x] Preserve existing inbox search behavior with paginated backing
+- [x] Add focused repository and store tests for pagination
 
 ## c — Test coverage for new services
 

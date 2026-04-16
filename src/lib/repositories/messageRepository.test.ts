@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockEq = vi.fn();
 const mockIn = vi.fn();
 const mockOrder = vi.fn();
+const mockLimit = vi.fn();
 const mockSelect = vi.fn(() => ({ eq: mockEq, in: mockIn }));
 const mockRpc = vi.fn();
 const mockUpload = vi.fn();
@@ -46,10 +47,11 @@ import {
 beforeEach(() => {
 	vi.clearAllMocks();
 
-	// Default chain: select → eq → order (for threads), select → in → order (for messages)
+	// Default chain: select → eq → order (for threads), select → in → order → limit (for messages)
 	mockEq.mockReturnValue({ order: mockOrder });
 	mockIn.mockReturnValue({ order: mockOrder });
-	mockOrder.mockReturnValue({ data: [], error: null, in: mockIn });
+	mockOrder.mockReturnValue({ data: [], error: null, in: mockIn, limit: mockLimit });
+	mockLimit.mockReturnValue({ data: [], error: null });
 });
 
 // ── fetchOwnMessageThreads ──
@@ -81,8 +83,8 @@ describe('fetchOwnMessageThreads', () => {
 
 		// First order() call → thread rows
 		mockOrder.mockResolvedValueOnce({ data: threadRows, error: null });
-		// Second order() call → message rows
-		mockOrder.mockResolvedValueOnce({ data: messageRows, error: null });
+		// Second order().limit() call → message rows
+		mockLimit.mockResolvedValueOnce({ data: messageRows, error: null });
 
 		const result = await fetchOwnMessageThreads('user-1');
 
@@ -110,7 +112,7 @@ describe('fetchOwnMessageThreads', () => {
 			data: [{ id: 'thread-1', contact_id: 'c1', last_read_at: null, created_at: '', updated_at: '', contact: { id: 'c1', profile_id: null, name: 'X', avatar_url: '', subtitle: '', is_demo: false } }],
 			error: null
 		});
-		mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'message fail' } });
+		mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'message fail' } });
 
 		await expect(fetchOwnMessageThreads('user-1')).rejects.toThrow('message fail');
 	});

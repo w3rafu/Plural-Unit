@@ -43,6 +43,7 @@ const mockSendMessageToThread = vi.fn();
 const mockUploadMessageImage = vi.fn();
 const mockSendImageMessageToThread = vi.fn();
 const mockMarkMessageThreadRead = vi.fn();
+const mockFetchOlderMessages = vi.fn();
 
 const mockRepository = {
 	fetchOwnMessageThreads: mockFetchOwnMessageThreads,
@@ -52,7 +53,8 @@ const mockRepository = {
 	sendMessageToThread: mockSendMessageToThread,
 	uploadMessageImage: mockUploadMessageImage,
 	sendImageMessageToThread: mockSendImageMessageToThread,
-	markMessageThreadRead: mockMarkMessageThreadRead
+	markMessageThreadRead: mockMarkMessageThreadRead,
+	fetchOlderMessages: mockFetchOlderMessages
 };
 
 import { createCurrentMessagesStore } from './currentMessages.svelte';
@@ -83,6 +85,7 @@ function makeThread(overrides: Partial<MessageThread> = {}): MessageThread {
 		unreadCount: 0,
 		lastReadAt: '2026-04-10T12:00:00Z',
 		contactLastReadAt: null,
+		hasMoreMessages: false,
 		...overrides
 	};
 }
@@ -424,6 +427,55 @@ describe('push notification triggers', () => {
 		await store.sendMessage('Hello');
 
 		expect(mockTriggerPushNotification).not.toHaveBeenCalled();
+	});
+});
+
+// ── loadOlderMessages ──
+
+describe('loadOlderMessages', () => {
+	it('prepends older messages to the active thread', async () => {
+		const thread = makeThread({ hasMoreMessages: true });
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockFetchOlderMessages.mockResolvedValueOnce([
+			{
+				id: 'msg-0',
+				thread_id: 'thread-1',
+				sender_kind: 'contact',
+				message_kind: 'text',
+				body: 'Older message',
+				image_url: null,
+				sent_at: '2026-04-10T11:00:00Z',
+				created_at: '2026-04-10T11:00:00Z'
+			}
+		]);
+
+		await store.loadOlderMessages();
+
+		expect(mockFetchOlderMessages).toHaveBeenCalledWith('thread-1', '2026-04-10T12:00:00Z');
+		expect(store.activeThread?.messages).toHaveLength(2);
+		expect(store.activeThread?.messages[0].body).toBe('Older message');
+		expect(store.activeThread?.hasMoreMessages).toBe(false);
+	});
+
+	it('skips when thread has no more messages', async () => {
+		const thread = makeThread({ hasMoreMessages: false });
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		await store.loadOlderMessages();
+
+		expect(mockFetchOlderMessages).not.toHaveBeenCalled();
+	});
+
+	it('skips when no active thread', async () => {
+		await store.loadOlderMessages();
+		expect(mockFetchOlderMessages).not.toHaveBeenCalled();
 	});
 });
 

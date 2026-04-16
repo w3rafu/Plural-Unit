@@ -1,4 +1,5 @@
-import type { MessageThread } from '$lib/models/messageModel';
+import type { MessageThread, MessageEntry } from '$lib/models/messageModel';
+import { MESSAGE_PAGE_SIZE, normalizeMessageBody, normalizeMessageImageUrl } from '$lib/models/messageModel';
 import * as messageRepository from '$lib/repositories/messageRepository';
 import {
 	subscribeToMessages,
@@ -21,6 +22,7 @@ export type MessageRepository = {
 	uploadMessageImage: typeof messageRepository.uploadMessageImage;
 	sendImageMessageToThread: typeof messageRepository.sendImageMessageToThread;
 	markMessageThreadRead: typeof messageRepository.markMessageThreadRead;
+	fetchOlderMessages: typeof messageRepository.fetchOlderMessages;
 };
 
 const defaultMessageRepository: MessageRepository = {
@@ -31,7 +33,8 @@ const defaultMessageRepository: MessageRepository = {
 	sendMessageToThread: messageRepository.sendMessageToThread,
 	uploadMessageImage: messageRepository.uploadMessageImage,
 	sendImageMessageToThread: messageRepository.sendImageMessageToThread,
-	markMessageThreadRead: messageRepository.markMessageThreadRead
+	markMessageThreadRead: messageRepository.markMessageThreadRead,
+	fetchOlderMessages: messageRepository.fetchOlderMessages
 };
 
 class CurrentMessages {
@@ -40,6 +43,7 @@ class CurrentMessages {
 
 	isReady = $state(false);
 	isLoading = $state(false);
+	isLoadingOlderMessages = $state(false);
 	isSending = $state(false);
 	isResetting = $state(false);
 	error = $state('');
@@ -233,6 +237,60 @@ class CurrentMessages {
 		}
 	}
 
+	async loadOlderMessages() {
+		const thread = this.activeThread;
+		if (!thread || !thread.hasMoreMessages || this.isLoadingOlderMessages) return;
+
+		const oldestMessage = thread.messages[0];
+		if (!oldestMessage) return;
+
+		this.isLoadingOlderMessages = true;
+
+		try {
+			const olderRows = await this.repository.fetchOlderMessages(
+				thread.id,
+				oldestMessage.sentAt
+			);
+
+			const olderEntries: MessageEntry[] = olderRows
+				.map((row) => {
+					const body = normalizeMessageBody(row.body);
+					const imageUrl = normalizeMessageImageUrl(row.image_url);
+					const kind = row.message_kind === 'image' ? 'image' as const : 'text' as const;
+					const isValid = kind === 'text' ? Boolean(body) : Boolean(imageUrl);
+					if (!isValid) return null;
+
+					return {
+						id: row.id,
+						threadId: row.thread_id,
+						senderId:
+							row.sender_kind === 'owner'
+								? this.ownerId
+								: thread.participant.id,
+						senderKind: row.sender_kind,
+						kind,
+						body,
+						imageUrl: imageUrl,
+						sentAt: row.sent_at
+					} satisfies MessageEntry;
+				})
+				.filter((entry): entry is MessageEntry => entry !== null)
+				.sort((a, b) => a.sentAt.localeCompare(b.sentAt));
+
+			const hasMore = olderRows.length >= MESSAGE_PAGE_SIZE;
+
+			this.threads = this.threads.map((t) =>
+				t.id === thread.id
+					? { ...t, messages: [...olderEntries, ...t.messages], hasMoreMessages: hasMore }
+					: t
+			);
+		} catch (err) {
+			this.error = err instanceof Error ? err.message : 'Could not load older messages.';
+		} finally {
+			this.isLoadingOlderMessages = false;
+		}
+	}
+
 	reset() {
 		this.teardownChannels();
 		this.stopPolling();
@@ -240,6 +298,7 @@ class CurrentMessages {
 		this.refreshRequestId = 0;
 		this.isReady = false;
 		this.isLoading = false;
+		this.isLoadingOlderMessages = false;
 		this.isSending = false;
 		this.isResetting = false;
 		this.error = '';

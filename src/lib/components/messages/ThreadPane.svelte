@@ -17,22 +17,26 @@
 		thread,
 		isSending = false,
 		isResetting = false,
+		isLoadingOlderMessages = false,
 		contactTyping = false,
 		onSendMessage,
 		onSendImage,
 		onTyping,
 		onBack,
-		onResetDemo
+		onResetDemo,
+		onLoadOlderMessages
 	}: {
 		thread: MessageThread;
 		isSending?: boolean;
 		isResetting?: boolean;
+		isLoadingOlderMessages?: boolean;
 		contactTyping?: boolean;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
 		onTyping?: () => void;
 		onBack?: () => void;
 		onResetDemo?: () => void;
+		onLoadOlderMessages?: () => void;
 	} = $props();
 
 	const dayGroups = $derived(groupMessagesByDay(thread.messages));
@@ -51,7 +55,24 @@
 
 	function keepScrolledToBottom(_trigger: string) {
 		return (node: HTMLElement) => {
-		node.scrollTop = node.scrollHeight;
+			const isNearBottom = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+			if (isNearBottom || node.scrollTop === 0) {
+				node.scrollTop = node.scrollHeight;
+			}
+		};
+	}
+
+	function handleScrollTop(node: HTMLElement) {
+		function onScroll() {
+			if (node.scrollTop < 40 && thread.hasMoreMessages && !isLoadingOlderMessages && onLoadOlderMessages) {
+				onLoadOlderMessages();
+			}
+		}
+		node.addEventListener('scroll', onScroll, { passive: true });
+		return {
+			destroy() {
+				node.removeEventListener('scroll', onScroll);
+			}
 		};
 	}
 </script>
@@ -119,7 +140,23 @@
 	<div
 		class="min-h-0 flex-1 overflow-y-auto bg-muted/[0.12] px-3 py-3 sm:px-4"
 		{@attach keepScrolledToBottom(`${thread.id}:${thread.messages.length}`)}
+		{@attach handleScrollTop}
 	>
+		{#if isLoadingOlderMessages}
+			<div class="mb-3 flex justify-center">
+				<span class="text-xs text-muted-foreground animate-pulse">Loading older messages…</span>
+			</div>
+		{:else if thread.hasMoreMessages}
+			<div class="mb-3 flex justify-center">
+				<button
+					type="button"
+					class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+					onclick={() => onLoadOlderMessages?.()}
+				>
+					Load older messages
+				</button>
+			</div>
+		{/if}
 		{#each dayGroups as group (group.dateKey)}
 			<div class="my-3 flex items-center gap-3">
 				<div class="h-px flex-1 bg-border/50"></div>

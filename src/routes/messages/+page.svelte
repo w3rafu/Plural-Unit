@@ -33,6 +33,9 @@
 		void currentMessages.resetDemoThread();
 	}
 
+	function handleLoadOlderMessages() {
+		void currentMessages.loadOlderMessages();
+	}
 </script>
 
 <PageHeader preset="section" title="Messages" subtitle="Conversations and threads" />
@@ -57,6 +60,7 @@
 			activeThread={currentMessages.activeThread}
 			isSending={currentMessages.isSending}
 			isResetting={currentMessages.isResetting}
+			isLoadingOlderMessages={currentMessages.isLoadingOlderMessages}
 			contactTyping={currentMessages.contactTyping}
 			onSelectThread={handleSelectThread}
 			onSendMessage={handleSendMessage}
@@ -64,6 +68,7 @@
 			onTyping={handleTyping}
 			onBack={handleBack}
 			onResetDemo={handleResetDemo}
+			onLoadOlderMessages={handleLoadOlderMessages}
 		/>
 	{/if}
 </main>

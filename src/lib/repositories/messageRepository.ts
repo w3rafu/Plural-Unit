@@ -2,7 +2,7 @@ import { getSupabaseClient } from '$lib/supabaseClient';
 import { throwRepositoryError } from '$lib/services/repositoryError';
 import { withRetry } from '$lib/services/retry';
 import type { MessageRow, MessageThread, MessageThreadRow } from '$lib/models/messageModel';
-import { mapMessageThreads, normalizeMessageBody, normalizeMessageImageUrl } from '$lib/models/messageModel';
+import { mapMessageThreads, normalizeMessageBody, normalizeMessageImageUrl, MESSAGE_PAGE_SIZE } from '$lib/models/messageModel';
 
 const MESSAGE_THREADS_TABLE = 'message_threads';
 const MESSAGES_TABLE = 'messages';
@@ -47,7 +47,8 @@ export async function fetchOwnMessageThreads(userId: string): Promise<MessageThr
 					.from(MESSAGES_TABLE)
 					.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at')
 					.in('thread_id', threadIds)
-					.order('sent_at', { ascending: true })
+					.order('sent_at', { ascending: false })
+					.limit(MESSAGE_PAGE_SIZE * threadIds.length)
 		),
 		fetchContactLastReadAtMap(threadIds)
 	]);
@@ -60,7 +61,8 @@ export async function fetchOwnMessageThreads(userId: string): Promise<MessageThr
 		ownerId: userId,
 		threads,
 		messages: (messageResult.data ?? []) as MessageRow[],
-		contactLastReadAtMap: contactReadResult
+		contactLastReadAtMap: contactReadResult,
+		pageSize: MESSAGE_PAGE_SIZE
 	});
 }
 
@@ -209,4 +211,28 @@ async function fetchContactLastReadAtMap(
 	} catch {
 		return {};
 	}
+}
+
+export async function fetchOlderMessages(
+	threadId: string,
+	beforeSentAt: string,
+	limit = MESSAGE_PAGE_SIZE
+): Promise<MessageRow[]> {
+	const supabase = requireClient();
+	const { data, error } = await withRetry(
+		async () =>
+			await supabase
+				.from(MESSAGES_TABLE)
+				.select('id, thread_id, sender_kind, message_kind, body, image_url, sent_at, created_at')
+				.eq('thread_id', threadId)
+				.lt('sent_at', beforeSentAt)
+				.order('sent_at', { ascending: false })
+				.limit(limit)
+	);
+
+	if (error) {
+		throwRepositoryError(error, 'Could not load older messages.');
+	}
+
+	return (data ?? []) as MessageRow[];
 }

@@ -11,19 +11,22 @@
 		activeThread,
 		isSending = false,
 		isResetting = false,
+		isLoadingOlderMessages = false,
 		contactTyping = false,
 		onSelectThread,
 		onSendMessage,
 		onSendImage,
 		onTyping,
 		onBack,
-		onResetDemo
+		onResetDemo,
+		onLoadOlderMessages
 	}: {
 		threads: MessageThread[];
 		activeThreadId?: string;
 		activeThread: MessageThread | null;
 		isSending?: boolean;
 		isResetting?: boolean;
+		isLoadingOlderMessages?: boolean;
 		contactTyping?: boolean;
 		onSelectThread: (threadId: string) => void;
 		onSendMessage: (body: string) => void;
@@ -31,6 +34,7 @@
 		onTyping?: () => void;
 		onBack: () => void;
 		onResetDemo?: () => void;
+		onLoadOlderMessages?: () => void;
 	} = $props();
 
 	const showThread = $derived(!!activeThread);
@@ -47,11 +51,13 @@
 				thread={activeThread}
 				{isSending}
 				{isResetting}
+				{isLoadingOlderMessages}
 				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
 				{onTyping}
 				{onResetDemo}
+				{onLoadOlderMessages}
 			/>
 		{:else}
 			<div class="flex h-full items-center justify-center bg-muted/12 p-6">
@@ -76,12 +82,14 @@
 				thread={activeThread}
 				{isSending}
 				{isResetting}
+				{isLoadingOlderMessages}
 				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
 				{onTyping}
 				{onBack}
 				{onResetDemo}
+				{onLoadOlderMessages}
 			/>
 		</Card.Root>
 	{:else}
