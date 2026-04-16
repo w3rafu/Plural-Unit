@@ -37,11 +37,11 @@
 
 ## c — Test coverage for new services
 
-- [ ] Create `src/lib/services/pushSubscription.test.ts` — subscribe, save, remove, smoke bypass, permission state
-- [ ] Create `src/lib/services/realtimeService.test.ts` — channel subscribe/unsubscribe, typing broadcast/clear, fallback
-- [ ] Create `src/lib/stores/authBoundary.test.ts`
-- [ ] Create `src/lib/stores/currentTheme.test.ts`
-- [ ] Verify total test count increase is at least +15
+- [x] Create `src/lib/services/pushSubscription.test.ts` — subscribe, save, remove, smoke bypass, permission state
+- [x] Create `src/lib/services/realtimeService.test.ts` — channel subscribe/unsubscribe, typing broadcast/clear, fallback
+- [x] Create `src/lib/stores/authBoundary.test.ts`
+- [x] Create `src/lib/stores/currentTheme.test.ts`
+- [x] Verify total test count increase is at least +15
 
 ## d — Lint, format, and error page
 
