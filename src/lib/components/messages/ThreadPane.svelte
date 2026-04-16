@@ -17,16 +17,20 @@
 		thread,
 		isSending = false,
 		isResetting = false,
+		contactTyping = false,
 		onSendMessage,
 		onSendImage,
+		onTyping,
 		onBack,
 		onResetDemo
 	}: {
 		thread: MessageThread;
 		isSending?: boolean;
 		isResetting?: boolean;
+		contactTyping?: boolean;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onTyping?: () => void;
 		onBack?: () => void;
 		onResetDemo?: () => void;
 	} = $props();
@@ -171,5 +175,11 @@
 		{/if}
 	</div>
 
-	<MessageComposer {isSending} {onSendMessage} {onSendImage} />
+	{#if contactTyping}
+		<div class="px-3 py-1 sm:px-4">
+			<p class="text-xs text-muted-foreground animate-pulse">{thread.participant.name} is typing…</p>
+		</div>
+	{/if}
+
+	<MessageComposer {isSending} {onSendMessage} {onSendImage} {onTyping} />
 </div>

@@ -11,9 +11,11 @@
 		activeThread,
 		isSending = false,
 		isResetting = false,
+		contactTyping = false,
 		onSelectThread,
 		onSendMessage,
 		onSendImage,
+		onTyping,
 		onBack,
 		onResetDemo
 	}: {
@@ -22,9 +24,11 @@
 		activeThread: MessageThread | null;
 		isSending?: boolean;
 		isResetting?: boolean;
+		contactTyping?: boolean;
 		onSelectThread: (threadId: string) => void;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onTyping?: () => void;
 		onBack: () => void;
 		onResetDemo?: () => void;
 	} = $props();
@@ -43,8 +47,10 @@
 				thread={activeThread}
 				{isSending}
 				{isResetting}
+				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
+				{onTyping}
 				{onResetDemo}
 			/>
 		{:else}
@@ -70,8 +76,10 @@
 				thread={activeThread}
 				{isSending}
 				{isResetting}
+				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
+				{onTyping}
 				{onBack}
 				{onResetDemo}
 			/>

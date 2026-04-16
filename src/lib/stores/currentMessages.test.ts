@@ -1,6 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MessageThread } from '$lib/models/messageModel';
 
+// ── Mock realtime service ──
+
+const mockSubscribeToMessages = vi.fn().mockReturnValue(() => {});
+const mockSubscribeToThreadPresence = vi.fn().mockReturnValue(() => {});
+const mockBroadcastTyping = vi.fn();
+const mockClearTyping = vi.fn();
+const mockUnsubscribeAll = vi.fn();
+
+vi.mock('$lib/services/realtimeService', () => ({
+	subscribeToMessages: (...args: any[]) => mockSubscribeToMessages(...args),
+	subscribeToThreadPresence: (...args: any[]) => mockSubscribeToThreadPresence(...args),
+	broadcastTyping: (...args: any[]) => mockBroadcastTyping(...args),
+	clearTyping: (...args: any[]) => mockClearTyping(...args),
+	unsubscribeAll: (...args: any[]) => mockUnsubscribeAll(...args)
+}));
+
 // ── Mock message repository ──
 
 const mockFetchOwnMessageThreads = vi.fn();
@@ -363,10 +379,23 @@ describe('reset', () => {
 	});
 });
 
-// ── Polling ──
+// ── Realtime + polling fallback ──
 
-describe('polling', () => {
-	it('starts polling after load', async () => {
+describe('realtime and polling', () => {
+	it('subscribes to realtime after load', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValue([makeThread()]);
+
+		await store.loadForUser('user-1');
+
+		expect(mockSubscribeToMessages).toHaveBeenCalledTimes(1);
+		expect(mockSubscribeToMessages).toHaveBeenCalledWith('user-1', expect.any(Function));
+	});
+
+	it('falls back to polling when realtime subscription throws', async () => {
+		mockSubscribeToMessages.mockImplementationOnce(() => {
+			throw new Error('Realtime unavailable');
+		});
 		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
 		mockFetchOwnMessageThreads.mockResolvedValue([makeThread()]);
 
@@ -374,11 +403,14 @@ describe('polling', () => {
 
 		vi.advanceTimersByTime(15_000);
 
-		// Initial load: ensureDemo + fetch. After 1 tick: fetch again = 3 calls total
+		// Initial load + 1 polling tick
 		expect(mockFetchOwnMessageThreads).toHaveBeenCalledTimes(2);
 	});
 
 	it('stops polling on reset', async () => {
+		mockSubscribeToMessages.mockImplementationOnce(() => {
+			throw new Error('Realtime unavailable');
+		});
 		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
 		mockFetchOwnMessageThreads.mockResolvedValue([makeThread()]);
 
@@ -389,6 +421,19 @@ describe('polling', () => {
 
 		// Only the initial load call
 		expect(mockFetchOwnMessageThreads).toHaveBeenCalledTimes(1);
+	});
+
+	it('unsubscribes on reset', async () => {
+		const mockUnsub = vi.fn();
+		mockSubscribeToMessages.mockReturnValueOnce(mockUnsub);
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValue([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.reset();
+
+		expect(mockUnsub).toHaveBeenCalled();
+		expect(mockUnsubscribeAll).toHaveBeenCalled();
 	});
 });
 

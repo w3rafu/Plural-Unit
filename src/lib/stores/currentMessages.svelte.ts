@@ -1,5 +1,12 @@
 import type { MessageThread } from '$lib/models/messageModel';
 import * as messageRepository from '$lib/repositories/messageRepository';
+import {
+	subscribeToMessages,
+	subscribeToThreadPresence,
+	broadcastTyping,
+	clearTyping,
+	unsubscribeAll
+} from '$lib/services/realtimeService';
 import { buildSmokeMessages } from '$lib/demo/smokeFixtures';
 import { isSmokeModeEnabled } from '$lib/demo/smokeMode';
 
@@ -27,6 +34,7 @@ const defaultMessageRepository: MessageRepository = {
 
 class CurrentMessages {
 	private static readonly POLL_INTERVAL_MS = 15_000;
+	private static readonly REALTIME_REFRESH_DEBOUNCE_MS = 300;
 
 	isReady = $state(false);
 	isLoading = $state(false);
@@ -38,10 +46,15 @@ class CurrentMessages {
 	recentIncomingAt = $state(0);
 	activeThreadId = $state('');
 	threads = $state<MessageThread[]>([]);
+	contactTyping = $state(false);
 
 	private ownerId = '';
 	private refreshRequestId = 0;
 	private pollTimer: ReturnType<typeof setInterval> | null = null;
+	private unsubscribeMessages: (() => void) | null = null;
+	private unsubscribePresence: (() => void) | null = null;
+	private realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+	private useRealtimeFallback = false;
 
 	constructor(private readonly repository: MessageRepository = defaultMessageRepository) {}
 
@@ -88,7 +101,7 @@ class CurrentMessages {
 			await this.refresh({ ensureDemoThread: true });
 		} finally {
 			this.isReady = true;
-			this.startPolling();
+			this.startRealtimeOrPolling();
 		}
 	}
 
@@ -123,6 +136,8 @@ class CurrentMessages {
 
 	async selectThread(threadId: string) {
 		this.activeThreadId = threadId;
+		this.contactTyping = false;
+		this.subscribeToActiveThreadPresence();
 
 		const thread = this.activeThread;
 		if (thread && thread.unreadCount > 0) {
@@ -130,7 +145,7 @@ class CurrentMessages {
 				await this.repository.markMessageThreadRead(threadId);
 				await this.refresh();
 			} catch {
-				// Silently fail — unread badge will clear on next poll
+				// Silently fail — unread badge will clear on next refresh
 			}
 		}
 	}
@@ -181,6 +196,7 @@ class CurrentMessages {
 		this.error = '';
 
 		try {
+			this.notifyStoppedTyping();
 			await this.repository.sendMessageToThread(this.activeThreadId, body);
 			this.lastSentAt = Date.now();
 			await this.refresh();
@@ -214,6 +230,7 @@ class CurrentMessages {
 	}
 
 	reset() {
+		this.teardownChannels();
 		this.stopPolling();
 		this.ownerId = '';
 		this.refreshRequestId = 0;
@@ -227,6 +244,92 @@ class CurrentMessages {
 		this.recentIncomingAt = 0;
 		this.activeThreadId = '';
 		this.threads = [];
+		this.contactTyping = false;
+		this.useRealtimeFallback = false;
+	}
+
+	/**
+	 * Notify the store that the user is actively composing a message.
+	 * Called by the composer on each keystroke.
+	 */
+	notifyTyping() {
+		if (!this.activeThreadId || isSmokeModeEnabled()) return;
+		broadcastTyping(this.activeThreadId);
+	}
+
+	/**
+	 * Explicitly clear typing indicator (e.g. after send).
+	 */
+	notifyStoppedTyping() {
+		if (!this.activeThreadId || isSmokeModeEnabled()) return;
+		clearTyping(this.activeThreadId);
+	}
+
+	private startRealtimeOrPolling() {
+		if (isSmokeModeEnabled()) return;
+
+		try {
+			this.unsubscribeMessages = subscribeToMessages(this.ownerId, () => {
+				this.debouncedRealtimeRefresh();
+			});
+		} catch {
+			// Realtime unavailable — fall back to polling
+			this.useRealtimeFallback = true;
+		}
+
+		if (this.useRealtimeFallback) {
+			this.startPolling();
+		}
+	}
+
+	private debouncedRealtimeRefresh() {
+		if (this.realtimeRefreshTimer) clearTimeout(this.realtimeRefreshTimer);
+		this.realtimeRefreshTimer = setTimeout(() => {
+			this.realtimeRefreshTimer = null;
+			void this.refresh();
+		}, CurrentMessages.REALTIME_REFRESH_DEBOUNCE_MS);
+	}
+
+	private subscribeToActiveThreadPresence() {
+		if (this.unsubscribePresence) {
+			this.unsubscribePresence();
+			this.unsubscribePresence = null;
+		}
+
+		if (!this.activeThreadId || !this.ownerId || isSmokeModeEnabled()) return;
+
+		try {
+			this.unsubscribePresence = subscribeToThreadPresence(
+				this.activeThreadId,
+				this.ownerId,
+				{
+					onTypingChange: (typing) => {
+						this.contactTyping = typing;
+					}
+				}
+			);
+		} catch {
+			// Presence unavailable — typing indicators won't show
+		}
+	}
+
+	private teardownChannels() {
+		if (this.realtimeRefreshTimer) {
+			clearTimeout(this.realtimeRefreshTimer);
+			this.realtimeRefreshTimer = null;
+		}
+
+		if (this.unsubscribePresence) {
+			this.unsubscribePresence();
+			this.unsubscribePresence = null;
+		}
+
+		if (this.unsubscribeMessages) {
+			this.unsubscribeMessages();
+			this.unsubscribeMessages = null;
+		}
+
+		unsubscribeAll();
 	}
 
 	private startPolling() {

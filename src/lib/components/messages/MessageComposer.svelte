@@ -10,11 +10,13 @@
 	let {
 		isSending = false,
 		onSendMessage,
-		onSendImage
+		onSendImage,
+		onTyping
 	}: {
 		isSending?: boolean;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onTyping?: () => void;
 	} = $props();
 
 	let text = $state('');
@@ -35,7 +37,9 @@
 			if (!trimmed || isSending) return;
 			onSendMessage(trimmed);
 			text = '';
+			return;
 		}
+		onTyping?.();
 	}
 
 	function handleFileChange(event: Event) {

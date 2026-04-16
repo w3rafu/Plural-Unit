@@ -25,6 +25,10 @@
 		void currentMessages.sendImage(file);
 	}
 
+	function handleTyping() {
+		currentMessages.notifyTyping();
+	}
+
 	function handleResetDemo() {
 		void currentMessages.resetDemoThread();
 	}
@@ -53,9 +57,11 @@
 			activeThread={currentMessages.activeThread}
 			isSending={currentMessages.isSending}
 			isResetting={currentMessages.isResetting}
+			contactTyping={currentMessages.contactTyping}
 			onSelectThread={handleSelectThread}
 			onSendMessage={handleSendMessage}
 			onSendImage={handleSendImage}
+			onTyping={handleTyping}
 			onBack={handleBack}
 			onResetDemo={handleResetDemo}
 		/>
