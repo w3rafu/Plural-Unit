@@ -15,49 +15,23 @@
 		type PageHeaderAction
 	} from '$lib/stores/pageHeader.svelte';
 
-	const headerPreset = $derived(resolvePageHeaderPreset(pageHeader.config));
-	const headerActions = $derived(pageHeader.config.actions ?? []);
-	const isBrandHeader = $derived(headerPreset === 'brand');
+	const rawPreset = $derived(resolvePageHeaderPreset(pageHeader.config));
+	const isBrandHeader = $derived(rawPreset === 'brand');
 	const hasBack = $derived(Boolean(pageHeader.config.onBack));
 	const backButtonLabel = $derived(pageHeader.config.backLabel?.trim() || '');
 	const backButtonAriaLabel = $derived(backButtonLabel || 'Back');
 	const showSubtitle = $derived(
-		Boolean(pageHeader.config.subtitle) && shouldShowPageHeaderSubtitle(headerPreset)
+		Boolean(pageHeader.config.subtitle) && shouldShowPageHeaderSubtitle(rawPreset)
 	);
 	const showBrandMark = $derived(!hasBack);
 	const showContextAvatar = $derived(
-		hasBack && headerPreset === 'context' && Boolean(pageHeader.config.avatarText)
+		hasBack && Boolean(pageHeader.config.avatarText)
 	);
 	const shellClass = $derived(
-		[
-			'shell-header__surface',
-			isBrandHeader ? 'shell-header__surface--brand' : '',
-			headerPreset === 'section' ? 'shell-header__surface--section' : '',
-			headerPreset === 'context' ? 'shell-header__surface--context' : '',
-			headerPreset === 'detail' ? 'shell-header__surface--detail' : ''
-		]
-			.filter(Boolean)
-			.join(' ')
+		isBrandHeader ? 'shell-header__surface' : 'shell-header__surface shell-header__surface--page'
 	);
 	const titleClass = $derived(
-		[
-			'shell-header__title',
-			headerPreset === 'brand' ? 'shell-header__title--brand' : '',
-			headerPreset === 'section' ? 'shell-header__title--section' : '',
-			headerPreset === 'context' ? 'shell-header__title--context' : '',
-			headerPreset === 'detail' ? 'shell-header__title--detail' : ''
-		]
-			.filter(Boolean)
-			.join(' ')
-	);
-	const subtitleClass = $derived(
-		[
-			'shell-header__subtitle',
-			headerPreset === 'brand' ? 'shell-header__subtitle--brand' : '',
-			headerPreset === 'context' ? 'shell-header__subtitle--context' : ''
-		]
-			.filter(Boolean)
-			.join(' ')
+		isBrandHeader ? 'shell-header__title shell-header__title--brand' : 'shell-header__title shell-header__title--page'
 	);
 	const showOrganizationControl = $derived(currentUser.isLoggedIn && currentOrganization.isAdmin);
 	const isOrganizationRoute = $derived(page.url.pathname.startsWith('/organization'));
@@ -181,9 +155,7 @@
 		box-shadow: none;
 	}
 
-	.shell-header__surface--section,
-	.shell-header__surface--context,
-	.shell-header__surface--detail {
+	.shell-header__surface--page {
 		padding-block: 0.5rem 0.7rem;
 		min-height: 3.9rem;
 	}
@@ -279,18 +251,16 @@
 		font-size: clamp(1.45rem, 3vw, 1.95rem);
 	}
 
-	.shell-header__title--section,
-	.shell-header__title--context,
-	.shell-header__title--detail {
+	.shell-header__title--page {
 		font-size: clamp(1.22rem, 2.45vw, 1.55rem);
 	}
 
-	.shell-header__surface--section .shell-header__brand-mark {
+	.shell-header__surface--page .shell-header__brand-mark {
 		width: 2.75rem;
 		height: 2.75rem;
 	}
 
-	.shell-header__surface--section .shell-header__brand-image {
+	.shell-header__surface--page .shell-header__brand-image {
 		width: 2.2rem;
 		height: 2.2rem;
 	}

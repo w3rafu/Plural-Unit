@@ -9,7 +9,7 @@ export type PageHeaderAction = {
 	disabled?: boolean;
 };
 
-export type PageHeaderPreset = 'brand' | 'section' | 'context' | 'detail';
+export type PageHeaderPreset = 'brand' | 'page' | 'section' | 'context' | 'detail';
 
 export type PageHeaderConfig = {
 	preset: PageHeaderPreset;
@@ -33,24 +33,32 @@ export const DEFAULT_HEADER: Readonly<PageHeaderConfig> = {
 	actions: []
 };
 
+/**
+ * Resolve the effective header preset. Legacy names (section, context, detail)
+ * all map to `page` so the Header component only has two visual variants.
+ */
 export function resolvePageHeaderPreset(config: PageHeaderConfigInput): PageHeaderPreset {
-	if (config.preset) {
-		return config.preset;
+	if (config.preset && config.preset !== 'brand') {
+		return 'page';
+	}
+
+	if (config.preset === 'brand') {
+		return 'brand';
 	}
 
 	if (config.onBack && config.backLabel) {
-		return 'context';
+		return 'page';
 	}
 
 	if ((config.actions?.length ?? 0) > 0) {
-		return 'section';
+		return 'page';
 	}
 
 	return 'brand';
 }
 
 export function shouldShowPageHeaderSubtitle(preset: PageHeaderPreset) {
-	return preset === 'brand' || preset === 'section';
+	return preset === 'brand' || preset === 'page';
 }
 
 export function buildPageHeaderConfig(config: PageHeaderConfigInput): PageHeaderConfig {
