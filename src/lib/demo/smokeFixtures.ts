@@ -185,7 +185,13 @@ function buildSmokeReminderSettings(now: number): Record<string, EventReminderSe
 }
 
 function cloneSmokeMessages() {
-	return cloneUiPreviewThreads();
+	return cloneUiPreviewThreads().map((thread) => ({
+		...thread,
+		archivedAt:
+			thread.participant.name === 'Yara Haddad' ? '2026-04-16T09:30:00.000Z' : thread.archivedAt ?? null,
+		mutedAt:
+			thread.participant.name === 'Malik Johnson' ? '2026-04-16T10:15:00.000Z' : thread.mutedAt ?? null
+	}));
 }
 
 export function buildSmokeInvitations(now = Date.now()): OrganizationInvitation[] {

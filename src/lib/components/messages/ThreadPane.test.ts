@@ -97,4 +97,42 @@ describe('ThreadPane', () => {
 		expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
 		expect(screen.queryByRole('img')).toBeNull();
 	});
+
+	it('renders restore controls for archived threads and forwards the click', async () => {
+		const onUnarchiveThread = vi.fn();
+
+		render(ThreadPane, {
+			props: {
+				thread: makeThread({ archivedAt: '2026-04-16T12:00:00.000Z' }),
+				onSendMessage: () => {},
+				onSendImage: () => {},
+				onUnarchiveThread
+			}
+		});
+
+		expect(screen.getByText('Archived')).toBeTruthy();
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Restore conversation' }));
+
+		expect(onUnarchiveThread).toHaveBeenCalled();
+	});
+
+	it('renders unmute controls for muted threads and forwards the click', async () => {
+		const onUnmuteThread = vi.fn();
+
+		render(ThreadPane, {
+			props: {
+				thread: makeThread({ mutedAt: '2026-04-16T12:00:00.000Z' }),
+				onSendMessage: () => {},
+				onSendImage: () => {},
+				onUnmuteThread
+			}
+		});
+
+		expect(screen.getByText('Muted')).toBeTruthy();
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Unmute conversation' }));
+
+		expect(onUnmuteThread).toHaveBeenCalled();
+	});
 });

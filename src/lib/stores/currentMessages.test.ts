@@ -47,6 +47,10 @@ const mockFetchOwnMessageThreads = vi.fn();
 const mockEnsureDemoMessageThread = vi.fn();
 const mockEnsureMessageThreadForProfile = vi.fn();
 const mockResetDemoMessageThread = vi.fn();
+const mockArchiveMessageThread = vi.fn();
+const mockUnarchiveMessageThread = vi.fn();
+const mockMuteMessageThread = vi.fn();
+const mockUnmuteMessageThread = vi.fn();
 const mockSendMessageToThread = vi.fn();
 const mockUploadMessageImage = vi.fn();
 const mockSendImageMessageToThread = vi.fn();
@@ -59,6 +63,10 @@ const mockRepository = {
 	ensureDemoMessageThread: mockEnsureDemoMessageThread,
 	ensureMessageThreadForProfile: mockEnsureMessageThreadForProfile,
 	resetDemoMessageThread: mockResetDemoMessageThread,
+	archiveMessageThread: mockArchiveMessageThread,
+	unarchiveMessageThread: mockUnarchiveMessageThread,
+	muteMessageThread: mockMuteMessageThread,
+	unmuteMessageThread: mockUnmuteMessageThread,
 	sendMessageToThread: mockSendMessageToThread,
 	uploadMessageImage: mockUploadMessageImage,
 	sendImageMessageToThread: mockSendImageMessageToThread,
@@ -95,6 +103,8 @@ function makeThread(overrides: Partial<MessageThread> = {}): MessageThread {
 		unreadCount: 0,
 		lastReadAt: '2026-04-10T12:00:00Z',
 		contactLastReadAt: null,
+		archivedAt: null,
+		mutedAt: null,
 		hasMoreMessages: false,
 		...overrides
 	};
@@ -539,6 +549,110 @@ describe('resetDemoThread', () => {
 	});
 });
 
+// ── archiveThread / unarchiveThread ──
+
+describe('archiveThread', () => {
+	it('optimistically archives and persists the active thread', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+		mockArchiveMessageThread.mockResolvedValueOnce('2026-04-16T12:00:00.000Z');
+
+		await store.archiveThread();
+
+		expect(mockArchiveMessageThread).toHaveBeenCalledWith('thread-1');
+		expect(store.activeThread?.archivedAt).toBe('2026-04-16T12:00:00.000Z');
+		expect(store.archivingThreadId).toBe('');
+	});
+
+	it('reverts the optimistic change when archive fails', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+		mockArchiveMessageThread.mockRejectedValueOnce(new Error('archive fail'));
+
+		await store.archiveThread();
+
+		expect(store.activeThread?.archivedAt).toBeNull();
+		expect(store.error).toBe('archive fail');
+		expect(store.archivingThreadId).toBe('');
+	});
+});
+
+describe('unarchiveThread', () => {
+	it('optimistically restores an archived thread', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([
+			makeThread({ archivedAt: '2026-04-16T12:00:00.000Z' })
+		]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+		mockUnarchiveMessageThread.mockResolvedValueOnce(undefined);
+
+		await store.unarchiveThread();
+
+		expect(mockUnarchiveMessageThread).toHaveBeenCalledWith('thread-1');
+		expect(store.activeThread?.archivedAt).toBeNull();
+		expect(store.archivingThreadId).toBe('');
+	});
+});
+
+describe('muteThread', () => {
+	it('optimistically mutes and persists the active thread', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+		mockMuteMessageThread.mockResolvedValueOnce('2026-04-16T12:00:00.000Z');
+
+		await store.muteThread();
+
+		expect(mockMuteMessageThread).toHaveBeenCalledWith('thread-1');
+		expect(store.activeThread?.mutedAt).toBe('2026-04-16T12:00:00.000Z');
+		expect(store.mutingThreadId).toBe('');
+	});
+
+	it('reverts the optimistic change when mute fails', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+		mockMuteMessageThread.mockRejectedValueOnce(new Error('mute fail'));
+
+		await store.muteThread();
+
+		expect(store.activeThread?.mutedAt).toBeNull();
+		expect(store.error).toBe('mute fail');
+		expect(store.mutingThreadId).toBe('');
+	});
+});
+
+describe('unmuteThread', () => {
+	it('optimistically restores push alerts for a muted thread', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([
+			makeThread({ mutedAt: '2026-04-16T12:00:00.000Z' })
+		]);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+		mockUnmuteMessageThread.mockResolvedValueOnce(undefined);
+
+		await store.unmuteThread();
+
+		expect(mockUnmuteMessageThread).toHaveBeenCalledWith('thread-1');
+		expect(store.activeThread?.mutedAt).toBeNull();
+		expect(store.mutingThreadId).toBe('');
+	});
+});
+
 describe('smoke mode local messaging', () => {
 	it('sends messages locally without the repository', async () => {
 		mockIsSmokeModeEnabled.mockReturnValue(true);
@@ -551,6 +665,44 @@ describe('smoke mode local messaging', () => {
 		expect(mockSendMessageToThread).not.toHaveBeenCalled();
 		expect(store.activeThread?.messages).toHaveLength(previousCount + 1);
 		expect(store.activeThread?.messages.at(-1)?.body).toBe('Smoke mode message');
+	});
+
+	it('clears archivedAt locally when sending on an archived thread', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await store.loadForUser('user-1');
+		const archivedThread = store.threads.find((thread) => thread.participant.name === 'Yara Haddad');
+		if (!archivedThread) {
+			throw new Error('Expected archived smoke thread to exist.');
+		}
+
+		await store.selectThread(archivedThread.id);
+		expect(store.activeThread?.archivedAt).toBeTruthy();
+
+		await store.sendMessage('Restoring archived smoke thread');
+
+		expect(store.activeThread?.archivedAt).toBeNull();
+	});
+
+	it('mutes and unmutes locally without the repository', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await store.loadForUser('user-1');
+		const mutedThread = store.threads.find((thread) => thread.participant.name === 'Malik Johnson');
+		if (!mutedThread) {
+			throw new Error('Expected muted smoke thread to exist.');
+		}
+
+		await store.selectThread(mutedThread.id);
+		expect(store.activeThread?.mutedAt).toBeTruthy();
+
+		await store.unmuteThread();
+		expect(store.activeThread?.mutedAt).toBeNull();
+		expect(mockUnmuteMessageThread).not.toHaveBeenCalled();
+
+		await store.muteThread();
+		expect(store.activeThread?.mutedAt).toBeTruthy();
+		expect(mockMuteMessageThread).not.toHaveBeenCalled();
 	});
 });
 

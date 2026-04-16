@@ -22,4 +22,28 @@ test.describe('messages smoke routes', () => {
 			page.locator('p:visible').filter({ hasText: 'This message was deleted.' }).first()
 		).toBeVisible();
 	});
+
+	test('reveals and restores an archived smoke conversation', async ({ page }) => {
+		await page.goto('/messages?smoke=1');
+
+		await expect(page.getByText('Yara Haddad').first()).toBeHidden();
+		await page.getByRole('button', { name: 'Show archived' }).click();
+		await expect(page.getByText('Yara Haddad').first()).toBeVisible();
+
+		await page.getByRole('button', { name: /Yara Haddad/i }).first().click();
+		await page.getByRole('button', { name: 'Restore conversation' }).click();
+		await expect(page.getByText('Archived conversations stay out of inbox triage').first()).toBeHidden();
+
+		await page.getByRole('button', { name: 'Hide archived' }).click();
+		await expect(page.getByText('Yara Haddad').first()).toBeVisible();
+	});
+
+	test('unmutes a muted smoke conversation locally', async ({ page }) => {
+		await page.goto('/messages?smoke=1');
+
+		await page.getByText('Malik Johnson').first().click();
+		await expect(page.getByRole('button', { name: 'Unmute conversation' })).toBeVisible();
+		await page.getByRole('button', { name: 'Unmute conversation' }).click();
+		await expect(page.getByRole('button', { name: 'Mute conversation' })).toBeVisible();
+	});
 });

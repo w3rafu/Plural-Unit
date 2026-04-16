@@ -90,7 +90,18 @@ Deno.serve(async (req: Request) => {
 				.eq(preferenceColumn, true)
 				.maybeSingle();
 
-			eligibleProfileIds = recipientPref ? [recipientPref.profile_id] : [];
+			if (!recipientPref) {
+				eligibleProfileIds = [];
+			} else {
+				const { data: recipientThread } = await adminClient
+					.from('message_threads')
+					.select('id, muted_at, message_contacts!inner(profile_id)')
+					.eq('owner_user_id', target_profile_id)
+					.eq('message_contacts.profile_id', user.id)
+					.maybeSingle();
+
+				eligibleProfileIds = recipientThread?.muted_at ? [] : [recipientPref.profile_id];
+			}
 		} else {
 			const { data: eligibleMembers } = await adminClient
 				.from('hub_notification_preferences')

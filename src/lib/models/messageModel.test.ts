@@ -7,6 +7,8 @@ import {
 	getThreadLastMessage,
 	getThreadLastMessageSentAt,
 	getThreadPreview,
+	isThreadArchived,
+	isThreadMuted,
 	sortThreadsByRecent,
 	isThreadRecent,
 	filterThreadsByInboxQuery,
@@ -56,6 +58,8 @@ function makeThread(overrides: Partial<MessageThread> = {}): MessageThread {
 		unreadCount: 0,
 		lastReadAt: '2026-04-10T12:00:00Z',
 		contactLastReadAt: null,
+		archivedAt: null,
+		mutedAt: null,
 		hasMoreMessages: false,
 		...overrides
 	};
@@ -135,6 +139,28 @@ describe('getThreadLastMessageSentAt', () => {
 	});
 });
 
+// ── isThreadArchived ──
+
+describe('isThreadArchived', () => {
+	it('returns true when archivedAt is present', () => {
+		expect(isThreadArchived(makeThread({ archivedAt: '2026-04-12T10:00:00Z' }))).toBe(true);
+	});
+
+	it('returns false when archivedAt is null', () => {
+		expect(isThreadArchived(makeThread({ archivedAt: null }))).toBe(false);
+	});
+});
+
+describe('isThreadMuted', () => {
+	it('returns true when mutedAt is present', () => {
+		expect(isThreadMuted(makeThread({ mutedAt: '2026-04-12T10:00:00Z' }))).toBe(true);
+	});
+
+	it('returns false when mutedAt is null', () => {
+		expect(isThreadMuted(makeThread({ mutedAt: null }))).toBe(false);
+	});
+});
+
 // ── getThreadPreview ──
 
 describe('getThreadPreview', () => {
@@ -180,6 +206,23 @@ describe('sortThreadsByRecent', () => {
 		const threads = [makeThread()];
 		const sorted = sortThreadsByRecent(threads);
 		expect(sorted).not.toBe(threads);
+	});
+
+	it('uses archivedAt when it is newer than the last message', () => {
+		const active = makeThread({
+			id: 'active',
+			messages: [makeMessage({ sentAt: '2026-04-10T12:00:00Z' })]
+		});
+		const archived = makeThread({
+			id: 'archived',
+			messages: [makeMessage({ sentAt: '2026-04-01T12:00:00Z' })],
+			archivedAt: '2026-04-11T09:00:00Z'
+		});
+
+		expect(sortThreadsByRecent([active, archived]).map((thread) => thread.id)).toEqual([
+			'archived',
+			'active'
+		]);
 	});
 });
 
@@ -272,6 +315,30 @@ describe('getInboxThreadSections', () => {
 		const sections = getInboxThreadSections([alice, bob], 'bob', { now });
 		expect(sections.visibleThreads).toHaveLength(1);
 	});
+
+	it('keeps archived threads out of active sections by default', () => {
+		const archived = makeThread({
+			id: 'archived',
+			archivedAt: '2026-04-10T11:30:00Z',
+			messages: [makeMessage({ sentAt: '2026-04-01T12:00:00Z' })]
+		});
+		const sections = getInboxThreadSections([archived], '', { now });
+
+		expect(sections.visibleThreads).toEqual([]);
+		expect(sections.archivedThreads).toEqual([]);
+	});
+
+	it('returns archived threads when includeArchived is enabled', () => {
+		const archived = makeThread({
+			id: 'archived',
+			archivedAt: '2026-04-10T11:30:00Z',
+			messages: [makeMessage({ sentAt: '2026-04-01T12:00:00Z' })]
+		});
+		const sections = getInboxThreadSections([archived], '', { now, includeArchived: true });
+
+		expect(sections.visibleThreads.map((thread) => thread.id)).toEqual(['archived']);
+		expect(sections.archivedThreads.map((thread) => thread.id)).toEqual(['archived']);
+	});
 });
 
 // ── mapMessageThreads ──
@@ -283,6 +350,8 @@ describe('mapMessageThreads', () => {
 				id: 'thread-1',
 				contact_id: 'contact-1',
 				last_read_at: null,
+				archived_at: '2026-04-10T12:30:00Z',
+				muted_at: '2026-04-10T12:35:00Z',
 				created_at: '2026-04-10T10:00:00Z',
 				updated_at: '2026-04-10T12:00:00Z',
 				contact: {
@@ -328,6 +397,8 @@ describe('mapMessageThreads', () => {
 		expect(result[0].messages[0].senderId).toBe('user-1');
 		expect(result[0].messages[1].senderKind).toBe('contact');
 		expect(result[0].messages[1].senderId).toBe('contact-1');
+		expect(result[0].archivedAt).toBe('2026-04-10T12:30:00Z');
+		expect(result[0].mutedAt).toBe('2026-04-10T12:35:00Z');
 	});
 
 	it('counts unread messages since last_read_at', () => {

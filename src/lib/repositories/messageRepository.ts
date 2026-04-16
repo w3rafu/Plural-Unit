@@ -24,7 +24,7 @@ export async function fetchOwnMessageThreads(userId: string): Promise<MessageThr
 			await supabase
 				.from(MESSAGE_THREADS_TABLE)
 				.select(
-					'id, contact_id, last_read_at, created_at, updated_at, contact:message_contacts(id, profile_id, name, avatar_url, subtitle, is_demo)'
+					'id, contact_id, last_read_at, archived_at, muted_at, created_at, updated_at, contact:message_contacts(id, profile_id, name, avatar_url, subtitle, is_demo)'
 				)
 				.eq('owner_user_id', userId)
 				.order('updated_at', { ascending: false })
@@ -204,6 +204,82 @@ export async function markMessageThreadRead(threadId: string) {
 
 	if (error) {
 		throwRepositoryError(error, 'Could not mark thread as read.');
+	}
+}
+
+export async function archiveMessageThread(threadId: string) {
+	const supabase = requireClient();
+	if (!threadId) {
+		throw new Error('Thread id is required.');
+	}
+
+	const { data, error } = await withRetry(
+		async () =>
+			await supabase.rpc('archive_message_thread', {
+				target_thread_id: threadId
+			})
+	);
+
+	if (error) {
+		throwRepositoryError(error, 'Could not archive thread.');
+	}
+
+	return typeof data === 'string' ? data : '';
+}
+
+export async function unarchiveMessageThread(threadId: string) {
+	const supabase = requireClient();
+	if (!threadId) {
+		throw new Error('Thread id is required.');
+	}
+
+	const { error } = await withRetry(
+		async () =>
+			await supabase.rpc('unarchive_message_thread', {
+				target_thread_id: threadId
+			})
+	);
+
+	if (error) {
+		throwRepositoryError(error, 'Could not restore thread.');
+	}
+}
+
+export async function muteMessageThread(threadId: string) {
+	const supabase = requireClient();
+	if (!threadId) {
+		throw new Error('Thread id is required.');
+	}
+
+	const { data, error } = await withRetry(
+		async () =>
+			await supabase.rpc('mute_message_thread', {
+				target_thread_id: threadId
+			})
+	);
+
+	if (error) {
+		throwRepositoryError(error, 'Could not mute thread.');
+	}
+
+	return typeof data === 'string' ? data : '';
+}
+
+export async function unmuteMessageThread(threadId: string) {
+	const supabase = requireClient();
+	if (!threadId) {
+		throw new Error('Thread id is required.');
+	}
+
+	const { error } = await withRetry(
+		async () =>
+			await supabase.rpc('unmute_message_thread', {
+				target_thread_id: threadId
+			})
+	);
+
+	if (error) {
+		throwRepositoryError(error, 'Could not unmute thread.');
 	}
 }
 
