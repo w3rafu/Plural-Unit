@@ -15,6 +15,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"lint": "eslint .",
 		"format": "prettier --write .",
+		"generate-vapid-keys": "node scripts/generate-vapid-keys.mjs",
 		"test": "vitest run",
 		"test:smoke": "playwright test",
 		"test:smoke:headed": "playwright test --headed",

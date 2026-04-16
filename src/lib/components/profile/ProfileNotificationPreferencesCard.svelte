@@ -14,7 +14,9 @@
 		removePushSubscription,
 		hasSavedPushSubscription
 	} from '$lib/services/pushSubscription';
+	import { triggerPushNotification } from '$lib/services/pushNotification';
 	import { env } from '$env/dynamic/public';
+	import { dev } from '$app/environment';
 
 	let draftPreferences = $state<{ broadcast: boolean; event: boolean; message: boolean } | null>(null);
 	let fieldError = $state('');
@@ -88,6 +90,24 @@
 			toast({ title: 'Push error', description: msg, variant: 'error' });
 		} finally {
 			pushBusy = false;
+		}
+	}
+
+	async function sendTestPush() {
+		const orgId = currentOrganization.organization?.id;
+		if (!orgId) return;
+		try {
+			await triggerPushNotification({
+				kind: 'broadcast',
+				organization_id: orgId,
+				source_id: 'test',
+				title: 'Test push notification',
+				body: 'If you see this, push notifications are working!',
+				url: '/profile'
+			});
+			toast({ title: 'Test sent', description: 'Check your device for the notification.', variant: 'success' });
+		} catch {
+			toast({ title: 'Test failed', description: 'Could not send test push.', variant: 'error' });
 		}
 	}
 
@@ -223,6 +243,14 @@
 								</Field.Description>
 							</Field.Content>
 						</Field.Field>
+
+						{#if dev && pushEnabled}
+							<div class="pl-7">
+								<Button type="button" variant="outline" size="sm" onclick={() => void sendTestPush()}>
+									Send test push
+								</Button>
+							</div>
+						{/if}
 					{/if}
 
 					{#if fieldError}

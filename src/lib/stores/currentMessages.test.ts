@@ -333,7 +333,7 @@ describe('push notification triggers', () => {
 			source_id: 'thread-1',
 			title: 'New message',
 			body: 'Hey!',
-			url: '/messages',
+			url: '/messages?thread=thread-1',
 			target_profile_id: 'profile-2'
 		});
 	});

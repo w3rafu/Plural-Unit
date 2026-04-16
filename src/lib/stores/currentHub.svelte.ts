@@ -1319,7 +1319,7 @@ class CurrentHub {
 					source_id: created.id,
 					title: created.title || 'New event',
 					body: created.location ? `Location: ${created.location}` : '',
-					url: `/hub`
+					url: `/hub/event/${created.id}`
 				});
 			}
 		});
@@ -1866,7 +1866,7 @@ class CurrentHub {
 				source_id: synced.id,
 				title: synced.title || 'New event',
 				body: synced.location ? `Location: ${synced.location}` : '',
-				url: `/hub`
+				url: `/hub/event/${synced.id}`
 			});
 		}
 

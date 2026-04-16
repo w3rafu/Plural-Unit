@@ -1,5 +1,42 @@
-// Service worker for Plural Unit push notifications.
+// Service worker for Plural Unit push notifications and offline caching.
 // Registered by src/lib/services/pushSubscription.ts.
+
+const CACHE_NAME = 'plural-unit-v1';
+const APP_SHELL = ['/', '/logo-white.png'];
+
+// ── Install: cache the app shell ──
+
+self.addEventListener('install', (event) => {
+	event.waitUntil(
+		caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+	);
+	self.skipWaiting();
+});
+
+// ── Activate: clean old caches ──
+
+self.addEventListener('activate', (event) => {
+	event.waitUntil(
+		caches.keys().then((keys) =>
+			Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+		)
+	);
+	self.clients.claim();
+});
+
+// ── Fetch: network-first with cache fallback for navigations ──
+
+self.addEventListener('fetch', (event) => {
+	if (event.request.mode !== 'navigate') return;
+
+	event.respondWith(
+		fetch(event.request).catch(() =>
+			caches.match('/').then((cached) => cached || new Response('Offline', { status: 503 }))
+		)
+	);
+});
+
+// ── Push: show notification ──
 
 self.addEventListener('push', (event) => {
 	if (!event.data) return;

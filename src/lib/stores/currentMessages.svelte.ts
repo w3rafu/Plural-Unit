@@ -324,7 +324,7 @@ class CurrentMessages {
 			source_id: thread.id,
 			title: 'New message',
 			body: body.slice(0, 200),
-			url: '/messages',
+			url: `/messages?thread=${thread.id}`,
 			target_profile_id: thread.participant.profileId
 		});
 	}
