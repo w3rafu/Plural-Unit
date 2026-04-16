@@ -25,7 +25,13 @@ export async function fetchBroadcastAcknowledgments(
 		.select(BROADCAST_ACK_SELECT)
 		.eq('organization_id', organizationId);
 
-	if (error) throwRepositoryError(error, 'Could not load broadcast acknowledgments.');
+	if (error) {
+		// Graceful degradation: table may not exist until migration 030 is applied.
+		if (error.code === 'PGRST204' || error.message?.includes('schema cache')) {
+			return [];
+		}
+		throwRepositoryError(error, 'Could not load broadcast acknowledgments.');
+	}
 	return (data ?? []) as BroadcastAcknowledgmentRow[];
 }
 
