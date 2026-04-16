@@ -8,6 +8,7 @@ export type PushNotificationPayload = {
 	title: string;
 	body: string;
 	url?: string;
+	target_profile_id?: string;
 };
 
 /**

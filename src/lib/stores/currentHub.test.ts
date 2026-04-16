@@ -2605,7 +2605,7 @@ describe('currentHub.reset', () => {
 		currentHub.eventResponseMap = { e1: [] };
 		currentHub.eventReminderSettingsMap = { e1: makeReminderSettings({ event_id: 'e1' }) };
 		currentHub.executionLedger = [makeExecutionLedgerRow()];
-		currentHub.notificationPreferences = { broadcast: false, event: true };
+		currentHub.notificationPreferences = { broadcast: false, event: true, message: true };
 		currentHub.notificationReadMap = { 'broadcast:b1': '2026-04-13T10:00:00.000Z' };
 		currentHub.broadcastTargetId = 'b1';
 		currentHub.eventTargetId = 'e1';
@@ -2630,7 +2630,7 @@ describe('currentHub.reset', () => {
 		expect(currentHub.eventReminderSettingsMap).toEqual({});
 		expect(currentHub.executionLedger).toEqual([]);
 		expect(currentHub.eventResponseTargetId).toBe('');
-		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: true });
+		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: true, message: true });
 		expect(currentHub.notificationReadMap).toEqual({});
 		expect(currentHub.isSavingNotificationPreferences).toBe(false);
 		expect(currentHub.notificationReadTargetId).toBe('');

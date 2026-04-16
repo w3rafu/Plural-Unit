@@ -7,6 +7,8 @@ import {
 	clearTyping,
 	unsubscribeAll
 } from '$lib/services/realtimeService';
+import { triggerPushNotification } from '$lib/services/pushNotification';
+import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 import { buildSmokeMessages } from '$lib/demo/smokeFixtures';
 import { isSmokeModeEnabled } from '$lib/demo/smokeMode';
 
@@ -199,6 +201,7 @@ class CurrentMessages {
 			this.notifyStoppedTyping();
 			await this.repository.sendMessageToThread(this.activeThreadId, body);
 			this.lastSentAt = Date.now();
+			this.firePushForActiveThread(body);
 			await this.refresh();
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Could not send message.';
@@ -221,6 +224,7 @@ class CurrentMessages {
 			);
 			await this.repository.sendImageMessageToThread(this.activeThreadId, imageUrl);
 			this.lastSentAt = Date.now();
+			this.firePushForActiveThread('Sent an image');
 			await this.refresh();
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Could not send image.';
@@ -246,6 +250,24 @@ class CurrentMessages {
 		this.threads = [];
 		this.contactTyping = false;
 		this.useRealtimeFallback = false;
+	}
+
+	private firePushForActiveThread(body: string) {
+		const thread = this.activeThread;
+		if (!thread || thread.participant.isFakeUser || !thread.participant.profileId) return;
+
+		const orgId = currentOrganization.organization?.id;
+		if (!orgId) return;
+
+		void triggerPushNotification({
+			kind: 'message',
+			organization_id: orgId,
+			source_id: thread.id,
+			title: 'New message',
+			body: body.slice(0, 200),
+			url: '/messages',
+			target_profile_id: thread.participant.profileId
+		});
 	}
 
 	/**

@@ -22,12 +22,14 @@ export async function updateCurrentHubNotificationPreferences(input: {
 }) {
 	const row = await saveHubNotificationPreferences(input.orgId, input.ownProfileId, {
 		broadcast_enabled: input.nextPreferences.broadcast,
-		event_enabled: input.nextPreferences.event
+		event_enabled: input.nextPreferences.event,
+		message_enabled: input.nextPreferences.message
 	});
 
 	return {
 		broadcast: row.broadcast_enabled,
-		event: row.event_enabled
+		event: row.event_enabled,
+		message: row.message_enabled
 	};
 }
 

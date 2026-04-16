@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
 		}
 
 		const payload = await req.json();
-		const { kind, organization_id, title, body, url } = payload;
+		const { kind, organization_id, title, body, url, target_profile_id } = payload;
 
 		if (!kind || !organization_id || !title) {
 			return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -75,17 +75,33 @@ Deno.serve(async (req: Request) => {
 		const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
 		// Get org members who have the relevant notification preference enabled.
-		const preferenceColumn = kind === 'event' ? 'event_enabled' : 'broadcast_enabled';
+		const preferenceColumn =
+			kind === 'event' ? 'event_enabled' : kind === 'message' ? 'message_enabled' : 'broadcast_enabled';
 
-		const { data: eligibleMembers } = await adminClient
-			.from('hub_notification_preferences')
-			.select('profile_id')
-			.eq('organization_id', organization_id)
-			.eq(preferenceColumn, true);
+		let eligibleProfileIds: string[];
 
-		const eligibleProfileIds = (eligibleMembers ?? [])
-			.map((row: { profile_id: string }) => row.profile_id)
-			.filter((id: string) => id !== user.id); // Exclude sender.
+		if (kind === 'message' && target_profile_id) {
+			// For messages, check preference for just the target recipient.
+			const { data: recipientPref } = await adminClient
+				.from('hub_notification_preferences')
+				.select('profile_id')
+				.eq('organization_id', organization_id)
+				.eq('profile_id', target_profile_id)
+				.eq(preferenceColumn, true)
+				.maybeSingle();
+
+			eligibleProfileIds = recipientPref ? [recipientPref.profile_id] : [];
+		} else {
+			const { data: eligibleMembers } = await adminClient
+				.from('hub_notification_preferences')
+				.select('profile_id')
+				.eq('organization_id', organization_id)
+				.eq(preferenceColumn, true);
+
+			eligibleProfileIds = (eligibleMembers ?? [])
+				.map((row: { profile_id: string }) => row.profile_id)
+				.filter((id: string) => id !== user.id); // Exclude sender.
+		}
 
 		if (eligibleProfileIds.length === 0) {
 			return new Response(JSON.stringify({ sent: 0 }), {

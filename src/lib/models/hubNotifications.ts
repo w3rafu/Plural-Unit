@@ -18,6 +18,7 @@ import { formatShortDateTime } from '$lib/utils/dateFormat';
 export type HubNotificationPreferences = {
 	broadcast: boolean;
 	event: boolean;
+	message: boolean;
 };
 
 export type HubNotificationReadMap = Record<string, string>;
@@ -175,7 +176,8 @@ function buildEventNotification(
 export function createDefaultHubNotificationPreferences(): HubNotificationPreferences {
 	return {
 		broadcast: true,
-		event: true
+		event: true,
+		message: true
 	};
 }
 
@@ -186,12 +188,13 @@ export function normalizeHubNotificationPreferences(
 
 	return {
 		broadcast: row?.broadcast_enabled ?? defaults.broadcast,
-		event: row?.event_enabled ?? defaults.event
+		event: row?.event_enabled ?? defaults.event,
+		message: row?.message_enabled ?? defaults.message
 	};
 }
 
 export function hasEnabledHubNotificationPreferences(preferences: HubNotificationPreferences) {
-	return preferences.broadcast || preferences.event;
+	return preferences.broadcast || preferences.event || preferences.message;
 }
 
 export function getHubNotificationId(

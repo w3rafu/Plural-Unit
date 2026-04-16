@@ -1,6 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MessageThread } from '$lib/models/messageModel';
 
+// ── Mock push notification service ──
+
+const mockTriggerPushNotification = vi.fn();
+
+vi.mock('$lib/services/pushNotification', () => ({
+	triggerPushNotification: (...args: any[]) => mockTriggerPushNotification(...args)
+}));
+
+// ── Mock currentOrganization ──
+
+vi.mock('$lib/stores/currentOrganization.svelte', () => ({
+	currentOrganization: { organization: null as { id: string } | null }
+}));
+
+import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+
 // ── Mock realtime service ──
 
 const mockSubscribeToMessages = vi.fn().mockReturnValue(() => {});
@@ -77,6 +93,7 @@ beforeEach(() => {
 	vi.resetAllMocks();
 	vi.useFakeTimers();
 	store = createCurrentMessagesStore(mockRepository);
+	currentOrganization.organization = { id: 'org-1' } as any;
 });
 
 afterEach(() => {
@@ -280,6 +297,133 @@ describe('sendImage', () => {
 	it('skips when no active thread', async () => {
 		await store.sendImage(new File([], 'x.png'));
 		expect(mockUploadMessageImage).not.toHaveBeenCalled();
+	});
+});
+
+// ── Push notification triggers ──
+
+describe('push notification triggers', () => {
+	it('fires push after sendMessage when participant has a profileId', async () => {
+		const thread = makeThread({
+			participant: {
+				id: 'contact-1',
+				profileId: 'profile-2',
+				name: 'Bob',
+				avatar_url: '',
+				subtitle: '',
+				isFakeUser: false
+			}
+		});
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSendMessageToThread.mockResolvedValueOnce('msg-2');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.sendMessage('Hey!');
+
+		expect(mockTriggerPushNotification).toHaveBeenCalledWith({
+			kind: 'message',
+			organization_id: 'org-1',
+			source_id: 'thread-1',
+			title: 'New message',
+			body: 'Hey!',
+			url: '/messages',
+			target_profile_id: 'profile-2'
+		});
+	});
+
+	it('fires push after sendImage', async () => {
+		const thread = makeThread({
+			participant: {
+				id: 'contact-1',
+				profileId: 'profile-2',
+				name: 'Bob',
+				avatar_url: '',
+				subtitle: '',
+				isFakeUser: false
+			}
+		});
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockUploadMessageImage.mockResolvedValueOnce('https://example.com/img.jpg');
+		mockSendImageMessageToThread.mockResolvedValueOnce('msg-3');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.sendImage(new File(['data'], 'photo.png', { type: 'image/png' }));
+
+		expect(mockTriggerPushNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'message', body: 'Sent an image' })
+		);
+	});
+
+	it('skips push for fake users', async () => {
+		const thread = makeThread({
+			participant: {
+				id: 'contact-1',
+				profileId: 'profile-2',
+				name: 'Demo Bot',
+				avatar_url: '',
+				subtitle: '',
+				isFakeUser: true
+			}
+		});
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSendMessageToThread.mockResolvedValueOnce('msg-2');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.sendMessage('Hello');
+
+		expect(mockTriggerPushNotification).not.toHaveBeenCalled();
+	});
+
+	it('skips push when participant has no profileId', async () => {
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSendMessageToThread.mockResolvedValueOnce('msg-2');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([makeThread()]);
+
+		await store.sendMessage('Hello');
+
+		expect(mockTriggerPushNotification).not.toHaveBeenCalled();
+	});
+
+	it('skips push when no organization is loaded', async () => {
+		currentOrganization.organization = null as any;
+
+		const thread = makeThread({
+			participant: {
+				id: 'contact-1',
+				profileId: 'profile-2',
+				name: 'Bob',
+				avatar_url: '',
+				subtitle: '',
+				isFakeUser: false
+			}
+		});
+		mockEnsureDemoMessageThread.mockResolvedValueOnce('thread-1');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-1';
+
+		mockSendMessageToThread.mockResolvedValueOnce('msg-2');
+		mockFetchOwnMessageThreads.mockResolvedValueOnce([thread]);
+
+		await store.sendMessage('Hello');
+
+		expect(mockTriggerPushNotification).not.toHaveBeenCalled();
 	});
 });
 

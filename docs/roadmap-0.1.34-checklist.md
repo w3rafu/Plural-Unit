@@ -9,19 +9,19 @@
 
 ## a — Complete push notification triggers
 
-- [ ] Add `033_add_message_notification_preference.sql` with `message_enabled boolean not null default true`
-- [ ] Update Edge Function `send-push/index.ts` to use `message_enabled` for `kind: 'message'`
-- [ ] Update Edge Function to support single-profile targeting for message push (recipient only)
-- [ ] Wire `triggerPushNotification({ kind: 'message' })` in `currentMessages.svelte.ts` after `sendMessageToThread`
-- [ ] Skip push for demo/fake user threads
-- [ ] Wire `triggerPushNotification({ kind: 'event' })` in `currentHub.svelte.ts` after event publish
-- [ ] Wire push for scheduled broadcasts that transition to active via the execution ledger delivery path
-- [ ] Update `HubNotificationPreferences` type to include `message: boolean`
-- [ ] Update `HubNotificationPreferenceRow` to include `message_enabled`
-- [ ] Update `saveHubNotificationPreferences` to persist `message_enabled`
-- [ ] Add "Message notifications" checkbox to `ProfileNotificationPreferencesCard.svelte`
-- [ ] Verify all new push calls no-op in smoke mode
-- [ ] Add focused tests for message and event push triggers
+- [x] Add `033_add_message_notification_preference.sql` with `message_enabled boolean not null default true`
+- [x] Update Edge Function `send-push/index.ts` to use `message_enabled` for `kind: 'message'`
+- [x] Update Edge Function to support single-profile targeting for message push (recipient only)
+- [x] Wire `triggerPushNotification({ kind: 'message' })` in `currentMessages.svelte.ts` after `sendMessageToThread`
+- [x] Skip push for demo/fake user threads
+- [x] Wire `triggerPushNotification({ kind: 'event' })` in `currentHub.svelte.ts` after event publish
+- [x] Wire push for scheduled broadcasts that transition to active via the execution ledger delivery path
+- [x] Update `HubNotificationPreferences` type to include `message: boolean`
+- [x] Update `HubNotificationPreferenceRow` to include `message_enabled`
+- [x] Update `saveHubNotificationPreferences` to persist `message_enabled`
+- [x] Add "Message notifications" checkbox to `ProfileNotificationPreferencesCard.svelte`
+- [x] Verify all new push calls no-op in smoke mode
+- [x] Add focused tests for message and event push triggers
 
 ## b — Message pagination
 

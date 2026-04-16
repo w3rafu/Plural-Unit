@@ -347,7 +347,8 @@ describe('buildHubNotifications', () => {
 	it('defaults notification preferences to all enabled when no row exists', () => {
 		expect(createDefaultHubNotificationPreferences()).toEqual({
 			broadcast: true,
-			event: true
+			event: true,
+			message: true
 		});
 	});
 

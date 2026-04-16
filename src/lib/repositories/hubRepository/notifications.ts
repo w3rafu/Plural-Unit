@@ -6,7 +6,7 @@ import { getSupabaseClient } from '$lib/supabaseClient';
 import { throwRepositoryError } from '$lib/services/repositoryError';
 
 const HUB_NOTIFICATION_PREFERENCE_SELECT =
-	'id, organization_id, profile_id, broadcast_enabled, event_enabled, created_at, updated_at';
+	'id, organization_id, profile_id, broadcast_enabled, event_enabled, message_enabled, created_at, updated_at';
 
 const HUB_NOTIFICATION_READ_SELECT =
 	'id, organization_id, profile_id, notification_kind, source_id, notification_key, read_at, created_at, updated_at';
@@ -19,6 +19,7 @@ export type HubNotificationPreferenceRow = {
 	profile_id: string;
 	broadcast_enabled: boolean;
 	event_enabled: boolean;
+	message_enabled: boolean;
 	created_at: string;
 	updated_at: string;
 };
@@ -26,6 +27,7 @@ export type HubNotificationPreferenceRow = {
 export type HubNotificationPreferenceMutationPayload = {
 	broadcast_enabled: boolean;
 	event_enabled: boolean;
+	message_enabled: boolean;
 };
 
 export type HubNotificationReadRow = {

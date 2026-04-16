@@ -16,7 +16,7 @@
 	} from '$lib/services/pushSubscription';
 	import { env } from '$env/dynamic/public';
 
-	let draftPreferences = $state<{ broadcast: boolean; event: boolean } | null>(null);
+	let draftPreferences = $state<{ broadcast: boolean; event: boolean; message: boolean } | null>(null);
 	let fieldError = $state('');
 	let pushEnabled = $state(false);
 	let pushSupported = $state(false);
@@ -101,7 +101,8 @@
 		try {
 			await currentHub.updateNotificationPreferences({
 				broadcast: resolvedPreferences.broadcast,
-				event: resolvedPreferences.event
+				event: resolvedPreferences.event,
+				message: resolvedPreferences.message
 			});
 
 			draftPreferences = null;
@@ -181,6 +182,26 @@
 							<Field.Label for="notification-preferences-events">Event alerts</Field.Label>
 							<Field.Description>
 								Show newly published events, event reminders, and live event updates in your alert tray.
+							</Field.Description>
+						</Field.Content>
+					</Field.Field>
+
+					<Field.Field orientation="horizontal">
+						<Checkbox
+							id="notification-preferences-messages"
+							checked={resolvedPreferences.message}
+							disabled={!canEditPreferences || isLoadingInitialState}
+							onCheckedChange={(nextChecked) => {
+								draftPreferences = {
+									...resolvedPreferences,
+									message: Boolean(nextChecked)
+								};
+							}}
+						/>
+						<Field.Content>
+							<Field.Label for="notification-preferences-messages">Message notifications</Field.Label>
+							<Field.Description>
+								Receive a push notification when someone sends you a direct message.
 							</Field.Description>
 						</Field.Content>
 					</Field.Field>

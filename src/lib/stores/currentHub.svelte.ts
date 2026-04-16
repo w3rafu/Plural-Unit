@@ -1310,6 +1310,18 @@ class CurrentHub {
 
 			await this.reconcileExecutionLedger();
 			await this.cleanupOrphanedFollowUpWorkflowStateRows();
+
+			const created = this.events.find((e) => e.id === nextEventState.createdEventId);
+			if (created && created.delivery_state === 'published' && this.orgId) {
+				void triggerPushNotification({
+					kind: 'event',
+					organization_id: this.orgId,
+					source_id: created.id,
+					title: created.title || 'New event',
+					body: created.location ? `Location: ${created.location}` : '',
+					url: `/hub`
+				});
+			}
 		});
 	}
 
@@ -1826,11 +1838,39 @@ class CurrentHub {
 	}
 
 	private async syncBroadcastDeliveryRow(row: BroadcastRow) {
-		return syncCurrentHubBroadcastDeliveryRow(row);
+		const previousState = row.delivery_state;
+		const synced = await syncCurrentHubBroadcastDeliveryRow(row);
+
+		if (previousState !== 'published' && synced.delivery_state === 'published' && this.orgId) {
+			void triggerPushNotification({
+				kind: 'broadcast',
+				organization_id: this.orgId,
+				source_id: synced.id,
+				title: synced.title || 'New broadcast',
+				body: (synced.body || '').slice(0, 200),
+				url: `/hub`
+			});
+		}
+
+		return synced;
 	}
 
 	private async syncEventDeliveryRow(row: EventRow) {
-		return syncCurrentHubEventDeliveryRow(row);
+		const previousState = row.delivery_state;
+		const synced = await syncCurrentHubEventDeliveryRow(row);
+
+		if (previousState !== 'published' && synced.delivery_state === 'published' && this.orgId) {
+			void triggerPushNotification({
+				kind: 'event',
+				organization_id: this.orgId,
+				source_id: synced.id,
+				title: synced.title || 'New event',
+				body: synced.location ? `Location: ${synced.location}` : '',
+				url: `/hub`
+			});
+		}
+
+		return synced;
 	}
 
 	// ── Resource actions ──
