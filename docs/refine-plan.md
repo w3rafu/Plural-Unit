@@ -180,12 +180,12 @@ If pending invites = 0, stale invites = 0, email = 0, phone = 0 — don't show t
 
 ## Suggested work order
 
-1. **Phase 1** — Theme system (unblocks your team's design work)
-2. **Phase 2a** — Flatten organization routes
-3. **Phase 2b** — Flatten profile routes
-4. **Phase 3a** — Header preset reduction
-5. **Phase 3b/c** — Hub page simplification
-6. **Phase 4** — Visual tightening
-7. **Phase 5** — Polish and test
+1. **Phase 1** — Theme system ✅ `06dd4c7`
+2. **Phase 2a** — Flatten organization routes ✅ `5fac0a6`
+3. **Phase 2b** — Flatten profile routes ✅ `5fac0a6`
+4. **Phase 3a** — Header preset reduction ✅ `026934d`
+5. **Phase 3b/c** — Hub page simplification ✅ `b411411`
+6. **Phase 4** — Visual tightening ✅ `ad4b079`
+7. **Phase 5** — Polish and test ✅ (route audit, mobile 375px audit, dark/light parity — all clean)
 
 Each phase is a mergeable chunk. The branch can be reviewed and merged incrementally via squash merges back to main, or kept as one refinement PR.
