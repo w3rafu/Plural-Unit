@@ -38,6 +38,13 @@
 <ModeWatcher defaultMode="dark" themeColors={{ dark: '#09090b', light: '#fafafa' }} />
 <UnsavedChangesGuard />
 
+<a
+	href="#main-content"
+	class="bg-background text-foreground ring-ring fixed left-2 top-2 z-50 -translate-y-full rounded-md px-4 py-2 text-sm font-medium opacity-0 transition focus:translate-y-0 focus:opacity-100 focus:outline-none focus:ring-2"
+>
+	Skip to content
+</a>
+
 <!--
   Root layout — wraps every page with the AuthGate.
 
@@ -52,6 +59,7 @@
 			{/if}
 		</div>
 		<div
+			id="main-content"
 			class={isLockedContentRoute
 				? 'min-h-0 flex-1 overflow-hidden py-3 sm:py-4'
 				: 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 sm:py-4'}
