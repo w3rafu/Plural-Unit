@@ -7,9 +7,20 @@
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
+	import {
+		isPushSupported,
+		subscribeToPush,
+		savePushSubscription,
+		removePushSubscription,
+		hasSavedPushSubscription
+	} from '$lib/services/pushSubscription';
+	import { env } from '$env/dynamic/public';
 
 	let draftPreferences = $state<{ broadcast: boolean; event: boolean } | null>(null);
 	let fieldError = $state('');
+	let pushEnabled = $state(false);
+	let pushSupported = $state(false);
+	let pushBusy = $state(false);
 
 	const organizationId = $derived(currentOrganization.organization?.id ?? '');
 	const hasMembership = $derived(Boolean(currentOrganization.membership?.profile_id));
@@ -19,6 +30,13 @@
 	const resolvedPreferences = $derived(draftPreferences ?? currentHub.notificationPreferences);
 
 	onMount(() => {
+		pushSupported = isPushSupported();
+		if (pushSupported) {
+			void hasSavedPushSubscription().then((saved) => {
+				pushEnabled = saved;
+			});
+		}
+
 		if (organizationId && hasMembership && !currentHub.hasLoadedForCurrentOrg && !currentHub.isLoading) {
 			void loadNotificationSettings();
 		}
@@ -40,6 +58,37 @@
 
 	function retryLoad() {
 		void loadNotificationSettings();
+	}
+
+	async function togglePush(enable: boolean) {
+		if (pushBusy) return;
+		pushBusy = true;
+
+		try {
+			if (enable) {
+				const permission = await Notification.requestPermission();
+				if (permission !== 'granted') {
+					toast({ title: 'Permission denied', description: 'Enable notifications in your browser settings.', variant: 'error' });
+					return;
+				}
+
+				const subscription = await subscribeToPush(env.PUBLIC_VAPID_KEY ?? '');
+				if (subscription) {
+					await savePushSubscription(subscription);
+					pushEnabled = true;
+					toast({ title: 'Push enabled', description: 'You will receive push notifications on this device.', variant: 'success' });
+				}
+			} else {
+				await removePushSubscription();
+				pushEnabled = false;
+				toast({ title: 'Push disabled', description: 'Push notifications turned off for this device.', variant: 'success' });
+			}
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : 'Could not update push settings.';
+			toast({ title: 'Push error', description: msg, variant: 'error' });
+		} finally {
+			pushBusy = false;
+		}
 	}
 
 	async function savePreferences() {
@@ -135,6 +184,25 @@
 							</Field.Description>
 						</Field.Content>
 					</Field.Field>
+
+					{#if pushSupported && env.PUBLIC_VAPID_KEY}
+						<Field.Field orientation="horizontal">
+							<Checkbox
+								id="notification-preferences-push"
+								checked={pushEnabled}
+								disabled={pushBusy}
+								onCheckedChange={(nextChecked) => {
+									void togglePush(Boolean(nextChecked));
+								}}
+							/>
+							<Field.Content>
+								<Field.Label for="notification-preferences-push">Push notifications</Field.Label>
+								<Field.Description>
+									Receive push notifications on this device when you're away from the app.
+								</Field.Description>
+							</Field.Content>
+						</Field.Field>
+					{/if}
 
 					{#if fieldError}
 						<Field.Error role="alert">{fieldError}</Field.Error>

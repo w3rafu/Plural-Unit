@@ -186,6 +186,7 @@ import {
 	isSmokeModeEnabled,
 	shouldHydrateSmokeHubState
 } from '$lib/demo/smokeMode';
+import { triggerPushNotification } from '$lib/services/pushNotification';
 
 const HUB_EXECUTION_QUEUE_TRIAGE_STORAGE_KEY_PREFIX = 'plural-unit:hub-queue-triage:';
 const HUB_EXECUTION_QUEUE_TRIAGE_IMPORT_STORAGE_KEY_PREFIX =
@@ -1226,6 +1227,18 @@ class CurrentHub {
 				syncBroadcastDeliveryRow: (row) => this.syncBroadcastDeliveryRow(row)
 			});
 			await this.reconcileExecutionLedger();
+
+			const published = this.broadcasts.find((b) => b.id === broadcastId);
+			if (published && this.orgId) {
+				void triggerPushNotification({
+					kind: 'broadcast',
+					organization_id: this.orgId,
+					source_id: broadcastId,
+					title: published.title || 'New broadcast',
+					body: (published.body || '').slice(0, 200),
+					url: `/hub`
+				});
+			}
 		});
 	}
 
