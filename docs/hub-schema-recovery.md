@@ -43,6 +43,9 @@ These are the hub migrations most likely to surface as runtime drift in an older
 | `027_backfill_hub_delivery_metadata.sql` | Catch-up migration for databases that missed the `021` delivery metadata rollout | older databases still fail on `delivery_state` even though newer code expects it |
 | `028_fix_get_organization_members_ambiguity.sql` | Qualifies membership columns in `get_organization_members(...)` so RPC output names stop shadowing table columns | `column reference "profile_id" is ambiguous`, `column reference "role" is ambiguous` |
 | `029_create_hub_operator_workflow_state.sql` | Adds shared admin review and defer persistence for queue and follow-up workflow state | `relation "public.hub_operator_workflow_state" does not exist`, `column hub_operator_workflow_state.reviewed_against_signature does not exist` |
+| `030_add_broadcast_acknowledgments.sql` | Adds broadcast acknowledgment tracking (member engagement) | `relation "public.hub_broadcast_acknowledgments" does not exist` |
+| `031_add_contact_last_read_at.sql` | Adds RPC for cross-thread read status ("Seen" indicator) | `function public.get_contact_last_read_at(uuid[]) does not exist` |
+| `032_add_push_subscriptions.sql` | Adds Web Push subscription storage per profile | `relation "public.push_subscriptions" does not exist` |
 
 Important precondition:
 
@@ -132,6 +135,9 @@ Use the error text itself:
 - ambiguous `profile_id` or `role` reference from `get_organization_members(...)`: apply `028`
 - missing shared workflow-state relation or `reviewed_against_signature`: apply `029`
 - no error, but recent events vanish too early: apply `026`
+- missing broadcast acknowledgments table: apply `030`
+- missing `get_contact_last_read_at` function: apply `031`
+- missing push subscriptions table: apply `032`
 
 If the database is broadly behind, do not cherry-pick one migration unless you know exactly why. Apply the full outstanding sequence in order.
 

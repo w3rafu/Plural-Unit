@@ -308,7 +308,7 @@ The browser smoke harness runs the real app routes in a fixture-backed smoke mod
 
 The smoke flows intentionally stay narrow. They currently cover one happy-path plugin toggle, one alert filter/read interaction, one attendance closeout mutation, one workflow write plus stale re-surface path in the operations queue, and one workflow-schema failure path. They do not try to exhaustively cover every editor path, reminder edge case, or multi-user synchronization scenario.
 
-Smoke mode is also intentionally local-only. Plugin toggles, alert read state, attendance closeout, and queue triage all mutate in-memory or browser-local state during smoke runs so the harness remains safe under blank `PUBLIC_SUPABASE_*` env vars.
+Smoke mode is also intentionally local-only. Plugin toggles, alert read state, attendance closeout, queue triage, broadcast acknowledgments, and messaging all mutate in-memory or browser-local state during smoke runs so the harness remains safe under blank `PUBLIC_SUPABASE_*` env vars. Real-time messaging falls back to fixture-backed polling in smoke mode, and push subscription registration is skipped entirely.
 
 For manual failure-path checks, `?smoke=1&smokeScenario=stale-workflow-schema` simulates a missing shared workflow-state schema and should surface the `029_create_hub_operator_workflow_state.sql` recovery guidance in both home and manage load states. `stale-hub-schema` is still available if you need to force the older delivery-column drift path.
 
