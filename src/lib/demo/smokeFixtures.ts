@@ -202,15 +202,17 @@ export function buildSmokeInvitations(now = Date.now()): OrganizationInvitation[
 			email: 'new.family@example.com',
 			phone: null,
 			status: 'pending',
-			created_at: toIsoFromNow(-2_880, now)
+			created_at: toIsoFromNow(-12_960, now),
+			expires_at: toIsoFromNow(2_880, now)
 		},
 		{
 			id: 'smoke-invite-phone',
 			organization_id: uiPreviewFixtures.organizationId,
 			email: null,
 			phone: '+1 555 123 0099',
-			status: 'pending',
-			created_at: toIsoFromNow(-12_960, now)
+			status: 'expired',
+			created_at: toIsoFromNow(-28_800, now),
+			expires_at: toIsoFromNow(-14_400, now)
 		}
 	];
 }

@@ -17,6 +17,7 @@ function makeInvitation(overrides: Partial<OrganizationInvitation> = {}): Organi
 		phone: null,
 		status: 'pending',
 		created_at: '2026-04-11T00:00:00Z',
+		expires_at: '2026-04-25T00:00:00Z',
 		...overrides
 	};
 }
@@ -73,6 +74,7 @@ describe('getInviteConfirmationDetails', () => {
 		});
 		expect(details.some((d) => d.includes('a@b.com'))).toBe(true);
 		expect(details.some((d) => d.includes('Email'))).toBe(true);
+		expect(details.some((d) => d.includes('fresh expiry window'))).toBe(true);
 	});
 
 	it('shows Phone channel when email is null', () => {

@@ -7,6 +7,7 @@ import {
 
 import {
 	buildSmokeHubState,
+	buildSmokeInvitations,
 	buildSmokeMessages,
 	buildSmokeUserDetails,
 	summarizeSmokeHubState
@@ -83,5 +84,18 @@ describe('smokeFixtures', () => {
 		expect(user.name).toBe('Ariana Lopez');
 		expect(threads.length).toBeGreaterThan(0);
 		expect(threads[0]?.messages.length).toBeGreaterThan(0);
+	});
+
+	it('seeds invitation follow-up with active and expired fixtures', () => {
+		const now = Date.parse('2026-04-15T12:00:00.000Z');
+		const invitations = buildSmokeInvitations(now);
+		const activeInvitation = invitations.find((invitation) => invitation.status === 'pending');
+		const expiredInvitation = invitations.find((invitation) => invitation.status === 'expired');
+
+		expect(invitations).toHaveLength(2);
+		expect(activeInvitation?.email).toBe('new.family@example.com');
+		expect(Date.parse(activeInvitation?.expires_at ?? '')).toBeGreaterThan(now);
+		expect(expiredInvitation?.phone).toBe('+1 555 123 0099');
+		expect(Date.parse(expiredInvitation?.expires_at ?? '')).toBeLessThan(now);
 	});
 });

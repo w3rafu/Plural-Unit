@@ -27,6 +27,7 @@ export type OrganizationInvitation = {
 	phone: string | null;
 	status: 'pending' | 'accepted' | 'revoked' | 'expired';
 	created_at: string;
+	expires_at: string | null;
 };
 
 /** Denormalized member row returned by the get_organization_members RPC. */

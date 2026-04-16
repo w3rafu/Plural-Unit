@@ -4,7 +4,10 @@
 	import * as Table from '$lib/components/ui/table';
 	import {
 		getInvitationChannel,
+		getOrganizationInvitationExpiresAt,
 		getInvitationRecipient,
+		isExpiredOrganizationInvitation,
+		isExpiringSoonOrganizationInvitation,
 		isStaleOrganizationInvitation
 	} from '$lib/models/accessReviewModel';
 	import type { OrganizationInvitation } from '$lib/models/organizationModel';
@@ -39,7 +42,7 @@
 </script>
 
 <div class="overflow-hidden rounded-xl border border-border/70 bg-muted/10">
-	<Table.Root class="min-w-[40rem]">
+	<Table.Root class="min-w-160">
 		<Table.Caption class="sr-only">Pending invitations for the current organization.</Table.Caption>
 		<Table.Header class="bg-muted/25">
 			<Table.Row>
@@ -47,6 +50,7 @@
 				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Channel</Table.Head>
 				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Signals</Table.Head>
 				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Sent</Table.Head>
+				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Expires</Table.Head>
 				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
 			</Table.Row>
 		</Table.Header>
@@ -65,14 +69,22 @@
 						<Table.Cell class="text-sm text-muted-foreground">{formatChannelLabel(invitation)}</Table.Cell>
 						<Table.Cell>
 							<div class="flex flex-wrap gap-2">
-								<Badge variant="secondary">Pending</Badge>
+								<Badge variant={isExpiredOrganizationInvitation(invitation) ? 'destructive' : 'secondary'}>
+									{isExpiredOrganizationInvitation(invitation) ? 'Expired' : 'Pending'}
+								</Badge>
 								{#if isStaleOrganizationInvitation(invitation)}
 									<Badge variant="outline">Stale</Badge>
+								{/if}
+								{#if isExpiringSoonOrganizationInvitation(invitation)}
+									<Badge variant="outline">Expiring soon</Badge>
 								{/if}
 							</div>
 						</Table.Cell>
 						<Table.Cell class="text-right text-sm text-muted-foreground">
 							{formatSentAt(invitation.created_at)}
+						</Table.Cell>
+						<Table.Cell class="text-right text-sm text-muted-foreground">
+							{formatSentAt(getOrganizationInvitationExpiresAt(invitation))}
 						</Table.Cell>
 						<Table.Cell class="text-right">
 							<div class="flex justify-end gap-2">
@@ -102,7 +114,7 @@
 				{/each}
 			{:else}
 				<Table.Row class="border-0 hover:bg-transparent">
-					<Table.Cell colspan={5} class="py-10 text-center">
+					<Table.Cell colspan={6} class="py-10 text-center">
 						<div class="space-y-1">
 							<p class="font-medium text-foreground">{emptyTitle}</p>
 							<p class="text-sm text-muted-foreground">{emptyDescription}</p>

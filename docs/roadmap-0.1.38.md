@@ -4,7 +4,7 @@
 
 ## Status
 
-Slices `a` and `b` are implemented locally and validated. Slices `c` through `e` remain planned.
+Slices `a` through `c` are implemented locally and validated. Slices `d` and `e` remain planned.
 
 ## Product constraints
 
@@ -101,6 +101,7 @@ Goals:
 - add explicit expiry metadata and recovery copy for pending invites
 - extend resend behavior so refreshed invites rotate the token and extend expiry consistently
 - keep join-code access separate from direct-invite lifecycle rules
+- keep smoke-mode invitation review and recovery deterministic with fixture-backed expired invites
 
 Candidate files:
 

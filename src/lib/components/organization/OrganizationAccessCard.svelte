@@ -8,6 +8,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import {
 		buildPendingInvitationsSummary,
+		countExpiredOrganizationInvitations,
+		countExpiringSoonOrganizationInvitations,
 		countStaleOrganizationInvitations,
 		filterPendingInvitations,
 		getInvitationChannel,
@@ -30,6 +32,7 @@
 	const invitationFilterOptions = [
 		{ value: 'all', label: 'All' },
 		{ value: 'stale', label: 'Stale' },
+		{ value: 'expired', label: 'Expired' },
 		{ value: 'email', label: 'Email' },
 		{ value: 'phone', label: 'Phone' }
 	] as const satisfies Array<{ value: InvitationReviewFilter; label: string }>;
@@ -38,13 +41,12 @@
 	let pendingInviteAction = $state<PendingInviteAction>(null);
 	let invitationQuery = $state('');
 	let invitationFilter = $state<InvitationReviewFilter>('all');
+	const expiredInviteCount = $derived(countExpiredOrganizationInvitations(currentOrganization.invitations));
+	const expiringSoonInviteCount = $derived(
+		countExpiringSoonOrganizationInvitations(currentOrganization.invitations)
+	);
+	const activeInviteCount = $derived(currentOrganization.invitations.length - expiredInviteCount);
 	const staleInviteCount = $derived(countStaleOrganizationInvitations(currentOrganization.invitations));
-	const emailInviteCount = $derived(
-		currentOrganization.invitations.filter((invitation) => getInvitationChannel(invitation) === 'email').length
-	);
-	const phoneInviteCount = $derived(
-		currentOrganization.invitations.filter((invitation) => getInvitationChannel(invitation) === 'phone').length
-	);
 	const visibleInvitations = $derived(
 		filterPendingInvitations(currentOrganization.invitations, {
 			query: invitationQuery,
@@ -98,7 +100,7 @@
 				confirmationOpen = false;
 				toast({
 					title: 'Invitation refreshed',
-					description: `A new invite token was generated for ${recipient}.`,
+					description: `A new invite token and expiry window were generated for ${recipient}.`,
 					variant: 'success'
 				});
 			} catch (error) {
@@ -215,7 +217,7 @@
 		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<Card.Title class="text-lg font-semibold tracking-tight">Pending invitations</Card.Title>
-				<Card.Description>Review the invites that are still waiting to be accepted.</Card.Description>
+				<Card.Description>Review active and expired invites, then resend anything that needs a fresh token.</Card.Description>
 			</Card.Header>
 
 			<Card.Content class="space-y-3.5">
@@ -224,7 +226,7 @@
 						<div class="metric-card">
 							<div>
 								<p class="metric-label">Pending</p>
-								<p class="metric-value">{currentOrganization.invitations.length}</p>
+								<p class="metric-value">{activeInviteCount}</p>
 							</div>
 						</div>
 
@@ -237,15 +239,15 @@
 
 						<div class="metric-card">
 							<div>
-								<p class="metric-label">Email</p>
-								<p class="metric-value">{emailInviteCount}</p>
+								<p class="metric-label">Expiring soon</p>
+								<p class="metric-value">{expiringSoonInviteCount}</p>
 							</div>
 						</div>
 
 						<div class="metric-card">
 							<div>
-								<p class="metric-label">Phone</p>
-								<p class="metric-value">{phoneInviteCount}</p>
+								<p class="metric-label">Expired</p>
+								<p class="metric-value">{expiredInviteCount}</p>
 							</div>
 						</div>
 					</div>
@@ -296,7 +298,7 @@
 					/>
 				{:else}
 					<p class="text-sm text-muted-foreground py-3">
-						No pending invitations.
+						No invitations currently need review.
 					</p>
 				{/if}
 			</Card.Content>

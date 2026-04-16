@@ -30,12 +30,12 @@
 
 ## c — Invitation expiry and stale follow-through
 
-- [ ] Create `supabase/migrations/042_add_invitation_expiry.sql`
-- [ ] Extend invitation repository and store payloads with expiry metadata
-- [ ] Distinguish stale invites from expired invites in access-review helpers
-- [ ] Update invitation review UI with expiry badges and recovery copy
-- [ ] Keep resend as the main recovery path for expired invites
-- [ ] Verify existing pending invitations stay usable or migrate safely
+- [x] Create `supabase/migrations/042_add_invitation_expiry.sql`
+- [x] Extend invitation repository and store payloads with expiry metadata
+- [x] Distinguish stale invites from expired invites in access-review helpers
+- [x] Update invitation review UI with expiry badges and recovery copy
+- [x] Keep resend as the main recovery path for expired invites
+- [x] Verify existing pending invitations stay usable or migrate safely
 
 ## d — Role-aware hub section targeting
 
@@ -49,9 +49,9 @@
 ## e — Smoke, release handoff, and rollout safety
 
 - [ ] Extend `e2e/messages-smoke.spec.ts` for archive and mute flows
-- [ ] Extend `e2e/organization-smoke.spec.ts` for invitation expiry and resend recovery
+- [x] Extend `e2e/organization-smoke.spec.ts` for invitation expiry and resend recovery
 - [ ] Extend `e2e/hub-smoke.spec.ts` for role-targeted section visibility
-- [ ] Update smoke fixtures for archived threads, muted threads, and expired invitations
+- [x] Update smoke fixtures for archived threads, muted threads, and expired invitations
 - [ ] Create `docs/release-notes-0.1.37.md`
 - [ ] Update README only after the latest roadmap and release notes stay aligned
 - [ ] Verify missing-migration guidance stays accurate for any new thread, invite, or plugin-visibility schema changes

@@ -378,8 +378,8 @@ export function mapOrganizationErrorMessage(error: unknown): string {
 		return 'That organization code was not recognized.';
 	if (normalized.includes('invitation token is invalid'))
 		return 'That invitation token was not recognized.';
-	if (normalized.includes('invitation has expired'))
-		return 'That invitation has expired.';
+	if (normalized.includes('invitation has expired') || normalized.includes('invitation expired'))
+		return 'That invitation has expired. Ask an admin to resend it.';
 
 	return message;
 }

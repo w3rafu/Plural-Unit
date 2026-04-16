@@ -3,14 +3,19 @@ import type { OrganizationInvitation, OrganizationMember } from '$lib/models/org
 import {
 	buildOrganizationMembersSummary,
 	buildPendingInvitationsSummary,
+	countExpiredOrganizationInvitations,
+	countExpiringSoonOrganizationInvitations,
 	countRecentOrganizationMembers,
 	countStaleOrganizationInvitations,
 	filterOrganizationMembers,
 	filterPendingInvitations,
 	getInvitationChannel,
 	getInvitationRecipient,
+	getOrganizationInvitationExpiresAt,
 	getOrganizationMembersEmptyState,
 	getPendingInvitationsEmptyState,
+	isExpiredOrganizationInvitation,
+	isExpiringSoonOrganizationInvitation,
 	isRecentOrganizationMember,
 	isStaleOrganizationInvitation
 } from './accessReviewModel';
@@ -38,6 +43,7 @@ function makeInvitation(overrides: Partial<OrganizationInvitation> = {}): Organi
 		phone: null,
 		status: 'pending',
 		created_at: '2026-04-01T10:00:00.000Z',
+		expires_at: '2026-04-15T10:00:00.000Z',
 		...overrides
 	};
 }
@@ -90,25 +96,64 @@ describe('accessReviewModel', () => {
 		const now = new Date('2026-04-12T10:00:00.000Z').getTime();
 		const emailInvite = makeInvitation();
 		const phoneInvite = makeInvitation({ id: 'invite-2', email: null, phone: '+1555', created_at: '2026-04-10T10:00:00.000Z' });
+		const expiredInvite = makeInvitation({
+			id: 'invite-3',
+			status: 'expired',
+			expires_at: '2026-04-11T10:00:00.000Z'
+		});
 
 		expect(getInvitationRecipient(emailInvite)).toBe('person@example.com');
 		expect(getInvitationChannel(emailInvite)).toBe('email');
 		expect(getInvitationChannel(phoneInvite)).toBe('phone');
 		expect(isStaleOrganizationInvitation(emailInvite, now)).toBe(true);
 		expect(isStaleOrganizationInvitation(phoneInvite, now)).toBe(false);
-		expect(countStaleOrganizationInvitations([emailInvite, phoneInvite], now)).toBe(1);
+		expect(isStaleOrganizationInvitation(expiredInvite, now)).toBe(false);
+		expect(countStaleOrganizationInvitations([emailInvite, phoneInvite, expiredInvite], now)).toBe(1);
+	});
+
+	it('derives invitation expiry state from explicit or fallback timestamps', () => {
+		const now = new Date('2026-04-12T10:00:00.000Z').getTime();
+		const expiringSoonInvite = makeInvitation({
+			id: 'invite-2',
+			expires_at: '2026-04-14T10:00:00.000Z'
+		});
+		const expiredInvite = makeInvitation({
+			id: 'invite-3',
+			status: 'expired',
+			expires_at: '2026-04-11T10:00:00.000Z'
+		});
+		const fallbackInvite = makeInvitation({
+			id: 'invite-4',
+			expires_at: null,
+			created_at: '2026-04-01T10:00:00.000Z'
+		});
+
+		expect(getOrganizationInvitationExpiresAt(fallbackInvite)).toBe('2026-04-15T10:00:00.000Z');
+		expect(isExpiredOrganizationInvitation(expiredInvite, now)).toBe(true);
+		expect(isExpiredOrganizationInvitation(fallbackInvite, new Date('2026-04-16T10:00:00.000Z').getTime())).toBe(true);
+		expect(isExpiringSoonOrganizationInvitation(expiringSoonInvite, now)).toBe(true);
+		expect(countExpiredOrganizationInvitations([expiringSoonInvite, expiredInvite], now)).toBe(1);
+		expect(countExpiringSoonOrganizationInvitations([expiringSoonInvite, expiredInvite], now)).toBe(1);
 	});
 
 	it('filters invitations by query and review filter', () => {
 		const now = new Date('2026-04-12T10:00:00.000Z').getTime();
 		const invitations = [
 			makeInvitation({ id: 'invite-1', email: 'person@example.com', created_at: '2026-04-01T10:00:00.000Z' }),
-			makeInvitation({ id: 'invite-2', email: null, phone: '+1555', created_at: '2026-04-10T10:00:00.000Z' })
+			makeInvitation({ id: 'invite-2', email: null, phone: '+1555', created_at: '2026-04-10T10:00:00.000Z' }),
+			makeInvitation({
+				id: 'invite-3',
+				email: 'expired@example.com',
+				status: 'expired',
+				expires_at: '2026-04-11T10:00:00.000Z'
+			})
 		];
 
 		expect(filterPendingInvitations(invitations, { filter: 'stale', now }).map((invitation) => invitation.id)).toEqual(['invite-1']);
+		expect(filterPendingInvitations(invitations, { filter: 'expired', now }).map((invitation) => invitation.id)).toEqual(['invite-3']);
 		expect(filterPendingInvitations(invitations, { filter: 'phone', now }).map((invitation) => invitation.id)).toEqual(['invite-2']);
-		expect(filterPendingInvitations(invitations, { query: 'example', now }).map((invitation) => invitation.id)).toEqual(['invite-1']);
+		expect(filterPendingInvitations(invitations, { query: 'person@example', now }).map((invitation) => invitation.id)).toEqual(['invite-1']);
+		expect(filterPendingInvitations(invitations, { query: 'expired', now }).map((invitation) => invitation.id)).toEqual(['invite-3']);
 	});
 
 	it('builds invitation summaries and empty states', () => {
@@ -119,7 +164,7 @@ describe('accessReviewModel', () => {
 				visibleCount: 2,
 				totalCount: 2
 			})
-		).toBe('2 pending invites currently need review.');
+		).toBe('2 invites currently need review.');
 		expect(
 			buildPendingInvitationsSummary({
 				query: 'phone',
@@ -130,5 +175,6 @@ describe('accessReviewModel', () => {
 		).toContain('Showing 1 of 2 phone invites');
 		expect(getPendingInvitationsEmptyState('aria', 'all').title).toBe('No matching invitations');
 		expect(getPendingInvitationsEmptyState('', 'stale').title).toBe('No stale invitations');
+		expect(getPendingInvitationsEmptyState('', 'expired').title).toBe('No expired invitations');
 	});
 });
