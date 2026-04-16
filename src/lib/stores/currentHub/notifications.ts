@@ -29,7 +29,7 @@ export async function updateCurrentHubNotificationPreferences(input: {
 	return {
 		broadcast: row.broadcast_enabled,
 		event: row.event_enabled,
-		message: row.message_enabled
+		message: row.message_enabled ?? true
 	};
 }
 

@@ -8,6 +8,10 @@ import { throwRepositoryError } from '$lib/services/repositoryError';
 const HUB_NOTIFICATION_PREFERENCE_SELECT =
 	'id, organization_id, profile_id, broadcast_enabled, event_enabled, message_enabled, created_at, updated_at';
 
+/** Fallback select that omits message_enabled for databases that haven't applied migration 033. */
+const HUB_NOTIFICATION_PREFERENCE_SELECT_COMPAT =
+	'id, organization_id, profile_id, broadcast_enabled, event_enabled, created_at, updated_at';
+
 const HUB_NOTIFICATION_READ_SELECT =
 	'id, organization_id, profile_id, notification_kind, source_id, notification_key, read_at, created_at, updated_at';
 
@@ -19,7 +23,7 @@ export type HubNotificationPreferenceRow = {
 	profile_id: string;
 	broadcast_enabled: boolean;
 	event_enabled: boolean;
-	message_enabled: boolean;
+	message_enabled?: boolean;
 	created_at: string;
 	updated_at: string;
 };
@@ -27,7 +31,7 @@ export type HubNotificationPreferenceRow = {
 export type HubNotificationPreferenceMutationPayload = {
 	broadcast_enabled: boolean;
 	event_enabled: boolean;
-	message_enabled: boolean;
+	message_enabled?: boolean;
 };
 
 export type HubNotificationReadRow = {
@@ -46,15 +50,34 @@ export async function fetchHubNotificationPreferences(
 	organizationId: string,
 	profileId: string
 ): Promise<HubNotificationPreferenceRow | null> {
-	const { data, error } = await getSupabaseClient()
+	const supabase = getSupabaseClient();
+
+	// Try with message_enabled first; fall back to compat select if column doesn't exist yet.
+	const { data, error } = await supabase
 		.from('hub_notification_preferences')
 		.select(HUB_NOTIFICATION_PREFERENCE_SELECT)
 		.eq('organization_id', organizationId)
 		.eq('profile_id', profileId)
 		.maybeSingle();
 
+	if (error && isColumnMissing(error)) {
+		const { data: compat, error: compatError } = await supabase
+			.from('hub_notification_preferences')
+			.select(HUB_NOTIFICATION_PREFERENCE_SELECT_COMPAT)
+			.eq('organization_id', organizationId)
+			.eq('profile_id', profileId)
+			.maybeSingle();
+
+		if (compatError) throwRepositoryError(compatError, 'Could not load notification preferences.');
+		return (compat ?? null) as HubNotificationPreferenceRow | null;
+	}
+
 	if (error) throwRepositoryError(error, 'Could not load notification preferences.');
 	return (data ?? null) as HubNotificationPreferenceRow | null;
+}
+
+function isColumnMissing(error: { message?: string; code?: string }): boolean {
+	return !!error.message?.includes('does not exist');
 }
 
 export async function saveHubNotificationPreferences(
@@ -62,7 +85,9 @@ export async function saveHubNotificationPreferences(
 	profileId: string,
 	payload: HubNotificationPreferenceMutationPayload
 ): Promise<HubNotificationPreferenceRow> {
-	const { data, error } = await getSupabaseClient()
+	const supabase = getSupabaseClient();
+
+	const { data, error } = await supabase
 		.from('hub_notification_preferences')
 		.upsert(
 			{
@@ -75,9 +100,30 @@ export async function saveHubNotificationPreferences(
 		.select(HUB_NOTIFICATION_PREFERENCE_SELECT)
 		.single();
 
+	if (error && isColumnMissing(error)) {
+		// Retry without message_enabled for databases that haven't applied migration 033.
+		const { message_enabled: _, ...compatPayload } = payload;
+		const { data: compat, error: compatError } = await supabase
+			.from('hub_notification_preferences')
+			.upsert(
+				{
+					organization_id: organizationId,
+					profile_id: profileId,
+					...compatPayload
+				},
+				{ onConflict: 'organization_id,profile_id' }
+			)
+			.select(HUB_NOTIFICATION_PREFERENCE_SELECT_COMPAT)
+			.single();
+
+		if (compatError) throwRepositoryError(compatError, 'Could not save notification preferences.');
+		return compat as HubNotificationPreferenceRow;
+	}
+
 	if (error) throwRepositoryError(error, 'Could not save notification preferences.');
 	return data as HubNotificationPreferenceRow;
 }
+
 
 export async function fetchHubNotificationReads(
 	organizationId: string,

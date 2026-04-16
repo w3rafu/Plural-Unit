@@ -270,7 +270,7 @@ export async function loadCurrentHubState(input: {
 			? {
 				broadcast: raw.notificationPreferenceRow.broadcast_enabled,
 				event: raw.notificationPreferenceRow.event_enabled,
-				message: raw.notificationPreferenceRow.message_enabled
+				message: raw.notificationPreferenceRow.message_enabled ?? true
 			}
 			: createDefaultHubNotificationPreferences(),
 		notificationReadMap: buildHubNotificationReadMap(raw.notificationReadRows),

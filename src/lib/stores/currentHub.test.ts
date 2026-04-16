@@ -333,6 +333,7 @@ function makeNotificationPreferenceRow(
 		profile_id: string;
 		broadcast_enabled: boolean;
 		event_enabled: boolean;
+		message_enabled: boolean;
 		created_at: string;
 		updated_at: string;
 	}> = {}
@@ -343,6 +344,7 @@ function makeNotificationPreferenceRow(
 		profile_id: overrides.profile_id ?? 'profile-1',
 		broadcast_enabled: overrides.broadcast_enabled ?? true,
 		event_enabled: overrides.event_enabled ?? true,
+		message_enabled: overrides.message_enabled ?? true,
 		created_at: overrides.created_at ?? '2026-04-13T10:00:00.000Z',
 		updated_at: overrides.updated_at ?? '2026-04-13T10:00:00.000Z'
 	};
@@ -1016,7 +1018,7 @@ describe('currentHub.load', () => {
 
 		await currentHub.load();
 
-		expect(currentHub.notificationPreferences).toEqual({ broadcast: false, event: true });
+		expect(currentHub.notificationPreferences).toEqual({ broadcast: false, event: true, message: true });
 		expect(currentHub.notificationReadMap).toEqual({
 			'event:e1': '2026-04-13T10:00:00.000Z'
 		});
@@ -1618,13 +1620,14 @@ describe('currentHub notification preferences', () => {
 			makeNotificationPreferenceRow({ broadcast_enabled: true, event_enabled: false })
 		);
 
-		await currentHub.updateNotificationPreferences({ broadcast: true, event: false });
+		await currentHub.updateNotificationPreferences({ broadcast: true, event: false, message: true });
 
 		expect(mockSaveHubNotificationPreferences).toHaveBeenCalledWith('org-1', 'profile-1', {
 			broadcast_enabled: true,
-			event_enabled: false
+			event_enabled: false,
+			message_enabled: true
 		});
-		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: false });
+		expect(currentHub.notificationPreferences).toEqual({ broadcast: true, event: false, message: true });
 		expect(currentHub.isSavingNotificationPreferences).toBe(false);
 	});
 
