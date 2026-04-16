@@ -212,6 +212,16 @@ describe('filterThreadsByInboxQuery', () => {
 		expect(filterThreadsByInboxQuery([thread], 'missing')).toHaveLength(0);
 	});
 
+	it('searches older message bodies, not just the last preview', () => {
+		const thread = makeThread({
+			messages: [
+				makeMessage({ id: 'm1', body: 'hidden treasure', sentAt: '2026-04-09T10:00:00Z' }),
+				makeMessage({ id: 'm2', body: 'latest reply', sentAt: '2026-04-10T10:00:00Z' })
+			]
+		});
+		expect(filterThreadsByInboxQuery([thread], 'treasure')).toHaveLength(1);
+	});
+
 	it('is case-insensitive', () => {
 		const thread = makeThread({ participant: makeParticipant({ name: 'Alice' }) });
 		expect(filterThreadsByInboxQuery([thread], 'ALICE')).toHaveLength(1);

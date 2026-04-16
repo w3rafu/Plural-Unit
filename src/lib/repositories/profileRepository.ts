@@ -249,7 +249,7 @@ export async function fetchOwnProfile(userId: string): Promise<Partial<UserDetai
 	return withRetry(async () => {
 		const { data, error } = await getSupabaseClient()
 			.from('profiles')
-			.select('id, name, email, phone_number, avatar_url')
+			.select('id, name, email, phone_number, avatar_url, bio')
 			.eq('id', userId)
 			.maybeSingle();
 
@@ -295,4 +295,11 @@ export async function uploadProfileAvatar(userId: string, file: File): Promise<s
 
 export async function deleteProfileAvatar(userId: string) {
 	await removeExistingAvatarFiles(userId);
+}
+
+export async function requestAccountDeletion() {
+	return withRetry(async () => {
+		const { error } = await getSupabaseClient().rpc('request_account_deletion');
+		if (error) throwRepositoryError(error, 'Could not request account deletion.');
+	});
 }

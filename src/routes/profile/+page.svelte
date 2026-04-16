@@ -2,6 +2,7 @@
 	import { LogOut } from '@lucide/svelte';
 	import ProfileSection from '$lib/components/profile/ProfileSection.svelte';
 	import ProfileDetailsCard from '$lib/components/profile/ProfileDetailsCard.svelte';
+	import ProfileDangerZoneCard from '$lib/components/profile/ProfileDangerZoneCard.svelte';
 	import ProfileNotificationPreferencesCard from '$lib/components/profile/ProfileNotificationPreferencesCard.svelte';
 	import ProfileSecurityCard from '$lib/components/profile/ProfileSecurityCard.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -21,6 +22,8 @@
 <ProfileDetailsCard />
 <ProfileNotificationPreferencesCard />
 <ProfileSecurityCard />
+
+<ProfileDangerZoneCard />
 
 <Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Content class="flex items-center justify-between p-3.5">

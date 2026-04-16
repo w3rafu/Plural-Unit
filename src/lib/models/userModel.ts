@@ -10,6 +10,7 @@ export type UserDetails = {
 	email: string;
 	phone_number: string;
 	avatar_url: string;
+	bio: string;
 };
 
 /** Empty placeholder used before the real profile is loaded from Supabase. */
@@ -18,5 +19,6 @@ export const INITIAL_DETAILS: UserDetails = {
 	name: '',
 	email: '',
 	phone_number: '',
-	avatar_url: ''
+	avatar_url: '',
+	bio: ''
 };

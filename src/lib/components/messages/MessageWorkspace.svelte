@@ -19,7 +19,8 @@
 		onTyping,
 		onBack,
 		onResetDemo,
-		onLoadOlderMessages
+		onLoadOlderMessages,
+		onCompose
 	}: {
 		threads: MessageThread[];
 		activeThreadId?: string;
@@ -35,6 +36,7 @@
 		onBack: () => void;
 		onResetDemo?: () => void;
 		onLoadOlderMessages?: () => void;
+		onCompose?: () => void;
 	} = $props();
 
 	const showThread = $derived(!!activeThread);
@@ -42,7 +44,7 @@
 
 <div class="hidden min-h-0 flex-1 md:grid md:grid-cols-[340px_1fr] md:gap-2">
 	<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
-		<InboxPane {threads} {activeThreadId} {onSelectThread} />
+		<InboxPane {threads} {activeThreadId} {onSelectThread} {onCompose} />
 	</Card.Root>
 
 	<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
@@ -94,7 +96,7 @@
 		</Card.Root>
 	{:else}
 		<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
-			<InboxPane {threads} {activeThreadId} {onSelectThread} />
+			<InboxPane {threads} {activeThreadId} {onSelectThread} {onCompose} />
 		</Card.Root>
 	{/if}
 </div>

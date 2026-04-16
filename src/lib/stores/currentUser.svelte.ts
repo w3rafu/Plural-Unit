@@ -28,6 +28,7 @@ import {
 	upsertOwnProfile,
 	uploadProfileAvatar as uploadOwnProfileAvatar,
 	deleteProfileAvatar,
+	requestAccountDeletion as requestAccountDeletionRpc,
 	type EmailChangeResult,
 	type RegistrationResult
 } from '$lib/repositories/profileRepository';
@@ -239,7 +240,7 @@ class CurrentUser {
 		}
 	}
 
-	async updateProfileDetails(updates: Pick<UserDetails, 'name' | 'phone_number' | 'avatar_url'>) {
+	async updateProfileDetails(updates: Pick<UserDetails, 'name' | 'phone_number' | 'avatar_url' | 'bio'>) {
 		this.isLoggingIn = true;
 		try {
 			await upsertOwnProfile(this.details.id, updates);
@@ -254,7 +255,8 @@ class CurrentUser {
 		await this.updateProfileDetails({
 			name,
 			phone_number: this.details.phone_number,
-			avatar_url: this.details.avatar_url
+			avatar_url: this.details.avatar_url,
+			bio: this.details.bio
 		});
 	}
 
@@ -288,6 +290,10 @@ class CurrentUser {
 		} finally {
 			this.isLoggingIn = false;
 		}
+	}
+
+	async requestAccountDeletion() {
+		await requestAccountDeletionRpc();
 	}
 
 	async logout() {

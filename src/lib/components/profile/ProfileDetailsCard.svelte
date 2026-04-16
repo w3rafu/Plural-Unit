@@ -21,6 +21,7 @@
 
 	let name = $state(currentUser.details.name);
 	let phoneNumber = $state(currentUser.details.phone_number);
+	let bio = $state(currentUser.details.bio);
 	let selectedAvatarFile = $state<File | null>(null);
 	let avatarPreviewUrl = $state('');
 	let removeAvatar = $state(false);
@@ -37,6 +38,7 @@
 		createDirtySnapshot({
 			name: currentUser.details.name.trim(),
 			phoneNumber: currentUser.details.phone_number.trim(),
+			bio: currentUser.details.bio.trim(),
 			avatarState: currentUser.details.avatar_url ? 'stored-avatar' : 'no-avatar'
 		})
 	);
@@ -44,6 +46,7 @@
 		createDirtySnapshot({
 			name: name.trim(),
 			phoneNumber: phoneNumber.trim(),
+			bio: bio.trim(),
 			avatarState: selectedAvatarFile
 				? `${selectedAvatarFile.name}:${selectedAvatarFile.size}:${selectedAvatarFile.lastModified}`
 				: removeAvatar
@@ -63,6 +66,7 @@
 		if (!hasEditedDetails && !selectedAvatarFile && !removeAvatar) {
 			name = currentUser.details.name;
 			phoneNumber = currentUser.details.phone_number;
+			bio = currentUser.details.bio;
 		}
 	});
 
@@ -157,11 +161,13 @@
 			await currentUser.updateProfileDetails({
 				name: nameResult.normalizedName,
 				phone_number: normalizedPhoneNumber,
-				avatar_url: avatarUrl
+				avatar_url: avatarUrl,
+				bio: bio.trim().slice(0, 500)
 			});
 
 			name = currentUser.details.name;
 			phoneNumber = currentUser.details.phone_number;
+			bio = currentUser.details.bio;
 			hasEditedDetails = false;
 			clearAvatarPreview();
 			selectedAvatarFile = null;
@@ -236,6 +242,23 @@
 								hasEditedDetails = true;
 							}}
 						/>
+					</Field.Content>
+				</Field.Field>
+
+				<Field.Field>
+					<Field.Content>
+						<Field.Label for="profile-bio">Bio</Field.Label>
+						<Field.Description>A short note visible to other members (500 characters max).</Field.Description>
+						<textarea
+							id="profile-bio"
+							class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							maxlength={500}
+							rows={3}
+							bind:value={bio}
+							oninput={() => {
+								hasEditedDetails = true;
+							}}
+						></textarea>
 					</Field.Content>
 				</Field.Field>
 

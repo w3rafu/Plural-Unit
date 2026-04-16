@@ -258,7 +258,8 @@ export function buildSmokeUserDetails(): UserDetails {
 		name: currentMember.name,
 		email: currentMember.email,
 		phone_number: currentMember.phone_number,
-		avatar_url: currentMember.avatar_url
+		avatar_url: currentMember.avatar_url,
+		bio: ''
 	};
 }
 

@@ -194,9 +194,9 @@ describe('currentUser.updateProfileDetails', () => {
 		(currentUser as any).details = { ...INITIAL_DETAILS, id: 'u1' };
 		mockUpsertOwnProfile.mockResolvedValueOnce(undefined);
 
-		await currentUser.updateProfileDetails({ name: 'Bob', phone_number: '+1555', avatar_url: '' });
+		await currentUser.updateProfileDetails({ name: 'Bob', phone_number: '+1555', avatar_url: '', bio: 'Hello' });
 
-		expect(mockUpsertOwnProfile).toHaveBeenCalledWith('u1', { name: 'Bob', phone_number: '+1555', avatar_url: '' });
+		expect(mockUpsertOwnProfile).toHaveBeenCalledWith('u1', { name: 'Bob', phone_number: '+1555', avatar_url: '', bio: 'Hello' });
 		expect(currentUser.details.name).toBe('Bob');
 	});
 });

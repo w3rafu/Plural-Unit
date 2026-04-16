@@ -4,20 +4,23 @@
 -->
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import type { MessageThread, MessageInboxSections } from '$lib/models/messageModel';
 	import { getInboxThreadSections } from '$lib/models/messageModel';
 	import { Input } from '$lib/components/ui/input';
 	import ThreadCard from './ThreadCard.svelte';
-	import { Search } from '@lucide/svelte';
+	import { Search, SquarePen } from '@lucide/svelte';
 
 	let {
 		threads,
 		activeThreadId = '',
-		onSelectThread
+		onSelectThread,
+		onCompose
 	}: {
 		threads: MessageThread[];
 		activeThreadId?: string;
 		onSelectThread: (threadId: string) => void;
+		onCompose?: () => void;
 	} = $props();
 
 	let query = $state('');
@@ -43,9 +46,16 @@
 					</p>
 				</div>
 
-				<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-					{threadLabel}
-				</Badge>
+				<div class="flex items-center gap-2">
+					{#if onCompose}
+						<Button type="button" variant="ghost" size="icon" class="size-8 rounded-lg" aria-label="New message" onclick={onCompose}>
+							<SquarePen class="size-4" />
+						</Button>
+					{/if}
+					<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+						{threadLabel}
+					</Badge>
+				</div>
 			</div>
 
 			<div class="grid grid-cols-3 gap-2">

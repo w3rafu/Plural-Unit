@@ -5,9 +5,14 @@
 -->
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
+	import ContactPicker from '$lib/components/messages/ContactPicker.svelte';
 	import MessageWorkspace from '$lib/components/messages/MessageWorkspace.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
+	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+	import { currentUser } from '$lib/stores/currentUser.svelte';
+
+	let contactPickerOpen = $state(false);
 
 	function handleSelectThread(threadId: string) {
 		void currentMessages.selectThread(threadId);
@@ -35,6 +40,14 @@
 
 	function handleLoadOlderMessages() {
 		void currentMessages.loadOlderMessages();
+	}
+
+	function handleCompose() {
+		contactPickerOpen = true;
+	}
+
+	function handleSelectMember(profileId: string) {
+		void currentMessages.openConversationForProfile(profileId);
 	}
 </script>
 
@@ -69,6 +82,14 @@
 			onBack={handleBack}
 			onResetDemo={handleResetDemo}
 			onLoadOlderMessages={handleLoadOlderMessages}
+			onCompose={handleCompose}
 		/>
 	{/if}
+
+	<ContactPicker
+		bind:open={contactPickerOpen}
+		members={currentOrganization.members}
+		currentProfileId={currentUser.details.id}
+		onSelectMember={handleSelectMember}
+	/>
 </main>

@@ -150,7 +150,13 @@ export function filterThreadsByInboxQuery(threads: MessageThread[], query: strin
 			.join(' ')
 			.toLowerCase();
 
-		return haystack.includes(normalizedQuery);
+		if (haystack.includes(normalizedQuery)) {
+			return true;
+		}
+
+		return thread.messages.some(
+			(message) => message.body.toLowerCase().includes(normalizedQuery)
+		);
 	});
 }
 

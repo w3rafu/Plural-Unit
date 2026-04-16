@@ -209,7 +209,9 @@
 							</p>
 						</div>
 						<div class="space-y-1">
-							<h3 class="text-base font-medium text-foreground">{event.title}</h3>
+							<h3 class="text-base font-medium text-foreground">
+								<a href="/hub/event/{event.id}" class="hover:underline">{event.title}</a>
+							</h3>
 							<p class="text-sm leading-5 text-muted-foreground">
 								{event.description || 'More details will appear here soon.'}
 							</p>
@@ -299,7 +301,9 @@
 									</p>
 								</div>
 								<div class="space-y-1">
-									<h3 class="text-base font-medium text-foreground">{event.title}</h3>
+									<h3 class="text-base font-medium text-foreground">
+										<a href="/hub/event/{event.id}" class="hover:underline">{event.title}</a>
+									</h3>
 									<p class="text-sm leading-5 text-muted-foreground">
 										{event.description || 'More details will appear here soon.'}
 									</p>
