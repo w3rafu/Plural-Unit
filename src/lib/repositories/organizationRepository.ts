@@ -247,3 +247,15 @@ export async function removeOrganizationMember(organizationId: string, profileId
 
 	if (error) throwRepositoryError(error, 'Could not remove the member.');
 }
+
+// ── Update organization ──
+
+/** Update the organization's name. Caller must be an admin. */
+export async function updateOrganizationName(organizationId: string, name: string) {
+	const { error } = await getSupabaseClient().rpc('update_organization_name', {
+		p_organization_id: organizationId,
+		p_name: name
+	});
+
+	if (error) throwRepositoryError(error, 'Could not update the organization name.');
+}

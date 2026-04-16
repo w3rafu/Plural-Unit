@@ -15,6 +15,7 @@ const mockFetchMemberCount = vi.fn();
 const mockFetchOrganizationMembers = vi.fn();
 const mockSetOrganizationMemberRole = vi.fn();
 const mockRemoveOrganizationMember = vi.fn();
+const mockUpdateOrganizationName = vi.fn();
 
 vi.mock('$lib/repositories/organizationRepository', () => ({
 	fetchOwnOrganizationContext: (...args: any[]) => mockFetchOwnOrganizationContext(...args),
@@ -29,7 +30,8 @@ vi.mock('$lib/repositories/organizationRepository', () => ({
 	fetchMemberCount: (...args: any[]) => mockFetchMemberCount(...args),
 	fetchOrganizationMembers: (...args: any[]) => mockFetchOrganizationMembers(...args),
 	setOrganizationMemberRole: (...args: any[]) => mockSetOrganizationMemberRole(...args),
-	removeOrganizationMember: (...args: any[]) => mockRemoveOrganizationMember(...args)
+	removeOrganizationMember: (...args: any[]) => mockRemoveOrganizationMember(...args),
+	updateOrganizationName: (...args: any[]) => mockUpdateOrganizationName(...args)
 }));
 
 // Mock profileRepository auth helpers used by currentOrganization
@@ -339,5 +341,39 @@ describe('currentOrganization.reset', () => {
 		expect(currentOrganization.members).toEqual([]);
 		expect(currentOrganization.memberCount).toBeNull();
 		expect(currentOrganization.lastError).toBeNull();
+	});
+});
+
+describe('currentOrganization.updateName', () => {
+	it('calls repository and optimistically updates org name', async () => {
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(ORG_CTX);
+		await currentOrganization.refresh('u1');
+
+		mockUpdateOrganizationName.mockResolvedValueOnce(undefined);
+		await currentOrganization.updateName('New Name');
+
+		expect(mockUpdateOrganizationName).toHaveBeenCalledWith('org-1', 'New Name');
+		expect(currentOrganization.organization?.name).toBe('New Name');
+		expect(currentOrganization.isMutating).toBe(false);
+	});
+
+	it('throws for non-admin members', async () => {
+		const memberCtx = {
+			...ORG_CTX,
+			membership: { ...ORG_CTX.membership, role: 'member' as const }
+		};
+		mockFetchOwnOrganizationContext.mockResolvedValueOnce(memberCtx);
+		await currentOrganization.refresh('u1');
+
+		await expect(currentOrganization.updateName('Nope')).rejects.toThrow(
+			'Organization admin access required.'
+		);
+		expect(mockUpdateOrganizationName).not.toHaveBeenCalled();
+	});
+
+	it('throws when no organization is loaded', async () => {
+		await expect(currentOrganization.updateName('Nope')).rejects.toThrow(
+			'Organization admin access required.'
+		);
 	});
 });

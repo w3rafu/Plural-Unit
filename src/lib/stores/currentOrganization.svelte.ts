@@ -31,7 +31,8 @@ import {
 	fetchMemberCount,
 	fetchOrganizationMembers,
 	setOrganizationMemberRole,
-	removeOrganizationMember
+	removeOrganizationMember,
+	updateOrganizationName
 } from '$lib/repositories/organizationRepository';
 import { subscribeToAuthStateChange, getAuthenticatedUser } from '$lib/repositories/profileRepository';
 import {
@@ -314,6 +315,17 @@ class CurrentOrganization {
 				await this.loadMembers();
 			}
 			await this.loadMemberCount();
+		} finally {
+			this.isMutating = false;
+		}
+	}
+
+	async updateName(name: string) {
+		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
+		this.isMutating = true;
+		try {
+			await updateOrganizationName(this.organization.id, name);
+			this.organization = { ...this.organization, name };
 		} finally {
 			this.isMutating = false;
 		}

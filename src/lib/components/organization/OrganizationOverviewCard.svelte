@@ -1,7 +1,48 @@
 <script lang="ts">
+	import { Pencil } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+	import { toast } from '$lib/stores/toast.svelte';
 	import { formatShortDate } from '$lib/utils/dateFormat';
+
+	let isEditing = $state(false);
+	let editName = $state('');
+
+	function startEditing() {
+		editName = currentOrganization.organization?.name ?? '';
+		isEditing = true;
+	}
+
+	function cancelEditing() {
+		isEditing = false;
+	}
+
+	async function saveName() {
+		const trimmed = editName.trim();
+		if (!trimmed) return;
+		if (trimmed === currentOrganization.organization?.name) {
+			isEditing = false;
+			return;
+		}
+
+		try {
+			await currentOrganization.updateName(trimmed);
+			isEditing = false;
+			toast({
+				title: 'Organization updated',
+				description: 'The organization name was changed.',
+				variant: 'success'
+			});
+		} catch (error) {
+			toast({
+				title: 'Could not update name',
+				description: error instanceof Error ? error.message : 'Failed to save the organization name.',
+				variant: 'error'
+			});
+		}
+	}
 
 	const joinedLabel = $derived.by(() => {
 		switch (currentOrganization.membership?.joined_via) {
@@ -70,7 +111,50 @@
 				<div class="metric-card">
 					<div>
 						<p class="metric-label">{stat.label}</p>
-						<p class="metric-value metric-value--compact">{stat.value}</p>
+						{#if stat.label === 'Organization' && isEditing}
+							<form
+								class="mt-1 flex items-center gap-2"
+								onsubmit={(e) => { e.preventDefault(); saveName(); }}
+							>
+								<Input
+									bind:value={editName}
+									class="h-8 text-sm"
+									placeholder="Organization name"
+									disabled={currentOrganization.isMutating}
+								/>
+								<Button
+									type="submit"
+									size="sm"
+									variant="default"
+									disabled={!editName.trim() || currentOrganization.isMutating}
+								>
+									{currentOrganization.isMutating ? 'Saving…' : 'Save'}
+								</Button>
+								<Button
+									type="button"
+									size="sm"
+									variant="ghost"
+									disabled={currentOrganization.isMutating}
+									onclick={cancelEditing}
+								>
+									Cancel
+								</Button>
+							</form>
+						{:else}
+							<p class="metric-value metric-value--compact">
+								{stat.value}
+								{#if stat.label === 'Organization' && currentOrganization.isAdmin}
+									<button
+										type="button"
+										class="text-muted-foreground hover:text-foreground ml-1 inline-flex align-middle transition-colors"
+										onclick={startEditing}
+										aria-label="Edit organization name"
+									>
+										<Pencil class="h-3.5 w-3.5" />
+									</button>
+								{/if}
+							</p>
+						{/if}
 					</div>
 				</div>
 			{/each}
