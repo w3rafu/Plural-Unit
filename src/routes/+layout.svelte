@@ -12,6 +12,7 @@
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { pageHeader } from '$lib/stores/pageHeader.svelte';
+	import '$lib/stores/currentTheme.svelte'; // hydrate theme attribute on load
 
 	let { children } = $props();
 

@@ -1,12 +1,11 @@
 <!--
   Hub page — the org-centered root.
 
-  Shows organization stats, recent activity, and plugin sections.
+  Shows a compact summary, recent activity, and plugin sections.
   Loads hub data on mount, delegates rendering to member components.
 -->
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
 	import MemberCommitmentsCard from '$lib/components/hub/member/MemberCommitmentsCard.svelte';
@@ -59,12 +58,6 @@
 	const manageEventsHref = $derived(
 		currentOrganization.isAdmin ? '/hub/manage/content#manage-events' : undefined
 	);
-	const manageContentHref = $derived(
-		currentOrganization.isAdmin ? '/hub/manage/content' : undefined
-	);
-	const manageSectionsHref = $derived(
-		currentOrganization.isAdmin ? '/hub/manage/sections' : undefined
-	);
 	const hasBlockingHubError = $derived(
 		Boolean(currentHub.lastError) && !currentHub.hasLoadedForCurrentOrg
 	);
@@ -74,6 +67,11 @@
 			? [{ id: 'hub-manage', label: 'Manage hub', href: '/hub/manage' }]
 			: [])
 	]);
+
+	const memberCount = $derived(
+		currentOrganization.memberCount === null ? '—' : String(currentOrganization.memberCount)
+	);
+	const roleName = $derived(currentOrganization.membership?.role ?? 'member');
 </script>
 
 <PageHeader
@@ -84,122 +82,47 @@
 
 <main class="page-stack" aria-busy={currentHub.isLoading}>
 	{#if currentOrganization.isAdmin}
-		<Card.Root class="overflow-hidden border-primary/30 bg-linear-to-br from-primary/10 via-background to-secondary/30 shadow-sm">
-			<Card.Content class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-				<div class="space-y-2">
-					<Badge
-						variant="secondary"
-						class="w-fit rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]"
-					>
-						Admin shortcut
-					</Badge>
-					<div class="space-y-1">
-						<p class="text-lg font-semibold tracking-tight text-foreground">
-							Need to publish, edit, or end a broadcast?
-						</p>
-						<p class="max-w-2xl text-sm text-muted-foreground">
-							Open hub manage to reach the broadcast editor, archive live broadcasts, and switch over to section setup when something is missing.
-						</p>
-					</div>
-				</div>
-
-				<div class="flex w-full flex-col gap-2 sm:w-auto sm:min-w-72">
-					<Button
-						href={manageContentHref}
-						size="lg"
-						class="w-full justify-center text-sm font-semibold"
-					>
-						Open Hub Manage
-					</Button>
-					<Button href={manageSectionsHref} variant="outline" size="sm" class="w-full">
-						Hub sections
-					</Button>
-				</div>
-			</Card.Content>
-		</Card.Root>
-	{/if}
-
-	<!-- Quick stats row -->
-	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="metric-grid">
-			<div class="metric-card">
-				<div>
-					<p class="metric-label">Members</p>
-					<p class="metric-value">
-						{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}
-					</p>
-				</div>
-				<p class="metric-copy">People currently connected to this organization.</p>
-			</div>
-
-			<div class="metric-card">
-				<div>
-					<p class="metric-label">Role</p>
-					<p class="metric-value metric-value--compact capitalize">
-						{currentOrganization.membership?.role ?? 'member'}
-					</p>
-				</div>
-				<p class="metric-copy">Your current level of access in the organization.</p>
-			</div>
-
-			<a href="/messages" class="metric-card metric-card--link">
-				<div>
-					<p class="metric-label">Unread messages</p>
-					<p class="metric-value">{unreadMessages}</p>
-				</div>
-				<p class="metric-copy">Open your conversation queue.</p>
-			</a>
-
-			{#if currentOrganization.isAdmin}
-				<a href="/organization/access" class="metric-card metric-card--link">
-					<div>
-						<p class="metric-label">Pending invites</p>
-						<p class="metric-value">{pendingInvites}</p>
-					</div>
-					<p class="metric-copy">Review who still needs to accept access.</p>
+		<div class="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5">
+			<span class="mr-auto text-sm text-muted-foreground">
+				{memberCount} members &middot; {pendingInvites} pending invites
+			</span>
+			<Button href="/hub/manage/content" size="sm">Open Hub Manage</Button>
+		</div>
+	{:else}
+		<div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+			<span>{memberCount} members</span>
+			<span class="capitalize">{roleName}</span>
+			{#if unreadMessages > 0}
+				<a href="/messages" class="font-medium text-foreground underline underline-offset-4">
+					{unreadMessages} unread
 				</a>
-			{:else}
-				<div class="metric-card">
-					<div>
-						<p class="metric-label">Active sections</p>
-						<p class="metric-value">{activePlugins.length}</p>
-					</div>
-					<p class="metric-copy">Broadcasts and events visible to members.</p>
-				</div>
 			{/if}
-		</Card.Content>
-	</Card.Root>
+		</div>
+	{/if}
 
 	{#if hasBlockingHubError}
 		<Card.Root class="border-destructive/30 bg-destructive/5">
-			<Card.Header>
-				<Card.Title class="text-lg font-semibold tracking-tight">Could not load the hub</Card.Title>
-				<Card.Description role="alert" class="text-destructive">
-					{currentHub.lastError?.message ??
-						'The hub content could not be loaded right now. Try again in a moment.'}
-				</Card.Description>
-			</Card.Header>
-			<Card.Content class="flex flex-wrap items-center gap-3 pt-0">
+			<Card.Content class="flex flex-wrap items-center gap-3 py-4">
+				<div class="min-w-0 flex-1">
+					<p class="text-sm font-medium text-foreground">Could not load the hub</p>
+					<p role="alert" class="text-sm text-destructive">
+						{currentHub.lastError?.message ?? 'Try again in a moment.'}
+					</p>
+				</div>
 				<Button type="button" variant="outline" size="sm" onclick={retryHubLoad}>
 					Try again
 				</Button>
-				<p class="text-xs text-muted-foreground">
-					Organization stats are still available above while the hub content reconnects.
-				</p>
 			</Card.Content>
 		</Card.Root>
 	{:else}
 		{#if currentHub.lastError}
 			<Card.Root class="border-destructive/30 bg-destructive/5">
-				<Card.Content class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-					<div class="space-y-1">
-						<p class="text-sm font-medium text-foreground">Hub content may be out of date</p>
-						<p role="alert" class="text-sm text-destructive">
-							{currentHub.lastError.message}
-						</p>
-					</div>
+				<Card.Content class="flex flex-wrap items-center gap-3 py-4">
+					<p class="min-w-0 flex-1 text-sm text-destructive" role="alert">
+						{currentHub.lastError.message}
+					</p>
 					<Button type="button" variant="outline" size="sm" onclick={retryHubLoad}>
-						Refresh hub
+						Refresh
 					</Button>
 				</Card.Content>
 			</Card.Root>
@@ -215,22 +138,15 @@
 		/>
 
 		{#if currentHub.isLoading}
-			<Card.Root size="sm" class="border-border/70 bg-card">
-				<Card.Content>
-					<p class="text-sm text-muted-foreground">Loading the hub...</p>
-				</Card.Content>
-			</Card.Root>
+			<p class="text-sm text-muted-foreground">Loading the hub...</p>
 		{:else if activePlugins.length === 0}
 			<Card.Root class="border-dashed border-border/70 bg-muted/20">
-				<Card.Header>
-					<Card.Title class="text-lg font-semibold tracking-tight">The hub is ready for setup</Card.Title>
-					<Card.Description>No sections are live yet.</Card.Description>
-				</Card.Header>
-				{#if currentOrganization.isAdmin}
-					<Card.Content class="pt-0">
-						<Button href="/hub/manage" variant="outline" size="sm">Open hub manage</Button>
-					</Card.Content>
-				{/if}
+				<Card.Content class="py-6 text-center">
+					<p class="font-medium text-foreground">No sections are live yet.</p>
+					{#if currentOrganization.isAdmin}
+						<Button href="/hub/manage" variant="outline" size="sm" class="mt-3">Open hub manage</Button>
+					{/if}
+				</Card.Content>
 			</Card.Root>
 		{:else}
 			<div class="card-grid">

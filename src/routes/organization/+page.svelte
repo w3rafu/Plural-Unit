@@ -1,0 +1,116 @@
+<script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import * as ButtonGroup from '$lib/components/ui/button-group';
+	import * as Card from '$lib/components/ui/card';
+	import OrganizationOverviewCard from '$lib/components/organization/OrganizationOverviewCard.svelte';
+	import OrganizationAccessCard from '$lib/components/organization/OrganizationAccessCard.svelte';
+	import OrganizationMembersCard from '$lib/components/organization/OrganizationMembersCard.svelte';
+	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+
+	type OrgSection = 'access' | 'members';
+
+	let activeSection = $state<OrgSection>('access');
+
+	let loadedMemberCountOrgId = '';
+	let loadedInvitationsOrgId = '';
+	let loadedMembersOrgId = '';
+
+	$effect(() => {
+		if (!currentOrganization.organization) {
+			loadedMemberCountOrgId = '';
+			loadedInvitationsOrgId = '';
+			loadedMembersOrgId = '';
+		}
+
+		if (!currentOrganization.isAdmin) {
+			loadedInvitationsOrgId = '';
+		}
+	});
+
+	$effect(() => {
+		const organizationId = currentOrganization.organization?.id ?? '';
+
+		if (!organizationId || loadedMemberCountOrgId === organizationId) {
+			return;
+		}
+
+		loadedMemberCountOrgId = organizationId;
+		void currentOrganization.loadMemberCount();
+	});
+
+	$effect(() => {
+		const organizationId = currentOrganization.isAdmin
+			? (currentOrganization.organization?.id ?? '')
+			: '';
+
+		if (!organizationId || loadedInvitationsOrgId === organizationId) {
+			return;
+		}
+
+		loadedInvitationsOrgId = organizationId;
+		void currentOrganization.loadInvitations();
+	});
+
+	$effect(() => {
+		const organizationId =
+			activeSection === 'members' && currentOrganization.isAdmin
+				? (currentOrganization.organization?.id ?? '')
+				: '';
+
+		if (!organizationId || loadedMembersOrgId === organizationId) {
+			return;
+		}
+
+		loadedMembersOrgId = organizationId;
+		void currentOrganization.loadMembers();
+	});
+
+	const sections = $derived.by(() => {
+		const base: Array<{ id: OrgSection; label: string }> = [
+			{ id: 'access', label: 'Access' }
+		];
+
+		if (currentOrganization.isAdmin) {
+			base.push({ id: 'members', label: 'Members' });
+		}
+
+		return base;
+	});
+</script>
+
+<OrganizationOverviewCard />
+
+{#if currentOrganization.isAdmin}
+	<Card.Root size="sm" class="border-border/70 bg-card">
+		<Card.Content class="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+			<div class="space-y-1">
+				<p class="text-sm font-medium text-foreground">Choose a section</p>
+				<p class="text-sm text-muted-foreground">
+					Switch between access tools and member management.
+				</p>
+			</div>
+
+			<nav aria-label="Organization sections" class="w-full">
+				<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
+					{#each sections as section (section.id)}
+						<Button
+							size="sm"
+							variant="ghost"
+							class="segmented-control__button min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
+							aria-current={activeSection === section.id ? 'page' : undefined}
+							onclick={() => (activeSection = section.id)}
+						>
+							{section.label}
+						</Button>
+					{/each}
+				</ButtonGroup.Root>
+			</nav>
+		</Card.Content>
+	</Card.Root>
+{/if}
+
+{#if activeSection === 'access'}
+	<OrganizationAccessCard />
+{:else if activeSection === 'members'}
+	<OrganizationMembersCard />
+{/if}

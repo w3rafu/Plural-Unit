@@ -26,6 +26,7 @@ describe('contentLayoutModel', () => {
 		expect(isLockedContentRoute('/')).toBe(false);
 		expect(isLockedContentRoute('/profile')).toBe(false);
 		expect(isLockedContentRoute('/organization/access')).toBe(false);
+		expect(isLockedContentRoute('/organization')).toBe(false);
 		expect(isLockedContentRoute('/demo')).toBe(false);
 		expect(isLockedContentRoute('/messages-demo')).toBe(false);
 		expect(isLockedContentRoute('/directory-preview')).toBe(false);

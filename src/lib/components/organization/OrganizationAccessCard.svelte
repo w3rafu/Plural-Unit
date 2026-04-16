@@ -219,39 +219,37 @@
 			</Card.Header>
 
 			<Card.Content class="space-y-3.5">
-				<div class="metric-grid">
-					<div class="metric-card">
-						<div>
-							<p class="metric-label">Pending</p>
-							<p class="metric-value">{currentOrganization.invitations.length}</p>
+				{#if currentOrganization.invitations.length > 0}
+					<div class="metric-grid">
+						<div class="metric-card">
+							<div>
+								<p class="metric-label">Pending</p>
+								<p class="metric-value">{currentOrganization.invitations.length}</p>
+							</div>
 						</div>
-						<p class="metric-copy">Invitations still waiting for a response.</p>
-					</div>
 
-					<div class="metric-card">
-						<div>
-							<p class="metric-label">Stale</p>
-							<p class="metric-value">{staleInviteCount}</p>
+						<div class="metric-card">
+							<div>
+								<p class="metric-label">Stale</p>
+								<p class="metric-value">{staleInviteCount}</p>
+							</div>
 						</div>
-						<p class="metric-copy">Invites older than a week that may need a follow-up.</p>
-					</div>
 
-					<div class="metric-card">
-						<div>
-							<p class="metric-label">Email</p>
-							<p class="metric-value">{emailInviteCount}</p>
+						<div class="metric-card">
+							<div>
+								<p class="metric-label">Email</p>
+								<p class="metric-value">{emailInviteCount}</p>
+							</div>
 						</div>
-						<p class="metric-copy">Invitations currently going out through email.</p>
-					</div>
 
-					<div class="metric-card">
-						<div>
-							<p class="metric-label">Phone</p>
-							<p class="metric-value">{phoneInviteCount}</p>
+						<div class="metric-card">
+							<div>
+								<p class="metric-label">Phone</p>
+								<p class="metric-value">{phoneInviteCount}</p>
+							</div>
 						</div>
-						<p class="metric-copy">Invitations currently going out through phone.</p>
 					</div>
-				</div>
+				{/if}
 
 				{#if currentOrganization.invitations.length > 0}
 					<div class="space-y-3">
@@ -297,11 +295,9 @@
 						onRevoke={openRevokeConfirmation}
 					/>
 				{:else}
-					<div class="rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-5">
-						<p class="text-sm text-muted-foreground">
-							No pending invitations right now. Send one above when you are ready to add someone.
-						</p>
-					</div>
+					<p class="text-sm text-muted-foreground py-3">
+						No pending invitations.
+					</p>
 				{/if}
 			</Card.Content>
 		</Card.Root>
@@ -310,12 +306,7 @@
 	<Card.Root size="sm" class="border-border/70 bg-card">
 		<Card.Header class="gap-2 border-b border-border/70">
 			<Card.Title class="text-lg font-semibold tracking-tight">Access</Card.Title>
-			<Card.Description>Join code and invitations are only available to organization admins.</Card.Description>
+			<Card.Description>Only admins can manage join codes and invitations.</Card.Description>
 		</Card.Header>
-		<Card.Content>
-			<p class="text-sm text-muted-foreground">
-				Ask an admin if you need a new invite or help bringing in another member.
-			</p>
-		</Card.Content>
 	</Card.Root>
 {/if}
