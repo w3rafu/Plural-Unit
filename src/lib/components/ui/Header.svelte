@@ -95,7 +95,7 @@
 				<div class="shell-header__title-block">
 					<h1 class={titleClass}>{pageHeader.config.title}</h1>
 					{#if showSubtitle}
-						<p class={subtitleClass}>{pageHeader.config.subtitle}</p>
+						<p class="shell-header__subtitle">{pageHeader.config.subtitle}</p>
 					{/if}
 				</div>
 			</div>
