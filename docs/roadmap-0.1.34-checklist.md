@@ -2,10 +2,10 @@
 
 ## Release-wide product constraints
 
-- [ ] Each slice is independently shippable
-- [ ] Push notifications remain opt-in and respect preference toggles
-- [ ] Messaging schema is backward-compatible — pagination changes are transparent
-- [ ] Re-run `npm run check` and `npm test` as each major slice lands
+- [x] Each slice is independently shippable
+- [x] Push notifications remain opt-in and respect preference toggles
+- [x] Messaging schema is backward-compatible — pagination changes are transparent
+- [x] Re-run `npm run check` and `npm test` as each major slice lands
 
 ## a — Complete push notification triggers
 
@@ -45,24 +45,24 @@
 
 ## d — Lint, format, and error page
 
-- [ ] Install ESLint v9: `@eslint/js`, `typescript-eslint`, `eslint-plugin-svelte`
-- [ ] Install Prettier: `prettier`, `prettier-plugin-svelte`, `prettier-plugin-tailwindcss`
-- [ ] Create `eslint.config.js` with SvelteKit flat config
-- [ ] Create `.prettierrc` and `.prettierignore`
-- [ ] Add `lint` and `format` scripts to `package.json`
-- [ ] Create `src/routes/+error.svelte` with 404 and generic error handling
-- [ ] Add skip-to-content link in `src/routes/+layout.svelte`
-- [ ] Add `id="main-content"` to the main content region
-- [ ] Do not auto-format the entire codebase — config only
+- [x] Install ESLint v9: `@eslint/js`, `typescript-eslint`, `eslint-plugin-svelte`
+- [x] Install Prettier: `prettier`, `prettier-plugin-svelte`, `prettier-plugin-tailwindcss`
+- [x] Create `eslint.config.js` with SvelteKit flat config
+- [x] Create `.prettierrc` and `.prettierignore`
+- [x] Add `lint` and `format` scripts to `package.json`
+- [x] Create `src/routes/+error.svelte` with 404 and generic error handling
+- [x] Add skip-to-content link in `src/routes/+layout.svelte`
+- [x] Add `id="main-content"` to the main content region
+- [x] Do not auto-format the entire codebase — config only
 
 ## e — Organization settings editing
 
-- [ ] Add admin edit mode to `OrganizationOverviewCard.svelte` for org name
-- [ ] Add `updateOrganization` repository method (and migration if RLS requires it)
-- [ ] Wire optimistic org name update through `currentOrganization.svelte.ts`
-- [ ] Add per-member action menu in `OrganizationMembersCard.svelte` (admin only)
-- [ ] Wire promote (member → admin) via existing `setOrganizationMemberRole`
-- [ ] Wire demote (admin → member) via existing `setOrganizationMemberRole`
-- [ ] Wire remove member via existing `removeOrganizationMember` with confirmation dialog
-- [ ] Prevent self-removal or self-demotion
-- [ ] Add focused store tests for role change and member removal
+- [x] Add admin edit mode to `OrganizationOverviewCard.svelte` for org name
+- [x] Add `updateOrganization` repository method (and migration if RLS requires it)
+- [x] Wire optimistic org name update through `currentOrganization.svelte.ts`
+- [x] Add per-member action menu in `OrganizationMembersCard.svelte` (admin only)
+- [x] Wire promote (member → admin) via existing `setOrganizationMemberRole`
+- [x] Wire demote (admin → member) via existing `setOrganizationMemberRole`
+- [x] Wire remove member via existing `removeOrganizationMember` with confirmation dialog
+- [x] Prevent self-removal or self-demotion
+- [x] Add focused store tests for role change and member removal
