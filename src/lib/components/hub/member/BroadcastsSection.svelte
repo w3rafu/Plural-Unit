@@ -54,6 +54,7 @@
 				{@const acknowledged = currentHub.hasAcknowledged(broadcast.id)}
 				{@const ackCount = currentHub.getAcknowledgmentCount(broadcast.id)}
 				{@const ackBusy = currentHub.broadcastAcknowledgmentTargetId === broadcast.id}
+				{@const detailHref = `/hub/broadcast/${broadcast.id}`}
 				<Card.Root size="sm" class="border-border/70 bg-card">
 					<Card.Content class="space-y-3">
 						<div class="flex items-center justify-between gap-3">
@@ -72,7 +73,9 @@
 							</time>
 						</div>
 						<div class="space-y-1">
-							<h3 class="text-base font-medium text-foreground">{broadcast.title}</h3>
+							<h3 class="text-base font-medium text-foreground">
+								<a href={detailHref} class="hover:underline">{broadcast.title}</a>
+							</h3>
 							<p class="text-sm leading-6 text-muted-foreground">{broadcast.body}</p>
 							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
 						</div>

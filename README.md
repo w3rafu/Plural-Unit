@@ -28,34 +28,30 @@ supabase db push          # if using Supabase CLI
 # or paste each file in supabase/migrations/ into the SQL editor
 ```
 
-If you pull newer hub code into an existing database, run migrations before restarting the app. Recent app work depends on migrations 017, 018, 019, 020, 021, 022, 023, 024, 025, 026, 027, 028, 029, and 033, and missing them can surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `column hub_events.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, `relation "public.hub_event_attendances" does not exist`, `column reference "profile_id" is ambiguous`, `relation "public.hub_operator_workflow_state" does not exist`, or `column hub_notification_preferences.message_enabled does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts, missing `028_fix_get_organization_members_ambiguity.sql` can break member-directory and admin roster views, and missing `029_create_hub_operator_workflow_state.sql` can break shared queue and follow-up review persistence.
+If you pull newer hub, organization, profile, or messaging code into an existing database, run migrations before restarting the app. Current app work depends on migrations 017 through 039. Missing earlier hub migrations can still surface runtime errors such as `column hub_events.ends_at does not exist`, `relation "public.hub_event_reminders" does not exist`, `column hub_broadcasts.delivery_state does not exist`, `column hub_events.delivery_state does not exist`, `relation "public.hub_notification_preferences" does not exist`, `relation "public.hub_execution_ledger" does not exist`, `column hub_notification_reads.notification_key does not exist`, `relation "public.hub_event_attendances" does not exist`, `column reference "profile_id" is ambiguous`, `relation "public.hub_operator_workflow_state" does not exist`, or `column hub_notification_preferences.message_enabled does not exist`. Missing migration `026_expand_member_event_visibility_for_recent_history.sql` will also make member-facing recent event history disappear as soon as an event starts, missing `028_fix_get_organization_members_ambiguity.sql` can break member-directory and admin roster views, and missing `029_create_hub_operator_workflow_state.sql` can break shared queue and follow-up review persistence. The newer release batch matters too: missing `030_add_broadcast_acknowledgments.sql` breaks broadcast acknowledgments and follow-up views, missing `031_add_contact_last_read_at.sql` breaks message seen-state hydration through `get_contact_last_read_at(uuid[])`, missing `032_add_push_subscriptions.sql` breaks device push registration against `public.push_subscriptions`, missing `034_allow_org_name_update.sql` breaks organization name edits through `update_organization_name(uuid, text)`, missing `035_add_profile_bio.sql` or `037_include_profile_bio_in_member_roster.sql` breaks profile bio saves and directory/member-roster bio rendering, missing `036_add_account_deletion_request.sql` or `038_add_account_deletion_review_fields.sql` breaks deletion request submission and admin review queues, and missing `039_soft_delete_messages.sql` breaks direct-message deletion plus thread hydration that reads `messages.deleted_at`.
 
 If you need an operational recovery checklist instead of a feature roadmap, use [docs/hub-schema-recovery.md](/Users/rafa/Desktop/plural-unit/docs/hub-schema-recovery.md).
-If you are working on the current release batch, start with [docs/roadmap-0.1.32.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.32.md) and [docs/roadmap-0.1.32-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.32-checklist.md).
-If you need the prior rollout runbook, use [docs/rollout-0.1.29-checklist.md](/Users/rafa/Desktop/plural-unit/docs/rollout-0.1.29-checklist.md).
-If you need the prior release handoff context, use [docs/agent-handoff-0.1.29.md](/Users/rafa/Desktop/plural-unit/docs/agent-handoff-0.1.29.md).
+If you are working on the current release batch, start with [docs/roadmap-0.1.37.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.37.md) and [docs/roadmap-0.1.37-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.37-checklist.md).
+If you need the latest shipped release handoff, use [docs/release-notes-0.1.36.md](/Users/rafa/Desktop/plural-unit/docs/release-notes-0.1.36.md).
+If you need the prior rollout runbook, use [docs/rollout-0.1.32-checklist.md](/Users/rafa/Desktop/plural-unit/docs/rollout-0.1.32-checklist.md).
+If you need older pre-0.1.30 handoff context, use [docs/agent-handoff-0.1.29.md](/Users/rafa/Desktop/plural-unit/docs/agent-handoff-0.1.29.md).
 
 ---
 
-## Planning Docs
+## Planning and handoff docs
 
-These are the best starting points for junior developers:
+These are the best starting points for contributors:
 
-- Start with the newest roadmap, then work backward only if you need older implementation context.
+- Start with the newest roadmap, then use the latest shipped release notes if you need the last completed handoff.
+- [docs/roadmap-0.1.37.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.37.md)
+- [docs/roadmap-0.1.37-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.37-checklist.md)
+- [docs/release-notes-0.1.36.md](/Users/rafa/Desktop/plural-unit/docs/release-notes-0.1.36.md)
+- [docs/roadmap-0.1.36.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.36.md)
+- [docs/roadmap-0.1.36-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.36-checklist.md)
+- [docs/roadmap-0.1.35.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.35.md)
+- [docs/roadmap-0.1.35-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.35-checklist.md)
 - [docs/roadmap-0.1.32.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.32.md)
 - [docs/roadmap-0.1.32-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.32-checklist.md)
-- [docs/roadmap-0.1.31.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.31.md)
-- [docs/roadmap-0.1.31-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.31-checklist.md)
-- [docs/roadmap-0.1.30.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30.md)
-- [docs/roadmap-0.1.30-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.30-checklist.md)
-- [docs/roadmap-0.1.28.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28.md)
-- [docs/roadmap-0.1.28-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.28-checklist.md)
-- [docs/roadmap-0.1.27.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.27.md)
-- [docs/roadmap-0.1.27-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.27-checklist.md)
-- [docs/roadmap-0.1.26.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.26.md)
-- [docs/roadmap-0.1.26-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.26-checklist.md)
-- [docs/roadmap-0.1.25.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.25.md)
-- [docs/roadmap-0.1.25-checklist.md](/Users/rafa/Desktop/plural-unit/docs/roadmap-0.1.25-checklist.md)
 - [docs/ui-guardrails.md](/Users/rafa/Desktop/plural-unit/docs/ui-guardrails.md)
 
 ---

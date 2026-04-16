@@ -194,7 +194,7 @@ export function normalizeHubNotificationPreferences(
 }
 
 export function hasEnabledHubNotificationPreferences(preferences: HubNotificationPreferences) {
-	return preferences.broadcast || preferences.event || preferences.message;
+	return preferences.broadcast || preferences.event;
 }
 
 export function getHubNotificationId(

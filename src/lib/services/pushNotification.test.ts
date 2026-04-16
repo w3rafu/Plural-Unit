@@ -55,7 +55,7 @@ describe('triggerPushNotification', () => {
 			source_id: 'broadcast-1',
 			title: 'Test',
 			body: 'Hello',
-			url: '/hub'
+			url: '/hub/broadcast/broadcast-1'
 		});
 
 		expect(mockInvoke).toHaveBeenCalledWith('send-push', {
@@ -65,7 +65,7 @@ describe('triggerPushNotification', () => {
 				source_id: 'broadcast-1',
 				title: 'Test',
 				body: 'Hello',
-				url: '/hub'
+				url: '/hub/broadcast/broadcast-1'
 			}
 		});
 	});

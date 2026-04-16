@@ -50,9 +50,9 @@ describe('hubActivityModel', () => {
 		expect(
 			getHubActivityPrimaryAction(makeNotification('broadcast', 'b1'), destinations)
 		).toEqual({
-			label: 'Open broadcasts',
-			href: '#hub-broadcasts',
-			description: 'Jump to the live broadcast list below.'
+			label: 'Open broadcast',
+			href: '/hub/broadcast/b1',
+			description: 'Open this broadcast in its detail view.'
 		});
 
 		expect(

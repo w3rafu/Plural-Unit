@@ -58,9 +58,9 @@ export function getHubActivityPrimaryAction(
 ): HubActivityAction {
 	if (item.kind === 'broadcast') {
 		return {
-			label: 'Open broadcasts',
-			href: destinations.broadcastHref,
-			description: 'Jump to the live broadcast list below.'
+			label: 'Open broadcast',
+			href: `/hub/broadcast/${item.sourceId}`,
+			description: 'Open this broadcast in its detail view.'
 		};
 	}
 

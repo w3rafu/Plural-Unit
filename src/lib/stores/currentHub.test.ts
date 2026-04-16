@@ -47,6 +47,7 @@ const mockCreateResource = vi.fn();
 const mockUpdateResource = vi.fn();
 const mockSaveResourceOrder = vi.fn();
 const mockDeleteResource = vi.fn();
+const mockTriggerPushNotification = vi.fn();
 const { mockCurrentOrganization, smokeModeState } = vi.hoisted(() => ({
 	mockCurrentOrganization: {
 		organization: { id: 'org-1' as string },
@@ -122,6 +123,10 @@ vi.mock('$lib/demo/smokeMode', () => ({
 	isSmokeModeEnabled: () => smokeModeState.enabled,
 	shouldHydrateSmokeHubState: () => smokeModeState.hydrate,
 	getSmokeModeHubLoadError: () => smokeModeState.loadError
+}));
+
+vi.mock('$lib/services/pushNotification', () => ({
+	triggerPushNotification: (...args: any[]) => mockTriggerPushNotification(...args)
 }));
 
 // Mock pluginRegistry
@@ -1851,6 +1856,14 @@ describe('currentHub.publishBroadcastNow', () => {
 		expect(currentHub.activeBroadcasts[0]?.id).toBe('b1');
 		expect(currentHub.draftBroadcasts).toEqual([]);
 		expect(currentHub.broadcastTargetId).toBe('');
+		expect(mockTriggerPushNotification).toHaveBeenCalledWith({
+			kind: 'broadcast',
+			organization_id: 'org-1',
+			source_id: 'b1',
+			title: 'Broadcast',
+			body: 'Body',
+			url: '/hub/broadcast/b1'
+		});
 	});
 });
 

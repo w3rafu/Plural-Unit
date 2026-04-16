@@ -30,6 +30,14 @@
 	const canEditPreferences = $derived(canManagePreferences && currentHub.hasLoadedForCurrentOrg);
 	const isLoadingInitialState = $derived(currentHub.isLoading && !currentHub.hasLoadedForCurrentOrg);
 	const resolvedPreferences = $derived(draftPreferences ?? currentHub.notificationPreferences);
+	const devicePushAvailable = $derived(pushSupported && Boolean(env.PUBLIC_VAPID_KEY));
+	const messagePreferenceDescription = $derived.by(() => {
+		if (devicePushAvailable) {
+			return 'Allow push notifications for new direct messages from this organization when push is enabled on this device.';
+		}
+
+		return 'Allow push notifications for new direct messages from this organization. Push delivery is not available on this device right now.';
+	});
 
 	onMount(() => {
 		pushSupported = isPushSupported();
@@ -78,12 +86,20 @@
 				if (subscription) {
 					await savePushSubscription(subscription);
 					pushEnabled = true;
-					toast({ title: 'Push enabled', description: 'You will receive push notifications on this device.', variant: 'success' });
+					toast({
+						title: 'Push enabled',
+						description: 'This device can now receive push notifications for allowed channels.',
+						variant: 'success'
+					});
 				}
 			} else {
 				await removePushSubscription();
 				pushEnabled = false;
-				toast({ title: 'Push disabled', description: 'Push notifications turned off for this device.', variant: 'success' });
+				toast({
+					title: 'Push disabled',
+					description: 'This device will no longer receive push notifications.',
+					variant: 'success'
+				});
 			}
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : 'Could not update push settings.';
@@ -128,7 +144,7 @@
 			draftPreferences = null;
 			toast({
 				title: 'Notifications updated',
-				description: 'Your in-app alert preferences were saved.',
+				description: 'Your notification settings for this organization were saved.',
 				variant: 'success'
 			});
 		} catch (error) {
@@ -144,16 +160,16 @@
 
 <Card.Root id="notification-preferences" size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
-		<Card.Title class="text-lg font-semibold tracking-tight">In-app alerts</Card.Title>
+		<Card.Title class="text-lg font-semibold tracking-tight">Notifications</Card.Title>
 		<Card.Description>
-			Choose which hub updates stay in your alert tray. This only changes in-app alerts for the current organization.
+			Choose which updates this organization may send and whether this browser can receive push delivery.
 		</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="space-y-4">
 		{#if !canManagePreferences}
 			<p class="text-sm text-muted-foreground">
-				Join an organization to manage your in-app alert preferences.
+				Join an organization to manage your notification settings.
 			</p>
 		{:else}
 			<form
@@ -163,107 +179,106 @@
 					savePreferences();
 				}}
 			>
-				<Field.Group class="gap-4">
-					<Field.Field orientation="horizontal">
-						<Checkbox
-							id="notification-preferences-broadcasts"
-							checked={resolvedPreferences.broadcast}
-							disabled={!canEditPreferences || isLoadingInitialState}
-							onCheckedChange={(nextChecked) => {
-								draftPreferences = {
-									...resolvedPreferences,
-									broadcast: Boolean(nextChecked)
-								};
-							}}
-						/>
-						<Field.Content>
-							<Field.Label for="notification-preferences-broadcasts">
-								Broadcast alerts
-							</Field.Label>
-							<Field.Description>
-								Show live broadcast updates in your alert tray and activity surfaces.
-							</Field.Description>
-						</Field.Content>
-					</Field.Field>
+				<div class="space-y-4">
+					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
+						<div class="space-y-1">
+							<h3 class="text-sm font-semibold text-foreground">Hub alerts in the app</h3>
+							<p class="text-xs text-muted-foreground">
+								These settings control what appears in your alert tray and hub activity surfaces for this organization.
+							</p>
+						</div>
 
-					<Field.Field orientation="horizontal">
-						<Checkbox
-							id="notification-preferences-events"
-							checked={resolvedPreferences.event}
-							disabled={!canEditPreferences || isLoadingInitialState}
-							onCheckedChange={(nextChecked) => {
-								draftPreferences = {
-									...resolvedPreferences,
-									event: Boolean(nextChecked)
-								};
-							}}
-						/>
-						<Field.Content>
-							<Field.Label for="notification-preferences-events">Event alerts</Field.Label>
-							<Field.Description>
-								Show newly published events, event reminders, and live event updates in your alert tray.
-							</Field.Description>
-						</Field.Content>
-					</Field.Field>
+						<Field.Group class="gap-4">
+							<Field.Field orientation="horizontal">
+								<Checkbox
+									id="notification-preferences-broadcasts"
+									checked={resolvedPreferences.broadcast}
+									disabled={!canEditPreferences || isLoadingInitialState}
+									onCheckedChange={(nextChecked) => {
+										draftPreferences = {
+											...resolvedPreferences,
+											broadcast: Boolean(nextChecked)
+										};
+									}}
+								/>
+								<Field.Content>
+									<Field.Label for="notification-preferences-broadcasts">
+										Broadcast alerts in the app
+									</Field.Label>
+									<Field.Description>
+										Show live broadcast updates in your alert tray and activity surfaces.
+									</Field.Description>
+								</Field.Content>
+							</Field.Field>
 
-					<Field.Field orientation="horizontal">
-						<Checkbox
-							id="notification-preferences-messages"
-							checked={resolvedPreferences.message}
-							disabled={!canEditPreferences || isLoadingInitialState}
-							onCheckedChange={(nextChecked) => {
-								draftPreferences = {
-									...resolvedPreferences,
-									message: Boolean(nextChecked)
-								};
-							}}
-						/>
-						<Field.Content>
-							<Field.Label for="notification-preferences-messages">Message notifications</Field.Label>
-							<Field.Description>
-								Receive a push notification when someone sends you a direct message.
-							</Field.Description>
-						</Field.Content>
-					</Field.Field>
+							<Field.Field orientation="horizontal">
+								<Checkbox
+									id="notification-preferences-events"
+									checked={resolvedPreferences.event}
+									disabled={!canEditPreferences || isLoadingInitialState}
+									onCheckedChange={(nextChecked) => {
+										draftPreferences = {
+											...resolvedPreferences,
+											event: Boolean(nextChecked)
+										};
+									}}
+								/>
+								<Field.Content>
+									<Field.Label for="notification-preferences-events">
+										Event alerts in the app
+									</Field.Label>
+									<Field.Description>
+										Show newly published events, reminders, and live event updates in your alert tray.
+									</Field.Description>
+								</Field.Content>
+							</Field.Field>
+						</Field.Group>
+					</section>
 
-					{#if pushSupported && env.PUBLIC_VAPID_KEY}
-						<Field.Field orientation="horizontal">
-							<Checkbox
-								id="notification-preferences-push"
-								checked={pushEnabled}
-								disabled={pushBusy}
-								onCheckedChange={(nextChecked) => {
-									void togglePush(Boolean(nextChecked));
-								}}
-							/>
-							<Field.Content>
-								<Field.Label for="notification-preferences-push">Push notifications</Field.Label>
-								<Field.Description>
-									Receive push notifications on this device when you're away from the app.
-								</Field.Description>
-							</Field.Content>
-						</Field.Field>
+					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
+						<div class="space-y-1">
+							<h3 class="text-sm font-semibold text-foreground">Direct message push</h3>
+							<p class="text-xs text-muted-foreground">
+								This organization-level setting controls whether new direct messages may trigger push delivery. It does not change the hub alert tray.
+							</p>
+						</div>
 
-						{#if dev && pushEnabled}
-							<div class="pl-7">
-								<Button type="button" variant="outline" size="sm" onclick={() => void sendTestPush()}>
-									Send test push
-								</Button>
-							</div>
-						{/if}
-					{/if}
+						<Field.Group class="gap-4">
+							<Field.Field orientation="horizontal">
+								<Checkbox
+									id="notification-preferences-messages"
+									checked={resolvedPreferences.message}
+									disabled={!canEditPreferences || isLoadingInitialState}
+									onCheckedChange={(nextChecked) => {
+										draftPreferences = {
+											...resolvedPreferences,
+											message: Boolean(nextChecked)
+										};
+									}}
+								/>
+								<Field.Content>
+									<Field.Label for="notification-preferences-messages">
+										Direct message push alerts
+									</Field.Label>
+									<Field.Description>
+										{messagePreferenceDescription}
+									</Field.Description>
+								</Field.Content>
+							</Field.Field>
+						</Field.Group>
+					</section>
 
 					{#if fieldError}
 						<Field.Error role="alert">{fieldError}</Field.Error>
 					{/if}
-				</Field.Group>
+				</div>
 
 				<div class="flex flex-wrap items-center gap-3">
 					<Button
 						type="submit"
 						disabled={!canEditPreferences || currentHub.isSavingNotificationPreferences || isLoadingInitialState}
 					>
-						{currentHub.isSavingNotificationPreferences ? 'Saving...' : 'Save preferences'}
+						{currentHub.isSavingNotificationPreferences ? 'Saving...' : 'Save organization settings'}
 					</Button>
 					{#if !currentHub.hasLoadedForCurrentOrg && !isLoadingInitialState}
 						<Button type="button" variant="outline" size="sm" onclick={retryLoad}>
@@ -277,13 +292,49 @@
 					{/if}
 					<p class="text-xs text-muted-foreground">
 						{isLoadingInitialState
-							? 'Loading your current alert settings...'
+							? 'Loading your current notification settings...'
 							: !currentHub.hasLoadedForCurrentOrg
-								? 'Load your current alert settings before making changes.'
-							: `Applies only to ${currentOrganization.organization?.name ?? 'your organization'} in-app alerts.`}
+								? 'Load your current organization settings before making changes.'
+								: `Applies to ${currentOrganization.organization?.name ?? 'your organization'} notification settings. Device push is managed separately below.`}
 					</p>
 				</div>
 			</form>
+
+			{#if devicePushAvailable}
+				<div class="space-y-3 border-t border-border/70 pt-4">
+					<div class="space-y-1">
+						<h3 class="text-sm font-semibold text-foreground">This device</h3>
+						<p class="text-xs text-muted-foreground">
+							Enable browser push delivery on this device. Organization settings above still decide which alerts can be sent.
+						</p>
+					</div>
+
+					<Field.Field orientation="horizontal">
+						<Checkbox
+							id="notification-preferences-push"
+							checked={pushEnabled}
+							disabled={pushBusy}
+							onCheckedChange={(nextChecked) => {
+								void togglePush(Boolean(nextChecked));
+							}}
+						/>
+						<Field.Content>
+							<Field.Label for="notification-preferences-push">Enable push on this device</Field.Label>
+							<Field.Description>
+								Allow this browser to receive push notifications when you're away from the app.
+							</Field.Description>
+						</Field.Content>
+					</Field.Field>
+
+					{#if dev && pushEnabled}
+						<div class="pl-7">
+							<Button type="button" variant="outline" size="sm" onclick={() => void sendTestPush()}>
+								Send test push
+							</Button>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		{/if}
 	</Card.Content>
 </Card.Root>

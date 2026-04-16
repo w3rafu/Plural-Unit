@@ -18,6 +18,7 @@ const mockResolveDeletionRequest = vi.fn();
 const mockSetOrganizationMemberRole = vi.fn();
 const mockRemoveOrganizationMember = vi.fn();
 const mockUpdateOrganizationName = vi.fn();
+const mockIsSmokeModeEnabled = vi.fn(() => false);
 
 vi.mock('$lib/repositories/organizationRepository', () => ({
 	fetchOwnOrganizationContext: (...args: any[]) => mockFetchOwnOrganizationContext(...args),
@@ -45,6 +46,10 @@ vi.mock('$lib/repositories/profileRepository', () => ({
 	getAuthenticatedUser: (...args: any[]) => mockGetAuthenticatedUser(...args)
 }));
 
+vi.mock('$lib/demo/smokeMode', () => ({
+	isSmokeModeEnabled: () => mockIsSmokeModeEnabled()
+}));
+
 import { currentOrganization } from './currentOrganization.svelte';
 
 const ORG_CTX = {
@@ -54,6 +59,7 @@ const ORG_CTX = {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockIsSmokeModeEnabled.mockReturnValue(false);
 	currentOrganization.reset();
 });
 
@@ -354,6 +360,60 @@ describe('currentOrganization.updateMemberRole', () => {
 		await expect(currentOrganization.updateMemberRole('u2', 'admin')).rejects.toThrow(
 			'Organization admin access required.'
 		);
+		expect(mockSetOrganizationMemberRole).not.toHaveBeenCalled();
+	});
+});
+
+describe('currentOrganization smoke mode', () => {
+	it('keeps invitation loading local and skips the repository', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await currentOrganization.refresh('u1');
+		await currentOrganization.loadInvitations();
+
+		expect(currentOrganization.invitations.length).toBeGreaterThan(0);
+		expect(mockFetchPendingInvitations).not.toHaveBeenCalled();
+	});
+
+	it('revoke and regenerate actions stay local in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await currentOrganization.refresh('u1');
+		const originalJoinCode = currentOrganization.organization?.join_code;
+		const invitationId = currentOrganization.invitations[0]?.id;
+
+		await currentOrganization.regenerateCode();
+		await currentOrganization.revokePendingInvitation(invitationId ?? '');
+
+		expect(currentOrganization.organization?.join_code).not.toBe(originalJoinCode);
+		expect(currentOrganization.invitations.find((invitation) => invitation.id === invitationId)).toBeUndefined();
+		expect(mockRegenerateJoinCode).not.toHaveBeenCalled();
+		expect(mockRevokeInvitation).not.toHaveBeenCalled();
+	});
+
+	it('reviews deletion requests locally in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await currentOrganization.refresh('u1');
+		const profileId = currentOrganization.deletionRequests[0]?.profile_id;
+
+		await currentOrganization.resolvePendingDeletionRequest(profileId ?? '');
+
+		expect(currentOrganization.deletionRequests.find((request) => request.profile_id === profileId)).toBeUndefined();
+		expect(mockResolveDeletionRequest).not.toHaveBeenCalled();
+	});
+
+	it('updates member roles locally in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await currentOrganization.refresh('u1');
+		const member = currentOrganization.members.find((entry) => entry.role === 'member');
+
+		await currentOrganization.updateMemberRole(member?.profile_id ?? '', 'admin');
+
+		expect(
+			currentOrganization.members.find((entry) => entry.profile_id === member?.profile_id)?.role
+		).toBe('admin');
 		expect(mockSetOrganizationMemberRole).not.toHaveBeenCalled();
 	});
 });

@@ -4,6 +4,7 @@ import type { MessageThread } from '$lib/models/messageModel';
 // ── Mock push notification service ──
 
 const mockTriggerPushNotification = vi.fn();
+const mockIsSmokeModeEnabled = vi.fn(() => false);
 
 vi.mock('$lib/services/pushNotification', () => ({
 	triggerPushNotification: (...args: any[]) => mockTriggerPushNotification(...args)
@@ -12,10 +13,17 @@ vi.mock('$lib/services/pushNotification', () => ({
 // ── Mock currentOrganization ──
 
 vi.mock('$lib/stores/currentOrganization.svelte', () => ({
-	currentOrganization: { organization: null as { id: string } | null }
+	currentOrganization: {
+		organization: null as { id: string } | null,
+		members: [] as Array<Record<string, unknown>>
+	}
 }));
 
 import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+
+vi.mock('$lib/demo/smokeMode', () => ({
+	isSmokeModeEnabled: () => mockIsSmokeModeEnabled()
+}));
 
 // ── Mock realtime service ──
 
@@ -97,8 +105,10 @@ let store: ReturnType<typeof createCurrentMessagesStore>;
 beforeEach(() => {
 	vi.resetAllMocks();
 	vi.useFakeTimers();
+	mockIsSmokeModeEnabled.mockReturnValue(false);
 	store = createCurrentMessagesStore(mockRepository);
 	currentOrganization.organization = { id: 'org-1' } as any;
+	currentOrganization.members = [] as any;
 });
 
 afterEach(() => {
@@ -511,6 +521,36 @@ describe('resetDemoThread', () => {
 
 		expect(store.error).toBe('reset fail');
 		expect(store.isResetting).toBe(false);
+	});
+
+	it('resets locally in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await store.loadForUser('user-1');
+		store.activeThreadId = 'thread-demo-dispatch';
+		await store.sendMessage('Temporary smoke note');
+
+		await store.resetDemoThread();
+
+		expect(mockResetDemoMessageThread).not.toHaveBeenCalled();
+		expect(
+			store.threads.find((thread) => thread.id === 'thread-demo-dispatch')?.messages
+		).toHaveLength(1);
+	});
+});
+
+describe('smoke mode local messaging', () => {
+	it('sends messages locally without the repository', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await store.loadForUser('user-1');
+		const previousCount = store.activeThread?.messages.length ?? 0;
+
+		await store.sendMessage('Smoke mode message');
+
+		expect(mockSendMessageToThread).not.toHaveBeenCalled();
+		expect(store.activeThread?.messages).toHaveLength(previousCount + 1);
+		expect(store.activeThread?.messages.at(-1)?.body).toBe('Smoke mode message');
 	});
 });
 

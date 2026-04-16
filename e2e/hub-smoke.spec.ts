@@ -28,7 +28,7 @@ test.describe('hub smoke routes', () => {
 
 		await expect(page).toHaveURL(/\/profile#notification-preferences$/);
 		await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
-		await expect(page.getByText('In-app alerts', { exact: true })).toBeVisible();
+		await expect(page.getByText('Notifications', { exact: true })).toBeVisible();
 	});
 
 	test('navigates from the hub event list into event detail admin context', async ({ page }) => {
@@ -42,6 +42,23 @@ test.describe('hub smoke routes', () => {
 		await expect(page.getByText('Admin context')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Open in manage' })).toBeVisible();
 		await expect(page.getByText('RSVP follow-up')).toBeVisible();
+	});
+
+	test('navigates from the hub broadcast list into broadcast detail admin follow-up', async ({ page }) => {
+		await page.goto('/?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Harbor Unit' })).toBeVisible();
+		await page.getByRole('link', { name: 'Sunday hospitality reset' }).click();
+
+		await expect(page).toHaveURL(/\/hub\/broadcast\/broadcast-1$/);
+		await expect(
+			page.locator('main').getByRole('heading', { name: 'Sunday hospitality reset' })
+		).toBeVisible();
+		await expect(page.getByText('Admin context')).toBeVisible();
+		await expect(page.getByText('Acknowledgment follow-up', { exact: true })).toBeVisible();
+		await expect(page.getByText('2 acknowledged, 6 pending on the current roster.')).toBeVisible();
+		await expect(page.getByText('Lucia Costa')).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Open in manage' })).toBeVisible();
 	});
 
 	test('loads manage content and exercises attendance plus workflow queue state', async ({ page }) => {

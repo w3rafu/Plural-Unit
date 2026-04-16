@@ -5,6 +5,9 @@ test.describe('profile smoke routes', () => {
 		await page.goto('/profile?smoke=1');
 
 		await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
+		await expect(page.getByText('Notifications', { exact: true })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Hub alerts in the app' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Direct message push' })).toBeVisible();
 		await expect(page.getByLabel('Bio')).toHaveValue(
 			'Coordinates the Harbor Unit schedule and keeps volunteers aligned across weekly operations.'
 		);

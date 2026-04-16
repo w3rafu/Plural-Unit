@@ -39,6 +39,8 @@ import {
 } from '$lib/repositories/organizationRepository';
 import { subscribeToAuthStateChange, getAuthenticatedUser } from '$lib/repositories/profileRepository';
 import {
+	buildSmokeDeletionRequests,
+	buildSmokeInvitations,
 	buildSmokeMembers,
 	buildSmokeMembership,
 	buildSmokeOrganization
@@ -46,6 +48,10 @@ import {
 import { isSmokeModeEnabled } from '$lib/demo/smokeMode';
 
 const REFRESH_TIMEOUT_MS = 8_000;
+
+function buildSmokeJoinCode() {
+	return `SMOKE${Date.now().toString(36).slice(-6).toUpperCase()}`;
+}
 
 class CurrentOrganization {
 	isLoading = $state(false);
@@ -93,9 +99,9 @@ class CurrentOrganization {
 		this.hasResolvedMembership = true;
 		this.organization = buildSmokeOrganization();
 		this.membership = buildSmokeMembership();
-		this.invitations = [];
+		this.invitations = buildSmokeInvitations();
 		this.members = buildSmokeMembers();
-		this.deletionRequests = [];
+		this.deletionRequests = buildSmokeDeletionRequests();
 		this.memberCount = this.members.length;
 		this.isLoadingMembers = false;
 		this.isLoadingDeletionRequests = false;
@@ -221,6 +227,13 @@ class CurrentOrganization {
 	}
 
 	async loadInvitations() {
+		if (isSmokeModeEnabled()) {
+			if (!this.organization || !this.isAdmin) {
+				this.invitations = [];
+			}
+			return;
+		}
+
 		if (!this.organization || !this.isAdmin) {
 			this.invitations = [];
 			return;
@@ -230,6 +243,26 @@ class CurrentOrganization {
 
 	async sendInvitation(contact: { email?: string; phone?: string }) {
 		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				this.invitations = [
+					{
+						id: `smoke-invite-${Date.now().toString(36)}`,
+						organization_id: this.organization.id,
+						email: contact.email?.trim() || null,
+						phone: contact.phone?.trim() || null,
+						status: 'pending',
+						created_at: new Date().toISOString()
+					},
+					...this.invitations
+				];
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			await createInvitation(this.organization.id, contact);
@@ -241,6 +274,21 @@ class CurrentOrganization {
 
 	async resendPendingInvitation(invitationId: string) {
 		if (!this.organization || !this.isAdmin) throw new Error('No organization.');
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				const refreshedAt = new Date().toISOString();
+				this.invitations = this.invitations.map((invitation) =>
+					invitation.id === invitationId
+						? { ...invitation, created_at: refreshedAt }
+						: invitation
+				);
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			await resendInvitation(invitationId);
@@ -252,6 +300,16 @@ class CurrentOrganization {
 
 	async revokePendingInvitation(invitationId: string) {
 		if (!this.organization || !this.isAdmin) throw new Error('No organization.');
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				this.invitations = this.invitations.filter((invitation) => invitation.id !== invitationId);
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			await revokeInvitation(invitationId);
@@ -263,6 +321,19 @@ class CurrentOrganization {
 
 	async regenerateCode() {
 		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				this.organization = {
+					...this.organization,
+					join_code: buildSmokeJoinCode()
+				};
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			const newCode = await regenerateJoinCode(this.organization.id);
@@ -284,7 +355,10 @@ class CurrentOrganization {
 
 	async loadMembers() {
 		if (isSmokeModeEnabled()) {
-			this.members = buildSmokeMembers();
+			if (this.members.length === 0) {
+				this.members = buildSmokeMembers();
+			}
+			this.memberCount = this.members.length;
 			this.isLoadingMembers = false;
 			return;
 		}
@@ -305,7 +379,9 @@ class CurrentOrganization {
 
 	async loadPendingDeletionRequests() {
 		if (isSmokeModeEnabled()) {
-			this.deletionRequests = [];
+			if (!this.organization || !this.isAdmin) {
+				this.deletionRequests = [];
+			}
 			this.isLoadingDeletionRequests = false;
 			return;
 		}
@@ -328,6 +404,18 @@ class CurrentOrganization {
 			throw new Error('Organization admin access required.');
 		}
 
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				this.deletionRequests = this.deletionRequests.filter(
+					(request) => request.profile_id !== profileId
+				);
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			await resolveDeletionRequest(this.organization.id, profileId);
@@ -339,6 +427,22 @@ class CurrentOrganization {
 
 	async updateMemberRole(profileId: string, role: 'admin' | 'member') {
 		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				this.members = this.members.map((member) =>
+					member.profile_id === profileId ? { ...member, role } : member
+				);
+
+				if (this.membership?.profile_id === profileId) {
+					this.membership = { ...this.membership, role };
+				}
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			await setOrganizationMemberRole(this.organization.id, profileId, role);
@@ -353,6 +457,20 @@ class CurrentOrganization {
 
 	async removeMember(profileId: string) {
 		if (!this.organization || !this.isAdmin) throw new Error('Organization admin access required.');
+		if (isSmokeModeEnabled()) {
+			this.isMutating = true;
+			try {
+				this.members = this.members.filter((member) => member.profile_id !== profileId);
+				this.deletionRequests = this.deletionRequests.filter(
+					(request) => request.profile_id !== profileId
+				);
+				this.memberCount = this.members.length;
+			} finally {
+				this.isMutating = false;
+			}
+			return;
+		}
+
 		this.isMutating = true;
 		try {
 			await removeOrganizationMember(this.organization.id, profileId);

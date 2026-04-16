@@ -33,6 +33,7 @@ import {
 	upsertEventAttendanceMap
 } from '$lib/models/eventAttendanceModel';
 import {
+	type BroadcastAcknowledgmentRoster,
 	type BroadcastAcknowledgmentMap,
 	addAcknowledgmentToMap,
 	removeAcknowledgmentFromMap as removeAcknowledgmentFromMapModel,
@@ -105,6 +106,7 @@ import {
 import {
 	getCurrentHubActivityFeed,
 	getCurrentHubAllActivityFeed,
+	getCurrentHubBroadcastAcknowledgmentRoster,
 	getCurrentHubBroadcastExecutionDiagnostics,
 	getCurrentHubBroadcastDeliveryStatus,
 	getCurrentHubBroadcastEngagementSignal,
@@ -1236,7 +1238,7 @@ class CurrentHub {
 					source_id: broadcastId,
 					title: published.title || 'New broadcast',
 					body: (published.body || '').slice(0, 200),
-					url: `/hub`
+					url: `/hub/broadcast/${broadcastId}`
 				});
 			}
 		});
@@ -1622,6 +1624,16 @@ class CurrentHub {
 		return getCurrentHubBroadcastEngagementSignal(this.broadcasts, broadcastId);
 	}
 
+	getBroadcastAcknowledgmentRoster(broadcastId: string): BroadcastAcknowledgmentRoster | null {
+		return getCurrentHubBroadcastAcknowledgmentRoster({
+			broadcasts: this.broadcasts,
+			members: currentOrganization.members,
+			broadcastAcknowledgmentMap: this.broadcastAcknowledgmentMap,
+			broadcastId,
+			ownProfileId: this.ownProfileId
+		});
+	}
+
 	getEventAttendanceStatus(eventId: string, profileId: string): EventAttendanceStatus | null {
 		return getCurrentHubEventAttendanceStatus(this.eventAttendanceMap, eventId, profileId);
 	}
@@ -1848,7 +1860,7 @@ class CurrentHub {
 				source_id: synced.id,
 				title: synced.title || 'New broadcast',
 				body: (synced.body || '').slice(0, 200),
-				url: `/hub`
+				url: `/hub/broadcast/${synced.id}`
 			});
 		}
 

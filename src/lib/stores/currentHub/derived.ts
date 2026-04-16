@@ -7,6 +7,11 @@
 
 import type { OrganizationMember } from '$lib/models/organizationModel';
 import {
+	buildBroadcastAcknowledgmentRoster,
+	type BroadcastAcknowledgmentMap,
+	type BroadcastAcknowledgmentRoster
+} from '$lib/models/broadcastAcknowledgmentModel';
+import {
 	buildEventResponseRoster,
 	getOwnEventResponseForProfile,
 	summarizeEventResponses,
@@ -229,6 +234,25 @@ export function getCurrentHubBroadcastExecutionDiagnostics(input: {
 		broadcast,
 		executionLedger: input.executionLedger
 	});
+}
+
+export function getCurrentHubBroadcastAcknowledgmentRoster(input: {
+	broadcasts: BroadcastRow[];
+	members: OrganizationMember[];
+	broadcastAcknowledgmentMap: BroadcastAcknowledgmentMap;
+	broadcastId: string;
+	ownProfileId: string | null;
+}): BroadcastAcknowledgmentRoster | null {
+	const broadcast = findBroadcastById(input.broadcasts, input.broadcastId);
+	if (!broadcast) {
+		return null;
+	}
+
+	return buildBroadcastAcknowledgmentRoster(
+		input.members,
+		input.broadcastAcknowledgmentMap[input.broadcastId] ?? [],
+		input.ownProfileId ?? ''
+	);
 }
 
 export function getCurrentHubEventDeliveryStatus(

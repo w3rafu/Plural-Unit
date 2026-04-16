@@ -10,12 +10,15 @@ import {
 } from '$lib/models/hubExecutionQueue';
 import { createDefaultHubNotificationPreferences } from '$lib/models/hubNotifications';
 import type {
+	OrganizationDeletionRequest,
+	OrganizationInvitation,
 	OrganizationMembership,
 	OrganizationPayload
 } from '$lib/models/organizationModel';
 import type { UserDetails } from '$lib/models/userModel';
 import type { MessageThread } from '$lib/models/messageModel';
 import type {
+	BroadcastAcknowledgmentRow,
 	BroadcastRow,
 	EventReminderSettingsRow,
 	EventRow,
@@ -39,6 +42,15 @@ function shiftIsoByMinutes(value: string, minutes: number) {
 
 function cloneMembers() {
 	return uiPreviewFixtures.members.map((member) => ({ ...member }));
+}
+
+function getSmokeMember(profileId: string) {
+	const member = cloneMembers().find((entry) => entry.profile_id === profileId);
+	if (!member) {
+		throw new Error(`Smoke fixtures require member ${profileId}.`);
+	}
+
+	return member;
 }
 
 function buildSmokeBroadcasts(now: number): BroadcastRow[] {
@@ -174,6 +186,67 @@ function buildSmokeReminderSettings(now: number): Record<string, EventReminderSe
 
 function cloneSmokeMessages() {
 	return cloneUiPreviewThreads();
+}
+
+export function buildSmokeInvitations(now = Date.now()): OrganizationInvitation[] {
+	return [
+		{
+			id: 'smoke-invite-email',
+			organization_id: uiPreviewFixtures.organizationId,
+			email: 'new.family@example.com',
+			phone: null,
+			status: 'pending',
+			created_at: toIsoFromNow(-2_880, now)
+		},
+		{
+			id: 'smoke-invite-phone',
+			organization_id: uiPreviewFixtures.organizationId,
+			email: null,
+			phone: '+1 555 123 0099',
+			status: 'pending',
+			created_at: toIsoFromNow(-12_960, now)
+		}
+	];
+}
+
+export function buildSmokeDeletionRequests(now = Date.now()): OrganizationDeletionRequest[] {
+	const nico = getSmokeMember('profile-nico-park');
+
+	return [
+		{
+			...nico,
+			deletion_requested_at: toIsoFromNow(-180, now)
+		}
+	];
+}
+
+function buildSmokeBroadcastAcknowledgmentMap(
+	broadcasts: BroadcastRow[],
+	now: number
+): Record<string, BroadcastAcknowledgmentRow[]> {
+	const primaryBroadcast = broadcasts[0];
+	if (!primaryBroadcast) {
+		return {};
+	}
+
+	return {
+		[primaryBroadcast.id]: [
+			{
+				id: 'smoke-broadcast-ack-owner',
+				organization_id: uiPreviewFixtures.organizationId,
+				broadcast_id: primaryBroadcast.id,
+				profile_id: uiPreviewFixtures.currentUserProfileId,
+				acknowledged_at: toIsoFromNow(-170, now)
+			},
+			{
+				id: 'smoke-broadcast-ack-elena',
+				organization_id: uiPreviewFixtures.organizationId,
+				broadcast_id: primaryBroadcast.id,
+				profile_id: 'profile-elena-rossi',
+				acknowledged_at: toIsoFromNow(-145, now)
+			}
+		]
+	};
 }
 
 function getSmokeWorkflowReviewerId() {
@@ -350,7 +423,7 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 		executionLedger,
 		workflowStateRows,
 		queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(workflowStateRows),
-		broadcastAcknowledgmentMap: {},
+		broadcastAcknowledgmentMap: buildSmokeBroadcastAcknowledgmentMap(broadcasts, now),
 		notificationPreferences: createDefaultHubNotificationPreferences(),
 		notificationReadMap: {}
 	};

@@ -5,7 +5,8 @@ import {
 	countHubNotifications,
 	countUnreadHubNotifications,
 	createDefaultHubNotificationPreferences,
-	filterHubNotifications
+	filterHubNotifications,
+	hasEnabledHubNotificationPreferences
 } from './hubNotifications';
 
 function makeBroadcast(overrides: Partial<{
@@ -535,5 +536,25 @@ describe('buildHubNotifications', () => {
 			eventTimingState: 'recently_completed',
 			summary: 'This event wrapped recently. The last reminder went out 2 hours before.'
 		});
+	});
+});
+
+describe('hasEnabledHubNotificationPreferences', () => {
+	it('treats only broadcast and event settings as hub alert visibility controls', () => {
+		expect(
+			hasEnabledHubNotificationPreferences({
+				broadcast: false,
+				event: false,
+				message: true
+			})
+		).toBe(false);
+
+		expect(
+			hasEnabledHubNotificationPreferences({
+				broadcast: true,
+				event: false,
+				message: false
+			})
+		).toBe(true);
 	});
 });

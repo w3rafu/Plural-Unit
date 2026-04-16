@@ -4,7 +4,7 @@
 
 ## Status
 
-Planned.
+Slices `a` through `e` implemented locally and validated. Slice `e` refreshed README contributor guidance, updated migration/runtime pointers through migration `039`, and added `docs/release-notes-0.1.36.md`.
 
 ## Product constraints
 
@@ -24,9 +24,9 @@ What exists today (after 0.1.36):
 - **Members** can still only interact with broadcasts through list cards and alert-sheet anchors. There is no `/hub/broadcast/[broadcastId]` route, and broadcast push notifications still send members to `/hub` instead of a specific item.
 - **Notification settings** currently mix concepts. The profile card is presented as “In-app alerts,” but one toggle explicitly describes direct-message push behavior, while device-level push enablement sits in the same form.
 - **Smoke coverage** improved in 0.1.36, but it still only covers `hub` and `profile`. There is no smoke protection for directory flows, organization admin flows, or direct-message interactions.
-- **Docs** are stale. README still points contributors at `0.1.32` planning docs and does not reflect the latest migration/runtime dependencies.
+- **Docs** were stale at planning start. Slice `e` refreshes README contributor pointers and adds a short `0.1.36` release-note handoff doc.
 
-What is still missing:
+What was still missing when planning started:
 
 - a deep-linkable broadcast detail route for members and notifications
 - admin-only broadcast follow-up context outside the full manage editor

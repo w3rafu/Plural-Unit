@@ -1,8 +1,9 @@
-import type { MessageThread } from '$lib/models/messageModel';
+import type { MessageEntry, MessageThread } from '$lib/models/messageModel';
 import {
 	MESSAGE_PAGE_SIZE,
 	mapMessageRowToEntry,
-	markMessageEntryDeleted
+	markMessageEntryDeleted,
+	sortThreadsByRecent
 } from '$lib/models/messageModel';
 import * as messageRepository from '$lib/repositories/messageRepository';
 import {
@@ -42,6 +43,53 @@ const defaultMessageRepository: MessageRepository = {
 	markMessageThreadRead: messageRepository.markMessageThreadRead,
 	fetchOlderMessages: messageRepository.fetchOlderMessages
 };
+
+const SMOKE_IMAGE_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+
+function buildSmokeMessageId(threadId: string) {
+	return `smoke-${threadId}-${Date.now().toString(36)}`;
+}
+
+function appendSmokeMessage(
+	threads: MessageThread[],
+	threadId: string,
+	message: MessageEntry
+) {
+	return sortThreadsByRecent(
+		threads.map((thread) =>
+			thread.id === threadId
+				? {
+					...thread,
+					messages: [...thread.messages, message]
+				}
+				: thread
+		)
+	);
+}
+
+function buildSmokeThreadForProfile(profileId: string): MessageThread | null {
+	const member = currentOrganization.members.find((entry) => entry.profile_id === profileId);
+	if (!member) {
+		return null;
+	}
+
+	return {
+		id: `smoke-thread-${profileId}`,
+		participant: {
+			id: `contact-${profileId}`,
+			profileId: member.profile_id,
+			name: member.name || member.email || member.phone_number || 'Organization member',
+			avatar_url: member.avatar_url,
+			subtitle: member.role === 'admin' ? 'Organization admin' : 'Organization member',
+			isFakeUser: false
+		},
+		messages: [],
+		unreadCount: 0,
+		lastReadAt: new Date().toISOString(),
+		contactLastReadAt: null,
+		hasMoreMessages: false
+	};
+}
 
 class CurrentMessages {
 	private static readonly POLL_INTERVAL_MS = 15_000;
@@ -170,6 +218,17 @@ class CurrentMessages {
 			return existingThreadId;
 		}
 
+		if (isSmokeModeEnabled()) {
+			const smokeThread = buildSmokeThreadForProfile(profileId);
+			if (!smokeThread) {
+				throw new Error('Could not find that member in the smoke directory.');
+			}
+
+			this.threads = sortThreadsByRecent([...this.threads, smokeThread]);
+			await this.selectThread(smokeThread.id);
+			return smokeThread.id;
+		}
+
 		const threadId = await this.repository.ensureMessageThreadForProfile(profileId);
 		await this.refresh();
 		await this.selectThread(threadId);
@@ -193,6 +252,16 @@ class CurrentMessages {
 		this.error = '';
 
 		try {
+			if (isSmokeModeEnabled()) {
+				const previousActiveThreadId = this.activeThreadId;
+				this.threads = buildSmokeMessages();
+				this.activeThreadId =
+					this.threads.find((thread) => thread.id === previousActiveThreadId)?.id ??
+					this.threads[0]?.id ??
+					'';
+				return;
+			}
+
 			await this.repository.resetDemoMessageThread();
 			await this.refresh();
 		} catch (err) {
@@ -210,6 +279,24 @@ class CurrentMessages {
 
 		try {
 			this.notifyStoppedTyping();
+
+			if (isSmokeModeEnabled()) {
+				const message = {
+					id: buildSmokeMessageId(this.activeThreadId),
+					threadId: this.activeThreadId,
+					senderId: this.ownerId,
+					senderKind: 'owner',
+					kind: 'text',
+					body: body.trim(),
+					imageUrl: '',
+					sentAt: new Date().toISOString()
+				} satisfies MessageEntry;
+
+				this.lastSentAt = Date.now();
+				this.threads = appendSmokeMessage(this.threads, this.activeThreadId, message);
+				return;
+			}
+
 			await this.repository.sendMessageToThread(this.activeThreadId, body);
 			this.lastSentAt = Date.now();
 			this.firePushForActiveThread(body);
@@ -228,6 +315,23 @@ class CurrentMessages {
 		this.error = '';
 
 		try {
+			if (isSmokeModeEnabled()) {
+				const message = {
+					id: buildSmokeMessageId(this.activeThreadId),
+					threadId: this.activeThreadId,
+					senderId: this.ownerId,
+					senderKind: 'owner',
+					kind: 'image',
+					body: '',
+					imageUrl: SMOKE_IMAGE_DATA_URL,
+					sentAt: new Date().toISOString()
+				} satisfies MessageEntry;
+
+				this.lastSentAt = Date.now();
+				this.threads = appendSmokeMessage(this.threads, this.activeThreadId, message);
+				return;
+			}
+
 			const imageUrl = await this.repository.uploadMessageImage(
 				this.ownerId,
 				this.activeThreadId,
