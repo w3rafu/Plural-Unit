@@ -11,6 +11,7 @@
 
 import { sortEventRows } from '$lib/models/eventLifecycleModel';
 import { buildEventAttendanceMap } from '$lib/models/eventAttendanceModel';
+import { buildBroadcastAcknowledgmentMap } from '$lib/models/broadcastAcknowledgmentModel';
 import { buildEventResponseMap } from '$lib/models/eventResponseModel';
 import {
 	buildHubNotificationReadMap,
@@ -20,6 +21,7 @@ import {
 import { buildHubExecutionQueueTriageMapFromWorkflowStateRows, type HubExecutionTriageMap } from '$lib/models/hubExecutionQueue';
 import { sortHubExecutionLedgerRows } from '$lib/models/hubExecutionLedger';
 import type {
+	BroadcastAcknowledgmentRow,
 	BroadcastRow,
 	EventAttendanceRow,
 	EventReminderSettingsRow,
@@ -33,6 +35,7 @@ import type {
 } from '$lib/repositories/hubRepository';
 import {
 	fetchActivePlugins,
+	fetchBroadcastAcknowledgments,
 	fetchBroadcasts,
 	fetchEventAttendanceRecords,
 	fetchEventReminderSettings,
@@ -59,6 +62,7 @@ export type CurrentHubLoadResult = {
 	eventResponseMap: Record<string, EventResponseRow[]>;
 	eventAttendanceMap: Record<string, EventAttendanceRow[]>;
 	eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
+	broadcastAcknowledgmentMap: Record<string, BroadcastAcknowledgmentRow[]>;
 	executionLedger: HubExecutionLedgerRow[];
 	workflowStateRows: HubOperatorWorkflowStateRow[];
 	queueTriageMap: HubExecutionTriageMap;
@@ -74,6 +78,7 @@ type CurrentHubRawLoadData = {
 	eventResponses: EventResponseRow[];
 	eventAttendanceRecords: EventAttendanceRow[];
 	eventReminderSettings: EventReminderSettingsRow[];
+	broadcastAcknowledgments: BroadcastAcknowledgmentRow[];
 	resources: ResourceRow[];
 	notificationPreferenceRow: HubNotificationPreferenceRow | null;
 	notificationReadRows: HubNotificationReadRow[];
@@ -94,6 +99,7 @@ async function fetchCurrentHubRawLoadData(input: {
 		eventResponses,
 		eventAttendanceRecords,
 		eventReminderSettings,
+		broadcastAcknowledgments,
 		resources,
 		notificationPreferenceRow,
 		notificationReadRows,
@@ -104,6 +110,7 @@ async function fetchCurrentHubRawLoadData(input: {
 		plugins.events ? fetchEventResponses(input.orgId) : Promise.resolve([]),
 		plugins.events && input.profileId ? fetchEventAttendanceRecords(input.orgId) : Promise.resolve([]),
 		plugins.events && input.isAdmin ? fetchEventReminderSettings(input.orgId) : Promise.resolve([]),
+		plugins.broadcasts ? fetchBroadcastAcknowledgments(input.orgId) : Promise.resolve([]),
 		plugins.resources ? fetchResources(input.orgId) : Promise.resolve([]),
 		input.profileId ? fetchHubNotificationPreferences(input.orgId, input.profileId) : Promise.resolve(null),
 		input.profileId
@@ -121,6 +128,7 @@ async function fetchCurrentHubRawLoadData(input: {
 		eventResponses,
 		eventAttendanceRecords,
 		eventReminderSettings,
+		broadcastAcknowledgments,
 		resources,
 		notificationPreferenceRow,
 		notificationReadRows,
@@ -254,6 +262,7 @@ export async function loadCurrentHubState(input: {
 		eventResponseMap: buildEventResponseMap(raw.eventResponses),
 		eventAttendanceMap: buildEventAttendanceMap(raw.eventAttendanceRecords),
 		eventReminderSettingsMap,
+		broadcastAcknowledgmentMap: buildBroadcastAcknowledgmentMap(raw.broadcastAcknowledgments),
 		executionLedger,
 		workflowStateRows: raw.workflowStateRows,
 		queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(raw.workflowStateRows),

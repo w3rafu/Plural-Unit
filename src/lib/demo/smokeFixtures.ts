@@ -346,6 +346,7 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 		executionLedger,
 		workflowStateRows,
 		queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(workflowStateRows),
+		broadcastAcknowledgmentMap: {},
 		notificationPreferences: createDefaultHubNotificationPreferences(),
 		notificationReadMap: {}
 	};

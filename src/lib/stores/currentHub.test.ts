@@ -15,6 +15,7 @@ const mockProcessDueHubReminderExecutions = vi.fn();
 const mockFetchHubNotificationPreferences = vi.fn();
 const mockFetchHubNotificationReads = vi.fn();
 const mockFetchResources = vi.fn();
+const mockFetchBroadcastAcknowledgments = vi.fn();
 const mockCreateBroadcast = vi.fn();
 const mockSaveBroadcastDraft = vi.fn();
 const mockScheduleBroadcast = vi.fn();
@@ -75,6 +76,9 @@ vi.mock('$lib/repositories/hubRepository', () => ({
 	fetchHubNotificationPreferences: (...args: any[]) => mockFetchHubNotificationPreferences(...args),
 	fetchHubNotificationReads: (...args: any[]) => mockFetchHubNotificationReads(...args),
 	fetchResources: (...args: any[]) => mockFetchResources(...args),
+	fetchBroadcastAcknowledgments: (...args: any[]) => mockFetchBroadcastAcknowledgments(...args),
+	acknowledgeBroadcast: vi.fn(),
+	unacknowledgeBroadcast: vi.fn(),
 	createBroadcast: (...args: any[]) => mockCreateBroadcast(...args),
 	saveBroadcastDraft: (...args: any[]) => mockSaveBroadcastDraft(...args),
 	scheduleBroadcast: (...args: any[]) => mockScheduleBroadcast(...args),
@@ -469,6 +473,7 @@ beforeEach(() => {
 	});
 	vi.stubGlobal('sessionStorage', sessionStorageMock);
 	mockFetchEventAttendanceRecords.mockResolvedValue([]);
+	mockFetchBroadcastAcknowledgments.mockResolvedValue([]);
 	mockFetchHubExecutionLedger.mockResolvedValue([]);
 	mockFetchHubOperatorWorkflowState.mockResolvedValue([]);
 	mockProcessDueHubReminderExecutions.mockResolvedValue([]);

@@ -32,6 +32,13 @@ import {
 	removeEventAttendanceFromMap,
 	upsertEventAttendanceMap
 } from '$lib/models/eventAttendanceModel';
+import {
+	type BroadcastAcknowledgmentMap,
+	addAcknowledgmentToMap,
+	removeAcknowledgmentFromMap as removeAcknowledgmentFromMapModel,
+	getBroadcastAcknowledgmentCount,
+	hasMemberAcknowledgedBroadcast
+} from '$lib/models/broadcastAcknowledgmentModel';
 import type {
 	HubAdminEngagementSummary,
 	HubEventFollowUpSignal,
@@ -91,7 +98,9 @@ import type {
 import {
 	deleteHubOperatorWorkflowStateEntries,
 	togglePlugin,
-	upsertHubOperatorWorkflowStateEntries
+	upsertHubOperatorWorkflowStateEntries,
+	acknowledgeBroadcast as acknowledgeBroadcastRepo,
+	unacknowledgeBroadcast as unacknowledgeBroadcastRepo
 } from '$lib/repositories/hubRepository';
 import {
 	getCurrentHubActivityFeed,
@@ -347,11 +356,13 @@ class CurrentHub {
 	resourceTargetId = $state('');
 	eventResponseMap = $state<Record<string, EventResponseRow[]>>({});
 	eventAttendanceMap = $state<Record<string, EventAttendanceRow[]>>({});
+	broadcastAcknowledgmentMap = $state<BroadcastAcknowledgmentMap>({});
 	eventReminderSettingsMap = $state<Record<string, EventReminderSettingsRow>>({});
 	executionLedger = $state<HubExecutionLedgerRow[]>([]);
 	executionTargetId = $state('');
 	eventResponseTargetId = $state('');
 	eventAttendanceTargetId = $state('');
+	broadcastAcknowledgmentTargetId = $state('');
 	notificationPreferences = $state<HubNotificationPreferences>(
 		createDefaultHubNotificationPreferences()
 	);
@@ -754,6 +765,18 @@ class CurrentHub {
 		} finally {
 			if (this.notificationReadTargetId === targetId) {
 				this.notificationReadTargetId = '';
+			}
+		}
+	}
+
+	private async withBroadcastAcknowledgmentTarget<T>(targetId: string, work: () => Promise<T>) {
+		this.broadcastAcknowledgmentTargetId = targetId;
+
+		try {
+			return await work();
+		} finally {
+			if (this.broadcastAcknowledgmentTargetId === targetId) {
+				this.broadcastAcknowledgmentTargetId = '';
 			}
 		}
 	}
@@ -1850,6 +1873,90 @@ class CurrentHub {
 				resourceId,
 				currentRows: this.resources
 			});
+		});
+	}
+
+	// --- Broadcast acknowledgments ---
+
+	getAcknowledgmentCount(broadcastId: string): number {
+		return getBroadcastAcknowledgmentCount(this.broadcastAcknowledgmentMap, broadcastId);
+	}
+
+	hasAcknowledged(broadcastId: string): boolean {
+		return hasMemberAcknowledgedBroadcast(
+			this.broadcastAcknowledgmentMap,
+			broadcastId,
+			this.ownProfileId
+		);
+	}
+
+	get isBroadcastAcknowledgmentBusy(): boolean {
+		return this.broadcastAcknowledgmentTargetId !== '';
+	}
+
+	async acknowledgeBroadcast(broadcastId: string) {
+		if (!this.orgId || !this.ownProfileId) return;
+		if (this.hasAcknowledged(broadcastId)) return;
+
+		if (isSmokeModeEnabled()) {
+			await this.withBroadcastAcknowledgmentTarget(broadcastId, async () => {
+				this.broadcastAcknowledgmentMap = addAcknowledgmentToMap(
+					this.broadcastAcknowledgmentMap,
+					{
+						id: `smoke-ack-${broadcastId}-${this.ownProfileId}`,
+						organization_id: this.orgId as string,
+						broadcast_id: broadcastId,
+						profile_id: this.ownProfileId as string,
+						acknowledged_at: new Date().toISOString()
+					}
+				);
+			});
+			return;
+		}
+
+		await this.withBroadcastAcknowledgmentTarget(broadcastId, async () => {
+			const row = await this.withCapturedError(() =>
+				acknowledgeBroadcastRepo({
+					organizationId: this.orgId as string,
+					broadcastId,
+					profileId: this.ownProfileId as string
+				})
+			);
+			this.broadcastAcknowledgmentMap = addAcknowledgmentToMap(
+				this.broadcastAcknowledgmentMap,
+				row
+			);
+		});
+	}
+
+	async unacknowledgeBroadcast(broadcastId: string) {
+		if (!this.orgId || !this.ownProfileId) return;
+		if (!this.hasAcknowledged(broadcastId)) return;
+
+		if (isSmokeModeEnabled()) {
+			await this.withBroadcastAcknowledgmentTarget(broadcastId, async () => {
+				this.broadcastAcknowledgmentMap = removeAcknowledgmentFromMapModel(
+					this.broadcastAcknowledgmentMap,
+					broadcastId,
+					this.ownProfileId as string
+				);
+			});
+			return;
+		}
+
+		await this.withBroadcastAcknowledgmentTarget(broadcastId, async () => {
+			await this.withCapturedError(() =>
+				unacknowledgeBroadcastRepo({
+					organizationId: this.orgId as string,
+					broadcastId,
+					profileId: this.ownProfileId as string
+				})
+			);
+			this.broadcastAcknowledgmentMap = removeAcknowledgmentFromMapModel(
+				this.broadcastAcknowledgmentMap,
+				broadcastId,
+				this.ownProfileId as string
+			);
 		});
 	}
 }

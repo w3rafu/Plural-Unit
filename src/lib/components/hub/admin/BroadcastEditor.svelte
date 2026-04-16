@@ -635,6 +635,10 @@
 							{#if engagementSignal}
 								<p class={getEngagementClass(broadcast.id)}>{engagementSignal.copy}</p>
 							{/if}
+							{@const ackCount = currentHub.getAcknowledgmentCount(broadcast.id)}
+							{#if ackCount > 0}
+								<p class="text-xs text-muted-foreground">{ackCount} {ackCount === 1 ? 'acknowledgment' : 'acknowledgments'}</p>
+							{/if}
 						</Item.Content>
 						<Item.Actions>
 							<Button variant="ghost" size="sm" onclick={() => startEditing(broadcast)} disabled={isBroadcastMutating}>

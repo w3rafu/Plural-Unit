@@ -6,6 +6,7 @@
  * hydrated load results back onto the store instance.
  */
 
+import type { BroadcastAcknowledgmentMap } from '$lib/models/broadcastAcknowledgmentModel';
 import {
 	createDefaultHubNotificationPreferences,
 	type HubNotificationPreferences
@@ -30,6 +31,7 @@ export type CurrentHubHydratedState = {
 	broadcasts: BroadcastRow[];
 	events: EventRow[];
 	resources: ResourceRow[];
+	broadcastAcknowledgmentMap: BroadcastAcknowledgmentMap;
 	eventResponseMap: Record<string, EventResponseRow[]>;
 	eventAttendanceMap: Record<string, EventAttendanceRow[]>;
 	eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
@@ -72,6 +74,7 @@ export function applyCurrentHubLoadedState(
 	store.broadcasts = state.broadcasts;
 	store.events = state.events;
 	store.resources = state.resources;
+	store.broadcastAcknowledgmentMap = state.broadcastAcknowledgmentMap;
 	store.eventResponseMap = state.eventResponseMap;
 	store.eventAttendanceMap = state.eventAttendanceMap;
 	store.eventReminderSettingsMap = state.eventReminderSettingsMap;
@@ -91,6 +94,7 @@ export function resetCurrentHubState(store: CurrentHubResettableState) {
 	store.broadcasts = [];
 	store.events = [];
 	store.resources = [];
+	store.broadcastAcknowledgmentMap = {};
 	store.broadcastTargetId = '';
 	store.eventTargetId = '';
 	store.resourceTargetId = '';

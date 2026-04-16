@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { getBroadcastStateLabel, sortActiveBroadcasts } from '$lib/models/broadcastLifecycleModel';
 	import type { BroadcastRow } from '$lib/repositories/hubRepository';
@@ -50,6 +51,9 @@
 	{:else}
 		<div class="space-y-3">
 			{#each items as broadcast (broadcast.id)}
+				{@const acknowledged = currentHub.hasAcknowledged(broadcast.id)}
+				{@const ackCount = currentHub.getAcknowledgmentCount(broadcast.id)}
+				{@const ackBusy = currentHub.broadcastAcknowledgmentTargetId === broadcast.id}
 				<Card.Root size="sm" class="border-border/70 bg-card">
 					<Card.Content class="space-y-3">
 						<div class="flex items-center justify-between gap-3">
@@ -71,6 +75,26 @@
 							<h3 class="text-base font-medium text-foreground">{broadcast.title}</h3>
 							<p class="text-sm leading-6 text-muted-foreground">{broadcast.body}</p>
 							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
+						</div>
+						<div class="flex items-center justify-between gap-3 pt-1">
+							<p class="text-xs text-muted-foreground">
+								{ackCount} {ackCount === 1 ? 'acknowledgment' : 'acknowledgments'}
+							</p>
+							<Button
+								variant={acknowledged ? 'secondary' : 'outline'}
+								size="sm"
+								class="h-7 text-xs"
+								disabled={ackBusy}
+								onclick={() => {
+									if (acknowledged) {
+										currentHub.unacknowledgeBroadcast(broadcast.id);
+									} else {
+										currentHub.acknowledgeBroadcast(broadcast.id);
+									}
+								}}
+							>
+								{acknowledged ? 'Acknowledged ✓' : 'Acknowledge'}
+							</Button>
 						</div>
 					</Card.Content>
 				</Card.Root>

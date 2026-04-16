@@ -3,6 +3,7 @@
  */
 
 export * from './hubRepository/broadcasts';
+export * from './hubRepository/broadcastAcknowledgments';
 export * from './hubRepository/events';
 export * from './hubRepository/executionLedger';
 export * from './hubRepository/notifications';
