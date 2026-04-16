@@ -283,6 +283,7 @@ function makeMember(
 		email: string;
 		phone_number: string;
 		avatar_url: string;
+		bio: string | null;
 		role: 'admin' | 'member';
 		joined_via: 'created' | 'invitation' | 'code';
 		joined_at: string;
@@ -294,6 +295,7 @@ function makeMember(
 		email: overrides.email ?? 'alex@example.com',
 		phone_number: overrides.phone_number ?? '',
 		avatar_url: overrides.avatar_url ?? '',
+		bio: overrides.bio ?? null,
 		role: overrides.role ?? 'member',
 		joined_via: overrides.joined_via ?? 'invitation',
 		joined_at: overrides.joined_at ?? '2026-04-12T10:00:00.000Z'

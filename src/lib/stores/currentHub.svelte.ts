@@ -1936,6 +1936,10 @@ class CurrentHub {
 	}
 
 	hasAcknowledged(broadcastId: string): boolean {
+		if (!this.ownProfileId) {
+			return false;
+		}
+
 		return hasMemberAcknowledgedBroadcast(
 			this.broadcastAcknowledgmentMap,
 			broadcastId,

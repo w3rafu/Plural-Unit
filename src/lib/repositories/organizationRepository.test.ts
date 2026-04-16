@@ -321,7 +321,7 @@ describe('fetchMemberCount', () => {
 
 describe('fetchOrganizationMembers', () => {
 	it('calls the get_organization_members RPC', async () => {
-		const members = [{ profile_id: 'u1', name: 'Alice', role: 'admin' }];
+		const members = [{ profile_id: 'u1', name: 'Alice', bio: 'Ops lead', role: 'admin' }];
 		mockRpc.mockResolvedValueOnce({ data: members, error: null });
 
 		const result = await fetchOrganizationMembers('org-1');

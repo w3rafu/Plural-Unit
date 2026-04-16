@@ -22,6 +22,7 @@ function makeMember(overrides: Partial<OrganizationMember> = {}): OrganizationMe
 		email: 'ariana@example.com',
 		phone_number: '',
 		avatar_url: '',
+		bio: null,
 		role: 'member',
 		joined_via: 'invitation',
 		joined_at: '2026-04-10T10:00:00.000Z',

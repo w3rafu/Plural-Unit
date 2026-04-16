@@ -45,6 +45,7 @@
 	} = $props();
 
 	const memberLabel = $derived(member.name || formatContact(member));
+	const bioPreview = $derived((member.bio ?? '').trim());
 	const joinedViaLabel = $derived(formatJoinedVia(member));
 	const isRecentJoin = $derived(isRecentOrganizationMember(member));
 </script>
@@ -65,6 +66,9 @@
 			<div class="space-y-1">
 				<p class="font-medium text-foreground">{member.name || 'Unnamed member'}</p>
 				<p class="text-xs text-muted-foreground">{formatContact(member)}</p>
+				{#if bioPreview}
+					<p class="max-w-md truncate text-xs text-muted-foreground">{bioPreview}</p>
+				{/if}
 			</div>
 		</div>
 	</Table.Cell>

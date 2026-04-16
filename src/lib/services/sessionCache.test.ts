@@ -13,7 +13,8 @@ describe('serializeCachedSession / readCachedSession', () => {
 			name: 'Jo',
 			email: 'a@b.co',
 			phone_number: '',
-			avatar_url: 'https://cdn.example/avatar.png'
+			avatar_url: 'https://cdn.example/avatar.png',
+			bio: ''
 		};
 		const raw = serializeCachedSession(details);
 		const restored = readCachedSession(raw);
@@ -30,7 +31,8 @@ describe('serializeCachedSession / readCachedSession', () => {
 			name: 'Jo',
 			email: 'secret@x.co',
 			phone_number: '+1555',
-			avatar_url: 'https://cdn.example/avatar.png'
+			avatar_url: 'https://cdn.example/avatar.png',
+			bio: ''
 		};
 		const raw = serializeCachedSession(details);
 		const parsed = JSON.parse(raw);

@@ -37,6 +37,7 @@
 	} = $props();
 
 	const contactFields = $derived(member ? getMemberDirectoryContactFields(member) : []);
+	const bio = $derived((member?.bio ?? '').trim());
 	const isOwnProfile = $derived(member?.profile_id === currentUserId);
 	const messageLabel = $derived(hasConversation ? 'View conversation' : 'Message member');
 </script>
@@ -136,6 +137,17 @@
 						</p>
 					</div>
 				</div>
+			</div>
+
+			<div class="rounded-3xl border border-border/70 bg-background px-4 py-4 shadow-sm">
+				<p class="text-sm font-semibold text-foreground">Bio</p>
+				{#if bio}
+					<p class="mt-2 text-sm leading-6 text-foreground wrap-break-word">{bio}</p>
+				{:else}
+					<p class="mt-2 text-sm text-muted-foreground">
+						This member has not added a bio yet.
+					</p>
+				{/if}
 			</div>
 
 			{#if contactFields.length > 0}

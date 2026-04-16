@@ -18,6 +18,7 @@ const baseMembers = [
 		email: 'alex@example.com',
 		phone_number: '',
 		avatar_url: '',
+		bio: null,
 		role: 'admin' as const,
 		joined_via: 'created' as const,
 		joined_at: '2026-04-01T10:00:00.000Z'
@@ -28,6 +29,7 @@ const baseMembers = [
 		email: 'bea@example.com',
 		phone_number: '',
 		avatar_url: '',
+		bio: null,
 		role: 'member' as const,
 		joined_via: 'invitation' as const,
 		joined_at: '2026-04-02T10:00:00.000Z'
@@ -38,6 +40,7 @@ const baseMembers = [
 		email: 'casey@example.com',
 		phone_number: '',
 		avatar_url: '',
+		bio: null,
 		role: 'member' as const,
 		joined_via: 'code' as const,
 		joined_at: '2026-04-03T10:00:00.000Z'
@@ -48,6 +51,7 @@ const baseMembers = [
 		email: 'drew@example.com',
 		phone_number: '',
 		avatar_url: '',
+		bio: null,
 		role: 'member' as const,
 		joined_via: 'invitation' as const,
 		joined_at: '2026-04-04T10:00:00.000Z'

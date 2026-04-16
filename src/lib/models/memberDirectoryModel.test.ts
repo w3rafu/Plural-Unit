@@ -17,6 +17,7 @@ const members: OrganizationMember[] = [
 		email: 'jamie@example.com',
 		phone_number: '',
 		avatar_url: '',
+		bio: null,
 		role: 'member',
 		joined_via: 'code',
 		joined_at: '2026-01-10T00:00:00.000Z'
@@ -27,6 +28,7 @@ const members: OrganizationMember[] = [
 		email: 'alex@example.com',
 		phone_number: '555-0100',
 		avatar_url: '',
+		bio: null,
 		role: 'admin',
 		joined_via: 'created',
 		joined_at: '2026-01-01T00:00:00.000Z'

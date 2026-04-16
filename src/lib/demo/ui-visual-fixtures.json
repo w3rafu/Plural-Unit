@@ -9,6 +9,7 @@
 			"email": "ariana@pluralunit.test",
 			"phone_number": "+1 415 555 0101",
 			"avatar_url": "",
+			"bio": "Coordinates the Harbor Unit schedule and keeps volunteers aligned across weekly operations.",
 			"role": "admin",
 			"joined_via": "created",
 			"joined_at": "2026-01-06T15:20:00.000Z"
@@ -19,6 +20,7 @@
 			"email": "nico@pluralunit.test",
 			"phone_number": "+1 415 555 0102",
 			"avatar_url": "",
+			"bio": "Handles neighborhood outreach and keeps partner follow-ups moving.",
 			"role": "admin",
 			"joined_via": "invitation",
 			"joined_at": "2026-01-12T18:05:00.000Z"
@@ -29,6 +31,7 @@
 			"email": "elena@pluralunit.test",
 			"phone_number": "+1 415 555 0103",
 			"avatar_url": "",
+			"bio": "Supports volunteer onboarding and makes sure first-shift logistics stay clear.",
 			"role": "member",
 			"joined_via": "code",
 			"joined_at": "2026-02-04T17:30:00.000Z"
@@ -39,6 +42,7 @@
 			"email": "malik@pluralunit.test",
 			"phone_number": "+1 415 555 0104",
 			"avatar_url": "",
+			"bio": "Focuses on event setup, load-in, and same-day volunteer coordination.",
 			"role": "member",
 			"joined_via": "invitation",
 			"joined_at": "2026-02-18T20:10:00.000Z"
@@ -49,6 +53,7 @@
 			"email": "priya@pluralunit.test",
 			"phone_number": "+1 415 555 0105",
 			"avatar_url": "",
+			"bio": "Keeps documentation current and helps new members find the right resources quickly.",
 			"role": "member",
 			"joined_via": "invitation",
 			"joined_at": "2026-03-02T16:45:00.000Z"
@@ -59,6 +64,7 @@
 			"email": "tomas@pluralunit.test",
 			"phone_number": "+1 415 555 0106",
 			"avatar_url": "",
+			"bio": "",
 			"role": "member",
 			"joined_via": "code",
 			"joined_at": "2026-03-09T19:15:00.000Z"
@@ -69,6 +75,7 @@
 			"email": "yara@pluralunit.test",
 			"phone_number": "+1 415 555 0107",
 			"avatar_url": "",
+			"bio": "Tracks community requests and makes sure follow-up owners are assigned quickly.",
 			"role": "member",
 			"joined_via": "invitation",
 			"joined_at": "2026-03-14T22:20:00.000Z"
@@ -79,6 +86,7 @@
 			"email": "lucia@pluralunit.test",
 			"phone_number": "+1 415 555 0108",
 			"avatar_url": "",
+			"bio": "Helps with bilingual outreach and member support during live events.",
 			"role": "member",
 			"joined_via": "invitation",
 			"joined_at": "2026-03-29T21:00:00.000Z"

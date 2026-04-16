@@ -107,6 +107,7 @@ function makeRoster(pendingProfileIds: string[]): EventAttendanceRoster {
 				email: `member${index + 1}@example.com`,
 				phone_number: '',
 				avatar_url: '',
+				bio: null,
 				role: 'member',
 				joined_via: 'invitation',
 				joined_at: '2026-04-01T10:00:00.000Z'

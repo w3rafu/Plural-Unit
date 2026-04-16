@@ -358,7 +358,8 @@ describe('buildHubNotifications', () => {
 			events: [makeEvent({ id: 'e1' })],
 			preferences: {
 				broadcast: false,
-				event: true
+				event: true,
+				message: true
 			}
 		});
 

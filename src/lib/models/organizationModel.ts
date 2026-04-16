@@ -36,6 +36,7 @@ export type OrganizationMember = {
 	email: string;
 	phone_number: string;
 	avatar_url: string;
+	bio: string | null;
 	role: 'admin' | 'member';
 	joined_via: 'created' | 'invitation' | 'code';
 	joined_at: string;
