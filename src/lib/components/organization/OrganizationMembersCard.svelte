@@ -193,19 +193,12 @@
 <Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Members</Card.Title>
-		<Card.Description>
-			Review who belongs to this organization and which accounts can manage it.
-		</Card.Description>
+		<Card.Description>Who belongs to this organization and their roles.</Card.Description>
 	</Card.Header>
 
 	{#if !currentOrganization.isAdmin}
 		<Card.Content>
-			<div class="rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-center">
-				<p class="font-medium text-foreground">Members are visible to organization admins.</p>
-				<p class="mt-1 text-sm text-muted-foreground">
-					Ask an admin if you need help reviewing who has access.
-				</p>
-			</div>
+			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
 		<Card.Content class="space-y-3.5">
@@ -215,7 +208,6 @@
 						<p class="metric-label">Total members</p>
 						<p class="metric-value">{organizationMembers.length}</p>
 					</div>
-					<p class="metric-copy">Everyone who currently has access.</p>
 				</div>
 
 				<div class="metric-card">
@@ -223,7 +215,6 @@
 						<p class="metric-label">Admins</p>
 						<p class="metric-value">{adminCount}</p>
 					</div>
-					<p class="metric-copy">Accounts that can manage membership and access.</p>
 				</div>
 
 				<div class="metric-card">
@@ -231,7 +222,6 @@
 						<p class="metric-label">Recent joins</p>
 						<p class="metric-value">{recentJoinCount}</p>
 					</div>
-					<p class="metric-copy">Members added during the last week.</p>
 				</div>
 			</div>
 
@@ -288,12 +278,7 @@
 						{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
 							<Table.Row class="border-0 hover:bg-transparent">
 								<Table.Cell colspan={5} class="py-10 text-center">
-									<div class="space-y-1">
-										<p class="font-medium text-foreground">Loading members</p>
-										<p class="text-sm text-muted-foreground">
-											Pulling the latest organization access list now.
-										</p>
-									</div>
+									<p class="text-sm text-muted-foreground">Loading members…</p>
 								</Table.Cell>
 							</Table.Row>
 						{:else if visibleMembers.length > 0}
