@@ -418,9 +418,9 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 	return {
 		loadedOrgId: uiPreviewFixtures.organizationId,
 		plugins: {
-			broadcasts: true,
-			events: true,
-			resources: false
+			broadcasts: { isEnabled: true, visibility: 'all_members' },
+			events: { isEnabled: true, visibility: 'admins_only' },
+			resources: { isEnabled: false, visibility: 'all_members' }
 		},
 		broadcasts,
 		events,

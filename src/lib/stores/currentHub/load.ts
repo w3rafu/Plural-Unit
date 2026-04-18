@@ -105,13 +105,13 @@ async function fetchCurrentHubRawLoadData(input: {
 		notificationReadRows,
 		workflowStateRows
 	] = await Promise.all([
-		plugins.broadcasts ? fetchBroadcasts(input.orgId) : Promise.resolve([]),
-		plugins.events ? fetchEvents(input.orgId) : Promise.resolve([]),
-		plugins.events ? fetchEventResponses(input.orgId) : Promise.resolve([]),
-		plugins.events && input.profileId ? fetchEventAttendanceRecords(input.orgId) : Promise.resolve([]),
-		plugins.events && input.isAdmin ? fetchEventReminderSettings(input.orgId) : Promise.resolve([]),
-		plugins.broadcasts ? fetchBroadcastAcknowledgments(input.orgId) : Promise.resolve([]),
-		plugins.resources ? fetchResources(input.orgId) : Promise.resolve([]),
+		plugins.broadcasts.isEnabled ? fetchBroadcasts(input.orgId) : Promise.resolve([]),
+		plugins.events.isEnabled ? fetchEvents(input.orgId) : Promise.resolve([]),
+		plugins.events.isEnabled ? fetchEventResponses(input.orgId) : Promise.resolve([]),
+		plugins.events.isEnabled && input.profileId ? fetchEventAttendanceRecords(input.orgId) : Promise.resolve([]),
+		plugins.events.isEnabled && input.isAdmin ? fetchEventReminderSettings(input.orgId) : Promise.resolve([]),
+		plugins.broadcasts.isEnabled ? fetchBroadcastAcknowledgments(input.orgId) : Promise.resolve([]),
+		plugins.resources.isEnabled ? fetchResources(input.orgId) : Promise.resolve([]),
 		input.profileId ? fetchHubNotificationPreferences(input.orgId, input.profileId) : Promise.resolve(null),
 		input.profileId
 			? fetchHubNotificationReads(input.orgId, input.profileId)
@@ -144,7 +144,7 @@ async function syncCurrentHubLoadedContent(input: {
 	syncBroadcastDeliveryRow: (row: BroadcastRow) => Promise<BroadcastRow>;
 	syncEventDeliveryRow: (row: EventRow) => Promise<EventRow>;
 }) {
-	if (!input.plugins.broadcasts && !input.plugins.events) {
+	if (!input.plugins.broadcasts.isEnabled && !input.plugins.events.isEnabled) {
 		return {
 			broadcasts: input.broadcasts,
 			events: input.events
@@ -152,10 +152,10 @@ async function syncCurrentHubLoadedContent(input: {
 	}
 
 	const [broadcasts, events] = await Promise.all([
-		input.plugins.broadcasts && input.isAdmin
+		input.plugins.broadcasts.isEnabled && input.isAdmin
 			? Promise.all(input.broadcasts.map((broadcast) => input.syncBroadcastDeliveryRow(broadcast)))
 			: Promise.resolve(input.broadcasts),
-		input.plugins.events && input.isAdmin
+		input.plugins.events.isEnabled && input.isAdmin
 			? Promise.all(input.events.map((event) => input.syncEventDeliveryRow(event)))
 			: Promise.resolve(input.events)
 	]);
@@ -177,19 +177,19 @@ async function fetchCurrentHubExecutionLedger(input: {
 		return null;
 	}
 
-	if (input.plugins.events && input.profileId) {
+	if (input.plugins.events.isEnabled && input.profileId) {
 		await processDueHubReminderExecutions(input.orgId);
 	}
 
 	const shouldFetchExecutionLedger =
-		(input.plugins.broadcasts || input.plugins.events) &&
-		(input.isAdmin || (input.plugins.events && Boolean(input.profileId)));
+		(input.plugins.broadcasts.isEnabled || input.plugins.events.isEnabled) &&
+		(input.isAdmin || (input.plugins.events.isEnabled && Boolean(input.profileId)));
 
 	const executionLedgerRows = shouldFetchExecutionLedger
 		? await fetchHubExecutionLedger(input.orgId)
 		: ([] as HubExecutionLedgerRow[]);
 
-	if (!input.plugins.broadcasts && !input.plugins.events) {
+	if (!input.plugins.broadcasts.isEnabled && !input.plugins.events.isEnabled) {
 		return [];
 	}
 

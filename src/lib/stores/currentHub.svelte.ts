@@ -66,6 +66,8 @@ import {
 } from '$lib/models/resourcesModel';
 import {
 	type PluginKey,
+	type PluginState,
+	type PluginVisibilityMode,
 	type PluginStateMap
 } from './pluginRegistry';
 import {
@@ -1074,14 +1076,32 @@ class CurrentHub {
 	}
 
 	async toggle(key: PluginKey, enabled: boolean) {
+		return this.updatePluginState(key, { isEnabled: enabled });
+	}
+
+	async setVisibility(key: PluginKey, visibility: PluginVisibilityMode) {
+		return this.updatePluginState(key, { visibility });
+	}
+
+	private async updatePluginState(key: PluginKey, patch: Partial<PluginState>) {
+		const nextState = {
+			...this.plugins[key],
+			...patch
+		};
+
 		if (isSmokeModeEnabled()) {
-			this.plugins = { ...this.plugins, [key]: enabled };
+			this.plugins = { ...this.plugins, [key]: nextState };
 			return;
 		}
 
 		if (!this.orgId) return;
-		await togglePlugin(this.orgId, key, enabled);
-		this.plugins = { ...this.plugins, [key]: enabled };
+		await this.withCapturedError(() =>
+			togglePlugin(this.orgId as string, key, {
+				isEnabled: nextState.isEnabled,
+				visibilityMode: nextState.visibility
+			})
+		);
+		this.plugins = { ...this.plugins, [key]: nextState };
 	}
 
 	async updateNotificationPreferences(nextPreferences: HubNotificationPreferences) {

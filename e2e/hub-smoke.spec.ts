@@ -94,18 +94,28 @@ test.describe('hub smoke routes', () => {
 		).toBeVisible();
 	});
 
-	test('loads manage sections with plugin controls and toggles one section', async ({ page }) => {
+	test('loads manage sections with plugin controls and audience targeting', async ({ page }) => {
 		await page.goto('/hub/manage/sections?smoke=1');
 
 		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
 		await expect(page.getByText('Hub sections')).toBeVisible();
-		await expect(page.getByLabel('Broadcasts')).toBeVisible();
-		await expect(page.getByLabel('Events')).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Broadcasts' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Events' })).toBeVisible();
+		await expect(
+			page.getByRole('button', { name: 'Set Events visibility to admins only' })
+		).toHaveAttribute('aria-pressed', 'true');
 
 		const resourcesToggle = page.getByRole('checkbox', { name: 'Resources' });
 		await expect(resourcesToggle).not.toBeChecked();
 		await resourcesToggle.click();
 		await expect(resourcesToggle).toBeChecked();
+
+		const resourcesAdminsOnly = page.getByRole('button', {
+			name: 'Set Resources visibility to admins only'
+		});
+		await expect(resourcesAdminsOnly).toHaveAttribute('aria-pressed', 'false');
+		await resourcesAdminsOnly.click();
+		await expect(resourcesAdminsOnly).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	test('surfaces workflow-schema recovery guidance in smoke mode', async ({ page }) => {

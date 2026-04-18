@@ -39,18 +39,18 @@
 
 ## d — Role-aware hub section targeting
 
-- [ ] Create `supabase/migrations/043_add_hub_plugin_visibility.sql`
-- [ ] Extend plugin rows beyond simple enabled and disabled state
-- [ ] Update admin plugin controls to choose the visibility mode per section
-- [ ] Derive member-visible hub sections centrally in the root hub route
-- [ ] Keep hub manage available to admins regardless of member-facing targeting
-- [ ] Verify non-admin members only see sections allowed by both enablement and visibility mode
+- [x] Create `supabase/migrations/043_add_hub_plugin_visibility.sql`
+- [x] Extend plugin rows beyond simple enabled and disabled state
+- [x] Update admin plugin controls to choose the visibility mode per section
+- [x] Derive member-visible hub sections centrally in the root hub route
+- [x] Keep hub manage available to admins regardless of member-facing targeting
+- [x] Verify non-admin members only see sections allowed by both enablement and visibility mode
 
 ## e — Smoke, release handoff, and rollout safety
 
 - [ ] Extend `e2e/messages-smoke.spec.ts` for archive and mute flows
 - [x] Extend `e2e/organization-smoke.spec.ts` for invitation expiry and resend recovery
-- [ ] Extend `e2e/hub-smoke.spec.ts` for role-targeted section visibility
+- [x] Extend `e2e/hub-smoke.spec.ts` for role-targeted section visibility
 - [x] Update smoke fixtures for archived threads, muted threads, and expired invitations
 - [ ] Create `docs/release-notes-0.1.37.md`
 - [ ] Update README only after the latest roadmap and release notes stay aligned

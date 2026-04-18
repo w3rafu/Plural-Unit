@@ -34,7 +34,16 @@ export type PluginDefinition = {
 	adminOrder: number;
 };
 
-export type PluginStateMap = Record<PluginKey, boolean>;
+export type PluginVisibilityMode = 'all_members' | 'admins_only';
+
+export type PluginState = {
+	isEnabled: boolean;
+	visibility: PluginVisibilityMode;
+};
+
+export type PluginViewerRole = 'admin' | 'member';
+
+export type PluginStateMap = Record<PluginKey, PluginState>;
 
 /**
  * Canonical registry. Order is controlled by `memberOrder` / `adminOrder`.
@@ -65,30 +74,67 @@ export const PLUGIN_REGISTRY: Record<PluginKey, PluginDefinition> = {
 
 export const ALL_PLUGIN_KEYS: PluginKey[] = Object.keys(PLUGIN_REGISTRY) as PluginKey[];
 
+function normalizePluginVisibilityMode(value: string | null | undefined): PluginVisibilityMode {
+	return value === 'admins_only' ? 'admins_only' : 'all_members';
+}
+
 /**
  * Build a state map from plugin activation rows.
  * Missing rows are treated as disabled.
  */
 export function buildPluginStateMap(
-	rows: Array<{ plugin_key: string; is_enabled: boolean }>
+	rows: Array<{ plugin_key: string; is_enabled: boolean; visibility_mode?: string | null }>
 ): PluginStateMap {
-	const map: PluginStateMap = { broadcasts: false, events: false, resources: false };
+	const map: PluginStateMap = {
+		broadcasts: { isEnabled: false, visibility: 'all_members' },
+		events: { isEnabled: false, visibility: 'all_members' },
+		resources: { isEnabled: false, visibility: 'all_members' }
+	};
 	for (const row of rows) {
 		if (row.plugin_key in map) {
-			map[row.plugin_key as PluginKey] = row.is_enabled;
+			map[row.plugin_key as PluginKey] = {
+				isEnabled: row.is_enabled,
+				visibility: normalizePluginVisibilityMode(row.visibility_mode)
+			};
 		}
 	}
 	return map;
 }
 
+export function isPluginEnabled(stateMap: PluginStateMap, key: PluginKey) {
+	return stateMap[key].isEnabled;
+}
+
+export function isPluginVisibleToRole(state: PluginState, role: PluginViewerRole) {
+	return state.isEnabled && (role === 'admin' || state.visibility === 'all_members');
+}
+
+export function getPluginAudienceLabel(visibility: PluginVisibilityMode) {
+	return visibility === 'admins_only' ? 'Admins only' : 'Everyone';
+}
+
 /**
- * Return plugin definitions sorted by `memberOrder`.
+	* Return enabled plugin definitions sorted by `memberOrder`.
  */
 export function getActivePluginsForMember(stateMap: PluginStateMap): PluginDefinition[] {
+	return getVisiblePluginsForRole(stateMap, 'member');
+}
+
+export function getVisiblePluginsForRole(
+	stateMap: PluginStateMap,
+	role: PluginViewerRole
+): PluginDefinition[] {
 	return ALL_PLUGIN_KEYS
-		.filter((key) => stateMap[key])
+		.filter((key) => isPluginVisibleToRole(stateMap[key], role))
 		.map((key) => PLUGIN_REGISTRY[key])
 		.sort((a, b) => a.memberOrder - b.memberOrder);
+}
+
+export function getEnabledPlugins(stateMap: PluginStateMap): PluginDefinition[] {
+	return ALL_PLUGIN_KEYS
+		.filter((key) => stateMap[key].isEnabled)
+		.map((key) => PLUGIN_REGISTRY[key])
+		.sort((a, b) => a.adminOrder - b.adminOrder);
 }
 
 /**

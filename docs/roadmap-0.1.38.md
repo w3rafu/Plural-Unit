@@ -4,7 +4,7 @@
 
 ## Status
 
-Slices `a` through `c` are implemented locally and validated. Slices `d` and `e` remain planned.
+Slices `a` through `d` are implemented locally and validated. Slice `e` remains planned.
 
 ## Product constraints
 
@@ -128,6 +128,7 @@ Goals:
 - preserve the existing enabled and disabled behavior as the default shape
 - derive member-visible hub sections centrally instead of sprinkling role checks through section components
 - keep hub manage available to admins regardless of member-facing plugin visibility
+- keep smoke-mode hub targeting fixture-backed so admin-only sections can be exercised without Supabase writes
 
 Candidate files:
 

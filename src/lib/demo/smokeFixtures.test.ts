@@ -34,7 +34,11 @@ describe('smokeFixtures', () => {
 			includeTriaged: true
 		});
 
-		expect(state.plugins).toEqual({ broadcasts: true, events: true, resources: false });
+		expect(state.plugins).toEqual({
+			broadcasts: { isEnabled: true, visibility: 'all_members' },
+			events: { isEnabled: true, visibility: 'admins_only' },
+			resources: { isEnabled: false, visibility: 'all_members' }
+		});
 		expect(state.broadcasts).toHaveLength(3);
 		expect(state.events).toHaveLength(4);
 		expect(state.workflowStateRows).toHaveLength(2);

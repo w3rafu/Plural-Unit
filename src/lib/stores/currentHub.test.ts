@@ -132,9 +132,18 @@ vi.mock('$lib/services/pushNotification', () => ({
 // Mock pluginRegistry
 vi.mock('./pluginRegistry', () => ({
 	buildPluginStateMap: (rows: any[]) => {
-		const map: Record<string, boolean> = { broadcasts: false, events: false, resources: false };
+		const map: Record<string, { isEnabled: boolean; visibility: 'all_members' | 'admins_only' }> = {
+			broadcasts: { isEnabled: false, visibility: 'all_members' },
+			events: { isEnabled: false, visibility: 'all_members' },
+			resources: { isEnabled: false, visibility: 'all_members' }
+		};
 		for (const row of rows) {
-			if (row.plugin_key in map) map[row.plugin_key] = row.is_enabled;
+			if (row.plugin_key in map) {
+				map[row.plugin_key] = {
+					isEnabled: row.is_enabled,
+					visibility: row.visibility_mode === 'admins_only' ? 'admins_only' : 'all_members'
+				};
+			}
 		}
 		return map;
 	}
@@ -536,9 +545,9 @@ describe('currentHub.load', () => {
 		await currentHub.load();
 
 		expect(currentHub.hasLoadedForCurrentOrg).toBe(true);
-		expect(currentHub.plugins.broadcasts).toBe(true);
-		expect(currentHub.plugins.events).toBe(true);
-		expect(currentHub.plugins.resources).toBe(true);
+		expect(currentHub.plugins.broadcasts).toEqual({ isEnabled: true, visibility: 'all_members' });
+		expect(currentHub.plugins.events).toEqual({ isEnabled: true, visibility: 'all_members' });
+		expect(currentHub.plugins.resources).toEqual({ isEnabled: true, visibility: 'all_members' });
 		expect(currentHub.broadcasts).toEqual([makeBroadcast({ id: 'b1', title: 'Hello' })]);
 		expect(currentHub.events).toEqual([makeEvent({ id: 'e1', title: 'Meeting' })]);
 		expect(currentHub.getEventReminderOffsets('e1')).toEqual([1440, 120]);
@@ -1731,8 +1740,29 @@ describe('currentHub.toggle', () => {
 
 		await currentHub.toggle('broadcasts', true);
 
-		expect(mockTogglePlugin).toHaveBeenCalledWith('org-1', 'broadcasts', true);
-		expect(currentHub.plugins.broadcasts).toBe(true);
+		expect(mockTogglePlugin).toHaveBeenCalledWith('org-1', 'broadcasts', {
+			isEnabled: true,
+			visibilityMode: 'all_members'
+		});
+		expect(currentHub.plugins.broadcasts).toEqual({ isEnabled: true, visibility: 'all_members' });
+	});
+});
+
+describe('currentHub.setVisibility', () => {
+	it('updates a plugin audience and preserves enabled state', async () => {
+		mockTogglePlugin.mockResolvedValueOnce(undefined);
+		currentHub.plugins = {
+			...currentHub.plugins,
+			broadcasts: { isEnabled: true, visibility: 'all_members' }
+		};
+
+		await currentHub.setVisibility('broadcasts', 'admins_only');
+
+		expect(mockTogglePlugin).toHaveBeenCalledWith('org-1', 'broadcasts', {
+			isEnabled: true,
+			visibilityMode: 'admins_only'
+		});
+		expect(currentHub.plugins.broadcasts).toEqual({ isEnabled: true, visibility: 'admins_only' });
 	});
 });
 
@@ -2653,7 +2683,11 @@ describe('currentHub.reset', () => {
 		expect(currentHub.isSavingNotificationPreferences).toBe(false);
 		expect(currentHub.notificationReadTargetId).toBe('');
 		expect(currentHub.isMarkingAllActivityRead).toBe(false);
-		expect(currentHub.plugins).toEqual({ broadcasts: false, events: false, resources: false });
+		expect(currentHub.plugins).toEqual({
+			broadcasts: { isEnabled: false, visibility: 'all_members' },
+			events: { isEnabled: false, visibility: 'all_members' },
+			resources: { isEnabled: false, visibility: 'all_members' }
+		});
 		expect(currentHub.lastError).toBeNull();
 		expect(currentHub.isLoading).toBe(false);
 	});
