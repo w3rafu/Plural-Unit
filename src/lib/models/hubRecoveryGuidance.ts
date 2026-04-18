@@ -65,6 +65,26 @@ const SCHEMA_DRIFT_GUIDANCE = [
 	{
 		pattern: /\b(public\.)?hub_event_attendances\b/i,
 		copy: 'Apply migration 025_add_hub_event_attendances.sql, then try again.'
+	},
+	{
+		pattern:
+			/\bmessage_threads\.archived_at\b|['"]archived_at['"]\s+column\s+of\s+['"]message_threads['"]|\b(public\.)?(un)?archive_message_thread\b/i,
+		copy: 'Apply migration 040_add_message_thread_archive.sql, then try again.'
+	},
+	{
+		pattern:
+			/\bmessage_threads\.muted_at\b|['"]muted_at['"]\s+column\s+of\s+['"]message_threads['"]|\b(public\.)?(?:un)?mute_message_thread\b/i,
+		copy: 'Apply migration 041_add_message_thread_mute.sql, then try again.'
+	},
+	{
+		pattern:
+			/\borganization_invitations\.expires_at\b|['"]expires_at['"]\s+column\s+of\s+['"]organization_invitations['"]/i,
+		copy: 'Apply migration 042_add_invitation_expiry.sql, then try again.'
+	},
+	{
+		pattern:
+			/\bhub_plugins\.visibility_mode\b|['"]visibility_mode['"]\s+column\s+of\s+['"]hub_plugins['"]/i,
+		copy: 'Apply migration 043_add_hub_plugin_visibility.sql, then try again.'
 	}
 ] as const;
 

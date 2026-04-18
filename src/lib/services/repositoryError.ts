@@ -11,9 +11,15 @@ import { getHubSchemaDriftRecoveryCopy } from '$lib/models/hubRecoveryGuidance';
 const SCHEMA_DRIFT_CODES = new Set(['42703', '42P01', '42704', '42883']);
 const SCHEMA_DRIFT_MESSAGE_PATTERN =
 	/\b(column|relation|function|constraint)\b[\s\S]*\bdoes not exist\b/i;
+const SCHEMA_CACHE_MESSAGE_PATTERN =
+	/could not find the ['"][^'"]+['"] column of ['"][^'"]+['"] in the schema cache/i;
 
 function buildRepositoryErrorMessage(fallback: string, message: string, code?: string | null) {
-	if (SCHEMA_DRIFT_CODES.has(code ?? '') || SCHEMA_DRIFT_MESSAGE_PATTERN.test(message)) {
+	if (
+		SCHEMA_DRIFT_CODES.has(code ?? '') ||
+		SCHEMA_DRIFT_MESSAGE_PATTERN.test(message) ||
+		SCHEMA_CACHE_MESSAGE_PATTERN.test(message)
+	) {
 		return `${message} ${getHubSchemaDriftRecoveryCopy(message)}`;
 	}
 

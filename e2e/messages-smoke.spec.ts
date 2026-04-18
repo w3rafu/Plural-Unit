@@ -23,6 +23,24 @@ test.describe('messages smoke routes', () => {
 		).toBeVisible();
 	});
 
+	test('archives and mutes an active smoke conversation locally', async ({ page }) => {
+		await page.goto('/messages?smoke=1');
+
+		await page.getByRole('button', { name: /Elena Rossi/i }).first().click();
+		await expect(page.getByRole('button', { name: 'Mute conversation' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Archive conversation' })).toBeVisible();
+
+		await page.getByRole('button', { name: 'Mute conversation' }).click();
+		await expect(page.getByRole('button', { name: 'Unmute conversation' })).toBeVisible();
+
+		await page.getByRole('button', { name: 'Archive conversation' }).click();
+		await expect(page.getByRole('button', { name: 'Restore conversation' })).toBeVisible();
+		await expect(page.getByRole('button', { name: /Elena Rossi/i })).toHaveCount(0);
+
+		await page.getByRole('button', { name: 'Show archived' }).click();
+		await expect(page.getByRole('button', { name: /Elena Rossi/i }).first()).toBeVisible();
+	});
+
 	test('reveals and restores an archived smoke conversation', async ({ page }) => {
 		await page.goto('/messages?smoke=1');
 

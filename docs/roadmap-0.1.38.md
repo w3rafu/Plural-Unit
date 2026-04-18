@@ -4,7 +4,7 @@
 
 ## Status
 
-Slices `a` through `d` are implemented locally and validated. Slice `e` remains planned.
+Slices `a` through `e` are implemented locally and validated. Slice `e` extended archive and mute smoke coverage, added `docs/release-notes-0.1.37.md`, refreshed README contributor guidance through migration `043`, and added targeted schema-drift recovery copy for missing `040` through `043`.
 
 ## Product constraints
 
@@ -25,9 +25,9 @@ What exists today (after 0.1.37):
 - **Messages** now support directory-initiated conversations, image send, seen state, soft delete, typing presence, older-message loading, owner-side archive and recovery, and owner-side mute state that narrows push delivery without hiding the thread in-app.
 - **Organization access** supports send, resend, revoke, search, and stale-age filtering for pending invites. But pending invites do not expire, warn when they are close to becoming unusable, or distinguish between "stale" and truly inactive invite links.
 - **Hub sections** are still toggled only at the organization level. The root hub route renders every enabled plugin for every member, and admin controls only support on or off state.
-- **Docs** now point contributors to `0.1.37`, but there is no `0.1.37` release handoff doc yet.
+- **Docs** now point contributors to `0.1.38`, and the shipped `0.1.37` handoff is captured in `docs/release-notes-0.1.37.md`.
 
-What is still missing:
+What was still missing when planning started:
 
 - invitation expiry and recovery signals beyond a simple stale-age badge
 - role-aware hub section visibility using the existing admin and member roles

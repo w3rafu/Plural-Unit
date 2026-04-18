@@ -48,10 +48,10 @@
 
 ## e — Smoke, release handoff, and rollout safety
 
-- [ ] Extend `e2e/messages-smoke.spec.ts` for archive and mute flows
+- [x] Extend `e2e/messages-smoke.spec.ts` for archive and mute flows
 - [x] Extend `e2e/organization-smoke.spec.ts` for invitation expiry and resend recovery
 - [x] Extend `e2e/hub-smoke.spec.ts` for role-targeted section visibility
 - [x] Update smoke fixtures for archived threads, muted threads, and expired invitations
-- [ ] Create `docs/release-notes-0.1.37.md`
-- [ ] Update README only after the latest roadmap and release notes stay aligned
-- [ ] Verify missing-migration guidance stays accurate for any new thread, invite, or plugin-visibility schema changes
+- [x] Create `docs/release-notes-0.1.37.md`
+- [x] Update README only after the latest roadmap and release notes stay aligned
+- [x] Verify missing-migration guidance stays accurate for any new thread, invite, or plugin-visibility schema changes
