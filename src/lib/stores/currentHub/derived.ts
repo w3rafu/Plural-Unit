@@ -208,7 +208,9 @@ export function getCurrentHubEventReminderSummary(input: {
 
 	return summarizeEventReminderSchedule(
 		event,
-		getCurrentHubEventReminderOffsets(input.eventReminderSettingsMap, input.eventId)
+		getCurrentHubEventReminderOffsets(input.eventReminderSettingsMap, input.eventId),
+		getCurrentHubEventReminderSettings(input.eventReminderSettingsMap, input.eventId)?.delivery_channel ??
+			'in_app'
 	);
 }
 

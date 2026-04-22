@@ -57,6 +57,24 @@ describe('hubRecoveryGuidance', () => {
 		expect(
 			getHubSchemaDriftRecoveryCopy('relation "public"."hub_notification_preferences" does not exist')
 		).toBe('Apply migration 022_add_hub_notification_preferences.sql, then try again.');
+		expect(
+			getHubSchemaDriftRecoveryCopy('function public.archive_message_thread(uuid) does not exist')
+		).toBe('Apply migration 040_add_message_thread_archive.sql, then try again.');
+		expect(
+			getHubSchemaDriftRecoveryCopy(
+				"Could not find the 'muted_at' column of 'message_threads' in the schema cache"
+			)
+		).toBe('Apply migration 041_add_message_thread_mute.sql, then try again.');
+		expect(
+			getHubSchemaDriftRecoveryCopy(
+				"Could not find the 'expires_at' column of 'organization_invitations' in the schema cache"
+			)
+		).toBe('Apply migration 042_add_invitation_expiry.sql, then try again.');
+		expect(
+			getHubSchemaDriftRecoveryCopy(
+				"Could not find the 'visibility_mode' column of 'hub_plugins' in the schema cache"
+			)
+		).toBe('Apply migration 043_add_hub_plugin_visibility.sql, then try again.');
 		expect(getHubSchemaDriftRecoveryCopy('relation some_other_table does not exist')).toBe(
 			'Run the latest Supabase migrations, then try again.'
 		);

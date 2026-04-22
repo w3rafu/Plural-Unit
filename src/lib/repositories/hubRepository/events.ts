@@ -7,7 +7,7 @@ import { throwRepositoryError } from '$lib/services/repositoryError';
 import type { ScheduledDeliveryMetadataPatch, ScheduledDeliveryState } from './broadcasts';
 
 const HUB_EVENT_SELECT =
-	'id, organization_id, title, description, starts_at, ends_at, location, created_at, updated_at, publish_at, canceled_at, archived_at, delivery_state, delivered_at, delivery_failure_reason';
+	'id, organization_id, title, description, starts_at, ends_at, location, created_at, updated_at, publish_at, canceled_at, archived_at, member_signal_kind, member_signal_at, delivery_state, delivered_at, delivery_failure_reason';
 
 const HUB_EVENT_ATTENDANCE_SELECT =
 	'id, event_id, organization_id, profile_id, status, marked_by_profile_id, created_at, updated_at';
@@ -29,6 +29,8 @@ export type EventRow = {
 	publish_at: string | null;
 	canceled_at: string | null;
 	archived_at: string | null;
+	member_signal_kind?: EventMemberSignalKind;
+	member_signal_at?: string;
 	delivery_state?: ScheduledDeliveryState | null;
 	delivered_at?: string | null;
 	delivery_failure_reason?: string | null;
@@ -43,7 +45,14 @@ export type EventMutationPayload = {
 	publish_at: string | null;
 };
 
-export type EventReminderChannel = 'in_app';
+export type EventMemberSignalKind = 'default' | 'canceled' | 'restored';
+
+export type EventReminderChannel = 'in_app' | 'push' | 'in_app_and_push';
+
+export type EventUpdatePayload = EventMutationPayload & {
+	member_signal_kind?: EventMemberSignalKind;
+	member_signal_at?: string;
+};
 
 export type EventReminderSettingsRow = {
 	id: string;
@@ -186,7 +195,7 @@ export async function createEvent(
 }
 
 /** Update an event in place and return the latest row. */
-export async function updateEvent(eventId: string, payload: EventMutationPayload): Promise<EventRow> {
+export async function updateEvent(eventId: string, payload: EventUpdatePayload): Promise<EventRow> {
 	const { data, error } = await getSupabaseClient()
 		.from('hub_events')
 		.update(payload)
@@ -200,9 +209,14 @@ export async function updateEvent(eventId: string, payload: EventMutationPayload
 
 /** Mark an event canceled without removing it from admin history. */
 export async function cancelEvent(eventId: string): Promise<EventRow> {
+	const canceledAt = new Date().toISOString();
 	const { data, error } = await getSupabaseClient()
 		.from('hub_events')
-		.update({ canceled_at: new Date().toISOString() })
+		.update({
+			canceled_at: canceledAt,
+			member_signal_kind: 'canceled',
+			member_signal_at: canceledAt
+		})
 		.eq('id', eventId)
 		.select(HUB_EVENT_SELECT)
 		.single();
@@ -226,9 +240,15 @@ export async function archiveEvent(eventId: string): Promise<EventRow> {
 
 /** Restore a canceled or archived event to the active lifecycle. */
 export async function restoreEvent(eventId: string): Promise<EventRow> {
+	const restoredAt = new Date().toISOString();
 	const { data, error } = await getSupabaseClient()
 		.from('hub_events')
-		.update({ canceled_at: null, archived_at: null })
+		.update({
+			canceled_at: null,
+			archived_at: null,
+			member_signal_kind: 'restored',
+			member_signal_at: restoredAt
+		})
 		.eq('id', eventId)
 		.select(HUB_EVENT_SELECT)
 		.single();

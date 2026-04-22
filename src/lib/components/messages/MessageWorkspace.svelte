@@ -11,12 +11,18 @@
 		activeThread,
 		isSending = false,
 		isResetting = false,
+		isArchiving = false,
+		isMuting = false,
 		isLoadingOlderMessages = false,
 		deletingMessageId = '',
 		contactTyping = false,
 		onSelectThread,
 		onSendMessage,
 		onSendImage,
+		onArchiveThread,
+		onUnarchiveThread,
+		onMuteThread,
+		onUnmuteThread,
 		onDeleteMessage,
 		onTyping,
 		onBack,
@@ -29,12 +35,18 @@
 		activeThread: MessageThread | null;
 		isSending?: boolean;
 		isResetting?: boolean;
+		isArchiving?: boolean;
+		isMuting?: boolean;
 		isLoadingOlderMessages?: boolean;
 		deletingMessageId?: string;
 		contactTyping?: boolean;
 		onSelectThread: (threadId: string) => void;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onArchiveThread?: () => void;
+		onUnarchiveThread?: () => void;
+		onMuteThread?: () => void;
+		onUnmuteThread?: () => void;
 		onDeleteMessage?: (messageId: string) => void;
 		onTyping?: () => void;
 		onBack: () => void;
@@ -57,11 +69,17 @@
 				thread={activeThread}
 				{isSending}
 				{isResetting}
+				{isArchiving}
+				{isMuting}
 				{isLoadingOlderMessages}
 				{deletingMessageId}
 				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
+				{onArchiveThread}
+				{onUnarchiveThread}
+				{onMuteThread}
+				{onUnmuteThread}
 				{onDeleteMessage}
 				{onTyping}
 				{onResetDemo}
@@ -90,11 +108,17 @@
 				thread={activeThread}
 				{isSending}
 				{isResetting}
+				{isArchiving}
+				{isMuting}
 				{isLoadingOlderMessages}
 				{deletingMessageId}
 				{contactTyping}
 				{onSendMessage}
 				{onSendImage}
+				{onArchiveThread}
+				{onUnarchiveThread}
+				{onMuteThread}
+				{onUnmuteThread}
 				{onDeleteMessage}
 				{onTyping}
 				{onBack}

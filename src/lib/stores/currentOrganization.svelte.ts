@@ -253,7 +253,8 @@ class CurrentOrganization {
 						email: contact.email?.trim() || null,
 						phone: contact.phone?.trim() || null,
 						status: 'pending',
-						created_at: new Date().toISOString()
+						created_at: new Date().toISOString(),
+						expires_at: new Date(Date.now() + 14 * 86_400_000).toISOString()
 					},
 					...this.invitations
 				];
@@ -280,7 +281,12 @@ class CurrentOrganization {
 				const refreshedAt = new Date().toISOString();
 				this.invitations = this.invitations.map((invitation) =>
 					invitation.id === invitationId
-						? { ...invitation, created_at: refreshedAt }
+						? {
+							...invitation,
+							status: 'pending',
+							created_at: refreshedAt,
+							expires_at: new Date(Date.now() + 14 * 86_400_000).toISOString()
+						}
 						: invitation
 				);
 			} finally {

@@ -132,9 +132,18 @@ vi.mock('$lib/services/pushNotification', () => ({
 // Mock pluginRegistry
 vi.mock('./pluginRegistry', () => ({
 	buildPluginStateMap: (rows: any[]) => {
-		const map: Record<string, boolean> = { broadcasts: false, events: false, resources: false };
+		const map: Record<string, { isEnabled: boolean; visibility: 'all_members' | 'admins_only' }> = {
+			broadcasts: { isEnabled: false, visibility: 'all_members' },
+			events: { isEnabled: false, visibility: 'all_members' },
+			resources: { isEnabled: false, visibility: 'all_members' }
+		};
 		for (const row of rows) {
-			if (row.plugin_key in map) map[row.plugin_key] = row.is_enabled;
+			if (row.plugin_key in map) {
+				map[row.plugin_key] = {
+					isEnabled: row.is_enabled,
+					visibility: row.visibility_mode === 'admins_only' ? 'admins_only' : 'all_members'
+				};
+			}
 		}
 		return map;
 	}
@@ -221,7 +230,7 @@ function makeEvent(
 		organization_id: overrides.organization_id ?? 'org-1',
 		title: overrides.title ?? 'Meeting',
 		description: overrides.description ?? '',
-		starts_at: overrides.starts_at ?? '2026-04-20T16:30:00.000Z',
+		starts_at: overrides.starts_at ?? '2099-04-20T16:30:00.000Z',
 		ends_at: overrides.ends_at ?? null,
 		location: overrides.location ?? '',
 		created_at: overrides.created_at ?? '2026-04-12T10:00:00.000Z',
@@ -406,7 +415,7 @@ function makeExecutionLedgerRow(
 		job_kind: overrides.job_kind ?? 'event_reminder',
 		source_id: overrides.source_id ?? 'e1',
 		execution_key: overrides.execution_key ?? '120',
-		due_at: overrides.due_at ?? '2026-04-20T14:00:00.000Z',
+		due_at: overrides.due_at ?? '2099-04-20T14:00:00.000Z',
 		execution_state: overrides.execution_state ?? 'pending',
 		processed_at: overrides.processed_at ?? null,
 		last_attempted_at: overrides.last_attempted_at ?? null,
@@ -536,9 +545,9 @@ describe('currentHub.load', () => {
 		await currentHub.load();
 
 		expect(currentHub.hasLoadedForCurrentOrg).toBe(true);
-		expect(currentHub.plugins.broadcasts).toBe(true);
-		expect(currentHub.plugins.events).toBe(true);
-		expect(currentHub.plugins.resources).toBe(true);
+		expect(currentHub.plugins.broadcasts).toEqual({ isEnabled: true, visibility: 'all_members' });
+		expect(currentHub.plugins.events).toEqual({ isEnabled: true, visibility: 'all_members' });
+		expect(currentHub.plugins.resources).toEqual({ isEnabled: true, visibility: 'all_members' });
 		expect(currentHub.broadcasts).toEqual([makeBroadcast({ id: 'b1', title: 'Hello' })]);
 		expect(currentHub.events).toEqual([makeEvent({ id: 'e1', title: 'Meeting' })]);
 		expect(currentHub.getEventReminderOffsets('e1')).toEqual([1440, 120]);
@@ -1115,8 +1124,8 @@ describe('currentHub execution queue actions', () => {
 		currentHub.events = [
 			makeEvent({
 				id: 'e1',
-				publish_at: '2026-04-18T10:00:00.000Z',
-				starts_at: '2026-04-20T16:00:00.000Z'
+				publish_at: '2099-04-18T10:00:00.000Z',
+				starts_at: '2099-04-20T16:00:00.000Z'
 			})
 		];
 		currentHub.eventReminderSettingsMap = {
@@ -1128,7 +1137,7 @@ describe('currentHub execution queue actions', () => {
 				job_kind: 'event_reminder',
 				source_id: 'e1',
 				execution_key: '120',
-				due_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2099-04-20T14:00:00.000Z',
 				execution_state: 'failed',
 				last_failure_reason:
 					'Reminder window lands before event visibility. Adjust the publish time or reminder plan.'
@@ -1140,7 +1149,7 @@ describe('currentHub execution queue actions', () => {
 				job_kind: 'event_reminder',
 				source_id: 'e1',
 				execution_key: '120',
-				due_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2099-04-20T14:00:00.000Z',
 				execution_state: 'pending',
 				last_failure_reason: null
 			})
@@ -1163,7 +1172,7 @@ describe('currentHub execution queue actions', () => {
 				job_kind: 'event_reminder',
 				source_id: 'e1',
 				execution_key: '120',
-				due_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2099-04-20T14:00:00.000Z',
 				execution_state: 'pending',
 				last_failure_reason: null
 			})
@@ -1252,14 +1261,17 @@ describe('currentHub execution queue actions', () => {
 		await currentHub.runExecutionEntryNow('exec-event');
 
 		expect(mockRestoreEvent).toHaveBeenCalledWith('e1');
-		expect(mockUpdateEvent).toHaveBeenCalledWith('e1', {
-			title: 'Meeting',
-			description: '',
-			starts_at: '2099-04-20T16:00:00.000Z',
-			ends_at: null,
-			location: '',
-			publish_at: null
-		});
+		expect(mockUpdateEvent).toHaveBeenCalledWith(
+			'e1',
+			expect.objectContaining({
+				title: 'Meeting',
+				description: '',
+				starts_at: '2099-04-20T16:00:00.000Z',
+				ends_at: null,
+				location: '',
+				publish_at: null
+			})
+		);
 		expect(currentHub.executionLedger).toHaveLength(1);
 		expect(currentHub.executionLedger[0]).toMatchObject({
 			job_kind: 'event_publish',
@@ -1731,8 +1743,29 @@ describe('currentHub.toggle', () => {
 
 		await currentHub.toggle('broadcasts', true);
 
-		expect(mockTogglePlugin).toHaveBeenCalledWith('org-1', 'broadcasts', true);
-		expect(currentHub.plugins.broadcasts).toBe(true);
+		expect(mockTogglePlugin).toHaveBeenCalledWith('org-1', 'broadcasts', {
+			isEnabled: true,
+			visibilityMode: 'all_members'
+		});
+		expect(currentHub.plugins.broadcasts).toEqual({ isEnabled: true, visibility: 'all_members' });
+	});
+});
+
+describe('currentHub.setVisibility', () => {
+	it('updates a plugin audience and preserves enabled state', async () => {
+		mockTogglePlugin.mockResolvedValueOnce(undefined);
+		currentHub.plugins = {
+			...currentHub.plugins,
+			broadcasts: { isEnabled: true, visibility: 'all_members' }
+		};
+
+		await currentHub.setVisibility('broadcasts', 'admins_only');
+
+		expect(mockTogglePlugin).toHaveBeenCalledWith('org-1', 'broadcasts', {
+			isEnabled: true,
+			visibilityMode: 'admins_only'
+		});
+		expect(currentHub.plugins.broadcasts).toEqual({ isEnabled: true, visibility: 'admins_only' });
 	});
 });
 
@@ -2653,7 +2686,11 @@ describe('currentHub.reset', () => {
 		expect(currentHub.isSavingNotificationPreferences).toBe(false);
 		expect(currentHub.notificationReadTargetId).toBe('');
 		expect(currentHub.isMarkingAllActivityRead).toBe(false);
-		expect(currentHub.plugins).toEqual({ broadcasts: false, events: false, resources: false });
+		expect(currentHub.plugins).toEqual({
+			broadcasts: { isEnabled: false, visibility: 'all_members' },
+			events: { isEnabled: false, visibility: 'all_members' },
+			resources: { isEnabled: false, visibility: 'all_members' }
+		});
 		expect(currentHub.lastError).toBeNull();
 		expect(currentHub.isLoading).toBe(false);
 	});

@@ -30,7 +30,7 @@ export function getInviteConfirmationDescription(action: PendingInviteAction): s
 	const recipient = action.invitation.email ?? action.invitation.phone ?? 'this invite';
 
 	return action.type === 'resend'
-		? `A new invitation token will be generated for ${recipient}.`
+		? `A new invitation token and expiry window will be generated for ${recipient}.`
 		: `${recipient} will no longer be able to use this pending invitation.`;
 }
 
@@ -46,7 +46,7 @@ export function getInviteConfirmationDetails(action: PendingInviteAction): strin
 		return [
 			`Recipient: ${recipient}`,
 			`Delivery channel: ${channel}`,
-			'The original pending invite will be refreshed with a new token and timestamp.'
+			'The original invite will be refreshed with a new token and a fresh expiry window.'
 		];
 	}
 

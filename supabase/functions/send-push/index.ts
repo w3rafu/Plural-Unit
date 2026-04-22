@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
 		}
 
 		const payload = await req.json();
-		const { kind, organization_id, title, body, url, target_profile_id } = payload;
+		const { kind, organization_id, title, body, url, target_profile_id, include_actor_profile } = payload;
 
 		if (!kind || !organization_id || !title) {
 			return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -90,7 +90,18 @@ Deno.serve(async (req: Request) => {
 				.eq(preferenceColumn, true)
 				.maybeSingle();
 
-			eligibleProfileIds = recipientPref ? [recipientPref.profile_id] : [];
+			if (!recipientPref) {
+				eligibleProfileIds = [];
+			} else {
+				const { data: recipientThread } = await adminClient
+					.from('message_threads')
+					.select('id, muted_at, message_contacts!inner(profile_id)')
+					.eq('owner_user_id', target_profile_id)
+					.eq('message_contacts.profile_id', user.id)
+					.maybeSingle();
+
+				eligibleProfileIds = recipientThread?.muted_at ? [] : [recipientPref.profile_id];
+			}
 		} else {
 			const { data: eligibleMembers } = await adminClient
 				.from('hub_notification_preferences')
@@ -100,7 +111,7 @@ Deno.serve(async (req: Request) => {
 
 			eligibleProfileIds = (eligibleMembers ?? [])
 				.map((row: { profile_id: string }) => row.profile_id)
-				.filter((id: string) => id !== user.id); // Exclude sender.
+				.filter((id: string) => include_actor_profile ? true : id !== user.id);
 		}
 
 		if (eligibleProfileIds.length === 0) {

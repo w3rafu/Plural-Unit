@@ -38,6 +38,10 @@ import {
 	ensureDemoMessageThread,
 	ensureMessageThreadForProfile,
 	resetDemoMessageThread,
+	archiveMessageThread,
+	unarchiveMessageThread,
+	muteMessageThread,
+	unmuteMessageThread,
 	sendMessageToThread,
 	uploadMessageImage,
 	sendImageMessageToThread,
@@ -64,6 +68,8 @@ describe('fetchOwnMessageThreads', () => {
 				id: 'thread-1',
 				contact_id: 'contact-1',
 				last_read_at: null,
+				archived_at: null,
+				muted_at: null,
 				created_at: '2026-04-10T10:00:00Z',
 				updated_at: '2026-04-10T12:00:00Z',
 				contact: { id: 'contact-1', profile_id: null, name: 'Alice', avatar_url: '', subtitle: '', is_demo: false }
@@ -110,12 +116,106 @@ describe('fetchOwnMessageThreads', () => {
 
 	it('throws on message fetch error', async () => {
 		mockOrder.mockResolvedValueOnce({
-			data: [{ id: 'thread-1', contact_id: 'c1', last_read_at: null, created_at: '', updated_at: '', contact: { id: 'c1', profile_id: null, name: 'X', avatar_url: '', subtitle: '', is_demo: false } }],
+			data: [{ id: 'thread-1', contact_id: 'c1', last_read_at: null, archived_at: null, muted_at: null, created_at: '', updated_at: '', contact: { id: 'c1', profile_id: null, name: 'X', avatar_url: '', subtitle: '', is_demo: false } }],
 			error: null
 		});
 		mockLimit.mockResolvedValueOnce({ data: null, error: { message: 'message fail' } });
 
 		await expect(fetchOwnMessageThreads('user-1')).rejects.toThrow('message fail');
+	});
+});
+
+describe('muteMessageThread', () => {
+	it('calls mute_message_thread RPC', async () => {
+		mockRpc.mockResolvedValueOnce({ data: '2026-04-16T12:00:00.000Z', error: null });
+
+		const result = await muteMessageThread('thread-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('mute_message_thread', {
+			target_thread_id: 'thread-1'
+		});
+		expect(result).toBe('2026-04-16T12:00:00.000Z');
+	});
+
+	it('throws when id is empty', async () => {
+		await expect(muteMessageThread('')).rejects.toThrow('Thread id is required.');
+	});
+
+	it('throws on RPC error', async () => {
+		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'mute fail' } });
+
+		await expect(muteMessageThread('thread-1')).rejects.toThrow('mute fail');
+	});
+});
+
+describe('unmuteMessageThread', () => {
+	it('calls unmute_message_thread RPC', async () => {
+		mockRpc.mockResolvedValueOnce({ error: null });
+
+		await unmuteMessageThread('thread-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('unmute_message_thread', {
+			target_thread_id: 'thread-1'
+		});
+	});
+
+	it('throws when id is empty', async () => {
+		await expect(unmuteMessageThread('')).rejects.toThrow('Thread id is required.');
+	});
+
+	it('throws on RPC error', async () => {
+		mockRpc.mockResolvedValueOnce({ error: { message: 'unmute fail' } });
+
+		await expect(unmuteMessageThread('thread-1')).rejects.toThrow('unmute fail');
+	});
+});
+
+// ── archiveMessageThread ──
+
+describe('archiveMessageThread', () => {
+	it('calls archive_message_thread RPC', async () => {
+		mockRpc.mockResolvedValueOnce({ data: '2026-04-16T12:00:00.000Z', error: null });
+
+		const result = await archiveMessageThread('thread-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('archive_message_thread', {
+			target_thread_id: 'thread-1'
+		});
+		expect(result).toBe('2026-04-16T12:00:00.000Z');
+	});
+
+	it('throws when id is empty', async () => {
+		await expect(archiveMessageThread('')).rejects.toThrow('Thread id is required.');
+	});
+
+	it('throws on RPC error', async () => {
+		mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'archive fail' } });
+
+		await expect(archiveMessageThread('thread-1')).rejects.toThrow('archive fail');
+	});
+});
+
+// ── unarchiveMessageThread ──
+
+describe('unarchiveMessageThread', () => {
+	it('calls unarchive_message_thread RPC', async () => {
+		mockRpc.mockResolvedValueOnce({ error: null });
+
+		await unarchiveMessageThread('thread-1');
+
+		expect(mockRpc).toHaveBeenCalledWith('unarchive_message_thread', {
+			target_thread_id: 'thread-1'
+		});
+	});
+
+	it('throws when id is empty', async () => {
+		await expect(unarchiveMessageThread('')).rejects.toThrow('Thread id is required.');
+	});
+
+	it('throws on RPC error', async () => {
+		mockRpc.mockResolvedValueOnce({ error: { message: 'restore fail' } });
+
+		await expect(unarchiveMessageThread('thread-1')).rejects.toThrow('restore fail');
 	});
 });
 

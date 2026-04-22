@@ -158,7 +158,17 @@ describe('currentOrganization.sendInvitation', () => {
 		await currentOrganization.refresh('u1');
 
 		mockCreateInvitation.mockResolvedValueOnce({});
-		mockFetchPendingInvitations.mockResolvedValueOnce([{ id: 'inv-1', status: 'pending' }]);
+		mockFetchPendingInvitations.mockResolvedValueOnce([
+			{
+				id: 'inv-1',
+				organization_id: 'org-1',
+				email: 'test@example.com',
+				phone: null,
+				status: 'pending',
+				created_at: '2026-04-11T00:00:00.000Z',
+				expires_at: '2026-04-25T00:00:00.000Z'
+			}
+		]);
 
 		await currentOrganization.sendInvitation({ email: 'test@example.com' });
 
@@ -373,6 +383,35 @@ describe('currentOrganization smoke mode', () => {
 
 		expect(currentOrganization.invitations.length).toBeGreaterThan(0);
 		expect(mockFetchPendingInvitations).not.toHaveBeenCalled();
+	});
+
+	it('sends and refreshes expired invitations locally in smoke mode', async () => {
+		mockIsSmokeModeEnabled.mockReturnValue(true);
+
+		await currentOrganization.refresh('u1');
+		const originalCount = currentOrganization.invitations.length;
+		const expiredInvitation = currentOrganization.invitations.find((invitation) => invitation.status === 'expired');
+
+		await currentOrganization.sendInvitation({ phone: '+1 555 000 0000' });
+
+		expect(currentOrganization.invitations).toHaveLength(originalCount + 1);
+		expect(currentOrganization.invitations[0]).toMatchObject({
+			phone: '+1 555 000 0000',
+			status: 'pending'
+		});
+		expect(currentOrganization.invitations[0]?.expires_at).toBeTruthy();
+
+		await currentOrganization.resendPendingInvitation(expiredInvitation?.id ?? '');
+
+		const refreshedInvitation = currentOrganization.invitations.find(
+			(invitation) => invitation.id === expiredInvitation?.id
+		);
+
+		expect(refreshedInvitation?.status).toBe('pending');
+		expect(refreshedInvitation?.created_at).not.toBe(expiredInvitation?.created_at);
+		expect(refreshedInvitation?.expires_at).not.toBe(expiredInvitation?.expires_at);
+		expect(mockCreateInvitation).not.toHaveBeenCalled();
+		expect(mockResendInvitation).not.toHaveBeenCalled();
 	});
 
 	it('revoke and regenerate actions stay local in smoke mode', async () => {

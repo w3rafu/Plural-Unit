@@ -1,6 +1,8 @@
 import type { MessageEntry, MessageThread } from '$lib/models/messageModel';
 import {
 	MESSAGE_PAGE_SIZE,
+	isThreadArchived,
+	isThreadMuted,
 	mapMessageRowToEntry,
 	markMessageEntryDeleted,
 	sortThreadsByRecent
@@ -23,6 +25,10 @@ export type MessageRepository = {
 	ensureDemoMessageThread: typeof messageRepository.ensureDemoMessageThread;
 	ensureMessageThreadForProfile: typeof messageRepository.ensureMessageThreadForProfile;
 	resetDemoMessageThread: typeof messageRepository.resetDemoMessageThread;
+	archiveMessageThread: typeof messageRepository.archiveMessageThread;
+	unarchiveMessageThread: typeof messageRepository.unarchiveMessageThread;
+	muteMessageThread: typeof messageRepository.muteMessageThread;
+	unmuteMessageThread: typeof messageRepository.unmuteMessageThread;
 	sendMessageToThread: typeof messageRepository.sendMessageToThread;
 	uploadMessageImage: typeof messageRepository.uploadMessageImage;
 	sendImageMessageToThread: typeof messageRepository.sendImageMessageToThread;
@@ -36,6 +42,10 @@ const defaultMessageRepository: MessageRepository = {
 	ensureDemoMessageThread: messageRepository.ensureDemoMessageThread,
 	ensureMessageThreadForProfile: messageRepository.ensureMessageThreadForProfile,
 	resetDemoMessageThread: messageRepository.resetDemoMessageThread,
+	archiveMessageThread: messageRepository.archiveMessageThread,
+	unarchiveMessageThread: messageRepository.unarchiveMessageThread,
+	muteMessageThread: messageRepository.muteMessageThread,
+	unmuteMessageThread: messageRepository.unmuteMessageThread,
 	sendMessageToThread: messageRepository.sendMessageToThread,
 	uploadMessageImage: messageRepository.uploadMessageImage,
 	sendImageMessageToThread: messageRepository.sendImageMessageToThread,
@@ -60,6 +70,7 @@ function appendSmokeMessage(
 			thread.id === threadId
 				? {
 					...thread,
+					archivedAt: null,
 					messages: [...thread.messages, message]
 				}
 				: thread
@@ -87,8 +98,44 @@ function buildSmokeThreadForProfile(profileId: string): MessageThread | null {
 		unreadCount: 0,
 		lastReadAt: new Date().toISOString(),
 		contactLastReadAt: null,
+		archivedAt: null,
+		mutedAt: null,
 		hasMoreMessages: false
 	};
+}
+
+function setThreadArchivedState(
+	threads: MessageThread[],
+	threadId: string,
+	archivedAt: string | null
+) {
+	return sortThreadsByRecent(
+		threads.map((thread) =>
+			thread.id === threadId
+				? {
+					...thread,
+					archivedAt
+				}
+				: thread
+		)
+	);
+}
+
+function setThreadMutedState(
+	threads: MessageThread[],
+	threadId: string,
+	mutedAt: string | null
+) {
+	return sortThreadsByRecent(
+		threads.map((thread) =>
+			thread.id === threadId
+				? {
+					...thread,
+					mutedAt
+				}
+				: thread
+		)
+	);
 }
 
 class CurrentMessages {
@@ -100,6 +147,8 @@ class CurrentMessages {
 	isLoadingOlderMessages = $state(false);
 	isSending = $state(false);
 	isResetting = $state(false);
+	archivingThreadId = $state('');
+	mutingThreadId = $state('');
 	deletingMessageId = $state('');
 	error = $state('');
 	lastSentAt = $state(0);
@@ -389,6 +438,122 @@ class CurrentMessages {
 		}
 	}
 
+	async archiveThread(threadId = this.activeThreadId) {
+		const thread = this.threads.find((entry) => entry.id === threadId);
+		if (!thread || isThreadArchived(thread)) return;
+
+		this.error = '';
+		this.archivingThreadId = threadId;
+		const previousThreads = this.threads;
+		const optimisticArchivedAt = new Date().toISOString();
+		this.threads = setThreadArchivedState(this.threads, threadId, optimisticArchivedAt);
+
+		if (isSmokeModeEnabled()) {
+			this.archivingThreadId = '';
+			return;
+		}
+
+		try {
+			const archivedAt = await this.repository.archiveMessageThread(threadId);
+			this.threads = setThreadArchivedState(
+				this.threads,
+				threadId,
+				archivedAt || optimisticArchivedAt
+			);
+		} catch (err) {
+			this.threads = previousThreads;
+			this.error = err instanceof Error ? err.message : 'Could not archive thread.';
+		} finally {
+			if (this.archivingThreadId === threadId) {
+				this.archivingThreadId = '';
+			}
+		}
+	}
+
+	async unarchiveThread(threadId = this.activeThreadId) {
+		const thread = this.threads.find((entry) => entry.id === threadId);
+		if (!thread || !isThreadArchived(thread)) return;
+
+		this.error = '';
+		this.archivingThreadId = threadId;
+		const previousThreads = this.threads;
+		this.threads = setThreadArchivedState(this.threads, threadId, null);
+
+		if (isSmokeModeEnabled()) {
+			this.archivingThreadId = '';
+			return;
+		}
+
+		try {
+			await this.repository.unarchiveMessageThread(threadId);
+		} catch (err) {
+			this.threads = previousThreads;
+			this.error = err instanceof Error ? err.message : 'Could not restore thread.';
+		} finally {
+			if (this.archivingThreadId === threadId) {
+				this.archivingThreadId = '';
+			}
+		}
+	}
+
+	async muteThread(threadId = this.activeThreadId) {
+		const thread = this.threads.find((entry) => entry.id === threadId);
+		if (!thread || isThreadMuted(thread)) return;
+
+		this.error = '';
+		this.mutingThreadId = threadId;
+		const previousThreads = this.threads;
+		const optimisticMutedAt = new Date().toISOString();
+		this.threads = setThreadMutedState(this.threads, threadId, optimisticMutedAt);
+
+		if (isSmokeModeEnabled()) {
+			this.mutingThreadId = '';
+			return;
+		}
+
+		try {
+			const mutedAt = await this.repository.muteMessageThread(threadId);
+			this.threads = setThreadMutedState(
+				this.threads,
+				threadId,
+				mutedAt || optimisticMutedAt
+			);
+		} catch (err) {
+			this.threads = previousThreads;
+			this.error = err instanceof Error ? err.message : 'Could not mute thread.';
+		} finally {
+			if (this.mutingThreadId === threadId) {
+				this.mutingThreadId = '';
+			}
+		}
+	}
+
+	async unmuteThread(threadId = this.activeThreadId) {
+		const thread = this.threads.find((entry) => entry.id === threadId);
+		if (!thread || !isThreadMuted(thread)) return;
+
+		this.error = '';
+		this.mutingThreadId = threadId;
+		const previousThreads = this.threads;
+		this.threads = setThreadMutedState(this.threads, threadId, null);
+
+		if (isSmokeModeEnabled()) {
+			this.mutingThreadId = '';
+			return;
+		}
+
+		try {
+			await this.repository.unmuteMessageThread(threadId);
+		} catch (err) {
+			this.threads = previousThreads;
+			this.error = err instanceof Error ? err.message : 'Could not unmute thread.';
+		} finally {
+			if (this.mutingThreadId === threadId) {
+				this.mutingThreadId = '';
+			}
+		}
+	}
+
 	async loadOlderMessages() {
 		const thread = this.activeThread;
 		if (!thread || !thread.hasMoreMessages || this.isLoadingOlderMessages) return;
@@ -439,6 +604,8 @@ class CurrentMessages {
 		this.isLoadingOlderMessages = false;
 		this.isSending = false;
 		this.isResetting = false;
+		this.archivingThreadId = '';
+		this.mutingThreadId = '';
 		this.deletingMessageId = '';
 		this.error = '';
 		this.lastSentAt = 0;

@@ -4,24 +4,30 @@
 -->
 <script lang="ts">
 	import type { MessageThread } from '$lib/models/messageModel';
-	import { getParticipantInitials } from '$lib/models/messageModel';
+	import { getParticipantInitials, isThreadArchived, isThreadMuted } from '$lib/models/messageModel';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { groupMessagesByDay, formatMessageTime } from './messageUi';
 	import MessageComposer from './MessageComposer.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft, RotateCcw, Trash2 } from '@lucide/svelte';
+	import { Archive, ArrowLeft, Bell, BellOff, RotateCcw, Trash2, Undo2 } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 
 	let {
 		thread,
 		isSending = false,
 		isResetting = false,
+		isArchiving = false,
+		isMuting = false,
 		isLoadingOlderMessages = false,
 		deletingMessageId = '',
 		contactTyping = false,
 		onSendMessage,
 		onSendImage,
+		onArchiveThread,
+		onUnarchiveThread,
+		onMuteThread,
+		onUnmuteThread,
 		onDeleteMessage,
 		onTyping,
 		onBack,
@@ -31,11 +37,17 @@
 		thread: MessageThread;
 		isSending?: boolean;
 		isResetting?: boolean;
+		isArchiving?: boolean;
+		isMuting?: boolean;
 		isLoadingOlderMessages?: boolean;
 		deletingMessageId?: string;
 		contactTyping?: boolean;
 		onSendMessage: (body: string) => void;
 		onSendImage: (file: File) => void;
+		onArchiveThread?: () => void;
+		onUnarchiveThread?: () => void;
+		onMuteThread?: () => void;
+		onUnmuteThread?: () => void;
 		onDeleteMessage?: (messageId: string) => void;
 		onTyping?: () => void;
 		onBack?: () => void;
@@ -45,6 +57,8 @@
 
 	const dayGroups = $derived(groupMessagesByDay(thread.messages));
 	const initials = $derived(getParticipantInitials(thread.participant.name));
+	const archived = $derived(isThreadArchived(thread));
+	const muted = $derived(isThreadMuted(thread));
 
 	const lastSeenMessageId = $derived.by(() => {
 		if (!thread.contactLastReadAt) return null;
@@ -111,6 +125,18 @@
 					{thread.messages.length} {thread.messages.length === 1 ? 'message' : 'messages'}
 				</Badge>
 
+				{#if archived}
+					<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+						Archived
+					</Badge>
+				{/if}
+
+				{#if muted}
+					<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+						Muted
+					</Badge>
+				{/if}
+
 				{#if thread.unreadCount > 0}
 					<Badge variant="default" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
 						{thread.unreadCount} unread
@@ -125,24 +151,88 @@
 			</div>
 		</div>
 
-		{#if thread.participant.isFakeUser && onResetDemo}
-			<Button
-				variant="outline"
-				size="sm"
-				class="shrink-0"
-				disabled={isResetting}
-				onclick={onResetDemo}
-				aria-label="Reset demo conversation"
-			>
-				<RotateCcw class="mr-1.5 h-3.5 w-3.5" />
-				Reset
-			</Button>
-		{/if}
+		<div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+			{#if muted ? onUnmuteThread : onMuteThread}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={isMuting}
+					onclick={() => {
+						if (muted) {
+							onUnmuteThread?.();
+						} else {
+							onMuteThread?.();
+						}
+					}}
+					aria-label={muted ? 'Unmute conversation' : 'Mute conversation'}
+				>
+					{#if muted}
+						<Bell class="mr-1.5 h-3.5 w-3.5" />
+						{isMuting ? 'Unmuting...' : 'Unmute'}
+					{:else}
+						<BellOff class="mr-1.5 h-3.5 w-3.5" />
+						{isMuting ? 'Muting...' : 'Mute'}
+					{/if}
+				</Button>
+			{/if}
+
+			{#if archived ? onUnarchiveThread : onArchiveThread}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={isArchiving}
+					onclick={() => {
+						if (archived) {
+							onUnarchiveThread?.();
+						} else {
+							onArchiveThread?.();
+						}
+					}}
+					aria-label={archived ? 'Restore conversation' : 'Archive conversation'}
+				>
+					{#if archived}
+						<Undo2 class="mr-1.5 h-3.5 w-3.5" />
+						{isArchiving ? 'Restoring...' : 'Restore'}
+					{:else}
+						<Archive class="mr-1.5 h-3.5 w-3.5" />
+						{isArchiving ? 'Archiving...' : 'Archive'}
+					{/if}
+				</Button>
+			{/if}
+
+			{#if thread.participant.isFakeUser && onResetDemo}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={isResetting}
+					onclick={onResetDemo}
+					aria-label="Reset demo conversation"
+				>
+					<RotateCcw class="mr-1.5 h-3.5 w-3.5" />
+					Reset
+				</Button>
+			{/if}
+		</div>
 		</div>
 	</div>
 
+	{#if archived || muted}
+		<div class="border-b border-border/70 bg-background px-3 py-2 sm:px-4">
+			{#if archived}
+				<p class="text-xs text-muted-foreground">
+					Archived conversations stay out of inbox triage until you restore them or send a new reply.
+				</p>
+			{/if}
+			{#if muted}
+				<p class={cn('text-xs text-muted-foreground', archived ? 'mt-1' : '')}>
+					Push notifications are muted for this conversation, but in-app unread state and replies still update.
+				</p>
+			{/if}
+		</div>
+	{/if}
+
 	<div
-		class="min-h-0 flex-1 overflow-y-auto bg-muted/[0.12] px-3 py-3 sm:px-4"
+		class="min-h-0 flex-1 overflow-y-auto bg-muted/12 px-3 py-3 sm:px-4"
 		{@attach keepScrolledToBottom(`${thread.id}:${thread.messages.length}`)}
 		{@attach handleScrollTop}
 	>

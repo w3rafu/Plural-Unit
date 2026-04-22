@@ -5,7 +5,13 @@
 -->
 <script lang="ts">
 	import type { MessageThread } from '$lib/models/messageModel';
-	import { getParticipantInitials, getThreadPreview, getThreadLastMessageSentAt } from '$lib/models/messageModel';
+	import {
+		getParticipantInitials,
+		getThreadPreview,
+		getThreadLastMessageSentAt,
+		isThreadArchived,
+		isThreadMuted
+	} from '$lib/models/messageModel';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { formatThreadTimestamp } from './messageUi';
@@ -24,6 +30,8 @@
 	const initials = $derived(getParticipantInitials(thread.participant.name));
 	const preview = $derived(getThreadPreview(thread));
 	const timestamp = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)));
+	const archived = $derived(isThreadArchived(thread));
+	const muted = $derived(isThreadMuted(thread));
 </script>
 
 <button
@@ -32,6 +40,8 @@
 		'group flex w-full items-start gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition-[background-color,border-color,box-shadow]',
 		isActive
 			? 'border-border/70 bg-accent/60 text-accent-foreground shadow-sm'
+			: archived
+				? 'border-border/30 bg-background/80 text-muted-foreground hover:border-border/60 hover:bg-muted/25'
 			: thread.unreadCount > 0
 				? 'border-border/40 bg-muted/30 hover:border-border/70 hover:bg-muted/50'
 				: 'hover:border-border/60 hover:bg-muted/40'
@@ -56,6 +66,16 @@
 			<div class="min-w-0 space-y-1">
 				<div class="flex items-center gap-2">
 					<span class="truncate text-sm font-semibold text-foreground">{thread.participant.name}</span>
+					{#if archived}
+						<Badge variant="outline" class="rounded-full px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.16em]">
+							Archived
+						</Badge>
+					{/if}
+					{#if muted}
+						<Badge variant="outline" class="rounded-full px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.16em]">
+							Muted
+						</Badge>
+					{/if}
 					{#if thread.unreadCount > 0}
 						<span class="size-2 rounded-full bg-primary"></span>
 					{/if}
@@ -78,7 +98,12 @@
 			</span>
 		</div>
 
-		<p class={cn('mt-2 truncate text-xs', thread.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+		<p
+			class={cn(
+				'mt-2 truncate text-xs',
+				thread.unreadCount > 0 && !archived ? 'text-foreground' : 'text-muted-foreground'
+			)}
+		>
 			{preview}
 		</p>
 

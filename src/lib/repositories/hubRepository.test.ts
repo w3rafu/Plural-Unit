@@ -782,7 +782,14 @@ describe('restoreEvent', () => {
 
 		const result = await restoreEvent('e1');
 
-		expect(mockUpdate).toHaveBeenCalledWith({ canceled_at: null, archived_at: null });
+		expect(mockUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				canceled_at: null,
+				archived_at: null,
+				member_signal_kind: 'restored',
+				member_signal_at: expect.any(String)
+			})
+		);
 		expect(result).toEqual(row);
 	});
 });
@@ -1481,14 +1488,16 @@ describe('deleteResource', () => {
 describe('fetchActivePlugins', () => {
 	it('queries hub_plugins by organization_id', async () => {
 		mockEq.mockResolvedValueOnce({
-			data: [{ plugin_key: 'broadcasts', is_enabled: true }],
+			data: [{ plugin_key: 'broadcasts', is_enabled: true, visibility_mode: 'all_members' }],
 			error: null
 		});
 
 		const result = await fetchActivePlugins('org-1');
 
 		expect(mockFrom).toHaveBeenCalledWith('hub_plugins');
-		expect(result).toEqual([{ plugin_key: 'broadcasts', is_enabled: true }]);
+		expect(result).toEqual([
+			{ plugin_key: 'broadcasts', is_enabled: true, visibility_mode: 'all_members' }
+		]);
 	});
 
 	it('throws on error', async () => {
@@ -1499,17 +1508,34 @@ describe('fetchActivePlugins', () => {
 });
 
 describe('togglePlugin', () => {
-	it('upserts the plugin state', async () => {
+	it('upserts the plugin state and audience', async () => {
 		mockUpsert.mockResolvedValueOnce({ error: null });
 
-		await togglePlugin('org-1', 'broadcasts', true);
+		await togglePlugin('org-1', 'broadcasts', {
+			isEnabled: true,
+			visibilityMode: 'admins_only'
+		});
 
 		expect(mockFrom).toHaveBeenCalledWith('hub_plugins');
+		expect(mockUpsert).toHaveBeenCalledWith(
+			{
+				organization_id: 'org-1',
+				plugin_key: 'broadcasts',
+				is_enabled: true,
+				visibility_mode: 'admins_only'
+			},
+			{ onConflict: 'organization_id,plugin_key' }
+		);
 	});
 
 	it('throws on upsert error', async () => {
 		mockUpsert.mockResolvedValueOnce({ error: { message: 'toggle fail' } });
 
-		await expect(togglePlugin('org-1', 'broadcasts', false)).rejects.toThrow('toggle fail');
+		await expect(
+			togglePlugin('org-1', 'broadcasts', {
+				isEnabled: false,
+				visibilityMode: 'all_members'
+			})
+		).rejects.toThrow('toggle fail');
 	});
 });

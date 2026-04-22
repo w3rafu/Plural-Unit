@@ -189,7 +189,7 @@ describe('acceptInvitation', () => {
 
 describe('createInvitation', () => {
 	it('inserts an email invitation', async () => {
-		const inv = { id: 'inv-1', organization_id: 'org-1', email: 'test@example.com', phone: null, status: 'pending', created_at: '2026-01-01' };
+		const inv = { id: 'inv-1', organization_id: 'org-1', email: 'test@example.com', phone: null, status: 'pending', created_at: '2026-01-01', expires_at: '2026-01-15' };
 		mockSingle.mockResolvedValueOnce({ data: inv, error: null });
 
 		const result = await createInvitation('org-1', { email: 'test@example.com' });
@@ -199,7 +199,7 @@ describe('createInvitation', () => {
 	});
 
 	it('inserts a phone invitation', async () => {
-		const inv = { id: 'inv-2', organization_id: 'org-1', email: null, phone: '+15551234567', status: 'pending', created_at: '2026-01-01' };
+		const inv = { id: 'inv-2', organization_id: 'org-1', email: null, phone: '+15551234567', status: 'pending', created_at: '2026-01-01', expires_at: '2026-01-15' };
 		mockSingle.mockResolvedValueOnce({ data: inv, error: null });
 
 		const result = await createInvitation('org-1', { phone: '+15551234567' });
@@ -226,16 +226,25 @@ describe('createInvitation', () => {
 });
 
 describe('fetchPendingInvitations', () => {
-	it('queries pending invitations for the org', async () => {
+	it('returns active and expired invitations that still need review', async () => {
 		mockOrder.mockResolvedValueOnce({
-			data: [{ id: 'inv-1', status: 'pending' }],
+			data: [
+				{ id: 'inv-1', status: 'pending', expires_at: '2026-01-15' },
+				{ id: 'inv-2', status: 'expired', expires_at: '2026-01-10' },
+				{ id: 'inv-3', status: 'revoked', expires_at: '2026-01-12' }
+			],
 			error: null
 		});
 
 		const result = await fetchPendingInvitations('org-1');
 
 		expect(mockFrom).toHaveBeenCalledWith('organization_invitations');
-		expect(result).toEqual([{ id: 'inv-1', status: 'pending' }]);
+		expect(mockEq).toHaveBeenCalledWith('organization_id', 'org-1');
+		expect(mockEq).not.toHaveBeenCalledWith('status', 'pending');
+		expect(result).toEqual([
+			{ id: 'inv-1', status: 'pending', expires_at: '2026-01-15' },
+			{ id: 'inv-2', status: 'expired', expires_at: '2026-01-10' }
+		]);
 	});
 
 	it('throws on error', async () => {

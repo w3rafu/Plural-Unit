@@ -1,6 +1,7 @@
 import type {
 	BroadcastRow,
 	EventRow,
+	EventMemberSignalKind,
 	HubExecutionLedgerRow,
 	HubNotificationKind,
 	HubNotificationPreferenceRow,
@@ -8,6 +9,11 @@ import type {
 } from '$lib/repositories/hubRepository';
 import { isBroadcastLive } from '$lib/models/broadcastLifecycleModel';
 import { getEventLocationLabel } from '$lib/models/eventCalendarModel';
+import {
+	getEventEffectiveEndTime,
+	isEventPublishedToMembers,
+	isEventWithinMemberHistoryWindow
+} from '$lib/models/eventLifecycleModel';
 import {
 	getMemberEventTimingState,
 	type MemberCommitmentTimingState
@@ -37,6 +43,7 @@ export type HubNotificationItem = {
 	isRead: boolean;
 	readAt: string | null;
 	eventTimingState?: MemberCommitmentTimingState;
+	eventLifecycleSignal?: EventMemberSignalKind;
 	priority?: number;
 };
 
@@ -74,6 +81,14 @@ function getEventNotificationOccurredAt(
 	event: EventRow,
 	timingState: MemberCommitmentTimingState
 ) {
+	if (event.member_signal_kind === 'canceled') {
+		return event.member_signal_at ?? event.canceled_at ?? event.updated_at;
+	}
+
+	if (event.member_signal_kind === 'restored') {
+		return event.member_signal_at ?? event.updated_at;
+	}
+
 	if (timingState === 'today' || timingState === 'in_progress') {
 		return event.starts_at;
 	}
@@ -101,10 +116,30 @@ function getEventNotificationLabel(timingState: MemberCommitmentTimingState) {
 	return 'Event';
 }
 
+function getEventNotificationLifecycleLabel(event: EventRow, timingState: MemberCommitmentTimingState) {
+	if (event.member_signal_kind === 'canceled') {
+		return 'Canceled';
+	}
+
+	if (event.member_signal_kind === 'restored') {
+		return 'Restored';
+	}
+
+	return getEventNotificationLabel(timingState);
+}
+
 function getEventNotificationSummary(
 	event: EventRow,
 	timingState: MemberCommitmentTimingState
 ) {
+	if (event.member_signal_kind === 'canceled') {
+		return 'This event was canceled. Open it to confirm the final timing and any follow-through details.';
+	}
+
+	if (event.member_signal_kind === 'restored') {
+		return 'This event is back on the schedule. Open it for the latest timing and reminder details.';
+	}
+
 	const description = event.description.trim();
 	if (description) {
 		return description;
@@ -129,6 +164,20 @@ function getEventNotificationMeta(
 	event: EventRow,
 	timingState: MemberCommitmentTimingState
 ) {
+	if (event.member_signal_kind === 'canceled') {
+		return joinMeta([
+			formatEventMeta(event),
+			`Canceled ${formatShortDateTime(event.member_signal_at ?? event.canceled_at ?? event.updated_at)}`
+		]);
+	}
+
+	if (event.member_signal_kind === 'restored') {
+		return joinMeta([
+			formatEventMeta(event),
+			`Restored ${formatShortDateTime(event.member_signal_at ?? event.updated_at)}`
+		]);
+	}
+
 	if (timingState === 'today') {
 		return joinMeta([formatEventMeta(event), 'Today']);
 	}
@@ -165,12 +214,50 @@ function buildEventNotification(
 		summary: getEventNotificationSummary(event, timingState),
 		meta: getEventNotificationMeta(event, timingState),
 		occurredAt: getEventNotificationOccurredAt(event, timingState),
-		label: getEventNotificationLabel(timingState),
+		label: getEventNotificationLifecycleLabel(event, timingState),
 		isRead: Boolean(readAt),
 		readAt,
 		eventTimingState: timingState,
+		eventLifecycleSignal: event.member_signal_kind,
 		priority: 1
 	};
+}
+
+function getEventNotificationTimingState(
+	event: EventRow,
+	now: number
+): MemberCommitmentTimingState | null {
+	const activeTimingState = getMemberEventTimingState(event, now);
+	if (activeTimingState) {
+		return activeTimingState;
+	}
+
+	if (
+		event.member_signal_kind !== 'canceled' ||
+		!event.canceled_at ||
+		!isEventPublishedToMembers(event, new Date(event.canceled_at).getTime()) ||
+		!isEventWithinMemberHistoryWindow(event, now)
+	) {
+		return null;
+	}
+
+	const startsAt = new Date(event.starts_at).getTime();
+	const endsAt = getEventEffectiveEndTime(event);
+	if (Number.isNaN(startsAt) || endsAt === null) {
+		return null;
+	}
+
+	if (now < startsAt) {
+		const startDate = new Date(startsAt);
+		const currentDate = new Date(now);
+		return startDate.toDateString() === currentDate.toDateString() ? 'today' : 'upcoming';
+	}
+
+	if (now <= endsAt) {
+		return 'in_progress';
+	}
+
+	return 'recently_completed';
 }
 
 export function createDefaultHubNotificationPreferences(): HubNotificationPreferences {
@@ -312,7 +399,7 @@ export function buildHubNotifications(input: {
 	const preferences = input.preferences ?? createDefaultHubNotificationPreferences();
 	const readMap = input.readMap ?? {};
 	const visibleEvents = input.events
-		.map((event) => ({ event, timingState: getMemberEventTimingState(event, now) }))
+		.map((event) => ({ event, timingState: getEventNotificationTimingState(event, now) }))
 		.filter(
 			(item): item is { event: EventRow; timingState: MemberCommitmentTimingState } =>
 				item.timingState !== null

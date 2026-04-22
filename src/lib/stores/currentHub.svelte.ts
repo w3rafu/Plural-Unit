@@ -19,12 +19,19 @@ import {
 	sortInactiveBroadcasts
 } from '$lib/models/broadcastLifecycleModel';
 import {
+	getEventEffectiveEndTime,
+	isEventPublishedToMembers,
+	isEventWithinMemberHistoryWindow,
 	replaceEventRow,
 	sortInactiveEvents,
 	sortLiveEvents,
 	sortScheduledEvents
 } from '$lib/models/eventLifecycleModel';
-import { type EventReminderSummary } from '$lib/models/eventReminderModel';
+import {
+	formatEventReminderOffset,
+	reminderChannelSupportsPush,
+	type EventReminderSummary
+} from '$lib/models/eventReminderModel';
 import { type EventAttendanceSummary } from '$lib/models/eventResponseModel';
 import {
 	type EventAttendanceRoster,
@@ -61,11 +68,16 @@ import {
 	normalizeHubOperatorWorkflowNote
 } from '$lib/models/hubOperatorWorkflowModel';
 import {
-	sortResourceRows,
+	getResourceLifecycleState,
+	isResourceLive,
+	sortInactiveResourceRows,
+	sortLiveResourceRows,
 	type ResourceMoveDirection
 } from '$lib/models/resourcesModel';
 import {
 	type PluginKey,
+	type PluginState,
+	type PluginVisibilityMode,
 	type PluginStateMap
 } from './pluginRegistry';
 import {
@@ -89,6 +101,7 @@ import type {
 	EventMutationPayload,
 	EventAttendanceRow,
 	EventAttendanceStatus,
+	EventReminderChannel,
 	EventReminderSettingsRow,
 	EventResponseRow,
 	EventResponseStatus,
@@ -165,8 +178,11 @@ import {
 } from './currentHub/notifications';
 import {
 	addCurrentHubResource,
+	archiveCurrentHubResource,
 	moveCurrentHubResource,
 	removeCurrentHubResource,
+	recordCurrentHubResourceOpen,
+	restoreCurrentHubResource,
 	updateCurrentHubResource
 } from './currentHub/resources';
 import {
@@ -862,7 +878,11 @@ class CurrentHub {
 	}
 
 	get orderedResources() {
-		return sortResourceRows(this.resources);
+		return sortLiveResourceRows(this.resources);
+	}
+
+	get inactiveResources() {
+		return sortInactiveResourceRows(this.resources);
 	}
 
 	get executionLedgerGroups() {
@@ -1050,6 +1070,7 @@ class CurrentHub {
 					workflowStateRows
 				)
 			});
+			this.dispatchProcessedReminderPushes(nextState);
 			await this.cleanupOrphanedFollowUpWorkflowStateRows();
 		})();
 
@@ -1074,14 +1095,32 @@ class CurrentHub {
 	}
 
 	async toggle(key: PluginKey, enabled: boolean) {
+		return this.updatePluginState(key, { isEnabled: enabled });
+	}
+
+	async setVisibility(key: PluginKey, visibility: PluginVisibilityMode) {
+		return this.updatePluginState(key, { visibility });
+	}
+
+	private async updatePluginState(key: PluginKey, patch: Partial<PluginState>) {
+		const nextState = {
+			...this.plugins[key],
+			...patch
+		};
+
 		if (isSmokeModeEnabled()) {
-			this.plugins = { ...this.plugins, [key]: enabled };
+			this.plugins = { ...this.plugins, [key]: nextState };
 			return;
 		}
 
 		if (!this.orgId) return;
-		await togglePlugin(this.orgId, key, enabled);
-		this.plugins = { ...this.plugins, [key]: enabled };
+		await this.withCapturedError(() =>
+			togglePlugin(this.orgId as string, key, {
+				isEnabled: nextState.isEnabled,
+				visibilityMode: nextState.visibility
+			})
+		);
+		this.plugins = { ...this.plugins, [key]: nextState };
 	}
 
 	async updateNotificationPreferences(nextPreferences: HubNotificationPreferences) {
@@ -1293,7 +1332,11 @@ class CurrentHub {
 
 	// ── Event actions ──
 
-	async addEvent(payload: EventMutationPayload, reminderOffsets?: number[]) {
+	async addEvent(
+		payload: EventMutationPayload,
+		reminderOffsets?: number[],
+		reminderChannel: EventReminderChannel = 'in_app'
+	) {
 		if (!this.orgId) return;
 
 		await this.withEventTarget('draft', async () => {
@@ -1307,7 +1350,11 @@ class CurrentHub {
 			this.events = nextEventState.events;
 
 			if (reminderOffsets) {
-				await this.persistEventReminderSettings(nextEventState.createdEventId, reminderOffsets);
+				await this.persistEventReminderSettings(
+					nextEventState.createdEventId,
+					reminderOffsets,
+					reminderChannel
+				);
 			}
 
 			await this.reconcileExecutionLedger();
@@ -1327,7 +1374,12 @@ class CurrentHub {
 		});
 	}
 
-	async updateEvent(eventId: string, payload: EventMutationPayload, reminderOffsets?: number[]) {
+	async updateEvent(
+		eventId: string,
+		payload: EventMutationPayload,
+		reminderOffsets?: number[],
+		reminderChannel: EventReminderChannel = this.getEventReminderDeliveryChannel(eventId)
+	) {
 		await this.withEventTarget(eventId, async () => {
 			this.events = await updateCurrentHubEvent({
 				eventId,
@@ -1337,7 +1389,7 @@ class CurrentHub {
 			});
 
 			if (reminderOffsets !== undefined) {
-				await this.persistEventReminderSettings(eventId, reminderOffsets);
+				await this.persistEventReminderSettings(eventId, reminderOffsets, reminderChannel);
 			}
 
 			await this.reconcileExecutionLedger();
@@ -1347,13 +1399,33 @@ class CurrentHub {
 
 	async cancelEvent(eventId: string) {
 		await this.withEventTarget(eventId, async () => {
+			const previousEvent = this.events.find((event) => event.id === eventId) ?? null;
+
+			if (isSmokeModeEnabled()) {
+				if (previousEvent) {
+					const now = new Date().toISOString();
+					this.events = replaceEventRow(this.events, {
+						...previousEvent,
+						canceled_at: now,
+						member_signal_kind: 'canceled',
+						member_signal_at: now
+					});
+				}
+				await this.cleanupOrphanedFollowUpWorkflowStateRows({ persist: false });
+				return;
+			}
+
 			this.events = await cancelCurrentHubEvent({
 				eventId,
 				currentRows: this.events,
 				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
 			});
+			const nextEvent = this.events.find((event) => event.id === eventId) ?? null;
 			await this.reconcileExecutionLedger();
 			await this.cleanupOrphanedFollowUpWorkflowStateRows();
+			if (previousEvent && nextEvent) {
+				this.triggerEventLifecyclePush(previousEvent, nextEvent);
+			}
 		});
 	}
 
@@ -1371,13 +1443,34 @@ class CurrentHub {
 
 	async restoreEvent(eventId: string) {
 		await this.withEventTarget(eventId, async () => {
+			const previousEvent = this.events.find((event) => event.id === eventId) ?? null;
+
+			if (isSmokeModeEnabled()) {
+				if (previousEvent) {
+					const now = new Date().toISOString();
+					this.events = replaceEventRow(this.events, {
+						...previousEvent,
+						canceled_at: null,
+						archived_at: null,
+						member_signal_kind: 'restored',
+						member_signal_at: now
+					});
+				}
+				await this.cleanupOrphanedFollowUpWorkflowStateRows({ persist: false });
+				return;
+			}
+
 			this.events = await restoreCurrentHubEvent({
 				eventId,
 				currentRows: this.events,
 				syncEventDeliveryRow: (row) => this.syncEventDeliveryRow(row)
 			});
+			const nextEvent = this.events.find((event) => event.id === eventId) ?? null;
 			await this.reconcileExecutionLedger();
 			await this.cleanupOrphanedFollowUpWorkflowStateRows();
+			if (previousEvent && nextEvent) {
+				this.triggerEventLifecyclePush(previousEvent, nextEvent);
+			}
 		});
 	}
 
@@ -1405,6 +1498,10 @@ class CurrentHub {
 
 	getEventReminderOffsets(eventId: string) {
 		return getCurrentHubEventReminderOffsets(this.eventReminderSettingsMap, eventId);
+	}
+
+	getEventReminderDeliveryChannel(eventId: string): EventReminderChannel {
+		return this.getEventReminderSettings(eventId)?.delivery_channel ?? 'in_app';
 	}
 
 	getEventReminderSummary(eventId: string): EventReminderSummary | null {
@@ -1478,7 +1575,8 @@ class CurrentHub {
 				}
 
 				const nextEvent = this.events.find((entry) => entry.id === event.id) ?? event;
-				const reminderOffsets = this.getEventReminderSettings(nextEvent.id)?.reminder_offsets;
+				const reminderSettings = this.getEventReminderSettings(nextEvent.id);
+				const reminderOffsets = reminderSettings?.reminder_offsets;
 
 				await this.updateEvent(
 					nextEvent.id,
@@ -1490,7 +1588,8 @@ class CurrentHub {
 						location: nextEvent.location,
 						publish_at: null
 					},
-					reminderOffsets
+					reminderOffsets,
+					reminderSettings?.delivery_channel ?? 'in_app'
 				);
 			}
 
@@ -1806,7 +1905,11 @@ class CurrentHub {
 		});
 	}
 
-	private async persistEventReminderSettings(eventId: string, reminderOffsets: number[]) {
+	private async persistEventReminderSettings(
+		eventId: string,
+		reminderOffsets: number[],
+		deliveryChannel: EventReminderChannel
+	) {
 		if (!this.orgId || !currentOrganization.isAdmin) {
 			return;
 		}
@@ -1815,6 +1918,7 @@ class CurrentHub {
 			orgId: this.orgId,
 			eventId,
 			reminderOffsets,
+			deliveryChannel,
 			currentMap: this.eventReminderSettingsMap
 		});
 	}
@@ -1885,6 +1989,83 @@ class CurrentHub {
 		return synced;
 	}
 
+	private isMemberVisibleEventForLifecycle(event: EventRow, now = Date.now()) {
+		return (
+			!event.archived_at &&
+			isEventPublishedToMembers(event, now) &&
+			isEventWithinMemberHistoryWindow(event, now)
+		);
+	}
+
+	private triggerEventLifecyclePush(previousEvent: EventRow, nextEvent: EventRow) {
+		if (!this.orgId) {
+			return;
+		}
+
+		const wasVisible = this.isMemberVisibleEventForLifecycle(previousEvent);
+		if (!wasVisible) {
+			return;
+		}
+
+		if (!previousEvent.canceled_at && nextEvent.canceled_at) {
+			void triggerPushNotification({
+				kind: 'event',
+				organization_id: this.orgId,
+				source_id: nextEvent.id,
+				title: nextEvent.title || 'Event canceled',
+				body: 'This event was canceled. Open it for the latest details.',
+				url: `/hub/event/${nextEvent.id}`
+			});
+			return;
+		}
+
+		if (previousEvent.canceled_at && !nextEvent.canceled_at && this.isMemberVisibleEventForLifecycle(nextEvent)) {
+			void triggerPushNotification({
+				kind: 'event',
+				organization_id: this.orgId,
+				source_id: nextEvent.id,
+				title: nextEvent.title || 'Event restored',
+				body: 'This event is back on the schedule. Open it for the latest details.',
+				url: `/hub/event/${nextEvent.id}`
+			});
+		}
+	}
+
+	private dispatchProcessedReminderPushes(nextState: CurrentHubLoadResult) {
+		const processedReminderExecutions = nextState.processedReminderExecutions ?? [];
+		if (!this.orgId || processedReminderExecutions.length === 0) {
+			return;
+		}
+
+		for (const executionRow of processedReminderExecutions) {
+			const reminderSettings = nextState.eventReminderSettingsMap[executionRow.source_id];
+			if (!reminderSettings || !reminderChannelSupportsPush(reminderSettings.delivery_channel)) {
+				continue;
+			}
+
+			const event = nextState.events.find((entry) => entry.id === executionRow.source_id);
+			if (!event) {
+				continue;
+			}
+
+			const offsetMinutes = Number.parseInt(executionRow.execution_key, 10);
+			const reminderLabel =
+				Number.isInteger(offsetMinutes) && offsetMinutes > 0
+					? formatEventReminderOffset(offsetMinutes)
+					: 'Event starts soon';
+
+			void triggerPushNotification({
+				kind: 'event',
+				organization_id: this.orgId,
+				source_id: event.id,
+				title: event.title || 'Event reminder',
+				body: `Reminder sent ${reminderLabel}. Open for the latest details.`,
+				url: `/hub/event/${event.id}`,
+				include_actor_profile: true
+			});
+		}
+	}
+
 	// ── Resource actions ──
 
 	async addResource(payload: {
@@ -1892,6 +2073,7 @@ class CurrentHub {
 		description: string;
 		href: string;
 		resource_type: ResourceType;
+		is_draft?: boolean;
 	}) {
 		if (!this.orgId) return;
 
@@ -1911,6 +2093,7 @@ class CurrentHub {
 			description: string;
 			href: string;
 			resource_type: ResourceType;
+			is_draft?: boolean;
 		}
 	) {
 		await this.withResourceTarget(resourceId, async () => {
@@ -1932,6 +2115,50 @@ class CurrentHub {
 		});
 	}
 
+	async archiveResource(resourceId: string) {
+		await this.withResourceTarget(resourceId, async () => {
+			if (isSmokeModeEnabled()) {
+				const now = new Date().toISOString();
+				const remainingLive = sortLiveResourceRows(this.resources)
+					.filter((r) => r.id !== resourceId)
+					.map((r, index) => ({ ...r, sort_order: index }));
+				const target = this.resources.find((r) => r.id === resourceId);
+				if (target) {
+					this.resources = [
+						...remainingLive,
+						{ ...target, is_draft: false, archived_at: now },
+						...this.resources.filter((r) => !isResourceLive(r) && r.id !== resourceId)
+					];
+				}
+				return;
+			}
+
+			this.resources = await archiveCurrentHubResource({
+				resourceId,
+				currentRows: this.resources
+			});
+		});
+	}
+
+	async restoreResource(resourceId: string) {
+		await this.withResourceTarget(resourceId, async () => {
+			if (isSmokeModeEnabled()) {
+				const nextSortOrder = sortLiveResourceRows(this.resources).length;
+				this.resources = this.resources.map((r) =>
+					r.id === resourceId
+						? { ...r, is_draft: false, archived_at: null, sort_order: nextSortOrder }
+						: r
+				);
+				return;
+			}
+
+			this.resources = await restoreCurrentHubResource({
+				resourceId,
+				currentRows: this.resources
+			});
+		});
+	}
+
 	async removeResource(resourceId: string) {
 		await this.withResourceTarget(resourceId, async () => {
 			this.resources = await removeCurrentHubResource({
@@ -1939,6 +2166,30 @@ class CurrentHub {
 				currentRows: this.resources
 			});
 		});
+	}
+
+	async recordResourceOpen(resourceId: string) {
+		if (!this.orgId) return;
+
+		if (isSmokeModeEnabled()) {
+			this.resources = this.resources.map((resource) =>
+				resource.id === resourceId
+					? {
+							...resource,
+							open_count: Math.max(resource.open_count ?? 0, 0) + 1,
+							last_opened_at: new Date().toISOString()
+						}
+					: resource
+			);
+			return;
+		}
+
+		this.resources = await this.withCapturedError(() =>
+			recordCurrentHubResourceOpen({
+				resourceId,
+				currentRows: this.resources
+			})
+		);
 	}
 
 	// --- Broadcast acknowledgments ---

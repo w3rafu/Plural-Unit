@@ -12,7 +12,7 @@
 		getResourceActionLabel,
 		getResourceDestinationLabel,
 		getResourceTypeLabel,
-		sortResourceRows
+		sortLiveResourceRows
 	} from '$lib/models/resourcesModel';
 	import type { ResourceRow } from '$lib/repositories/hubRepository';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
@@ -23,7 +23,11 @@
 		sectionId = undefined as string | undefined
 	} = $props();
 
-	const items = $derived(sortResourceRows(resources ?? currentHub.orderedResources));
+	const items = $derived(sortLiveResourceRows(resources ?? currentHub.orderedResources));
+
+	function handleResourceOpen(resourceId: string) {
+		void currentHub.recordResourceOpen(resourceId);
+	}
 </script>
 
 <section id={sectionId} aria-label="Resources" class="space-y-3 scroll-mt-24">
@@ -71,6 +75,7 @@
 								size="sm"
 								target="_blank"
 								rel="noreferrer"
+								onclick={() => handleResourceOpen(resource.id)}
 							>
 								{getResourceActionLabel(resource.resource_type)}
 								<ExternalLink class="size-4" />

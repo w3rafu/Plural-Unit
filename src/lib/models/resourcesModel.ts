@@ -1,6 +1,12 @@
 import type { ResourceRow, ResourceType } from '$lib/repositories/hubRepository';
 
 export type ResourceMoveDirection = 'up' | 'down';
+export type ResourceLifecycleState = 'live' | 'draft' | 'archived';
+export type ResourceEngagementSignal = {
+	label: string;
+	copy: string;
+	needsAttention: boolean;
+};
 
 export const HUB_RESOURCE_TYPE_OPTIONS = [
 	{ value: 'link', label: 'Link' },
@@ -135,6 +141,43 @@ export function getResourceActionLabel(resourceType: ResourceType) {
 	}
 }
 
+export function isResourceDraft(resource: Pick<ResourceRow, 'is_draft'>) {
+	return Boolean(resource.is_draft);
+}
+
+export function isResourceArchived(resource: Pick<ResourceRow, 'archived_at'>) {
+	return Boolean(resource.archived_at);
+}
+
+export function isResourceLive(
+	resource: Pick<ResourceRow, 'is_draft' | 'archived_at'>
+) {
+	return !isResourceDraft(resource) && !isResourceArchived(resource);
+}
+
+export function getResourceLifecycleState(
+	resource: Pick<ResourceRow, 'is_draft' | 'archived_at'>
+): ResourceLifecycleState {
+	if (isResourceArchived(resource)) {
+		return 'archived';
+	}
+
+	return isResourceDraft(resource) ? 'draft' : 'live';
+}
+
+export function getResourceLifecycleLabel(
+	resource: Pick<ResourceRow, 'is_draft' | 'archived_at'>
+) {
+	switch (getResourceLifecycleState(resource)) {
+		case 'draft':
+			return 'Draft';
+		case 'archived':
+			return 'Archived';
+		default:
+			return 'Live';
+	}
+}
+
 export function getResourceDestinationLabel(href: string) {
 	const normalized = href.trim();
 
@@ -170,6 +213,25 @@ export function sortResourceRows(rows: ResourceRow[]) {
 	});
 }
 
+export function sortLiveResourceRows(rows: ResourceRow[]) {
+	return sortResourceRows(rows.filter((row) => isResourceLive(row)));
+}
+
+export function sortInactiveResourceRows(rows: ResourceRow[]) {
+	const drafts = rows
+		.filter((row) => isResourceDraft(row) && !isResourceArchived(row))
+		.sort((left, right) => getTime(right.updated_at) - getTime(left.updated_at));
+	const archived = rows
+		.filter((row) => isResourceArchived(row))
+		.sort((left, right) => {
+			const leftTime = getTime(left.archived_at) || getTime(left.updated_at);
+			const rightTime = getTime(right.archived_at) || getTime(right.updated_at);
+			return rightTime - leftTime;
+		});
+
+	return [...drafts, ...archived];
+}
+
 function renumberResourceRows(rows: ResourceRow[]) {
 	return rows.map((row, index) => ({ ...row, sort_order: index }));
 }
@@ -187,7 +249,7 @@ export function moveResourceRows(
 	resourceId: string,
 	direction: ResourceMoveDirection
 ) {
-	const orderedRows = sortResourceRows(rows);
+	const orderedRows = sortLiveResourceRows(rows);
 	const currentIndex = orderedRows.findIndex((row) => row.id === resourceId);
 
 	if (currentIndex === -1) {
@@ -203,4 +265,57 @@ export function moveResourceRows(
 	[nextRows[currentIndex], nextRows[nextIndex]] = [nextRows[nextIndex], nextRows[currentIndex]];
 
 	return renumberResourceRows(nextRows);
+}
+
+function formatResourceOpenCount(openCount: number) {
+	return `${openCount} open${openCount === 1 ? '' : 's'}`;
+}
+
+export function getResourceEngagementSignal(
+	resource: Pick<ResourceRow, 'open_count' | 'last_opened_at' | 'created_at' | 'is_draft' | 'archived_at'>,
+	now = Date.now()
+): ResourceEngagementSignal {
+	if (isResourceDraft(resource)) {
+		return {
+			label: 'Draft',
+			copy: 'Hidden from members until you publish it.',
+			needsAttention: false
+		};
+	}
+
+	if (isResourceArchived(resource)) {
+		return {
+			label: 'Archived',
+			copy: resource.last_opened_at
+				? `Archived after ${formatResourceOpenCount(resource.open_count ?? 0)}.`
+				: 'Archived before members opened it.',
+			needsAttention: false
+		};
+	}
+
+	if ((resource.open_count ?? 0) === 0) {
+		const createdAt = getTime(resource.created_at) ?? now;
+		const ageMs = Math.max(0, now - createdAt);
+		const isStale = ageMs >= 14 * 24 * 60 * 60 * 1000;
+
+		return {
+			label: 'Unused',
+			copy: isStale
+				? 'No member opens yet. Consider refreshing the copy or moving it to archive.'
+				: 'No member opens yet.',
+			needsAttention: isStale
+		};
+	}
+
+	const lastOpenedAt = getTime(resource.last_opened_at);
+	const staleThresholdMs = 45 * 24 * 60 * 60 * 1000;
+	const isStale = lastOpenedAt !== null ? now - lastOpenedAt >= staleThresholdMs : false;
+
+	return {
+		label: isStale ? 'Stale' : 'Active',
+		copy: resource.last_opened_at
+			? `${formatResourceOpenCount(resource.open_count ?? 0)}. Last opened ${new Date(resource.last_opened_at).toLocaleDateString()}.`
+			: formatResourceOpenCount(resource.open_count ?? 0),
+		needsAttention: isStale
+	};
 }

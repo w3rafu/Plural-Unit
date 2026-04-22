@@ -30,6 +30,22 @@
 		void currentMessages.sendImage(file);
 	}
 
+	function handleArchiveThread() {
+		void currentMessages.archiveThread();
+	}
+
+	function handleUnarchiveThread() {
+		void currentMessages.unarchiveThread();
+	}
+
+	function handleMuteThread() {
+		void currentMessages.muteThread();
+	}
+
+	function handleUnmuteThread() {
+		void currentMessages.unmuteThread();
+	}
+
 	function handleDeleteMessage(messageId: string) {
 		void currentMessages.deleteMessage(messageId);
 	}
@@ -77,12 +93,24 @@
 			activeThread={currentMessages.activeThread}
 			isSending={currentMessages.isSending}
 			isResetting={currentMessages.isResetting}
+			isArchiving={Boolean(
+				currentMessages.activeThreadId &&
+				currentMessages.archivingThreadId === currentMessages.activeThreadId
+			)}
+			isMuting={Boolean(
+				currentMessages.activeThreadId &&
+				currentMessages.mutingThreadId === currentMessages.activeThreadId
+			)}
 			isLoadingOlderMessages={currentMessages.isLoadingOlderMessages}
 			deletingMessageId={currentMessages.deletingMessageId}
 			contactTyping={currentMessages.contactTyping}
 			onSelectThread={handleSelectThread}
 			onSendMessage={handleSendMessage}
 			onSendImage={handleSendImage}
+			onArchiveThread={handleArchiveThread}
+			onUnarchiveThread={handleUnarchiveThread}
+			onMuteThread={handleMuteThread}
+			onUnmuteThread={handleUnmuteThread}
 			onDeleteMessage={handleDeleteMessage}
 			onTyping={handleTyping}
 			onBack={handleBack}

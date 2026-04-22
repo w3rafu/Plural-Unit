@@ -3,51 +3,97 @@ import {
 	buildPluginStateMap,
 	getActivePluginsForMember,
 	getAllPluginsForAdmin,
+	getPluginAudienceLabel,
+	getVisiblePluginsForRole,
 	PLUGIN_REGISTRY
 } from '$lib/stores/pluginRegistry';
 
 describe('buildPluginStateMap', () => {
 	it('defaults all plugins to disabled when no rows', () => {
 		const map = buildPluginStateMap([]);
-		expect(map.broadcasts).toBe(false);
-		expect(map.events).toBe(false);
-		expect(map.resources).toBe(false);
+		expect(map.broadcasts).toEqual({ isEnabled: false, visibility: 'all_members' });
+		expect(map.events).toEqual({ isEnabled: false, visibility: 'all_members' });
+		expect(map.resources).toEqual({ isEnabled: false, visibility: 'all_members' });
 	});
 
 	it('enables matching plugins from rows', () => {
 		const map = buildPluginStateMap([
-			{ plugin_key: 'broadcasts', is_enabled: true },
-			{ plugin_key: 'events', is_enabled: false },
-			{ plugin_key: 'resources', is_enabled: true }
+			{ plugin_key: 'broadcasts', is_enabled: true, visibility_mode: 'all_members' },
+			{ plugin_key: 'events', is_enabled: false, visibility_mode: 'admins_only' },
+			{ plugin_key: 'resources', is_enabled: true, visibility_mode: 'admins_only' }
 		]);
-		expect(map.broadcasts).toBe(true);
-		expect(map.events).toBe(false);
-		expect(map.resources).toBe(true);
+		expect(map.broadcasts).toEqual({ isEnabled: true, visibility: 'all_members' });
+		expect(map.events).toEqual({ isEnabled: false, visibility: 'admins_only' });
+		expect(map.resources).toEqual({ isEnabled: true, visibility: 'admins_only' });
 	});
 
 	it('ignores unknown plugin keys', () => {
 		const map = buildPluginStateMap([{ plugin_key: 'unknown', is_enabled: true }]);
-		expect(map.broadcasts).toBe(false);
-		expect(map.events).toBe(false);
-		expect(map.resources).toBe(false);
+		expect(map.broadcasts).toEqual({ isEnabled: false, visibility: 'all_members' });
+		expect(map.events).toEqual({ isEnabled: false, visibility: 'all_members' });
+		expect(map.resources).toEqual({ isEnabled: false, visibility: 'all_members' });
 	});
 });
 
 describe('getActivePluginsForMember', () => {
 	it('returns empty when all disabled', () => {
-		const result = getActivePluginsForMember({ broadcasts: false, events: false, resources: false });
+		const result = getActivePluginsForMember({
+			broadcasts: { isEnabled: false, visibility: 'all_members' },
+			events: { isEnabled: false, visibility: 'all_members' },
+			resources: { isEnabled: false, visibility: 'all_members' }
+		});
 		expect(result).toEqual([]);
 	});
 
 	it('returns only enabled plugins in member order', () => {
-		const result = getActivePluginsForMember({ broadcasts: true, events: true, resources: true });
-		expect(result.map((p) => p.key)).toEqual(['broadcasts', 'events', 'resources']);
+		const result = getActivePluginsForMember({
+			broadcasts: { isEnabled: true, visibility: 'all_members' },
+			events: { isEnabled: true, visibility: 'all_members' },
+			resources: { isEnabled: true, visibility: 'admins_only' }
+		});
+		expect(result.map((p) => p.key)).toEqual(['broadcasts', 'events']);
 	});
 
-	it('returns subset when only one is enabled', () => {
-		const result = getActivePluginsForMember({ broadcasts: false, events: false, resources: true });
+	it('returns subset when only one member-visible plugin is enabled', () => {
+		const result = getActivePluginsForMember({
+			broadcasts: { isEnabled: false, visibility: 'all_members' },
+			events: { isEnabled: false, visibility: 'all_members' },
+			resources: { isEnabled: true, visibility: 'all_members' }
+		});
 		expect(result).toHaveLength(1);
 		expect(result[0].key).toBe('resources');
+	});
+});
+
+describe('getVisiblePluginsForRole', () => {
+	it('lets admins see enabled admin-only sections', () => {
+		const result = getVisiblePluginsForRole(
+			{
+				broadcasts: { isEnabled: true, visibility: 'all_members' },
+				events: { isEnabled: true, visibility: 'admins_only' },
+				resources: { isEnabled: false, visibility: 'all_members' }
+			},
+			'admin'
+		);
+		expect(result.map((p) => p.key)).toEqual(['broadcasts', 'events']);
+	});
+
+	it('hides admin-only sections from members', () => {
+		const result = getVisiblePluginsForRole(
+			{
+				broadcasts: { isEnabled: true, visibility: 'all_members' },
+				events: { isEnabled: true, visibility: 'admins_only' },
+				resources: { isEnabled: true, visibility: 'admins_only' }
+			},
+			'member'
+		);
+		expect(result.map((p) => p.key)).toEqual(['broadcasts']);
+	});
+});
+
+describe('getPluginAudienceLabel', () => {
+	it('formats audience copy for admins-only mode', () => {
+		expect(getPluginAudienceLabel('admins_only')).toBe('Admins only');
 	});
 });
 

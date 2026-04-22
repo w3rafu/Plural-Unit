@@ -27,6 +27,8 @@ export type MessageThread = {
 	unreadCount: number;
 	lastReadAt: string | null;
 	contactLastReadAt: string | null;
+	archivedAt?: string | null;
+	mutedAt?: string | null;
 	hasMoreMessages: boolean;
 };
 
@@ -43,6 +45,8 @@ export type MessageThreadRow = {
 	id: string;
 	contact_id: string;
 	last_read_at: string | null;
+	archived_at?: string | null;
+	muted_at?: string | null;
 	created_at: string;
 	updated_at: string;
 	contact: MessageContactRow | MessageContactRow[] | null;
@@ -88,6 +92,20 @@ export function getThreadLastMessage(thread: MessageThread) {
 
 export function getThreadLastMessageSentAt(thread: MessageThread) {
 	return getThreadLastMessage(thread)?.sentAt ?? '';
+}
+
+export function isThreadArchived(thread: Pick<MessageThread, 'archivedAt'>) {
+	return Boolean(thread.archivedAt);
+}
+
+export function isThreadMuted(thread: Pick<MessageThread, 'mutedAt'>) {
+	return Boolean(thread.mutedAt);
+}
+
+function getThreadSortTimestamp(thread: MessageThread) {
+	const lastMessageSentAt = getThreadLastMessageSentAt(thread);
+	const archivedAt = thread.archivedAt ?? '';
+	return archivedAt > lastMessageSentAt ? archivedAt : lastMessageSentAt;
 }
 
 export function getThreadPreview(thread: MessageThread) {
@@ -150,8 +168,8 @@ export function mapMessageRowToEntry(input: {
 
 export function sortThreadsByRecent(threads: MessageThread[]) {
 	return [...threads].sort((left, right) => {
-		const leftTime = getThreadLastMessageSentAt(left);
-		const rightTime = getThreadLastMessageSentAt(right);
+		const leftTime = getThreadSortTimestamp(left);
+		const rightTime = getThreadSortTimestamp(right);
 		return rightTime.localeCompare(leftTime);
 	});
 }
@@ -161,11 +179,13 @@ export type MessageInboxSections = {
 	unreadThreads: MessageThread[];
 	recentThreads: MessageThread[];
 	olderThreads: MessageThread[];
+	archivedThreads: MessageThread[];
 };
 
 type InboxSectionOptions = {
 	now?: number;
 	recentWindowMs?: number;
+	includeArchived?: boolean;
 };
 
 const DEFAULT_RECENT_THREAD_WINDOW_MS = 1000 * 60 * 60 * 24 * 7;
@@ -219,20 +239,27 @@ export function getInboxThreadSections(
 	query = '',
 	options: InboxSectionOptions = {}
 ): MessageInboxSections {
-	const visibleThreads = filterThreadsByInboxQuery(threads, query);
-	const unreadThreads = visibleThreads.filter((thread) => thread.unreadCount > 0);
-	const recentThreads = visibleThreads.filter(
+	const matchingThreads = filterThreadsByInboxQuery(threads, query);
+	const includeArchived = options.includeArchived ?? query.trim().length > 0;
+	const activeThreads = matchingThreads.filter((thread) => !isThreadArchived(thread));
+	const archivedThreads = includeArchived
+		? matchingThreads.filter((thread) => isThreadArchived(thread))
+		: [];
+	const unreadThreads = activeThreads.filter((thread) => thread.unreadCount > 0);
+	const recentThreads = activeThreads.filter(
 		(thread) => thread.unreadCount === 0 && isThreadRecent(thread, options)
 	);
-	const olderThreads = visibleThreads.filter(
+	const olderThreads = activeThreads.filter(
 		(thread) => thread.unreadCount === 0 && !isThreadRecent(thread, options)
 	);
+	const visibleThreads = includeArchived ? [...activeThreads, ...archivedThreads] : activeThreads;
 
 	return {
 		visibleThreads,
 		unreadThreads,
 		recentThreads,
-		olderThreads
+		olderThreads,
+		archivedThreads
 	};
 }
 
@@ -263,43 +290,44 @@ export function mapMessageThreads(input: {
 	}
 
 	const pageSize = input.pageSize ?? 0;
+	const mappedThreads = input.threads.flatMap((thread): MessageThread[] => {
+		const participant = resolveParticipant(thread.contact);
+		if (!participant) {
+			return [];
+		}
 
-	return sortThreadsByRecent(
-		input.threads
-			.map((thread) => {
-				const participant = resolveParticipant(thread.contact);
-				if (!participant) {
-					return null;
-				}
+		const allMessages = (messagesByThread.get(thread.id) ?? []).sort((left, right) =>
+			left.sentAt.localeCompare(right.sentAt)
+		);
 
-				const allMessages = (messagesByThread.get(thread.id) ?? []).sort((left, right) =>
-					left.sentAt.localeCompare(right.sentAt)
-				);
+		const threadMessages =
+			pageSize > 0 && allMessages.length > pageSize
+				? allMessages.slice(-pageSize)
+				: allMessages;
 
-				const threadMessages =
-					pageSize > 0 && allMessages.length > pageSize
-						? allMessages.slice(-pageSize)
-						: allMessages;
+		return [
+			{
+				id: thread.id,
+				participant,
+				messages: threadMessages.map((message) =>
+					message.senderKind === 'contact'
+						? {
+								...message,
+								senderId: participant.id
+							}
+						: message
+				),
+				unreadCount: countUnreadMessages(threadMessages, thread.last_read_at),
+				lastReadAt: thread.last_read_at,
+				contactLastReadAt: input.contactLastReadAtMap?.[thread.id] ?? null,
+				archivedAt: thread.archived_at ?? null,
+				mutedAt: thread.muted_at ?? null,
+				hasMoreMessages: pageSize > 0 && allMessages.length >= pageSize
+			} satisfies MessageThread
+		];
+	});
 
-				return {
-					id: thread.id,
-					participant,
-					messages: threadMessages.map((message) =>
-						message.senderKind === 'contact'
-							? {
-									...message,
-									senderId: participant.id
-								}
-							: message
-					),
-					unreadCount: countUnreadMessages(threadMessages, thread.last_read_at),
-					lastReadAt: thread.last_read_at,
-					contactLastReadAt: input.contactLastReadAtMap?.[thread.id] ?? null,
-					hasMoreMessages: pageSize > 0 && allMessages.length >= pageSize
-				} satisfies MessageThread;
-			})
-			.filter((thread): thread is MessageThread => thread !== null)
-	);
+	return sortThreadsByRecent(mappedThreads);
 }
 
 function resolveParticipant(contact: MessageThreadRow['contact']): MessageParticipant | null {

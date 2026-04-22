@@ -94,18 +94,28 @@ test.describe('hub smoke routes', () => {
 		).toBeVisible();
 	});
 
-	test('loads manage sections with plugin controls and toggles one section', async ({ page }) => {
+	test('loads manage sections with plugin controls and audience targeting', async ({ page }) => {
 		await page.goto('/hub/manage/sections?smoke=1');
 
 		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
 		await expect(page.getByText('Hub sections')).toBeVisible();
-		await expect(page.getByLabel('Broadcasts')).toBeVisible();
-		await expect(page.getByLabel('Events')).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Broadcasts' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Events' })).toBeVisible();
+		await expect(
+			page.getByRole('button', { name: 'Set Events visibility to admins only' })
+		).toHaveAttribute('aria-pressed', 'true');
 
 		const resourcesToggle = page.getByRole('checkbox', { name: 'Resources' });
 		await expect(resourcesToggle).not.toBeChecked();
 		await resourcesToggle.click();
 		await expect(resourcesToggle).toBeChecked();
+
+		const resourcesAdminsOnly = page.getByRole('button', {
+			name: 'Set Resources visibility to admins only'
+		});
+		await expect(resourcesAdminsOnly).toHaveAttribute('aria-pressed', 'false');
+		await resourcesAdminsOnly.click();
+		await expect(resourcesAdminsOnly).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	test('surfaces workflow-schema recovery guidance in smoke mode', async ({ page }) => {
@@ -124,5 +134,96 @@ test.describe('hub smoke routes', () => {
 		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
 		await expect(page.getByText('Could not load hub tools')).toBeVisible();
 		await expect(page.getByRole('alert').first()).toContainText(staleWorkflowSchemaRecoveryCopy);
+	});
+
+	test('navigates to a canceled event detail and shows lifecycle state', async ({ page }) => {
+		await page.goto('/hub/event/smoke-event-canceled?smoke=1');
+
+		await expect(page.locator('main').getByText('Spring gathering')).toBeVisible();
+		await expect(page.getByText('Canceled')).toBeVisible();
+		await expect(page.getByText(/Keep this link/)).toBeVisible();
+		await expect(page.getByText('Responses are closed because this event was canceled.')).toBeVisible();
+	});
+
+	test('cancels a live event from manage and shows it in event history', async ({ page }) => {
+		await page.goto('/hub/manage/content?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
+		await expect(page.getByRole('region', { name: 'Event editor' })).toBeVisible();
+
+		const eventEditor = page.getByRole('region', { name: 'Event editor' });
+		const cancelButton = eventEditor.getByRole('button', { name: 'Cancel' }).first();
+		await expect(cancelButton).toBeVisible();
+		await cancelButton.click();
+
+		await expect(eventEditor.getByText('Event history')).toBeVisible();
+		await expect(eventEditor.getByText(/\d+ event(s)? in history\./)).toBeVisible();
+	});
+
+	test('restores a canceled event from manage event history', async ({ page }) => {
+		await page.goto('/hub/manage/content?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
+		const eventEditor = page.getByRole('region', { name: 'Event editor' });
+
+		await expect(eventEditor.getByText('Spring gathering')).toBeVisible();
+		const restoreButton = eventEditor.getByRole('button', { name: 'Restore' }).first();
+		await expect(restoreButton).toBeVisible();
+		await restoreButton.click();
+
+		await expect(eventEditor.getByText('Spring gathering')).toBeVisible();
+	});
+
+	test('loads manage content with resource editor and shows live resources with engagement signals', async ({ page }) => {
+		await page.goto('/hub/manage/content?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
+		await expect(page.getByRole('region', { name: 'Resource editor' })).toBeVisible();
+
+		const resourceEditor = page.getByRole('region', { name: 'Resource editor' });
+		await expect(resourceEditor.getByText('Member handbook')).toBeVisible();
+		await expect(resourceEditor.getByText('Volunteer interest form')).toBeVisible();
+		await expect(resourceEditor.getByText('Upcoming schedule')).toBeVisible();
+
+		await expect(resourceEditor.getByText('Active')).toBeVisible();
+		await expect(resourceEditor.getByText('Unused')).toBeVisible();
+		await expect(resourceEditor.getByText('Draft')).toBeVisible();
+	});
+
+	test('archives a live resource from manage and shows it in inactive history', async ({ page }) => {
+		await page.goto('/hub/manage/content?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
+		const resourceEditor = page.getByRole('region', { name: 'Resource editor' });
+
+		const archiveButton = resourceEditor.getByRole('button', { name: /Archive/ }).first();
+		await expect(archiveButton).toBeVisible();
+		await archiveButton.click();
+
+		await expect(resourceEditor.getByText('Inactive history')).toBeVisible();
+		await expect(resourceEditor.getByText(/\d+ draft or archived resource/)).toBeVisible();
+	});
+
+	test('restores an inactive resource from manage resource history', async ({ page }) => {
+		await page.goto('/hub/manage/content?smoke=1');
+
+		await expect(page.getByRole('heading', { name: 'Manage hub' })).toBeVisible();
+		const resourceEditor = page.getByRole('region', { name: 'Resource editor' });
+
+		const restoreButton = resourceEditor.getByRole('button', { name: 'Restore' }).first();
+		await expect(restoreButton).toBeVisible();
+		await restoreButton.click();
+
+		await expect(resourceEditor.getByText('Live resources')).toBeVisible();
+	});
+
+	test('shows event reminder channel in admin detail for push-channel reminder event', async ({ page }) => {
+		await page.goto('/?smoke=1');
+
+		await page.getByRole('link', { name: 'Prayer breakfast' }).click();
+
+		await expect(page).toHaveURL(/\/hub\/event\/event-3$/);
+		await expect(page.getByText('Admin context')).toBeVisible();
+		await expect(page.getByText(/via In-app alerts and push notifications/i)).toBeVisible();
 	});
 });

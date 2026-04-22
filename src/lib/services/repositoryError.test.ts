@@ -36,6 +36,17 @@ describe('throwRepositoryError', () => {
 		);
 	});
 
+	it('adds migration guidance for schema cache column drift errors', () => {
+		const pgError = {
+			message: "Could not find the 'visibility_mode' column of 'hub_plugins' in the schema cache",
+			code: 'PGRST204'
+		};
+
+		expect(() => throwRepositoryError(pgError, 'fallback')).toThrowError(
+			"Could not find the 'visibility_mode' column of 'hub_plugins' in the schema cache Apply migration 043_add_hub_plugin_visibility.sql, then try again."
+		);
+	});
+
 	it('uses fallback when plain object has empty message', () => {
 		expect(() => throwRepositoryError({ message: '' }, 'fallback')).toThrowError('fallback');
 	});

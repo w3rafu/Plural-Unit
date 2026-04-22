@@ -32,6 +32,7 @@
 	let { event } = $props<{ event: EventRow }>();
 
 	const stateLabel = $derived(getEventStateLabel(event));
+	const isCanceled = $derived(Boolean(event.canceled_at));
 	const locationLabel = $derived(getEventLocationLabel(event.location));
 	const attendance = $derived(currentHub.getEventAttendanceSummary(event.id));
 	const ownResponse = $derived(currentHub.getOwnEventResponse(event.id));
@@ -79,6 +80,17 @@
 
 		return getEventResponseRosterSummaryCopy(responseRoster);
 	});
+	const lifecycleCopy = $derived.by(() => {
+		if (event.member_signal_kind === 'canceled' && event.canceled_at) {
+			return `Canceled ${formatShortDateTime(event.canceled_at)}. Keep this link if you need the original details or want to watch for a restore.`;
+		}
+
+		if (event.member_signal_kind === 'restored') {
+			return 'This event is back on the schedule. Review the updated timing and reminders before you head out.';
+		}
+
+		return null;
+	});
 
 	async function respondToEvent(response: EventResponseStatus) {
 		try {
@@ -107,6 +119,11 @@
 			<p class="text-sm leading-relaxed text-muted-foreground">
 				{event.description || 'No details have been shared yet.'}
 			</p>
+			{#if lifecycleCopy}
+				<p class="rounded-xl border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground">
+					{lifecycleCopy}
+				</p>
+			{/if}
 		</div>
 
 		<div class="space-y-1.5 text-sm text-muted-foreground">
@@ -137,14 +154,18 @@
 						variant={ownResponse === option.value ? 'secondary' : 'outline'}
 						class="rounded-xl px-3"
 						aria-pressed={ownResponse === option.value}
-						disabled={isSavingResponse}
+						disabled={isSavingResponse || isCanceled}
 						onclick={() => respondToEvent(option.value)}
 					>
 						{option.label}
 					</Button>
 				{/each}
 			</div>
-			{#if isSavingResponse}
+			{#if isCanceled}
+				<p class="text-xs text-muted-foreground">
+					Responses are closed because this event was canceled.
+				</p>
+			{:else if isSavingResponse}
 				<p class="text-xs text-muted-foreground">Saving your response...</p>
 			{:else if attendance.total > 0}
 				<p class="text-xs text-muted-foreground">{formatEventAttendanceSummary(attendance)}</p>

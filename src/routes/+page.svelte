@@ -16,7 +16,11 @@
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
-	import { getActivePluginsForMember } from '$lib/stores/pluginRegistry';
+	import {
+		getEnabledPlugins,
+		getVisiblePluginsForRole,
+		isPluginVisibleToRole
+	} from '$lib/stores/pluginRegistry';
 
 	let loadedHubOrgId = '';
 
@@ -49,7 +53,29 @@
 		}
 	});
 
-	const activePlugins = $derived(getActivePluginsForMember(currentHub.plugins));
+	const viewerRole = $derived(currentOrganization.membership?.role ?? 'member');
+	const visiblePlugins = $derived(getVisiblePluginsForRole(currentHub.plugins, viewerRole));
+	const enabledPlugins = $derived(getEnabledPlugins(currentHub.plugins));
+	const canSeeBroadcasts = $derived(
+		isPluginVisibleToRole(currentHub.plugins.broadcasts, viewerRole)
+	);
+	const canSeeEvents = $derived(isPluginVisibleToRole(currentHub.plugins.events, viewerRole));
+	const visibleActivityItems = $derived(
+		currentHub.activityFeed.filter((item) =>
+			item.kind === 'broadcast' ? canSeeBroadcasts : canSeeEvents
+		)
+	);
+	const visibleEvents = $derived(canSeeEvents ? currentHub.events : []);
+	const visibleOwnResponses = $derived.by(() =>
+		Object.fromEntries(
+			visibleEvents.map((event) => [event.id, currentHub.getOwnEventResponse(event.id)])
+		)
+	);
+	const visibleOwnAttendance = $derived.by(() =>
+		Object.fromEntries(
+			visibleEvents.map((event) => [event.id, currentHub.getOwnEventAttendance(event.id)])
+		)
+	);
 	const unreadMessages = $derived(currentMessages.totalUnreadCount);
 	const pendingInvites = $derived(currentOrganization.invitations.length);
 	const manageBroadcastsHref = $derived(
@@ -71,7 +97,7 @@
 	const memberCount = $derived(
 		currentOrganization.memberCount === null ? '—' : String(currentOrganization.memberCount)
 	);
-	const roleName = $derived(currentOrganization.membership?.role ?? 'member');
+	const roleName = $derived(viewerRole);
 </script>
 
 <PageHeader
@@ -128,21 +154,45 @@
 			</Card.Root>
 		{/if}
 
-		<MemberCommitmentsCard eventHref="#hub-events" />
+		{#if canSeeEvents}
+			<MemberCommitmentsCard
+				events={visibleEvents}
+				ownResponses={visibleOwnResponses}
+				ownAttendance={visibleOwnAttendance}
+				notifications={visibleActivityItems}
+				eventHref="#hub-events"
+			/>
+		{/if}
 
-		<HubActivityFeed
-			broadcastHref="#hub-broadcasts"
-			eventHref="#hub-events"
-			{manageBroadcastsHref}
-			{manageEventsHref}
-		/>
+		{#if canSeeBroadcasts || canSeeEvents}
+			<HubActivityFeed
+				items={visibleActivityItems}
+				broadcastHref="#hub-broadcasts"
+				eventHref="#hub-events"
+				{manageBroadcastsHref}
+				{manageEventsHref}
+			/>
+		{/if}
 
 		{#if currentHub.isLoading}
 			<p class="text-sm text-muted-foreground">Loading the hub...</p>
-		{:else if activePlugins.length === 0}
+		{:else if visiblePlugins.length === 0}
 			<Card.Root class="border-dashed border-border/70 bg-muted/20">
 				<Card.Content class="py-6 text-center">
-					<p class="font-medium text-foreground">No sections are live yet.</p>
+					<p class="font-medium text-foreground">
+						{#if enabledPlugins.length === 0}
+							No sections are live yet.
+						{:else if !currentOrganization.isAdmin}
+							Hub sections are currently limited to admins.
+						{:else}
+							No sections are live yet.
+						{/if}
+					</p>
+					{#if enabledPlugins.length > 0 && !currentOrganization.isAdmin}
+						<p class="mt-1 text-sm text-muted-foreground">
+							An admin has enabled hub tools that are only visible to admins on this home view.
+						</p>
+					{/if}
 					{#if currentOrganization.isAdmin}
 						<Button href="/hub/manage" variant="outline" size="sm" class="mt-3">Open hub manage</Button>
 					{/if}
@@ -150,7 +200,7 @@
 			</Card.Root>
 		{:else}
 			<div class="card-grid">
-				{#each activePlugins as plugin (plugin.key)}
+				{#each visiblePlugins as plugin (plugin.key)}
 					{#if plugin.key === 'broadcasts'}
 						<BroadcastsSection sectionId="hub-broadcasts" />
 					{:else if plugin.key === 'events'}

@@ -161,13 +161,14 @@ export async function fetchPendingInvitations(
 ): Promise<OrganizationInvitation[]> {
 	const { data, error } = await getSupabaseClient()
 		.from('organization_invitations')
-		.select('id, organization_id, email, phone, status, created_at')
+		.select('id, organization_id, email, phone, status, created_at, expires_at')
 		.eq('organization_id', organizationId)
-		.eq('status', 'pending')
 		.order('created_at', { ascending: false });
 
 	if (error) throwRepositoryError(error, 'Could not load pending invitations.');
-	return (data ?? []) as OrganizationInvitation[];
+	return ((data ?? []) as OrganizationInvitation[]).filter(
+		(invitation) => invitation.status === 'pending' || invitation.status === 'expired'
+	);
 }
 
 /** Generate a fresh token for an existing pending invitation. */

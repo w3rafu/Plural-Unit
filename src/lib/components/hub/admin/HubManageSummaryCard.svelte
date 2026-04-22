@@ -10,11 +10,18 @@
 	import { buildHubExecutionQueueFocusHref } from '$lib/models/hubExecutionQueue';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
-	import { getAllPluginsForAdmin } from '$lib/stores/pluginRegistry';
+	import { getResourceEngagementSignal } from '$lib/models/resourcesModel';
+	import {
+		getAllPluginsForAdmin,
+		getEnabledPlugins,
+		getPluginAudienceLabel,
+		getVisiblePluginsForRole
+	} from '$lib/stores/pluginRegistry';
 
 	const adminPlugins = getAllPluginsForAdmin();
 
-	const activePlugins = $derived(adminPlugins.filter((plugin) => currentHub.plugins[plugin.key]));
+	const enabledPlugins = $derived(getEnabledPlugins(currentHub.plugins));
+	const memberVisiblePlugins = $derived(getVisiblePluginsForRole(currentHub.plugins, 'member'));
 	const draftBroadcastCount = $derived(currentHub.draftBroadcasts.length);
 	const scheduledBroadcastCount = $derived(currentHub.scheduledBroadcasts.length);
 	const liveBroadcastCount = $derived(currentHub.activeBroadcasts.length);
@@ -23,8 +30,12 @@
 	const scheduledEventCount = $derived(currentHub.scheduledEvents.length);
 	const inactiveEventCount = $derived(currentHub.inactiveEvents.length);
 	const liveResourceCount = $derived(currentHub.orderedResources.length);
+	const inactiveResourceCount = $derived(currentHub.inactiveResources.length);
+	const resourceAttentionCount = $derived(
+		currentHub.orderedResources.filter((resource) => getResourceEngagementSignal(resource).needsAttention).length
+	);
 	const publishedCount = $derived(liveBroadcastCount + liveEventCount + liveResourceCount);
-	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount);
+	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount + inactiveResourceCount);
 	const dueExecutionCount = $derived(currentHub.dueExecutionCount);
 	const recoverableExecutionCount = $derived(currentHub.visibleRecoverableExecutionCount);
 	const processedExecutionCount = $derived(currentHub.getExecutionQueueSections().processed.length);
@@ -79,11 +90,16 @@
 		return `${recoverableExecutionCount} failed or skipped row${recoverableExecutionCount === 1 ? '' : 's'} can be retried or opened for correction.${staleRecoverableExecutionCount > 0 ? ` ${staleRecoverableExecutionCount} changed since review.` : ''}`;
 	});
 	const sectionSummary = $derived.by(() => {
-		if (activePlugins.length === 0) {
-			return 'No hub sections are live yet.';
+		if (enabledPlugins.length === 0) {
+			return 'No hub sections are enabled yet.';
 		}
 
-		return `${activePlugins.length} section${activePlugins.length === 1 ? '' : 's'} currently visible to members.`;
+		if (memberVisiblePlugins.length === 0) {
+			return `${enabledPlugins.length} enabled section${enabledPlugins.length === 1 ? '' : 's'}, but only admins can see them on the hub home.`;
+		}
+
+		const adminOnlyCount = enabledPlugins.length - memberVisiblePlugins.length;
+		return `${memberVisiblePlugins.length} section${memberVisiblePlugins.length === 1 ? '' : 's'} currently visible to members.${adminOnlyCount > 0 ? ` ${adminOnlyCount} admin-only.` : ''}`;
 	});
 
 	const contentSummary = $derived.by(() => {
@@ -123,6 +139,12 @@
 
 		if (historyCount > 0) {
 			parts.push(`${historyCount} item${historyCount === 1 ? '' : 's'} in history.`);
+		}
+
+		if (resourceAttentionCount > 0) {
+			parts.push(
+				`${resourceAttentionCount} live resource${resourceAttentionCount === 1 ? '' : 's'} may need cleanup.`
+			);
 		}
 
 		return parts.join(' ');
@@ -165,7 +187,7 @@
 		<div class="metric-card">
 			<div>
 				<p class="metric-label">Live now</p>
-				<p class="metric-value">{activePlugins.length}</p>
+				<p class="metric-value">{memberVisiblePlugins.length}</p>
 			</div>
 			<p class="metric-copy">{sectionSummary}</p>
 		</div>
@@ -222,8 +244,11 @@
 	<Card.Footer class="border-t border-border/70 pt-4">
 		<div class="flex flex-wrap gap-2">
 			{#each adminPlugins as plugin (plugin.key)}
-				<Badge variant={currentHub.plugins[plugin.key] ? 'secondary' : 'outline'}>
+				<Badge variant={currentHub.plugins[plugin.key].isEnabled ? 'secondary' : 'outline'}>
 					{plugin.title}
+					{#if currentHub.plugins[plugin.key].isEnabled}
+						&nbsp;&middot;&nbsp;{getPluginAudienceLabel(currentHub.plugins[plugin.key].visibility)}
+					{/if}
 				</Badge>
 			{/each}
 		</div>

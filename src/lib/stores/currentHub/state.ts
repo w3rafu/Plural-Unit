@@ -57,9 +57,9 @@ type CurrentHubResettableState = CurrentHubHydratedState & {
 };
 
 const DEFAULT_PLUGIN_STATE = {
-	broadcasts: false,
-	events: false,
-	resources: false
+	broadcasts: { isEnabled: false, visibility: 'all_members' },
+	events: { isEnabled: false, visibility: 'all_members' },
+	resources: { isEnabled: false, visibility: 'all_members' }
 } satisfies PluginStateMap;
 
 export function createDefaultCurrentHubPluginState(): PluginStateMap {
@@ -68,7 +68,7 @@ export function createDefaultCurrentHubPluginState(): PluginStateMap {
 
 export function applyCurrentHubLoadedState(
 	store: CurrentHubHydratedState,
-	state: CurrentHubLoadResult
+	state: CurrentHubHydratedState | CurrentHubLoadResult
 ) {
 	store.plugins = state.plugins;
 	store.broadcasts = state.broadcasts;
