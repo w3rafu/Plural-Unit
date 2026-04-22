@@ -191,7 +191,7 @@
 <Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Profile details</Card.Title>
-		<Card.Description>Keep your name, phone number, and photo current for the rest of your organization.</Card.Description>
+		<Card.Description>Update the name and contact details people see.</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="space-y-4">
@@ -215,45 +215,44 @@
 					onRemove={removeSelectedAvatar}
 				/>
 
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="profile-name">Name</Field.Label>
-						<Field.Description>Use the name other members should see around the app.</Field.Description>
-						<Input
-							id="profile-name"
-							type="text"
-							bind:value={name}
-							oninput={() => {
-								hasEditedDetails = true;
-							}}
-						/>
-					</Field.Content>
-				</Field.Field>
+				<div class="grid gap-4 md:grid-cols-2">
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="profile-name">Name</Field.Label>
+							<Input
+								id="profile-name"
+								type="text"
+								bind:value={name}
+								oninput={() => {
+									hasEditedDetails = true;
+								}}
+							/>
+						</Field.Content>
+					</Field.Field>
 
-				<Field.Field>
-					<Field.Content>
-						<Field.Label for="profile-phone">Phone</Field.Label>
-						<Field.Description>Add the number connected to your account.</Field.Description>
-						<Input
-							id="profile-phone"
-							type="tel"
-							bind:value={phoneNumber}
-							oninput={() => {
-								hasEditedDetails = true;
-							}}
-						/>
-					</Field.Content>
-				</Field.Field>
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="profile-phone">Phone</Field.Label>
+							<Input
+								id="profile-phone"
+								type="tel"
+								bind:value={phoneNumber}
+								oninput={() => {
+									hasEditedDetails = true;
+								}}
+							/>
+						</Field.Content>
+					</Field.Field>
+				</div>
 
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="profile-bio">Bio</Field.Label>
-						<Field.Description>A short note visible to other members (500 characters max).</Field.Description>
 						<textarea
 							id="profile-bio"
-							class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							class="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							maxlength={500}
-							rows={3}
+							rows={2}
 							bind:value={bio}
 							oninput={() => {
 								hasEditedDetails = true;
@@ -267,8 +266,8 @@
 				{/if}
 			</Field.Group>
 
-			<div class="flex justify-start">
-				<Button type="submit" disabled={currentUser.isLoggingIn}>Save details</Button>
+			<div class="flex justify-end">
+				<Button type="submit" size="sm" disabled={currentUser.isLoggingIn}>Save details</Button>
 			</div>
 		</form>
 	</Card.Content>

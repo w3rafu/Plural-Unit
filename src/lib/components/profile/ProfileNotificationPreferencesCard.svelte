@@ -161,9 +161,7 @@
 <Card.Root id="notification-preferences" size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Notifications</Card.Title>
-		<Card.Description>
-			Choose which updates this organization may send and whether this browser can receive push delivery.
-		</Card.Description>
+		<Card.Description>Choose what reaches you in the app and on this device.</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="space-y-4">
@@ -182,10 +180,8 @@
 				<div class="space-y-4">
 					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
 						<div class="space-y-1">
-							<h3 class="text-sm font-semibold text-foreground">Hub alerts in the app</h3>
-							<p class="text-xs text-muted-foreground">
-								These settings control what appears in your alert tray and hub activity surfaces for this organization.
-							</p>
+							<h3 class="text-sm font-semibold text-foreground">In-app alerts</h3>
+							<p class="text-xs text-muted-foreground">Show broadcasts and event updates in the app.</p>
 						</div>
 
 						<Field.Group class="gap-4">
@@ -203,10 +199,10 @@
 								/>
 								<Field.Content>
 									<Field.Label for="notification-preferences-broadcasts">
-										Broadcast alerts in the app
+										Broadcasts
 									</Field.Label>
 									<Field.Description>
-										Show live broadcast updates in your alert tray and activity surfaces.
+										Show live broadcast updates.
 									</Field.Description>
 								</Field.Content>
 							</Field.Field>
@@ -225,10 +221,10 @@
 								/>
 								<Field.Content>
 									<Field.Label for="notification-preferences-events">
-										Event alerts in the app
+										Events
 									</Field.Label>
 									<Field.Description>
-										Show newly published events, reminders, and live event updates in your alert tray.
+										Show new events and reminders.
 									</Field.Description>
 								</Field.Content>
 							</Field.Field>
@@ -238,9 +234,7 @@
 					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Direct message push</h3>
-							<p class="text-xs text-muted-foreground">
-								This organization-level setting controls whether new direct messages may trigger push delivery. It does not change the hub alert tray.
-							</p>
+							<p class="text-xs text-muted-foreground">Allow push for new direct messages from this organization.</p>
 						</div>
 
 						<Field.Group class="gap-4">
@@ -258,7 +252,7 @@
 								/>
 								<Field.Content>
 									<Field.Label for="notification-preferences-messages">
-										Direct message push alerts
+										Direct messages
 									</Field.Label>
 									<Field.Description>
 										{messagePreferenceDescription}
@@ -278,7 +272,7 @@
 						type="submit"
 						disabled={!canEditPreferences || currentHub.isSavingNotificationPreferences || isLoadingInitialState}
 					>
-						{currentHub.isSavingNotificationPreferences ? 'Saving...' : 'Save organization settings'}
+						{currentHub.isSavingNotificationPreferences ? 'Saving...' : 'Save settings'}
 					</Button>
 					{#if !currentHub.hasLoadedForCurrentOrg && !isLoadingInitialState}
 						<Button type="button" variant="outline" size="sm" onclick={retryLoad}>
@@ -295,7 +289,7 @@
 							? 'Loading your current notification settings...'
 							: !currentHub.hasLoadedForCurrentOrg
 								? 'Load your current organization settings before making changes.'
-								: `Applies to ${currentOrganization.organization?.name ?? 'your organization'} notification settings. Device push is managed separately below.`}
+								: `Applies to ${currentOrganization.organization?.name ?? 'your organization'}. Device push is managed separately below.`}
 					</p>
 				</div>
 			</form>
@@ -305,7 +299,7 @@
 					<div class="space-y-1">
 						<h3 class="text-sm font-semibold text-foreground">This device</h3>
 						<p class="text-xs text-muted-foreground">
-							Enable browser push delivery on this device. Organization settings above still decide which alerts can be sent.
+							Enable browser push on this device. Organization settings above still decide which alerts can be sent.
 						</p>
 					</div>
 

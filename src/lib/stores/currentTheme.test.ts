@@ -16,6 +16,7 @@ describe('currentTheme', () => {
 	it('defaults to zinc when localStorage is empty', async () => {
 		const theme = await loadThemeStore();
 		expect(theme.name).toBe('zinc');
+		expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
 	});
 
 	it('reads stored theme from localStorage', async () => {
@@ -28,6 +29,7 @@ describe('currentTheme', () => {
 		localStorage.setItem('plural-unit-theme', 'nonexistent');
 		const theme = await loadThemeStore();
 		expect(theme.name).toBe('zinc');
+		expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
 	});
 
 	it('set() updates name and persists to localStorage', async () => {

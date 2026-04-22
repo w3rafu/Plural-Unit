@@ -127,7 +127,7 @@
 <Card.Root size="sm" class="border-border/70 bg-card">
 	<Card.Header class="gap-2 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Security</Card.Title>
-		<Card.Description>Update the email and password used to sign in to this account.</Card.Description>
+		<Card.Description>Update the email and password used to sign in.</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="space-y-5">
@@ -141,7 +141,6 @@
 			<Field.Field class="gap-2.5">
 				<Field.Content>
 					<Field.Label for="profile-email">Email</Field.Label>
-					<Field.Description>Use an address you can access for confirmation and recovery.</Field.Description>
 					<Input
 						id="profile-email"
 						type="email"
@@ -170,14 +169,13 @@
 		>
 			<div class="space-y-1">
 				<h3 class="text-base font-semibold tracking-tight text-foreground">Password</h3>
-				<p class="text-sm text-muted-foreground">Set a new password when you want to refresh your account security.</p>
+				<p class="text-sm text-muted-foreground">Set a new password when you want to refresh access.</p>
 			</div>
 
 			<Field.Group class="gap-4">
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="new-password">New password</Field.Label>
-						<Field.Description>Use something long and hard to guess.</Field.Description>
 						<Input
 							id="new-password"
 							type="password"

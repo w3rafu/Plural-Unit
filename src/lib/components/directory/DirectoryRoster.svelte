@@ -5,9 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import * as Table from '$lib/components/ui/table';
 	import {
-		buildMemberDirectorySummary,
 		filterMemberDirectory,
 		getMemberDirectoryEmptyState,
 		getMemberDirectoryMeta,
@@ -46,20 +44,36 @@
 		openingThreadForProfileId?: string;
 	} = $props();
 
-	let searchQuery = $state('');
+	type DirectoryRoleFilter = 'all' | OrganizationMember['role'];
 
-	const visibleMembers = $derived(
+	let searchQuery = $state('');
+	let roleFilter = $state<DirectoryRoleFilter>('all');
+
+	const searchResults = $derived(
 		filterMemberDirectory(members, {
 			query: searchQuery,
 			currentUserId
 		})
 	);
-	const summary = $derived(
-		buildMemberDirectorySummary(searchQuery, visibleMembers.length, members.length)
+	const visibleMembers = $derived(
+		searchResults.filter((member) => roleFilter === 'all' || member.role === roleFilter)
+	);
+	const summary = $derived.by(() => {
+		if (searchQuery.trim() || roleFilter !== 'all') {
+			return `${visibleMembers.length} of ${members.length} members`;
+		}
+
+		return `${members.length} members`;
+	});
+	const roleOptions = $derived.by(() => [
+		{ id: 'all' as const, label: 'All' },
+		{ id: 'admin' as const, label: 'Admins' },
+		{ id: 'member' as const, label: 'Members' }
+	]);
+	const summaryCopy = $derived.by(() =>
+		roleFilter === 'all' ? summary : `${summary} · ${getMemberDirectoryRoleLabel(roleFilter)} filter`
 	);
 	const emptyState = $derived(getMemberDirectoryEmptyState(searchQuery));
-	const adminCount = $derived(members.filter((member) => member.role === 'admin').length);
-	const memberCount = $derived(members.filter((member) => member.role === 'member').length);
 	const isInitialLoading = $derived(isLoading && members.length === 0);
 	const showsMessageAction = $derived(typeof onMessageMember === 'function');
 
@@ -73,60 +87,43 @@
 </script>
 
 <Card.Root size="sm" class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
-	<Card.Header class="gap-2.5 border-b border-border/70">
-		<div class="flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between">
-			<div class="flex-1 space-y-2.5">
-				<div class="space-y-1">
-					<Card.Title class="text-lg font-semibold tracking-tight">{sectionTitle}</Card.Title>
-					<Card.Description>
-						{summary}. Search by name, role, email, or phone number.
-					</Card.Description>
-					{#if isRefreshing}
-						<p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-							Refreshing the latest member list
-						</p>
-					{/if}
-				</div>
+	<Card.Header class="gap-3 border-b border-border/70">
+		<div class="space-y-3">
+			<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+				<label class="relative block w-full lg:max-w-md">
+					<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+					<Input
+						type="search"
+						placeholder="Search members"
+						class="h-10 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+						bind:value={searchQuery}
+					/>
+				</label>
 
-				<div class="grid gap-2 sm:grid-cols-3">
-					<div class="rounded-xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-							Visible
-						</p>
-						<p class="mt-0.5 text-base font-semibold tracking-tight text-foreground">
-							{visibleMembers.length}
-						</p>
-					</div>
-
-					<div class="rounded-xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-							Admins
-						</p>
-						<p class="mt-0.5 text-base font-semibold tracking-tight text-foreground">
-							{adminCount}
-						</p>
-					</div>
-
-					<div class="rounded-xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-							Members
-						</p>
-						<p class="mt-0.5 text-base font-semibold tracking-tight text-foreground">
-							{memberCount}
-						</p>
-					</div>
+				<div class="segmented-control w-full lg:w-auto">
+					{#each roleOptions as option (option.id)}
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							class="justify-center px-4"
+							aria-current={roleFilter === option.id ? 'page' : undefined}
+							onclick={() => {
+								roleFilter = option.id;
+							}}
+						>
+							{option.label}
+						</Button>
+					{/each}
 				</div>
 			</div>
 
-			<label class="relative block w-full lg:max-w-xs">
-				<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-				<Input
-					type="search"
-					placeholder="Search the directory"
-					class="h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
-					bind:value={searchQuery}
-				/>
-			</label>
+			<div class="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+				<p>{summaryCopy}</p>
+				{#if isRefreshing}
+					<p class="font-medium uppercase tracking-[0.16em] text-muted-foreground">Refreshing</p>
+				{/if}
+			</div>
 		</div>
 	</Card.Header>
 
@@ -139,12 +136,12 @@
 				</div>
 			</div>
 		{:else if visibleMembers.length > 0}
-			<div class="min-h-0 flex-1 overflow-auto md:hidden">
-				<div class="space-y-2.5 p-3">
+			<div class="min-h-0 flex-1 overflow-auto p-3 md:p-4">
+				<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 					{#each visibleMembers as member (member.profile_id)}
-						<div class="rounded-xl border border-border/70 bg-background px-3.5 py-3.5 shadow-sm">
+						<div class="rounded-2xl border border-border/70 bg-background px-3.5 py-3.5 shadow-sm">
 							<div class="flex items-start gap-3">
-								<Avatar.Root class="size-11 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+								<Avatar.Root class="size-10 border border-border/70 bg-muted/50 shadow-sm after:hidden">
 									{#if member.avatar_url}
 										<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 									{:else}
@@ -154,32 +151,32 @@
 									{/if}
 								</Avatar.Root>
 
-								<div class="min-w-0 flex-1 space-y-2.5">
-									<div class="space-y-1">
-										<Button
-											href={getDetailHref(member)}
-											variant="ghost"
-											size="sm"
-											class="h-auto justify-start px-0 py-0 font-semibold hover:bg-transparent"
-										>
-											{member.name || 'Unnamed member'}
-										</Button>
-										<p class="text-xs text-muted-foreground">
-											{getMemberDirectoryMeta(member, currentUserId)}
-										</p>
-									</div>
+								<div class="min-w-0 flex-1">
+									<div class="flex items-start justify-between gap-2">
+										<div class="min-w-0 space-y-0.5">
+											<Button
+												href={getDetailHref(member)}
+												variant="ghost"
+												size="sm"
+												class="h-auto justify-start px-0 py-0 font-semibold hover:bg-transparent"
+											>
+												{member.name || 'Unnamed member'}
+											</Button>
+											<p class="text-sm text-muted-foreground">
+												{getMemberDirectoryMeta(member, currentUserId)}
+											</p>
+										</div>
 
-									<div class="flex flex-wrap gap-2">
-										<Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+										<Badge variant={member.role === 'admin' ? 'default' : 'outline'}>
 											{getMemberDirectoryRoleLabel(member.role)}
 										</Badge>
-										<Badge variant="outline">Joined {formatJoinedAt(member.joined_at)}</Badge>
 									</div>
 
-									<p class="text-sm text-muted-foreground wrap-break-word">{formatContact(member)}</p>
+									<p class="mt-2.5 text-sm text-muted-foreground wrap-break-word">{formatContact(member)}</p>
+									<p class="mt-1 text-xs text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</p>
 
-									<div class="flex flex-wrap gap-2">
-										<Button href={getDetailHref(member)} variant="outline" size="sm" class="flex-1 sm:flex-none">
+									<div class="mt-3 flex flex-wrap gap-2">
+										<Button href={getDetailHref(member)} variant="outline" size="xs">
 											{detailLabel}
 											<ChevronRight class="size-4" />
 										</Button>
@@ -188,8 +185,7 @@
 											<Button
 												type="button"
 												variant="ghost"
-												size="sm"
-												class="flex-1 sm:flex-none"
+												size="xs"
 												onclick={() => handleMessageMember(member)}
 												disabled={openingThreadForProfileId === member.profile_id}
 											>
@@ -203,86 +199,6 @@
 						</div>
 					{/each}
 				</div>
-			</div>
-
-			<div class="hidden min-h-0 flex-1 overflow-auto md:block">
-				<Table.Root class="min-w-184">
-					<Table.Caption class="sr-only">{tableCaption}</Table.Caption>
-					<Table.Header class="bg-muted/25">
-						<Table.Row>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Member</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Role</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Contact</Table.Head>
-							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each visibleMembers as member (member.profile_id)}
-							<Table.Row class="border-border/70">
-								<Table.Cell class="whitespace-normal">
-									<div class="flex items-center gap-3">
-										<Avatar.Root class="size-10 border border-border/70 bg-muted/50 shadow-sm after:hidden">
-											{#if member.avatar_url}
-												<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
-											{:else}
-												<Avatar.Fallback class="text-sm font-semibold tracking-tight text-foreground">
-													{getMemberInitials(member)}
-												</Avatar.Fallback>
-											{/if}
-										</Avatar.Root>
-
-										<div class="min-w-0 space-y-1">
-											<Button
-												href={getDetailHref(member)}
-												variant="ghost"
-												size="sm"
-												class="h-auto justify-start px-0 py-0 font-semibold hover:bg-transparent"
-											>
-												{member.name || 'Unnamed member'}
-											</Button>
-											<p class="text-xs text-muted-foreground">
-												{getMemberDirectoryMeta(member, currentUserId)}
-											</p>
-										</div>
-									</div>
-								</Table.Cell>
-								<Table.Cell>
-									<Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-										{getMemberDirectoryRoleLabel(member.role)}
-									</Badge>
-								</Table.Cell>
-								<Table.Cell class="text-sm text-muted-foreground">
-									{formatJoinedAt(member.joined_at)}
-								</Table.Cell>
-								<Table.Cell class="text-sm text-muted-foreground">
-									<div class="max-w-52 wrap-break-word">{formatContact(member)}</div>
-								</Table.Cell>
-								<Table.Cell class="text-right">
-									<div class="flex flex-wrap justify-end gap-2">
-										<Button href={getDetailHref(member)} variant="outline" size="sm">
-											{detailLabel}
-											<ChevronRight class="size-4" />
-										</Button>
-
-										{#if showsMessageAction && member.profile_id !== currentUserId}
-											<Button
-												type="button"
-												variant="ghost"
-												size="sm"
-												onclick={() => handleMessageMember(member)}
-												disabled={openingThreadForProfileId === member.profile_id}
-											>
-												<MessageSquare class="size-4" />
-												{openingThreadForProfileId === member.profile_id ? 'Opening...' : 'Message'}
-											</Button>
-										{/if}
-									</div>
-								</Table.Cell>
-							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
 			</div>
 		{:else}
 			<div class="flex min-h-0 flex-1 items-center justify-center px-6 py-10 text-center">

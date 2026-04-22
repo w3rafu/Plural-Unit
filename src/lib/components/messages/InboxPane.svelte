@@ -3,7 +3,6 @@
   Sections: Unread, Recent (7 days), Older.
 -->
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import type { MessageThread, MessageInboxSections } from '$lib/models/messageModel';
 	import { getInboxThreadSections, isThreadArchived } from '$lib/models/messageModel';
@@ -36,90 +35,48 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-muted/10 px-3 pb-3 pt-3">
+	<div class="border-b border-border/70 bg-muted/10 px-3 py-3">
 		<div class="space-y-3">
-			<div class="flex items-start justify-between gap-3">
-				<div class="space-y-1">
-					<p class="text-sm font-semibold text-foreground">Inbox</p>
-					<p class="text-xs text-muted-foreground">
-						{#if query.trim()}
-							Showing {threadLabel.toLowerCase()} that match your search.
-						{:else}
-							Unread, recent, and older conversations grouped for faster triage.
-						{/if}
-					</p>
-				</div>
-
-				<div class="flex items-center gap-2">
-					{#if onCompose}
-						<Button type="button" variant="ghost" size="icon" class="size-8 rounded-lg" aria-label="New message" onclick={onCompose}>
-							<SquarePen class="size-4" />
-						</Button>
-					{/if}
-					<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-						{threadLabel}
-					</Badge>
-				</div>
-			</div>
-
-			<div class="grid grid-cols-3 gap-2">
-				<div class="rounded-2xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						Unread
-					</p>
-					<p class="mt-1 text-lg font-semibold tracking-tight text-foreground">
-						{sections.unreadThreads.length}
-					</p>
-				</div>
-
-				<div class="rounded-2xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						Recent
-					</p>
-					<p class="mt-1 text-lg font-semibold tracking-tight text-foreground">
-						{sections.recentThreads.length}
-					</p>
-				</div>
-
-				<div class="rounded-2xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						Older
-					</p>
-					<p class="mt-1 text-lg font-semibold tracking-tight text-foreground">
-						{sections.olderThreads.length}
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-center justify-between rounded-2xl border border-border/70 bg-background px-3 py-2 shadow-sm">
-				<div>
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						Archived
-					</p>
-					<p class="mt-1 text-sm font-semibold tracking-tight text-foreground">{archivedCount}</p>
-				</div>
-
-				<Button
-					type="button"
-					variant={showArchived ? 'secondary' : 'outline'}
-					size="xs"
-					onclick={() => {
-						showArchived = !showArchived;
-					}}
-				>
-					{showArchived ? 'Hide archived' : 'Show archived'}
-				</Button>
-			</div>
-
-			<label class="relative block">
+			<div class="flex items-center gap-2">
+				<label class="relative block flex-1">
 				<Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					type="search"
-					placeholder="Search by name, role, or message"
+						placeholder="Search people or groups"
 					class="h-10 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 					bind:value={query}
 				/>
-			</label>
+				</label>
+
+				{#if onCompose}
+					<Button type="button" variant="outline" size="icon-sm" class="shrink-0 rounded-xl" aria-label="New message" onclick={onCompose}>
+						<SquarePen class="size-4" />
+					</Button>
+				{/if}
+			</div>
+
+			<div class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+				<p>
+					{#if query.trim()}
+						Showing {threadLabel.toLowerCase()} that match your search.
+					{:else}
+						{threadLabel} in this inbox.
+					{/if}
+				</p>
+
+				{#if archivedCount > 0}
+					<Button
+						type="button"
+						variant={showArchived ? 'secondary' : 'ghost'}
+						size="xs"
+						onclick={() => {
+							showArchived = !showArchived;
+						}}
+					>
+						{showArchived ? 'Hide archived' : 'Show archived'}
+					</Button>
+				{/if}
+			</div>
 		</div>
 	</div>
 

@@ -71,7 +71,7 @@
 	}
 </script>
 
-<PageHeader preset="section" title="Messages" subtitle="Conversations and threads" />
+<PageHeader preset="section" title="Messages" subtitle="Direct and group threads" />
 
 <main class="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
 	{#if !currentMessages.isReady}

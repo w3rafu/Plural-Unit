@@ -2,11 +2,12 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import HubActivityFeed from '$lib/components/hub/member/HubActivityFeed.svelte';
-	import MemberCommitmentsCard from '$lib/components/hub/member/MemberCommitmentsCard.svelte';
+	import HubOverviewCards from '$lib/components/hub/member/HubOverviewCards.svelte';
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
 	import ResourcesSection from '$lib/components/hub/member/ResourcesSection.svelte';
 	import VolunteersSection from '$lib/components/hub/member/VolunteersSection.svelte';
+	import { getMemberEventTimingState } from '$lib/models/memberCommitmentModel';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -61,17 +62,12 @@
 		)
 	);
 	const visibleEvents = $derived(canSeeEvents ? currentHub.events : []);
-	const visibleOwnResponses = $derived.by(() =>
-		Object.fromEntries(
-			visibleEvents.map((event) => [event.id, currentHub.getOwnEventResponse(event.id)])
-		)
-	);
-	const visibleOwnAttendance = $derived.by(() =>
-		Object.fromEntries(
-			visibleEvents.map((event) => [event.id, currentHub.getOwnEventAttendance(event.id)])
-		)
+	const upcomingVisibleEvents = $derived(
+		visibleEvents.filter((event) => getMemberEventTimingState(event) !== 'recently_completed')
 	);
 	const unreadMessages = $derived(currentMessages.totalUnreadCount);
+	const unreadActivityItems = $derived(visibleActivityItems.filter((item) => !item.isRead).length);
+	const spotlightThreads = $derived(currentMessages.sortedThreads.slice(0, 3));
 	const pendingInvites = $derived(currentOrganization.invitations.length);
 	const manageBroadcastsHref = $derived(
 		currentOrganization.isAdmin ? '/hub/manage/content#manage-broadcasts' : undefined
@@ -82,6 +78,66 @@
 	const hasBlockingHubError = $derived(
 		Boolean(currentHub.lastError) && !currentHub.hasLoadedForCurrentOrg
 	);
+	const broadcastReachPercent = $derived.by(() => {
+		const totalMembers = currentOrganization.memberCount ?? 0;
+		const liveBroadcast = canSeeBroadcasts ? currentHub.activeBroadcasts[0] ?? null : null;
+
+		if (!liveBroadcast || totalMembers <= 0) {
+			return 0;
+		}
+
+		return Math.min(
+			100,
+			Math.round((currentHub.getAcknowledgmentCount(liveBroadcast.id) / totalMembers) * 100)
+		);
+	});
+	const eventResponsePercent = $derived.by(() => {
+		const totalMembers = currentOrganization.memberCount ?? 0;
+		const sampleEvents = upcomingVisibleEvents.slice(0, 3);
+
+		if (sampleEvents.length === 0 || totalMembers <= 0) {
+			return 0;
+		}
+
+		const totalResponses = sampleEvents.reduce(
+			(sum, event) => sum + currentHub.getEventAttendanceSummary(event.id).total,
+			0
+		);
+
+		return Math.min(
+			100,
+			Math.round((totalResponses / (sampleEvents.length * totalMembers)) * 100)
+		);
+	});
+	const inboxClearPercent = $derived.by(() => {
+		const threads = currentMessages.sortedThreads;
+
+		if (threads.length === 0) {
+			return 100;
+		}
+
+		const clearThreads = threads.filter((thread) => thread.unreadCount === 0).length;
+		return Math.round((clearThreads / threads.length) * 100);
+	});
+	const hubSubtitle = $derived.by(() => {
+		const parts: string[] = [];
+
+		if (currentOrganization.memberCount !== null) {
+			parts.push(`${currentOrganization.memberCount} members`);
+		}
+
+		if (currentOrganization.isAdmin) {
+			parts.push(`${pendingInvites} pending invites`);
+		} else {
+			parts.push(roleName);
+		}
+
+		if (!currentOrganization.isAdmin && unreadMessages > 0) {
+			parts.push(`${unreadMessages} unread`);
+		}
+
+		return parts.join(' · ') || 'Organization hub';
+	});
 
 	const hubActions = $derived.by(() => [
 		...(currentOrganization.isAdmin
@@ -97,30 +153,11 @@
 
 <PageHeader
 	title={currentOrganization.organization?.name ?? 'Hub'}
-	subtitle="Organization hub"
+	subtitle={hubSubtitle}
 	actions={hubActions}
 />
 
-<main class="page-stack" aria-busy={currentHub.isLoading}>
-	{#if currentOrganization.isAdmin}
-		<div class="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5">
-			<span class="mr-auto text-sm text-muted-foreground">
-				{memberCount} members &middot; {pendingInvites} pending invites
-			</span>
-			<Button href="/hub/manage/content" size="sm">Open Hub Manage</Button>
-		</div>
-	{:else}
-		<div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-			<span>{memberCount} members</span>
-			<span class="capitalize">{roleName}</span>
-			{#if unreadMessages > 0}
-				<a href="/messages" class="font-medium text-foreground underline underline-offset-4">
-					{unreadMessages} unread
-				</a>
-			{/if}
-		</div>
-	{/if}
-
+<main class="mx-auto flex w-full max-w-3xl flex-col gap-4" aria-busy={currentHub.isLoading}>
 	{#if hasBlockingHubError}
 		<Card.Root class="border-destructive/30 bg-destructive/5">
 			<Card.Content class="flex flex-wrap items-center gap-3 py-4">
@@ -149,15 +186,18 @@
 			</Card.Root>
 		{/if}
 
-		{#if canSeeEvents}
-			<MemberCommitmentsCard
-				events={visibleEvents}
-				ownResponses={visibleOwnResponses}
-				ownAttendance={visibleOwnAttendance}
-				notifications={visibleActivityItems}
-				eventHref="#hub-events"
-			/>
-		{/if}
+		<HubOverviewCards
+			memberCount={currentOrganization.memberCount}
+			{pendingInvites}
+			liveBroadcasts={canSeeBroadcasts ? currentHub.activeBroadcasts.length : 0}
+			upcomingEvents={upcomingVisibleEvents.length}
+			{unreadMessages}
+			{unreadActivityItems}
+			{broadcastReachPercent}
+			{eventResponsePercent}
+			{inboxClearPercent}
+			threads={spotlightThreads}
+		/>
 
 		{#if canSeeBroadcasts || canSeeEvents}
 			<HubActivityFeed
@@ -194,7 +234,7 @@
 				</Card.Content>
 			</Card.Root>
 		{:else}
-			<div class="card-grid">
+			<div class="flex flex-col gap-4">
 				{#each visiblePlugins as plugin (plugin.key)}
 					{#if plugin.key === 'broadcasts'}
 						<BroadcastsSection sectionId="hub-broadcasts" />

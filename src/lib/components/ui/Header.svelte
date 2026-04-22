@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Building2Icon from '@lucide/svelte/icons/building-2';
-	import AuthHelpSheet from '$lib/components/ui/AuthHelpSheet.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import HubNotificationsSheet from '$lib/components/ui/HubNotificationsSheet.svelte';
@@ -11,8 +10,7 @@
 	import {
 		pageHeader,
 		resolvePageHeaderPreset,
-		shouldShowPageHeaderSubtitle,
-		type PageHeaderAction
+		shouldShowPageHeaderSubtitle
 	} from '$lib/stores/pageHeader.svelte';
 
 	const rawPreset = $derived(resolvePageHeaderPreset(pageHeader.config));
@@ -23,6 +21,7 @@
 	const showSubtitle = $derived(
 		Boolean(pageHeader.config.subtitle) && shouldShowPageHeaderSubtitle(rawPreset)
 	);
+	const headerActions = $derived(pageHeader.config.actions ?? []);
 	const showBrandMark = $derived(!hasBack);
 	const showContextAvatar = $derived(
 		hasBack && Boolean(pageHeader.config.avatarText)
@@ -102,6 +101,34 @@
 
 			<div class="shell-header__controls">
 				<div role="group" aria-label="Header controls" class="shell-header__control-group">
+					{#each headerActions as action, index (action.id)}
+						{#if action.href}
+							<Button
+								href={action.href}
+								type="button"
+								variant={index === 0 ? 'default' : 'outline'}
+								size="sm"
+								class={`${controlButtonClass} ${index === 0 ? 'shell-header__control--primary' : ''}`}
+								disabled={action.disabled}
+								aria-label={action.ariaLabel ?? action.label}
+							>
+								{action.label}
+							</Button>
+						{:else}
+							<Button
+								type="button"
+								variant={index === 0 ? 'default' : 'outline'}
+								size="sm"
+								class={`${controlButtonClass} ${index === 0 ? 'shell-header__control--primary' : ''}`}
+								disabled={action.disabled}
+								aria-label={action.ariaLabel ?? action.label}
+								onclick={() => action.onClick?.()}
+							>
+								{action.label}
+							</Button>
+						{/if}
+					{/each}
+
 					{#if showOrganizationControl}
 						<Button
 							href="/organization"
@@ -113,7 +140,7 @@
 							aria-label="Open organization admin tools"
 						>
 							<Building2Icon class="shell-header__control-icon" aria-hidden="true" />
-							<span class="shell-header__control-label">Org</span>
+							<span class="shell-header__control-label">Admin</span>
 						</Button>
 					{/if}
 
@@ -127,8 +154,6 @@
 							{manageBroadcastsHref}
 							{manageEventsHref}
 						/>
-					{:else}
-						<AuthHelpSheet triggerLabel="Help" triggerClass={controlButtonClass} />
 					{/if}
 
 					<ThemeToggle class={controlButtonClass} />
@@ -261,14 +286,14 @@
 	}
 
 	.shell-header__surface--page .shell-header__brand-image {
-		width: 2.2rem;
-		height: 2.2rem;
+		width: 2.15rem;
+		height: 2.15rem;
 	}
 
 	.shell-header__subtitle {
-		margin: 0.16rem 0 0;
-		max-width: 34rem;
-		font-size: 0.82rem;
+		margin: 0.14rem 0 0;
+		max-width: 30rem;
+		font-size: 0.8rem;
 		line-height: 1.35;
 		color: var(--muted-foreground);
 	}
@@ -293,18 +318,15 @@
 	}
 
 	:global(.shell-header__control-group) {
-		display: inline-flex;
+		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.12rem;
-		border: 1px solid var(--border);
-		border-radius: 9999px;
-		padding: 0.16rem;
-		background: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32);
+		justify-content: flex-end;
+		gap: 0.45rem;
 	}
 
 	:global(.shell-header__control) {
-		border-color: transparent;
+		border-color: color-mix(in srgb, var(--border) 86%, transparent);
 		border-radius: 9999px;
 		background: transparent;
 		box-shadow: none;
@@ -334,9 +356,24 @@
 	}
 
 	:global(.shell-header__control:hover) {
-		background: color-mix(in srgb, var(--color-muted) 88%, white 12%);
+		background: var(--muted);
 		color: var(--foreground);
 		opacity: 1;
+	}
+
+	:global(.shell-header__control--primary) {
+		background: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
+	}
+
+	:global(.shell-header__control--primary:visited) {
+		color: var(--background);
+	}
+
+	:global(.shell-header__control--primary:hover) {
+		background: color-mix(in srgb, var(--foreground) 90%, white 10%);
+		color: var(--background);
 	}
 
 	:global(.shell-header__control:active),
@@ -344,11 +381,9 @@
 	:global(.shell-header__control[aria-current='page']) {
 		position: relative;
 		z-index: 1;
-		background: color-mix(in srgb, var(--color-muted) 76%, var(--foreground) 8%);
-		border-color: transparent;
-		box-shadow:
-			0 1px 2px rgb(15 23 42 / 0.08),
-			inset 0 1px 0 rgb(255 255 255 / 0.18);
+		background: var(--muted);
+		border-color: var(--border);
+		box-shadow: none;
 		opacity: 1;
 	}
 
@@ -363,21 +398,8 @@
 		opacity: 0.72;
 	}
 
-	:global(.shell-header__control-group > * + *) {
-		position: relative;
-	}
-
-	:global(.shell-header__control-group > * + *::before) {
-		content: '';
-		position: absolute;
-		left: -0.06rem;
-		top: 0.5rem;
-		bottom: 0.5rem;
-		width: 1px;
-		background: var(--border);
-	}
-
 	:global(.dark .shell-header__surface) {
+		background: transparent;
 		box-shadow: none;
 	}
 
@@ -397,13 +419,9 @@
 		color: var(--muted-foreground);
 	}
 
-	:global(.dark .shell-header__control-group) {
-		background: var(--card);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
-	}
-
 	:global(.dark .shell-header__control) {
 		color: var(--foreground);
+		background: transparent;
 	}
 
 	:global(.dark .shell-header__control:visited) {
@@ -411,18 +429,21 @@
 	}
 
 	:global(.dark .shell-header__control:hover) {
-		background: color-mix(in srgb, var(--color-muted) 82%, white 10%);
+		background: var(--muted);
 		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__control:active),
 	:global(.dark .shell-header__control[aria-expanded='true']),
 	:global(.dark .shell-header__control[aria-current='page']) {
-		background: color-mix(in srgb, var(--color-muted) 72%, white 14%);
-		border-color: transparent;
-		box-shadow:
-			0 1px 3px rgb(0 0 0 / 0.24),
-			inset 0 1px 0 rgb(255 255 255 / 0.08);
+		background: var(--muted);
+	}
+
+	:global(.dark .shell-header__control--primary),
+	:global(.dark .shell-header__control--primary:visited) {
+		background: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
 	}
 
 	:global(.dark .shell-header__control:disabled),
@@ -430,18 +451,34 @@
 		color: var(--muted-foreground);
 	}
 
-	:global(.dark .shell-header__control-group > * + *::before) {
-		background: var(--border);
+	@media (max-width: 720px) {
+		.shell-header__surface,
+		.shell-header__surface--page {
+			padding-inline: 0.8rem;
+		}
+
+		.shell-header__row {
+			grid-template-columns: 1fr;
+			align-items: start;
+		}
+
+		.shell-header__controls {
+			justify-self: stretch;
+		}
+
+		:global(.shell-header__control-group) {
+			justify-content: flex-start;
+		}
 	}
 
 	@media (max-width: 640px) {
 		.shell-header__surface {
-			padding: 0.45rem 0 0.55rem;
+			padding: 0.55rem 0.7rem;
 		}
 
 		.shell-header__row {
-			grid-template-columns: minmax(0, 1fr) auto;
-			align-items: center;
+			grid-template-columns: 1fr;
+			align-items: start;
 			gap: 0.5rem;
 		}
 
@@ -450,8 +487,12 @@
 		}
 
 		.shell-header__controls {
-			align-self: center;
-			justify-self: end;
+			align-self: start;
+			justify-self: stretch;
+		}
+
+		:global(.shell-header__control-group) {
+			justify-content: flex-start;
 		}
 
 		.shell-header__title {
@@ -459,7 +500,7 @@
 		}
 
 		.shell-header__subtitle {
-			max-width: 14rem;
+			max-width: none;
 			font-size: 0.74rem;
 			line-height: 1.25;
 		}
@@ -472,10 +513,6 @@
 		:global(.shell-header__control) {
 			min-width: 2.2rem;
 			padding-inline: 0.55rem;
-		}
-
-		:global(.shell-header__control-group) {
-			padding: 0.12rem;
 		}
 
 		.shell-header__brand-mark {
