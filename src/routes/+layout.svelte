@@ -20,6 +20,8 @@
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
 	const isLockedContentRoute = $derived(getIsLockedContentRoute(page.url.pathname));
+	const isSignupRoute = $derived(page.url.pathname.startsWith('/signup'));
+	const isPublicRoute = $derived(isSignupRoute || page.url.pathname.startsWith('/volunteers'));
 
 	$effect(() => {
 		syncSmokeModeFromUrl(page.url);
@@ -53,11 +55,13 @@
 -->
 <div class="flex h-dvh min-h-dvh flex-col overflow-hidden">
 	<div class="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 sm:px-4">
-		<div class="z-30 flex-none pt-2" style:min-height="4.85rem">
-			{#if shouldRenderHeader}
-				<Header />
-			{/if}
-		</div>
+		{#if !isPublicRoute}
+			<div class="z-30 flex-none pt-2" style:min-height="4.85rem">
+				{#if shouldRenderHeader}
+					<Header />
+				{/if}
+			</div>
+		{/if}
 		<div
 			id="main-content"
 			class={isLockedContentRoute
@@ -65,10 +69,16 @@
 				: 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 sm:py-4'}
 		>
 			<div class="flex h-full min-h-0 flex-col">
-				<AuthGate>{@render children()}</AuthGate>
+				{#if isPublicRoute}
+					{@render children()}
+				{:else}
+					<AuthGate>{@render children()}</AuthGate>
+				{/if}
 			</div>
 		</div>
-		<BottomNav />
+		{#if !isPublicRoute}
+			<BottomNav />
+		{/if}
 	</div>
 	<Toaster />
 </div>

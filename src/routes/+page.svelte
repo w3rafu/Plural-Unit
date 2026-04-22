@@ -1,9 +1,3 @@
-<!--
-  Hub page — the org-centered root.
-
-  Shows a compact summary, recent activity, and plugin sections.
-  Loads hub data on mount, delegates rendering to member components.
--->
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
@@ -12,6 +6,7 @@
 	import BroadcastsSection from '$lib/components/hub/member/BroadcastsSection.svelte';
 	import EventsSection from '$lib/components/hub/member/EventsSection.svelte';
 	import ResourcesSection from '$lib/components/hub/member/ResourcesSection.svelte';
+	import VolunteersSection from '$lib/components/hub/member/VolunteersSection.svelte';
 	import PageHeader from '$lib/components/ui/PageHeader.svelte';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -207,6 +202,8 @@
 						<EventsSection sectionId="hub-events" />
 					{:else if plugin.key === 'resources'}
 						<ResourcesSection sectionId="hub-resources" />
+					{:else if plugin.key === 'volunteers'}
+						<VolunteersSection sectionId="hub-volunteers" />
 					{/if}
 				{/each}
 			</div>

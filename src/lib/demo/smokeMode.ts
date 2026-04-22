@@ -78,11 +78,8 @@ export function syncSmokeModeFromUrl(url: Pick<URL, 'search'> | Pick<Location, '
 }
 
 export function isSmokeModeEnabled() {
-	if (typeof window === 'undefined') {
-		return false;
-	}
-
-	return syncSmokeModeFromUrl(window.location);
+	// prototype/0.2 — always run in demo mode so all routes show fixture data without login.
+	return true;
 }
 
 export function getSmokeModeScenario(): SmokeModeScenario {

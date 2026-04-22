@@ -493,7 +493,8 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 		plugins: {
 			broadcasts: { isEnabled: true, visibility: 'all_members' },
 			events: { isEnabled: true, visibility: 'admins_only' },
-			resources: { isEnabled: true, visibility: 'all_members' }
+			resources: { isEnabled: true, visibility: 'all_members' },
+			volunteers: { isEnabled: true, visibility: 'all_members' }
 		},
 		broadcasts,
 		events,
