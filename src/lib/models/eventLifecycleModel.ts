@@ -9,6 +9,17 @@ function getTime(value: string | null | undefined) {
 	return Number.isNaN(parsed) ? null : parsed;
 }
 
+export function getEventEffectiveEndTime(
+	event: Pick<EventRow, 'starts_at' | 'ends_at'>
+) {
+	const startsAt = getTime(event.starts_at);
+	if (startsAt === null) {
+		return null;
+	}
+
+	return getTime(event.ends_at) ?? startsAt;
+}
+
 function sortByStartsAt(left: EventRow, right: EventRow) {
 	return (getTime(left.starts_at) ?? 0) - (getTime(right.starts_at) ?? 0);
 }
@@ -29,6 +40,18 @@ export function isEventPast(event: Pick<EventRow, 'starts_at'>, now = Date.now()
 export function isEventPublished(event: Pick<EventRow, 'publish_at'>, now = Date.now()) {
 	const publishAt = getTime(event.publish_at);
 	return publishAt === null || publishAt <= now;
+}
+
+export function isEventPublishedToMembers(event: Pick<EventRow, 'publish_at'>, now = Date.now()) {
+	return isEventPublished(event, now);
+}
+
+export function isEventWithinMemberHistoryWindow(
+	event: Pick<EventRow, 'starts_at' | 'ends_at'>,
+	now = Date.now()
+) {
+	const effectiveEndTime = getEventEffectiveEndTime(event);
+	return effectiveEndTime !== null && effectiveEndTime + 24 * 60 * 60 * 1000 > now;
 }
 
 export function isEventScheduled(event: EventRow, now = Date.now()) {

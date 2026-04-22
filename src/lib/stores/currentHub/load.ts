@@ -68,6 +68,7 @@ export type CurrentHubLoadResult = {
 	queueTriageMap: HubExecutionTriageMap;
 	notificationPreferences: HubNotificationPreferences;
 	notificationReadMap: Record<string, string>;
+	processedReminderExecutions?: HubExecutionLedgerRow[];
 	loadedOrgId: string;
 };
 
@@ -172,13 +173,17 @@ async function fetchCurrentHubExecutionLedger(input: {
 	events: EventRow[];
 	eventReminderSettingsMap: Record<string, EventReminderSettingsRow>;
 	currentOrgStillMatches: () => boolean;
-}) {
+}): Promise<{
+	executionLedger: HubExecutionLedgerRow[];
+	processedReminderExecutions: HubExecutionLedgerRow[];
+} | null> {
 	if (!input.currentOrgStillMatches()) {
 		return null;
 	}
 
+	let processedReminderExecutions: HubExecutionLedgerRow[] = [];
 	if (input.plugins.events.isEnabled && input.profileId) {
-		await processDueHubReminderExecutions(input.orgId);
+		processedReminderExecutions = await processDueHubReminderExecutions(input.orgId);
 	}
 
 	const shouldFetchExecutionLedger =
@@ -190,21 +195,30 @@ async function fetchCurrentHubExecutionLedger(input: {
 		: ([] as HubExecutionLedgerRow[]);
 
 	if (!input.plugins.broadcasts.isEnabled && !input.plugins.events.isEnabled) {
-		return [];
+		return {
+			executionLedger: [],
+			processedReminderExecutions
+		};
 	}
 
 	if (!input.isAdmin) {
-		return sortHubExecutionLedgerRows(executionLedgerRows);
+		return {
+			executionLedger: sortHubExecutionLedgerRows(executionLedgerRows),
+			processedReminderExecutions
+		};
 	}
 
-	return syncCurrentHubExecutionLedgerRows({
+	return {
+		executionLedger: await syncCurrentHubExecutionLedgerRows({
 		orgId: input.orgId,
 		isAdmin: input.isAdmin,
 		broadcasts: input.broadcasts,
 		events: input.events,
 		eventReminderSettingsMap: input.eventReminderSettingsMap,
 		currentRows: executionLedgerRows
-	});
+		}),
+		processedReminderExecutions
+	};
 }
 
 export async function loadCurrentHubState(input: {
@@ -239,7 +253,7 @@ export async function loadCurrentHubState(input: {
 		raw.eventReminderSettings.map((settings) => [settings.event_id, settings])
 	);
 
-	const executionLedger = await fetchCurrentHubExecutionLedger({
+	const executionLedgerResult = await fetchCurrentHubExecutionLedger({
 		orgId: input.orgId,
 		profileId: input.profileId,
 		isAdmin: input.isAdmin,
@@ -250,7 +264,7 @@ export async function loadCurrentHubState(input: {
 		currentOrgStillMatches: input.currentOrgStillMatches
 	});
 
-	if (executionLedger === null || !input.currentOrgStillMatches()) {
+	if (executionLedgerResult === null || !input.currentOrgStillMatches()) {
 		return null;
 	}
 
@@ -263,7 +277,7 @@ export async function loadCurrentHubState(input: {
 		eventAttendanceMap: buildEventAttendanceMap(raw.eventAttendanceRecords),
 		eventReminderSettingsMap,
 		broadcastAcknowledgmentMap: buildBroadcastAcknowledgmentMap(raw.broadcastAcknowledgments),
-		executionLedger,
+		executionLedger: executionLedgerResult.executionLedger,
 		workflowStateRows: raw.workflowStateRows,
 		queueTriageMap: buildHubExecutionQueueTriageMapFromWorkflowStateRows(raw.workflowStateRows),
 		notificationPreferences: raw.notificationPreferenceRow
@@ -274,6 +288,7 @@ export async function loadCurrentHubState(input: {
 			}
 			: createDefaultHubNotificationPreferences(),
 		notificationReadMap: buildHubNotificationReadMap(raw.notificationReadRows),
+		processedReminderExecutions: executionLedgerResult.processedReminderExecutions,
 		loadedOrgId: input.orgId
 	};
 }

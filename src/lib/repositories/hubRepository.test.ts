@@ -782,7 +782,14 @@ describe('restoreEvent', () => {
 
 		const result = await restoreEvent('e1');
 
-		expect(mockUpdate).toHaveBeenCalledWith({ canceled_at: null, archived_at: null });
+		expect(mockUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				canceled_at: null,
+				archived_at: null,
+				member_signal_kind: 'restored',
+				member_signal_at: expect.any(String)
+			})
+		);
 		expect(result).toEqual(row);
 	});
 });

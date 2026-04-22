@@ -23,7 +23,8 @@ import type {
 	EventReminderSettingsRow,
 	EventRow,
 	HubExecutionLedgerRow,
-	HubOperatorWorkflowStateRow
+	HubOperatorWorkflowStateRow,
+	ResourceRow
 } from '$lib/repositories/hubRepository';
 import type { CurrentHubHydratedState } from '$lib/stores/currentHub/state';
 import {
@@ -103,6 +104,8 @@ function buildSmokeEvents(now: number): EventRow[] {
 	const [liveEvent, processedPublishEvent, dueReminderEvent, scheduledPublishEvent] =
 		uiPreviewFixtures.events;
 
+	const canceledSignalAt = toIsoFromNow(-120, now);
+
 	return [
 		{
 			...liveEvent,
@@ -155,6 +158,25 @@ function buildSmokeEvents(now: number): EventRow[] {
 			delivery_state: null,
 			delivered_at: null,
 			delivery_failure_reason: null
+		},
+		{
+			id: 'smoke-event-canceled',
+			organization_id: uiPreviewFixtures.organizationId,
+			title: 'Spring gathering',
+			description: 'Opening celebration for the spring term. All members welcome.',
+			starts_at: toIsoFromNow(2_880, now),
+			ends_at: toIsoFromNow(2_940, now),
+			location: 'Main hall',
+			created_at: toIsoFromNow(-300, now),
+			updated_at: canceledSignalAt,
+			publish_at: null,
+			archived_at: null,
+			canceled_at: canceledSignalAt,
+			member_signal_kind: 'canceled',
+			member_signal_at: canceledSignalAt,
+			delivery_state: null,
+			delivered_at: null,
+			delivery_failure_reason: null
 		}
 	];
 }
@@ -167,7 +189,7 @@ function buildSmokeReminderSettings(now: number): Record<string, EventReminderSe
 			id: 'smoke-reminder-event-3',
 			event_id: events[2].id,
 			organization_id: uiPreviewFixtures.organizationId,
-			delivery_channel: 'in_app',
+			delivery_channel: 'in_app_and_push',
 			reminder_offsets: [120],
 			created_at: toIsoFromNow(-120, now),
 			updated_at: toIsoFromNow(-45, now)
@@ -192,6 +214,56 @@ function cloneSmokeMessages() {
 		mutedAt:
 			thread.participant.name === 'Malik Johnson' ? '2026-04-16T10:15:00.000Z' : thread.mutedAt ?? null
 	}));
+}
+
+function buildSmokeResources(now: number): ResourceRow[] {
+	return [
+		{
+			id: 'smoke-resource-guide',
+			organization_id: uiPreviewFixtures.organizationId,
+			title: 'Member handbook',
+			description: 'Essential guidelines and community practices for all members.',
+			href: 'https://example.com/handbook',
+			resource_type: 'document',
+			sort_order: 0,
+			is_draft: false,
+			archived_at: null,
+			open_count: 14,
+			last_opened_at: toIsoFromNow(-60, now),
+			created_at: toIsoFromNow(-10_080, now),
+			updated_at: toIsoFromNow(-4_320, now)
+		},
+		{
+			id: 'smoke-resource-form',
+			organization_id: uiPreviewFixtures.organizationId,
+			title: 'Volunteer interest form',
+			description: 'Sign up to help with upcoming events and operations.',
+			href: 'https://example.com/volunteer-form',
+			resource_type: 'form',
+			sort_order: 1,
+			is_draft: false,
+			archived_at: null,
+			open_count: 0,
+			last_opened_at: null,
+			created_at: toIsoFromNow(-30_000, now),
+			updated_at: toIsoFromNow(-30_000, now)
+		},
+		{
+			id: 'smoke-resource-draft',
+			organization_id: uiPreviewFixtures.organizationId,
+			title: 'Upcoming schedule',
+			description: 'Draft calendar of events for the next term.',
+			href: 'https://example.com/schedule',
+			resource_type: 'link',
+			sort_order: 2,
+			is_draft: true,
+			archived_at: null,
+			open_count: 0,
+			last_opened_at: null,
+			created_at: toIsoFromNow(-1_440, now),
+			updated_at: toIsoFromNow(-720, now)
+		}
+	];
 }
 
 export function buildSmokeInvitations(now = Date.now()): OrganizationInvitation[] {
@@ -376,6 +448,7 @@ export function buildSmokeMessages(): MessageThread[] {
 export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 	const broadcasts = buildSmokeBroadcasts(now);
 	const events = buildSmokeEvents(now);
+	const resources = buildSmokeResources(now);
 	const eventReminderSettingsMap = buildSmokeReminderSettings(now);
 	const eventResponseMap = buildEventResponseMap(uiPreviewEventResponses);
 	const executionLedger = buildExpectedHubExecutionLedgerRows({
@@ -420,11 +493,11 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 		plugins: {
 			broadcasts: { isEnabled: true, visibility: 'all_members' },
 			events: { isEnabled: true, visibility: 'admins_only' },
-			resources: { isEnabled: false, visibility: 'all_members' }
+			resources: { isEnabled: true, visibility: 'all_members' }
 		},
 		broadcasts,
 		events,
-		resources: [],
+		resources,
 		eventResponseMap,
 		eventAttendanceMap: {},
 		eventReminderSettingsMap,

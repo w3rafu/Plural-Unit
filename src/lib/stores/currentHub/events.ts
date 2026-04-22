@@ -28,7 +28,9 @@ import {
 	upsertOwnEventResponse,
 	type EventAttendanceRow,
 	type EventAttendanceStatus,
+	type EventMemberSignalKind,
 	type EventMutationPayload,
+	type EventReminderChannel,
 	type EventReminderSettingsRow,
 	type EventResponseRow,
 	type EventResponseStatus,
@@ -68,7 +70,14 @@ export async function updateCurrentHubEvent(input: {
 	currentRows: EventRow[];
 	syncEventDeliveryRow: (row: EventRow) => Promise<EventRow>;
 }) {
-	const row = await updateEvent(input.eventId, input.payload);
+	const existingRow = input.currentRows.find((event) => event.id === input.eventId) ?? null;
+	const lifecycleSignal: EventMemberSignalKind =
+		existingRow?.canceled_at ? 'canceled' : 'default';
+	const row = await updateEvent(input.eventId, {
+		...input.payload,
+		member_signal_kind: lifecycleSignal,
+		member_signal_at: existingRow?.member_signal_at ?? new Date().toISOString()
+	});
 	return syncAndReplaceEventRow({
 		currentRows: input.currentRows,
 		row,
@@ -139,10 +148,11 @@ export async function persistCurrentHubEventReminderSettings(input: {
 	orgId: string;
 	eventId: string;
 	reminderOffsets: number[];
+	deliveryChannel: EventReminderChannel;
 	currentMap: Record<string, EventReminderSettingsRow>;
 }) {
 	const row = await saveEventReminderSettings(input.eventId, input.orgId, {
-		delivery_channel: 'in_app',
+		delivery_channel: input.deliveryChannel,
 		reminder_offsets: normalizeEventReminderOffsets(input.reminderOffsets)
 	});
 

@@ -10,6 +10,7 @@
 	import { buildHubExecutionQueueFocusHref } from '$lib/models/hubExecutionQueue';
 	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
+	import { getResourceEngagementSignal } from '$lib/models/resourcesModel';
 	import {
 		getAllPluginsForAdmin,
 		getEnabledPlugins,
@@ -29,8 +30,12 @@
 	const scheduledEventCount = $derived(currentHub.scheduledEvents.length);
 	const inactiveEventCount = $derived(currentHub.inactiveEvents.length);
 	const liveResourceCount = $derived(currentHub.orderedResources.length);
+	const inactiveResourceCount = $derived(currentHub.inactiveResources.length);
+	const resourceAttentionCount = $derived(
+		currentHub.orderedResources.filter((resource) => getResourceEngagementSignal(resource).needsAttention).length
+	);
 	const publishedCount = $derived(liveBroadcastCount + liveEventCount + liveResourceCount);
-	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount);
+	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount + inactiveResourceCount);
 	const dueExecutionCount = $derived(currentHub.dueExecutionCount);
 	const recoverableExecutionCount = $derived(currentHub.visibleRecoverableExecutionCount);
 	const processedExecutionCount = $derived(currentHub.getExecutionQueueSections().processed.length);
@@ -134,6 +139,12 @@
 
 		if (historyCount > 0) {
 			parts.push(`${historyCount} item${historyCount === 1 ? '' : 's'} in history.`);
+		}
+
+		if (resourceAttentionCount > 0) {
+			parts.push(
+				`${resourceAttentionCount} live resource${resourceAttentionCount === 1 ? '' : 's'} may need cleanup.`
+			);
 		}
 
 		return parts.join(' ');

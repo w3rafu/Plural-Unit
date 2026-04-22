@@ -27,8 +27,11 @@
 		normalizeEventLocation
 	} from '$lib/models/eventCalendarModel';
 	import {
+		EVENT_REMINDER_CHANNEL_OPTIONS,
 		EVENT_REMINDER_OPTIONS,
 		formatEventReminderOffset,
+		getEventReminderChannelCopy,
+		getEventReminderChannelLabel,
 		getEventReminderSummaryCopy,
 		normalizeEventReminderOffsets
 	} from '$lib/models/eventReminderModel';
@@ -48,7 +51,7 @@
 		getEventResponseRosterSummaryCopy
 	} from '$lib/models/eventResponseModel';
 	import { createDirtySnapshot } from '$lib/models/unsavedChanges';
-	import type { EventRow } from '$lib/repositories/hubRepository';
+	import type { EventReminderChannel, EventRow } from '$lib/repositories/hubRepository';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
@@ -64,6 +67,7 @@
 	let endsAt = $state('');
 	let publishAt = $state('');
 	let selectedReminderOffsets = $state<number[]>([]);
+	let reminderChannel = $state<EventReminderChannel>('in_app');
 	let location = $state('');
 	let feedback = $state('');
 	let openingConversationForProfileId = $state('');
@@ -79,6 +83,9 @@
 			endsAt: toEventDateTimeLocalValue(editingEvent?.ends_at ?? null),
 			publishAt: toEventDateTimeLocalValue(editingEvent?.publish_at ?? null),
 			reminderOffsets: editingEvent ? currentHub.getEventReminderOffsets(editingEvent.id).join('|') : '',
+			reminderChannel: editingEvent
+				? currentHub.getEventReminderDeliveryChannel(editingEvent.id)
+				: 'in_app',
 			location: getEventLocationLabel(editingEvent?.location)
 		})
 	);
@@ -93,6 +100,7 @@
 			endsAt,
 			publishAt,
 			reminderOffsets: normalizedSelectedReminderOffsets.join('|'),
+			reminderChannel,
 			location: normalizeEventLocation(location)
 		})
 	);
@@ -103,7 +111,7 @@
 	const selectedReminderPlanCopy = $derived.by(() =>
 		normalizedSelectedReminderOffsets.length === 0
 			? 'No reminders will be queued for this event.'
-			: `Selected: ${normalizedSelectedReminderOffsets.map((offset) => formatEventReminderOffset(offset)).join(' · ')}.`
+			: `Selected: ${normalizedSelectedReminderOffsets.map((offset) => formatEventReminderOffset(offset)).join(' · ')} via ${getEventReminderChannelCopy(reminderChannel)}.`
 	);
 	const isEventDirty = $derived(currentEventSnapshot !== initialEventSnapshot);
 	const isEventMutating = $derived(currentHub.eventTargetId !== '');
@@ -131,6 +139,7 @@
 		endsAt = '';
 		publishAt = '';
 		selectedReminderOffsets = [];
+		reminderChannel = 'in_app';
 		location = '';
 		feedback = '';
 	}
@@ -143,6 +152,7 @@
 		endsAt = toEventDateTimeLocalValue(event.ends_at);
 		publishAt = toEventDateTimeLocalValue(event.publish_at);
 		selectedReminderOffsets = currentHub.getEventReminderOffsets(event.id);
+		reminderChannel = currentHub.getEventReminderDeliveryChannel(event.id);
 		location = getEventLocationLabel(event.location);
 		feedback = '';
 	}
@@ -349,11 +359,17 @@
 			};
 
 			if (editingId) {
-				await currentHub.updateEvent(editingId, payload, normalizedSelectedReminderOffsets);
+				await currentHub.updateEvent(
+					editingId,
+					payload,
+					normalizedSelectedReminderOffsets,
+					reminderChannel
+				);
 			} else {
 				await currentHub.addEvent(
 					payload,
-					normalizedSelectedReminderOffsets.length > 0 ? normalizedSelectedReminderOffsets : undefined
+					normalizedSelectedReminderOffsets.length > 0 ? normalizedSelectedReminderOffsets : undefined,
+					reminderChannel
 				);
 			}
 
@@ -487,8 +503,24 @@
 						<Field.Content>
 							<Field.Label>Reminder plan</Field.Label>
 							<Field.Description>
-								Optional. Queue simple in-app reminder windows before the event starts.
+								Optional. Queue reminder windows before the event starts, then choose how they reach members.
 							</Field.Description>
+							<div class="grid gap-2 sm:grid-cols-3">
+								{#each EVENT_REMINDER_CHANNEL_OPTIONS as option (option.value)}
+									<button
+										type="button"
+										class={`rounded-xl border px-3 py-3 text-left shadow-sm transition-colors ${reminderChannel === option.value ? 'border-primary/35 bg-primary/5' : 'border-border/70 bg-background'} ${isEventMutating ? 'cursor-not-allowed opacity-70' : ''}`}
+										aria-pressed={reminderChannel === option.value}
+										disabled={isEventMutating}
+										onclick={() => {
+											reminderChannel = option.value;
+										}}
+									>
+										<p class="text-sm font-medium text-foreground">{option.label}</p>
+										<p class="mt-1 text-xs text-muted-foreground">{option.description}</p>
+									</button>
+								{/each}
+							</div>
 							<div class="grid gap-2 sm:grid-cols-3">
 								{#each EVENT_REMINDER_OPTIONS as option (option.value)}
 									<label
@@ -508,6 +540,9 @@
 								{/each}
 							</div>
 							<p class="text-xs text-muted-foreground">{selectedReminderPlanCopy}</p>
+							<p class="text-xs text-muted-foreground">
+								Current channel: {getEventReminderChannelLabel(reminderChannel)}.
+							</p>
 						</Field.Content>
 					</Field.Field>
 					<Field.Field>

@@ -6,7 +6,7 @@ import { getSupabaseClient } from '$lib/supabaseClient';
 import { throwRepositoryError } from '$lib/services/repositoryError';
 
 const HUB_RESOURCE_SELECT =
-	'id, organization_id, title, description, href, resource_type, sort_order, created_at, updated_at';
+	'id, organization_id, title, description, href, resource_type, sort_order, is_draft, archived_at, open_count, last_opened_at, created_at, updated_at';
 
 export type ResourceType = 'link' | 'form' | 'document' | 'contact';
 
@@ -18,6 +18,10 @@ export type ResourceRow = {
 	href: string;
 	resource_type: ResourceType;
 	sort_order: number;
+	is_draft?: boolean;
+	archived_at?: string | null;
+	open_count?: number;
+	last_opened_at?: string | null;
 	created_at: string;
 	updated_at: string;
 };
@@ -43,6 +47,7 @@ export async function createResource(
 		href: string;
 		resource_type: ResourceType;
 		sort_order: number;
+		is_draft?: boolean;
 	}
 ): Promise<ResourceRow> {
 	const { data, error } = await getSupabaseClient()
@@ -64,6 +69,7 @@ export async function updateResource(
 		href: string;
 		resource_type: ResourceType;
 		sort_order?: number;
+		is_draft?: boolean;
 	}
 ): Promise<ResourceRow> {
 	const { data, error } = await getSupabaseClient()
@@ -97,4 +103,45 @@ export async function saveResourceOrder(updates: Array<{ id: string; sort_order:
 export async function deleteResource(id: string) {
 	const { error } = await getSupabaseClient().from('hub_resources').delete().eq('id', id);
 	if (error) throwRepositoryError(error, 'Could not delete the resource.');
+}
+
+/** Move a resource into archive history without permanently removing it. */
+export async function archiveResource(resourceId: string): Promise<ResourceRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_resources')
+		.update({ is_draft: false, archived_at: new Date().toISOString() })
+		.eq('id', resourceId)
+		.select(HUB_RESOURCE_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not archive the resource.');
+	return data as ResourceRow;
+}
+
+/** Restore an inactive resource back into the live list. */
+export async function restoreResource(
+	resourceId: string,
+	payload: { sort_order: number }
+): Promise<ResourceRow> {
+	const { data, error } = await getSupabaseClient()
+		.from('hub_resources')
+		.update({ is_draft: false, archived_at: null, sort_order: payload.sort_order })
+		.eq('id', resourceId)
+		.select(HUB_RESOURCE_SELECT)
+		.single();
+
+	if (error) throwRepositoryError(error, 'Could not restore the resource.');
+	return data as ResourceRow;
+}
+
+/** Record that a member opened a live resource. */
+export async function recordResourceOpen(resourceId: string): Promise<ResourceRow> {
+	const { data, error } = await getSupabaseClient().rpc('record_hub_resource_open', {
+		target_resource_id: resourceId
+	});
+
+	if (error) throwRepositoryError(error, 'Could not record the resource open.');
+
+	const row = Array.isArray(data) ? data[0] : data;
+	return row as ResourceRow;
 }

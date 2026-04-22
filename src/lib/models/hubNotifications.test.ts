@@ -56,7 +56,7 @@ function makeEvent(overrides: Partial<{
 		organization_id: overrides.organization_id ?? 'org1',
 		title: overrides.title ?? 'Event title',
 		description: overrides.description ?? 'Event description',
-		starts_at: overrides.starts_at ?? '2026-04-20T16:30:00.000Z',
+		starts_at: overrides.starts_at ?? '2099-04-20T16:30:00.000Z',
 		ends_at: overrides.ends_at ?? null,
 		location: overrides.location ?? 'Main Hall',
 		created_at: overrides.created_at ?? '2026-04-06T12:00:00.000Z',

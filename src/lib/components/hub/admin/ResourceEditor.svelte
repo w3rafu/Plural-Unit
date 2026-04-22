@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { ArrowDown, ArrowUp, ExternalLink } from '@lucide/svelte';
+	import { Archive, ArrowDown, ArrowUp, ExternalLink, RotateCcw, Trash2 } from '@lucide/svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -16,6 +16,8 @@
 		HUB_RESOURCE_TYPE_OPTIONS,
 		getResourceActionLabel,
 		getResourceDestinationLabel,
+		getResourceEngagementSignal,
+		getResourceLifecycleLabel,
 		getResourceTypeLabel,
 		validateResourceHref
 	} from '$lib/models/resourcesModel';
@@ -31,18 +33,20 @@
 	let description = $state('');
 	let href = $state('');
 	let resourceType = $state<ResourceType>('link');
+	let resourceStatus = $state<'live' | 'draft'>('live');
 	let feedback = $state('');
 	const UNSAVED_CHANGES_KEY = 'hub-resource-editor';
 
 	const editingResource = $derived(
-		editingId ? currentHub.orderedResources.find((resource) => resource.id === editingId) ?? null : null
+		editingId ? currentHub.resources.find((resource) => resource.id === editingId) ?? null : null
 	);
 	const initialResourceSnapshot = $derived.by(() =>
 		createDirtySnapshot({
 			title: editingResource?.title.trim() ?? '',
 			description: editingResource?.description.trim() ?? '',
 			href: editingResource?.href.trim() ?? '',
-			resourceType: editingResource?.resource_type ?? 'link'
+			resourceType: editingResource?.resource_type ?? 'link',
+			resourceStatus: editingResource?.is_draft ? 'draft' : 'live'
 		})
 	);
 	const currentResourceSnapshot = $derived.by(() =>
@@ -50,11 +54,13 @@
 			title: title.trim(),
 			description: description.trim(),
 			href: href.trim(),
-			resourceType
+			resourceType,
+			resourceStatus
 		})
 	);
 	const isEditing = $derived(!!editingResource);
 	const orderedResources = $derived(currentHub.orderedResources);
+	const inactiveResources = $derived(currentHub.inactiveResources);
 	const isResourceDirty = $derived(currentResourceSnapshot !== initialResourceSnapshot);
 	const isResourceMutating = $derived(currentHub.resourceTargetId !== '');
 	const resourceMutationStatus = $derived.by(() => {
@@ -115,6 +121,7 @@
 		description = '';
 		href = '';
 		resourceType = 'link';
+		resourceStatus = 'live';
 		feedback = '';
 	}
 
@@ -124,6 +131,7 @@
 		description = resource.description;
 		href = resource.href;
 		resourceType = resource.resource_type;
+		resourceStatus = resource.is_draft ? 'draft' : 'live';
 		feedback = '';
 	}
 
@@ -142,14 +150,16 @@
 					title: title.trim(),
 					description: description.trim(),
 					href: normalizedHref,
-					resource_type: resourceType
+					resource_type: resourceType,
+					is_draft: resourceStatus === 'draft'
 				});
 			} else {
 				await currentHub.addResource({
 					title: title.trim(),
 					description: description.trim(),
 					href: normalizedHref,
-					resource_type: resourceType
+					resource_type: resourceType,
+					is_draft: resourceStatus === 'draft'
 				});
 			}
 
@@ -175,6 +185,28 @@
 			}
 		} catch (error) {
 			feedback = error instanceof Error ? error.message : 'Failed to delete the resource.';
+		}
+	}
+
+	async function archive(resource: ResourceRow) {
+		try {
+			await currentHub.archiveResource(resource.id);
+			if (editingId === resource.id) {
+				resetForm();
+			}
+		} catch (error) {
+			feedback = error instanceof Error ? error.message : 'Failed to archive the resource.';
+		}
+	}
+
+	async function restore(resource: ResourceRow) {
+		try {
+			await currentHub.restoreResource(resource.id);
+			if (editingId === resource.id) {
+				resetForm();
+			}
+		} catch (error) {
+			feedback = error instanceof Error ? error.message : 'Failed to restore the resource.';
 		}
 	}
 </script>
@@ -215,6 +247,22 @@
 									{#each HUB_RESOURCE_TYPE_OPTIONS as option (option.value)}
 										<Select.Item value={option.value}>{option.label}</Select.Item>
 									{/each}
+								</Select.Content>
+							</Select.Root>
+						</Field.Content>
+					</Field.Field>
+
+					<Field.Field>
+						<Field.Content>
+							<Field.Label for="resource-status">Visibility</Field.Label>
+							<Field.Description>Live resources are visible right away. Drafts stay in admin history until you restore them.</Field.Description>
+							<Select.Root type="single" bind:value={resourceStatus} name="resourceStatus" disabled={isResourceMutating}>
+								<Select.Trigger id="resource-status" disabled={isResourceMutating}>
+									{resourceStatus === 'draft' ? 'Save as draft' : 'Live now'}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Item value="live">Live now</Select.Item>
+									<Select.Item value="draft">Save as draft</Select.Item>
 								</Select.Content>
 							</Select.Root>
 						</Field.Content>
@@ -294,17 +342,24 @@
 			{:else}
 				<Item.Group aria-busy={isResourceMutating}>
 					{#each orderedResources as resource, index (resource.id)}
+						{@const engagement = getResourceEngagementSignal(resource)}
 						<Item.Root variant="muted" size="sm">
 							<Item.Content>
 								<div class="flex flex-wrap items-center gap-2">
 									<Item.Title>{resource.title}</Item.Title>
 									<Badge variant="outline">{getResourceTypeLabel(resource.resource_type)}</Badge>
+									<Badge variant={engagement.needsAttention ? 'secondary' : 'outline'}>
+										{engagement.label}
+									</Badge>
 								</div>
 								<Item.Description>
 									{resource.description || 'No description added yet.'}
 								</Item.Description>
 								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
 									{getResourceDestinationLabel(resource.href)}
+								</p>
+								<p class={`text-xs ${engagement.needsAttention ? 'text-foreground' : 'text-muted-foreground'}`}>
+									{engagement.copy}
 								</p>
 							</Item.Content>
 							<Item.Actions>
@@ -341,12 +396,85 @@
 									<ExternalLink class="size-4" />
 								</Button>
 								<Button
-									variant="destructive"
+									variant="outline"
 									size="sm"
-									onclick={() => remove(resource)}
+									onclick={() => archive(resource)}
 									disabled={isResourceMutating}
 								>
-									{currentHub.resourceTargetId === resource.id ? 'Deleting...' : 'Delete'}
+									<Archive class="size-4" />
+									Archive
+								</Button>
+							</Item.Actions>
+						</Item.Root>
+					{/each}
+				</Item.Group>
+			{/if}
+		</div>
+
+		<div class="space-y-3">
+			<div class="space-y-1">
+				<h3 class="text-sm font-semibold tracking-tight text-foreground">Inactive history</h3>
+				<p class="text-sm text-muted-foreground">
+					{inactiveResources.length === 0
+						? 'No drafts or archived resources yet.'
+						: `${inactiveResources.length} draft or archived resource${inactiveResources.length === 1 ? '' : 's'} ready for review.`}
+				</p>
+			</div>
+
+			{#if inactiveResources.length === 0}
+				<Card.Root size="sm" class="border-dashed border-border/70 bg-muted/20">
+					<Card.Content>
+						<p class="text-sm text-muted-foreground">
+							Drafts and archived resources will collect here for restore or cleanup.
+						</p>
+					</Card.Content>
+				</Card.Root>
+			{:else}
+				<Item.Group aria-busy={isResourceMutating}>
+					{#each inactiveResources as resource (resource.id)}
+						{@const engagement = getResourceEngagementSignal(resource)}
+						<Item.Root variant="muted" size="sm">
+							<Item.Content>
+								<div class="flex flex-wrap items-center gap-2">
+									<Item.Title>{resource.title}</Item.Title>
+									<Badge variant="outline">{getResourceTypeLabel(resource.resource_type)}</Badge>
+									<Badge variant="secondary">{getResourceLifecycleLabel(resource)}</Badge>
+									<Badge variant={engagement.needsAttention ? 'secondary' : 'outline'}>
+										{engagement.label}
+									</Badge>
+								</div>
+								<Item.Description>
+									{resource.description || 'No description added yet.'}
+								</Item.Description>
+								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+									{getResourceDestinationLabel(resource.href)}
+								</p>
+								<p class={`text-xs ${engagement.needsAttention ? 'text-foreground' : 'text-muted-foreground'}`}>
+									{engagement.copy}
+								</p>
+							</Item.Content>
+							<Item.Actions>
+								<Button variant="ghost" size="sm" onclick={() => startEditing(resource)} disabled={isResourceMutating}>
+									Edit
+								</Button>
+								<Button
+									href={resource.href}
+									variant="outline"
+									size="sm"
+									target="_blank"
+									rel="noreferrer"
+									disabled={isResourceMutating}
+								>
+									{getResourceActionLabel(resource.resource_type)}
+									<ExternalLink class="size-4" />
+								</Button>
+								<Button variant="outline" size="sm" onclick={() => restore(resource)} disabled={isResourceMutating}>
+									<RotateCcw class="size-4" />
+									Restore
+								</Button>
+								<Button variant="destructive" size="sm" onclick={() => remove(resource)} disabled={isResourceMutating}>
+									<Trash2 class="size-4" />
+									Delete
 								</Button>
 							</Item.Actions>
 						</Item.Root>

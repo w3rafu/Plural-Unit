@@ -29,6 +29,14 @@ function getManageEventHref(destinations: HubActivityDestinations, sourceId: str
 }
 
 function getEventActionDescription(item: HubNotificationItem) {
+	if (item.eventLifecycleSignal === 'canceled') {
+		return 'Open the canceled event details and review the final update.';
+	}
+
+	if (item.eventLifecycleSignal === 'restored') {
+		return 'Open the restored event details and confirm the latest timing.';
+	}
+
 	if (item.eventTimingState === 'today') {
 		return item.kind === 'event_reminder'
 			? "Jump to today's event details below and review the latest reminder."
@@ -64,27 +72,41 @@ export function getHubActivityPrimaryAction(
 		};
 	}
 
+	const eventLabel =
+		item.eventLifecycleSignal === 'canceled'
+			? 'Open canceled event'
+			: item.eventLifecycleSignal === 'restored'
+				? 'Open restored event'
+				: item.eventTimingState === 'today'
+					? "Open today's event"
+					: item.kind === 'event_reminder'
+						? item.eventTimingState === 'in_progress'
+							? 'Open live event'
+							: item.eventTimingState === 'recently_completed'
+								? 'Open recent event'
+								: 'Open event details'
+						: item.eventTimingState === 'in_progress'
+							? 'Open live event'
+							: item.eventTimingState === 'recently_completed'
+								? 'Open recent event'
+								: 'Open events';
+
 	return {
-		label:
-			item.eventTimingState === 'today'
-				? "Open today's event"
-				: item.kind === 'event_reminder'
-				? item.eventTimingState === 'in_progress'
-					? 'Open live event'
-					: item.eventTimingState === 'recently_completed'
-						? 'Open recent event'
-						: 'Open event details'
-				: item.eventTimingState === 'in_progress'
-					? 'Open live event'
-					: item.eventTimingState === 'recently_completed'
-						? 'Open recent event'
-				: 'Open events',
+		label: eventLabel,
 		href: destinations.eventHref,
 		description: getEventActionDescription(item)
 	};
 }
 
 function getEventManageActionLabel(item: HubNotificationItem) {
+	if (item.eventLifecycleSignal === 'canceled') {
+		return 'Review cancellation';
+	}
+
+	if (item.eventLifecycleSignal === 'restored') {
+		return 'Review restore';
+	}
+
 	if (item.eventTimingState === 'today' || item.eventTimingState === 'in_progress') {
 		return 'Review attendance';
 	}
@@ -97,6 +119,14 @@ function getEventManageActionLabel(item: HubNotificationItem) {
 }
 
 function getEventManageActionDescription(item: HubNotificationItem) {
+	if (item.eventLifecycleSignal === 'canceled') {
+		return 'Jump straight to this event card and confirm the canceled-state follow-through.';
+	}
+
+	if (item.eventLifecycleSignal === 'restored') {
+		return 'Jump straight to this event card and confirm the restored schedule.';
+	}
+
 	if (item.eventTimingState === 'today' || item.eventTimingState === 'in_progress') {
 		return 'Jump straight to this event card and roster for attendance closeout.';
 	}

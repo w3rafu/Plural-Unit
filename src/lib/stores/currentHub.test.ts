@@ -230,7 +230,7 @@ function makeEvent(
 		organization_id: overrides.organization_id ?? 'org-1',
 		title: overrides.title ?? 'Meeting',
 		description: overrides.description ?? '',
-		starts_at: overrides.starts_at ?? '2026-04-20T16:30:00.000Z',
+		starts_at: overrides.starts_at ?? '2099-04-20T16:30:00.000Z',
 		ends_at: overrides.ends_at ?? null,
 		location: overrides.location ?? '',
 		created_at: overrides.created_at ?? '2026-04-12T10:00:00.000Z',
@@ -415,7 +415,7 @@ function makeExecutionLedgerRow(
 		job_kind: overrides.job_kind ?? 'event_reminder',
 		source_id: overrides.source_id ?? 'e1',
 		execution_key: overrides.execution_key ?? '120',
-		due_at: overrides.due_at ?? '2026-04-20T14:00:00.000Z',
+		due_at: overrides.due_at ?? '2099-04-20T14:00:00.000Z',
 		execution_state: overrides.execution_state ?? 'pending',
 		processed_at: overrides.processed_at ?? null,
 		last_attempted_at: overrides.last_attempted_at ?? null,
@@ -1124,8 +1124,8 @@ describe('currentHub execution queue actions', () => {
 		currentHub.events = [
 			makeEvent({
 				id: 'e1',
-				publish_at: '2026-04-18T10:00:00.000Z',
-				starts_at: '2026-04-20T16:00:00.000Z'
+				publish_at: '2099-04-18T10:00:00.000Z',
+				starts_at: '2099-04-20T16:00:00.000Z'
 			})
 		];
 		currentHub.eventReminderSettingsMap = {
@@ -1137,7 +1137,7 @@ describe('currentHub execution queue actions', () => {
 				job_kind: 'event_reminder',
 				source_id: 'e1',
 				execution_key: '120',
-				due_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2099-04-20T14:00:00.000Z',
 				execution_state: 'failed',
 				last_failure_reason:
 					'Reminder window lands before event visibility. Adjust the publish time or reminder plan.'
@@ -1149,7 +1149,7 @@ describe('currentHub execution queue actions', () => {
 				job_kind: 'event_reminder',
 				source_id: 'e1',
 				execution_key: '120',
-				due_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2099-04-20T14:00:00.000Z',
 				execution_state: 'pending',
 				last_failure_reason: null
 			})
@@ -1172,7 +1172,7 @@ describe('currentHub execution queue actions', () => {
 				job_kind: 'event_reminder',
 				source_id: 'e1',
 				execution_key: '120',
-				due_at: '2026-04-20T14:00:00.000Z',
+				due_at: '2099-04-20T14:00:00.000Z',
 				execution_state: 'pending',
 				last_failure_reason: null
 			})
@@ -1261,14 +1261,17 @@ describe('currentHub execution queue actions', () => {
 		await currentHub.runExecutionEntryNow('exec-event');
 
 		expect(mockRestoreEvent).toHaveBeenCalledWith('e1');
-		expect(mockUpdateEvent).toHaveBeenCalledWith('e1', {
-			title: 'Meeting',
-			description: '',
-			starts_at: '2099-04-20T16:00:00.000Z',
-			ends_at: null,
-			location: '',
-			publish_at: null
-		});
+		expect(mockUpdateEvent).toHaveBeenCalledWith(
+			'e1',
+			expect.objectContaining({
+				title: 'Meeting',
+				description: '',
+				starts_at: '2099-04-20T16:00:00.000Z',
+				ends_at: null,
+				location: '',
+				publish_at: null
+			})
+		);
 		expect(currentHub.executionLedger).toHaveLength(1);
 		expect(currentHub.executionLedger[0]).toMatchObject({
 			job_kind: 'event_publish',

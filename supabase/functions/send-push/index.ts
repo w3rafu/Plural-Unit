@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
 		}
 
 		const payload = await req.json();
-		const { kind, organization_id, title, body, url, target_profile_id } = payload;
+		const { kind, organization_id, title, body, url, target_profile_id, include_actor_profile } = payload;
 
 		if (!kind || !organization_id || !title) {
 			return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
 
 			eligibleProfileIds = (eligibleMembers ?? [])
 				.map((row: { profile_id: string }) => row.profile_id)
-				.filter((id: string) => id !== user.id); // Exclude sender.
+				.filter((id: string) => include_actor_profile ? true : id !== user.id);
 		}
 
 		if (eligibleProfileIds.length === 0) {

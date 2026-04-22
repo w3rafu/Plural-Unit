@@ -68,7 +68,7 @@ export function createDefaultCurrentHubPluginState(): PluginStateMap {
 
 export function applyCurrentHubLoadedState(
 	store: CurrentHubHydratedState,
-	state: CurrentHubLoadResult
+	state: CurrentHubHydratedState | CurrentHubLoadResult
 ) {
 	store.plugins = state.plugins;
 	store.broadcasts = state.broadcasts;

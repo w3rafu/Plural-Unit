@@ -9,6 +9,7 @@ export type PushNotificationPayload = {
 	body: string;
 	url?: string;
 	target_profile_id?: string;
+	include_actor_profile?: boolean;
 };
 
 /**

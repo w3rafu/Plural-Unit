@@ -53,7 +53,7 @@ describe('eventReminderModel', () => {
 			new Date('2026-04-20T10:00:00.000Z').getTime()
 		);
 		expect(getEventReminderSummaryCopy(nextSummary, new Date('2026-04-20T10:00:00.000Z').getTime())).toBe(
-			'1 reminder planned. Next goes out in 2 hours.'
+			'1 reminder planned via In-app alerts. Next goes out in 2 hours.'
 		);
 
 		const passedSummary = summarizeEventReminderSchedule(
@@ -62,7 +62,7 @@ describe('eventReminderModel', () => {
 			new Date('2026-04-20T13:00:00.000Z').getTime()
 		);
 		expect(getEventReminderSummaryCopy(passedSummary, new Date('2026-04-20T13:00:00.000Z').getTime())).toBe(
-			'1 reminder planned. All reminder windows are already behind this event.'
+			'1 reminder planned via In-app alerts. All reminder windows are already behind this event.'
 		);
 
 		expect(
