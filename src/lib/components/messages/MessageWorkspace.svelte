@@ -3,7 +3,6 @@
 	import * as Card from '$lib/components/ui/card';
 	import type { MessageThread } from '$lib/models/messageModel';
 	import InboxPane from './InboxPane.svelte';
-	import MessageContextRail from './MessageContextRail.svelte';
 	import ThreadPane from './ThreadPane.svelte';
 
 	let {
@@ -59,7 +58,7 @@
 	const showThread = $derived(!!activeThread);
 </script>
 
-<div class={`hidden min-h-0 flex-1 md:grid md:gap-2 ${activeThread ? 'md:grid-cols-[340px_1fr] xl:grid-cols-[320px_minmax(0,1fr)_280px]' : 'md:grid-cols-[340px_1fr]'}`}>
+<div class="hidden min-h-0 flex-1 md:grid md:grid-cols-[312px_minmax(0,1fr)] md:gap-1.5 xl:grid-cols-[296px_minmax(0,1fr)] xl:gap-2">
 	<Card.Root class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
 		<InboxPane {threads} {activeThreadId} {onSelectThread} {onCompose} />
 	</Card.Root>
@@ -100,10 +99,6 @@
 			</div>
 		{/if}
 	</Card.Root>
-
-	{#if activeThread}
-		<MessageContextRail thread={activeThread} {threads} {onSelectThread} />
-	{/if}
 </div>
 
 <div class="min-h-0 flex-1 md:hidden">

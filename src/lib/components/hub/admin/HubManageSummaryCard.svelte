@@ -35,6 +35,9 @@
 		currentHub.orderedResources.filter((resource) => getResourceEngagementSignal(resource).needsAttention).length
 	);
 	const publishedCount = $derived(liveBroadcastCount + liveEventCount + liveResourceCount);
+	const queuedContentCount = $derived(
+		draftBroadcastCount + scheduledBroadcastCount + scheduledEventCount
+	);
 	const historyCount = $derived(inactiveBroadcastCount + inactiveEventCount + inactiveResourceCount);
 	const dueExecutionCount = $derived(currentHub.dueExecutionCount);
 	const recoverableExecutionCount = $derived(currentHub.visibleRecoverableExecutionCount);
@@ -150,6 +153,58 @@
 		return parts.join(' ');
 	});
 
+	const summaryMetrics = $derived.by(() => [
+		{
+			label: 'Enabled sections',
+			value: String(enabledPlugins.length),
+			detail: `${adminPlugins.length} available`
+		},
+		{
+			label: 'Member-visible',
+			value: String(memberVisiblePlugins.length),
+			detail:
+				enabledPlugins.length === 0
+					? 'No live sections'
+					: `${Math.max(enabledPlugins.length - memberVisiblePlugins.length, 0)} admin-only`
+		},
+		{
+			label: 'Live content',
+			value: String(publishedCount),
+			detail:
+				queuedContentCount > 0
+					? `${queuedContentCount} queued`
+					: historyCount > 0
+						? `${historyCount} in history`
+						: 'Nothing queued'
+		},
+		{
+			label: 'Due work',
+			value: String(dueExecutionCount),
+			detail: dueExecutionCount === 0 ? 'Queue clear' : 'Ready now',
+			href: getQueueFocusHref('due')
+		}
+	]);
+
+	const signalItems = $derived.by(() => [
+		{
+			label: 'Replies',
+			value: responseCoverageValue
+		},
+		{
+			label: 'Day-of',
+			value: String(attendanceReviewCount)
+		},
+		{
+			label: 'Recovery',
+			value: String(recoverableExecutionCount),
+			href: getQueueFocusHref('recovery')
+		},
+		{
+			label: 'Follow-up',
+			value: String(engagementSummary.followUpCount)
+		}
+	]);
+
 	function getQueueFocusHref(bucket: 'due' | 'recovery') {
 		return buildHubExecutionQueueFocusHref({
 			url: page.url,
@@ -166,7 +221,7 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-3 border-b border-border/70">
+	<Card.Header class="gap-2.5 border-b border-border/70">
 		<div class="space-y-1">
 			<Card.Title class="text-lg font-semibold tracking-tight">Hub setup</Card.Title>
 			<Card.Description>
@@ -175,73 +230,51 @@
 		</div>
 	</Card.Header>
 
-	<Card.Content class="metric-grid">
-		<div class="metric-card">
-			<div>
-				<p class="metric-label">Available sections</p>
-				<p class="metric-value">{adminPlugins.length}</p>
-			</div>
-			<p class="metric-copy">Broadcasts, events, and resources can be turned on independently.</p>
+	<Card.Content class="space-y-3 p-2.5 sm:p-4">
+		<div class="grid grid-cols-2 gap-2 xl:grid-cols-4">
+			{#each summaryMetrics as metric (metric.label)}
+				{#if metric.href}
+					<a
+						href={metric.href}
+						class="flex min-w-0 flex-col gap-1 rounded-[0.95rem] border border-border/70 bg-muted/16 px-2.5 py-2.75 no-underline transition-colors hover:bg-muted/24 dark:border-white/10 dark:bg-black/36 dark:hover:bg-black/52 sm:rounded-[1rem] sm:px-3 sm:py-3"
+					>
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
+						<p class="text-[1.25rem] font-semibold tracking-tight text-foreground sm:text-[1.45rem]">{metric.value}</p>
+						<p class="text-[0.72rem] text-muted-foreground sm:text-[0.76rem]">{metric.detail}</p>
+					</a>
+				{:else}
+					<div class="flex min-w-0 flex-col gap-1 rounded-[0.95rem] border border-border/70 bg-muted/16 px-2.5 py-2.75 dark:border-white/10 dark:bg-black/36 sm:rounded-[1rem] sm:px-3 sm:py-3">
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
+						<p class="text-[1.25rem] font-semibold tracking-tight text-foreground sm:text-[1.45rem]">{metric.value}</p>
+						<p class="text-[0.72rem] text-muted-foreground sm:text-[0.76rem]">{metric.detail}</p>
+					</div>
+				{/if}
+			{/each}
 		</div>
 
-		<div class="metric-card">
-			<div>
-				<p class="metric-label">Live now</p>
-				<p class="metric-value">{memberVisiblePlugins.length}</p>
-			</div>
-			<p class="metric-copy">{sectionSummary}</p>
-		</div>
+		<p class="hidden text-[0.8rem] leading-5 text-muted-foreground sm:block">{contentSummary}</p>
 
-		<div class="metric-card">
-			<div>
-				<p class="metric-label">Live content</p>
-				<p class="metric-value">{publishedCount}</p>
-			</div>
-			<p class="metric-copy">{contentSummary}</p>
-		</div>
-
-		<div class="metric-card">
-			<div>
-				<p class="metric-label">Event replies</p>
-				<p class="metric-value metric-value--compact">{responseCoverageValue}</p>
-			</div>
-			<p class="metric-copy">{responseCoverageCopy}</p>
-		</div>
-
-		<div class="metric-card">
-			<div>
-				<p class="metric-label">Day-of status</p>
-				<p class="metric-value">{attendanceReviewCount}</p>
-			</div>
-			<p class="metric-copy">{attendanceReviewCopy}</p>
-		</div>
-
-		<a href={getQueueFocusHref('due')} class="metric-card metric-card--link no-underline">
-			<div>
-				<p class="metric-label">Due work</p>
-				<p class="metric-value">{dueExecutionCount}</p>
-			</div>
-			<p class="metric-copy">{dueExecutionCopy}</p>
-		</a>
-
-		<a href={getQueueFocusHref('recovery')} class="metric-card metric-card--link no-underline">
-			<div>
-				<p class="metric-label">Recovery queue</p>
-				<p class="metric-value">{recoverableExecutionCount}</p>
-			</div>
-			<p class="metric-copy">{recoveryQueueCopy}</p>
-		</a>
-
-		<div class="metric-card">
-			<div>
-				<p class="metric-label">Needs follow-up</p>
-				<p class="metric-value">{engagementSummary.followUpCount}</p>
-			</div>
-			<p class="metric-copy">{followUpCopy}</p>
+		<div class="flex flex-wrap gap-1.5 sm:gap-2">
+			{#each signalItems as item (item.label)}
+				{#if item.href}
+					<a
+						href={item.href}
+						class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.7rem] font-medium text-foreground no-underline transition-colors hover:bg-muted/18 dark:border-white/10 dark:bg-black/44 dark:hover:bg-black/58 sm:gap-2 sm:px-3 sm:py-1.5 sm:text-[0.74rem]"
+					>
+						<span class="text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</span>
+						<span>{item.value}</span>
+					</a>
+				{:else}
+					<div class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/44 sm:gap-2 sm:px-3 sm:py-1.5 sm:text-[0.74rem]">
+						<span class="text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</span>
+						<span>{item.value}</span>
+					</div>
+				{/if}
+			{/each}
 		</div>
 	</Card.Content>
 
-	<Card.Footer class="border-t border-border/70 pt-4">
+	<Card.Footer class="border-t border-border/70 pt-3.5">
 		<div class="flex flex-wrap gap-2">
 			{#each adminPlugins as plugin (plugin.key)}
 				<Badge variant={currentHub.plugins[plugin.key].isEnabled ? 'secondary' : 'outline'}>

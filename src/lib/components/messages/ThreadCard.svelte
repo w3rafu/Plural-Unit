@@ -4,6 +4,7 @@
   timestamp, and optional unread badge.
 -->
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
 	import type { MessageThread } from '$lib/models/messageModel';
 	import {
 		getParticipantInitials,
@@ -31,27 +32,27 @@
 	const timestamp = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)));
 	const archived = $derived(isThreadArchived(thread));
 	const muted = $derived(isThreadMuted(thread));
-	const metaLabel = $derived.by(() => {
-		const parts = [] as string[];
+	const statusBadges = $derived.by(() => {
+		const badges: Array<{ label: string; variant: 'warning' | 'muted' }> = [];
 
 		if (thread.unreadCount > 0) {
-			parts.push(`${thread.unreadCount} unread`);
+			badges.push({ label: `${thread.unreadCount} unread`, variant: 'warning' });
 		}
 
 		if (archived) {
-			parts.push('Archived');
+			badges.push({ label: 'Archived', variant: 'muted' });
 		} else if (muted) {
-			parts.push('Muted');
+			badges.push({ label: 'Muted', variant: 'muted' });
 		}
 
-		return parts.join(' · ');
+		return badges;
 	});
 </script>
 
 <button
 	type="button"
 	class={cn(
-		'group flex w-full items-start gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition-[background-color,border-color,box-shadow]',
+		'group flex w-full items-start gap-2.5 rounded-[1.2rem] border border-transparent px-2.5 py-2.5 text-left transition-[background-color,border-color,box-shadow]',
 		isActive
 			? 'border-border/70 bg-accent/35 text-accent-foreground shadow-sm dark:border-border/80 dark:bg-background/68'
 			: archived
@@ -64,7 +65,7 @@
 >
 	<Avatar.Root
 		class={cn(
-			'size-10 border bg-muted/50 shadow-sm after:hidden',
+			'size-9 border bg-muted/50 shadow-sm after:hidden',
 			thread.unreadCount > 0 ? 'border-primary/25 bg-primary/5' : 'border-border/70'
 		)}
 	>
@@ -79,13 +80,13 @@
 		<div class="flex items-start justify-between gap-2">
 			<div class="min-w-0 space-y-0.5">
 				<div class="flex items-center gap-2">
-					<span class="truncate text-sm font-semibold text-foreground">{thread.participant.name}</span>
+					<span class="truncate text-[0.95rem] font-semibold leading-5 text-foreground">{thread.participant.name}</span>
 					{#if thread.unreadCount > 0}
 						<span class="size-2 rounded-full bg-primary"></span>
 					{/if}
 				</div>
 
-				<p class="truncate text-xs text-muted-foreground">
+				<p class="truncate text-[0.74rem] text-muted-foreground">
 					{thread.participant.subtitle || 'Direct conversation'}
 				</p>
 			</div>
@@ -100,12 +101,18 @@
 			</span>
 		</div>
 
-		<p class={cn('mt-2 truncate text-sm', thread.unreadCount > 0 && !archived ? 'text-foreground' : 'text-muted-foreground')}>
+		<p class={cn('mt-1.5 truncate text-[0.84rem] leading-5', thread.unreadCount > 0 && !archived ? 'text-foreground' : 'text-muted-foreground')}>
 			{preview}
 		</p>
 
-		{#if metaLabel}
-			<p class="mt-2 text-[11px] text-muted-foreground">{metaLabel}</p>
+		{#if statusBadges.length > 0}
+			<div class="mt-1.5 flex flex-wrap gap-1.5">
+				{#each statusBadges as badge (badge.label)}
+					<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium">
+						{badge.label}
+					</Badge>
+				{/each}
+			</div>
 		{/if}
 	</div>
 </button>

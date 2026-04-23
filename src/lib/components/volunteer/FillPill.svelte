@@ -16,15 +16,15 @@
 </script>
 
 {#if status === 'full'}
-	<Badge variant="outline" class="rounded-full border-border/70 bg-transparent px-2 py-0.5 text-[0.7rem] font-medium text-muted-foreground">
+	<Badge variant="muted" class="rounded-full px-2 py-0.5 text-[0.68rem] font-medium tracking-[0.01em]">
 		Full
 	</Badge>
 {:else if status === 'need-more'}
-	<span class="inline-flex items-center rounded-full border border-border/70 bg-muted/20 px-2 py-0.5 text-[0.7rem] font-medium text-foreground">
+	<Badge variant="warning" class="rounded-full px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.01em]">
 		Need {remaining} more
-	</span>
+	</Badge>
 {:else}
-	<Badge variant="secondary" class="rounded-full bg-primary/8 px-2 py-0.5 text-[0.7rem] font-medium text-primary/90">
+	<Badge variant="success" class="rounded-full px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.01em]">
 		{filled}/{needed} filled
 	</Badge>
 {/if}

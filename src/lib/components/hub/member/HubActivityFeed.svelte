@@ -21,7 +21,7 @@
 		manageEventsHref = undefined as string | undefined
 	} = $props();
 
-	const MAX_VISIBLE_ACTIVITY_ITEMS = 4;
+	const MAX_VISIBLE_ACTIVITY_ITEMS = 3;
 	let showAll = $state(false);
 
 	const allItems = $derived(items ?? currentHub.allActivityFeed);
@@ -60,15 +60,15 @@
 
 	function getActivityRowTone(item: HubNotificationItem) {
 		if (!item.isRead) {
-			return 'border-primary/15 bg-primary/5';
+			return 'bg-primary/[0.045]';
 		}
 
-		return 'border-transparent bg-transparent hover:border-border/70 hover:bg-muted/18';
+		return 'bg-transparent hover:bg-muted/18';
 	}
 </script>
 
 <Card.Root size="sm" class="h-full border-border/70 bg-card">
-	<Card.Content class="space-y-3 py-4" aria-busy={resolvedIsLoading}>
+	<Card.Content class="space-y-3 py-3.5" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
 			<div class="space-y-1">
 				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
@@ -106,41 +106,51 @@
 				</p>
 			</div>
 		{:else}
-			<div class="space-y-1.5">
-				{#each activityItems as item (item.id)}
+			<div class="overflow-hidden rounded-[1.25rem] border border-border/70 bg-background/70 shadow-sm">
+				{#each activityItems as item, index (item.id)}
 					{@const primaryAction = getPrimaryAction(item)}
-					<a href={primaryAction.href} class={`block rounded-[1.35rem] border px-3.5 py-3 transition-[background-color,border-color] ${getActivityRowTone(item)}`}>
+					<a
+						href={primaryAction.href}
+						class={`group block px-3.5 py-3 transition-colors ${index > 0 ? 'border-t border-border/55' : ''} ${getActivityRowTone(item)}`}
+					>
 						<div class="flex items-start gap-3">
 							<div
-								class={`flex size-9 shrink-0 items-center justify-center rounded-[1rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
+								class={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-[0.8rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
 							>
 								{#if item.kind === 'broadcast'}
-									<Megaphone class="size-4" />
+									<Megaphone class="size-3.5" />
 								{:else if item.eventLifecycleSignal === 'canceled'}
-									<TriangleAlert class="size-4" />
+									<TriangleAlert class="size-3.5" />
 								{:else if item.eventTimingState === 'today' || item.eventTimingState === 'in_progress'}
-									<Sparkles class="size-4" />
+									<Sparkles class="size-3.5" />
 								{:else}
-									<CalendarDays class="size-4" />
+									<CalendarDays class="size-3.5" />
 								{/if}
 							</div>
 
 							<div class="min-w-0 flex-1">
-								<div class="flex flex-wrap items-center gap-2 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-									<span>{item.label}</span>
-									{#if !item.isRead}
-										<span class="inline-flex size-1.5 rounded-full bg-primary"></span>
-										<span class="normal-case tracking-normal text-primary">Needs review</span>
+								<div class="flex items-start justify-between gap-3">
+									<div class="min-w-0">
+										<div class="flex flex-wrap items-center gap-2 text-[0.63rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+											<span>{item.label}</span>
+											{#if !item.isRead}
+												<span class="inline-flex size-1.5 rounded-full bg-primary"></span>
+												<span class="normal-case tracking-normal text-primary">Needs review</span>
+											{/if}
+										</div>
+										<p class="mt-1 truncate text-sm font-semibold text-foreground">{item.title}</p>
+									</div>
+									<span class="shrink-0 pt-0.5 text-[0.7rem] font-medium text-primary/90 transition-colors group-hover:text-primary">{primaryAction.label}</span>
+								</div>
+								<p class="mt-1 text-[0.78rem] leading-5 text-muted-foreground">{item.summary}</p>
+								<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.7rem] text-muted-foreground">
+									<span>{item.meta}</span>
+									{#if item.kind === 'broadcast'}
+										<span>Broadcast update</span>
+									{:else}
+										<span>Event update</span>
 									{/if}
 								</div>
-								<div class="mt-1 flex items-start justify-between gap-3">
-									<div class="min-w-0">
-										<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
-										<p class="mt-1 text-sm leading-5 text-muted-foreground">{item.summary}</p>
-									</div>
-									<span class="shrink-0 pt-0.5 text-xs font-medium text-primary/90">{primaryAction.label}</span>
-								</div>
-								<p class="mt-1.5 text-[0.72rem] text-muted-foreground">{item.meta}</p>
 							</div>
 						</div>
 					</a>

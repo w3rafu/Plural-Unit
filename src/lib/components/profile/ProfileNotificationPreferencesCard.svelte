@@ -18,11 +18,15 @@
 	import { env } from '$env/dynamic/public';
 	import { dev } from '$app/environment';
 
+	type CommunicationPreference = 'push' | 'message' | 'sms' | 'call' | 'hybrid';
+
 	let draftPreferences = $state<{ broadcast: boolean; event: boolean; message: boolean } | null>(null);
 	let fieldError = $state('');
 	let pushEnabled = $state(false);
 	let pushSupported = $state(false);
 	let pushBusy = $state(false);
+	let preferredContactMethod = $state<CommunicationPreference>('hybrid');
+	let preferredContactTouched = $state(false);
 
 	const organizationId = $derived(currentOrganization.organization?.id ?? '');
 	const hasMembership = $derived(Boolean(currentOrganization.membership?.profile_id));
@@ -31,12 +35,63 @@
 	const isLoadingInitialState = $derived(currentHub.isLoading && !currentHub.hasLoadedForCurrentOrg);
 	const resolvedPreferences = $derived(draftPreferences ?? currentHub.notificationPreferences);
 	const devicePushAvailable = $derived(pushSupported && Boolean(env.PUBLIC_VAPID_KEY));
+	const communicationOptions = $derived.by(
+		() =>
+			[
+				{ id: 'push', label: 'Push' },
+				{ id: 'message', label: 'Message' },
+				{ id: 'sms', label: 'SMS' },
+				{ id: 'call', label: 'Call' },
+				{ id: 'hybrid', label: 'Hybrid' }
+			] as Array<{ id: CommunicationPreference; label: string }>
+	);
 	const messagePreferenceDescription = $derived.by(() => {
 		if (devicePushAvailable) {
 			return 'Allow push notifications for new direct messages from this organization when push is enabled on this device.';
 		}
 
 		return 'Allow push notifications for new direct messages from this organization. Push delivery is not available on this device right now.';
+	});
+	const communicationPreferenceSummary = $derived.by(() => {
+		switch (preferredContactMethod) {
+			case 'push':
+				return devicePushAvailable
+					? 'Lead with push so urgent updates can reach this device first.'
+					: 'Push is the preferred path, but this device still needs browser push enabled.';
+			case 'message':
+				return 'Use direct messages as the normal follow-up path when a conversation needs context.';
+			case 'sms':
+				return 'Use text messages for short confirmations or fast day-of coordination.';
+			case 'call':
+				return 'Call first when the update is time-sensitive or needs a quick decision.';
+			case 'hybrid':
+			default:
+				return 'Start with push or a message, then escalate to SMS or a call when timing matters.';
+		}
+	});
+	const communicationPreferenceCaption = $derived.by(() => {
+		if (preferredContactMethod === 'hybrid') {
+			return 'Balanced across quick alerts and richer follow-up.';
+		}
+
+		if (preferredContactMethod === 'push' && !devicePushAvailable) {
+			return 'Push still depends on device setup below.';
+		}
+
+		return 'Use this as the default communication rhythm for this account.';
+	});
+
+	$effect(() => {
+		if (preferredContactTouched) {
+			return;
+		}
+
+		if (devicePushAvailable && resolvedPreferences.message) {
+			preferredContactMethod = 'hybrid';
+			return;
+		}
+
+		preferredContactMethod = resolvedPreferences.message ? 'message' : 'call';
 	});
 
 	onMount(() => {
@@ -180,7 +235,37 @@
 				<div class="space-y-4">
 					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
 						<div class="space-y-1">
-							<h3 class="text-sm font-semibold text-foreground">In-app alerts</h3>
+							<h3 class="text-sm font-semibold text-foreground">Preferred communication</h3>
+							<p class="text-xs text-muted-foreground">Set the channel that should usually reach you first when someone needs a response.</p>
+						</div>
+
+						<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+							{#each communicationOptions as option (option.id)}
+								<Button
+									type="button"
+									variant={preferredContactMethod === option.id ? 'secondary' : 'outline'}
+									size="sm"
+									class="justify-center rounded-xl"
+									aria-pressed={preferredContactMethod === option.id}
+									onclick={() => {
+										preferredContactTouched = true;
+										preferredContactMethod = option.id;
+									}}
+								>
+									{option.label}
+								</Button>
+							{/each}
+						</div>
+
+						<div class="rounded-xl border border-border/60 bg-muted/18 px-3 py-2.5">
+							<p class="text-sm font-medium text-foreground">{communicationPreferenceCaption}</p>
+							<p class="mt-1 text-xs leading-5 text-muted-foreground">{communicationPreferenceSummary}</p>
+						</div>
+					</section>
+
+					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
+						<div class="space-y-1">
+							<h3 class="text-sm font-semibold text-foreground">Hub alerts in the app</h3>
 							<p class="text-xs text-muted-foreground">Show broadcasts and event updates in the app.</p>
 						</div>
 
@@ -272,7 +357,7 @@
 						type="submit"
 						disabled={!canEditPreferences || currentHub.isSavingNotificationPreferences || isLoadingInitialState}
 					>
-						{currentHub.isSavingNotificationPreferences ? 'Saving...' : 'Save settings'}
+						{currentHub.isSavingNotificationPreferences ? 'Saving...' : 'Save organization settings'}
 					</Button>
 					{#if !currentHub.hasLoadedForCurrentOrg && !isLoadingInitialState}
 						<Button type="button" variant="outline" size="sm" onclick={retryLoad}>

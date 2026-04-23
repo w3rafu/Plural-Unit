@@ -59,11 +59,11 @@
 					<Card.Content class="space-y-4">
 						<div class="flex items-center justify-between gap-3">
 							<div class="flex flex-wrap gap-2">
-								<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+								<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
 									Broadcast
 								</Badge>
 								{#if broadcast.is_pinned || broadcast.expires_at}
-									<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+									<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
 										{getBroadcastStateLabel(broadcast)}
 									</Badge>
 								{/if}

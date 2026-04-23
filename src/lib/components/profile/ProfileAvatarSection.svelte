@@ -34,9 +34,9 @@
 </script>
 
 
-	<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+	<div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex items-center gap-3">
-			<Avatar.Root class="size-16 border border-border/70 bg-muted/40 after:hidden">
+			<Avatar.Root class="size-14 border border-border/70 bg-muted/40 after:hidden">
 				{#if activeAvatarUrl}
 					<Avatar.Image src={activeAvatarUrl} alt="Profile preview" />
 				{:else}
@@ -46,9 +46,9 @@
 				{/if}
 			</Avatar.Root>
 
-			<div class="space-y-1">
+			<div class="space-y-0.5">
 				<p class="text-sm font-medium text-foreground">Photo</p>
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.78rem] leading-5 text-muted-foreground">
 					{#if willRemove}
 						Photo will be removed when you save.
 					{:else if previewUrl}
@@ -67,6 +67,7 @@
 				type="button"
 				variant="outline"
 				size="xs"
+				class="h-7 px-3 text-[0.72rem]"
 				onclick={() => avatarInput?.click()}
 				disabled={isSubmitting}
 			>
@@ -77,6 +78,7 @@
 					type="button"
 					variant="ghost"
 					size="xs"
+					class="h-7 px-2.5 text-[0.72rem]"
 					onclick={onRemove}
 					disabled={isSubmitting}
 				>

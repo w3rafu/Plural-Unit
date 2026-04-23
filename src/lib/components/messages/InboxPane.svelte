@@ -35,27 +35,27 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-muted/10 px-3 py-2.5">
-		<div class="space-y-3">
+	<div class="border-b border-border/70 bg-muted/10 px-3 py-2 sm:px-3.5 sm:py-2.5">
+		<div class="space-y-2.5">
 			<div class="flex items-center gap-2">
 				<label class="relative block flex-1">
 				<Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					type="search"
 						placeholder="Search conversations"
-					class="h-10 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+					class="h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 					bind:value={query}
 				/>
 				</label>
 
 				{#if onCompose}
-					<Button type="button" variant="outline" size="icon-sm" class="shrink-0 rounded-xl" aria-label="New message" onclick={onCompose}>
+					<Button type="button" variant="outline" size="icon-sm" class="h-9 w-9 shrink-0 rounded-xl" aria-label="New message" onclick={onCompose}>
 						<SquarePen class="size-4" />
 					</Button>
 				{/if}
 			</div>
 
-			<div class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+			<div class="flex items-center justify-between gap-3 text-[0.72rem] text-muted-foreground">
 				<p>
 					{#if query.trim()}
 						Showing {threadLabel.toLowerCase()} that match your search.
@@ -82,10 +82,10 @@
 		</div>
 	</div>
 
-	<div class="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+	<div class="min-h-0 flex-1 overflow-y-auto px-1.5 py-1.5 sm:px-2 sm:py-2">
 		{#if sections.visibleThreads.length === 0}
 			<div class="px-2 py-2">
-				<div class="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-8 text-center">
+				<div class="rounded-[1.25rem] border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-center">
 					<p class="font-medium text-foreground">
 						{query
 							? 'No conversations match your search.'
@@ -117,8 +117,8 @@
 			</div>
 		{:else}
 			{#if sections.unreadThreads.length > 0}
-				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Need reply</span>
+				<div class="flex items-center justify-between px-2 pb-0.5 pt-1.5">
+					<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Need reply</span>
 					<span class="text-[11px] text-muted-foreground">{sections.unreadThreads.length}</span>
 				</div>
 				{#each sections.unreadThreads as thread (thread.id)}
@@ -131,8 +131,8 @@
 			{/if}
 
 			{#if sections.recentThreads.length > 0}
-				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recently active</span>
+				<div class="flex items-center justify-between px-2 pb-0.5 pt-1.5">
+					<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recently active</span>
 					<span class="text-[11px] text-muted-foreground">Last 7 days</span>
 				</div>
 				{#each sections.recentThreads as thread (thread.id)}
@@ -145,8 +145,8 @@
 			{/if}
 
 			{#if sections.olderThreads.length > 0}
-				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Quiet</span>
+				<div class="flex items-center justify-between px-2 pb-0.5 pt-1.5">
+					<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Quiet</span>
 					<span class="text-[11px] text-muted-foreground">Low activity</span>
 				</div>
 				{#each sections.olderThreads as thread (thread.id)}
@@ -159,8 +159,8 @@
 			{/if}
 
 			{#if sections.archivedThreads.length > 0}
-				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Archived</span>
+				<div class="flex items-center justify-between px-2 pb-0.5 pt-1.5">
+					<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Archived</span>
 					<span class="text-[11px] text-muted-foreground">Out of triage</span>
 				</div>
 				{#each sections.archivedThreads as thread (thread.id)}

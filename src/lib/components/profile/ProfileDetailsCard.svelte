@@ -189,20 +189,19 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-1.5">
+	<Card.Header class="gap-1.5 pb-3">
 		<Card.Title class="text-lg font-semibold tracking-tight">Profile details</Card.Title>
-		<Card.Description>Update the details people see most often.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-3.5 pt-0 sm:space-y-4">
+	<Card.Content class="space-y-3 pt-0 sm:space-y-3.5">
 		<form
-			class="space-y-3.5 sm:space-y-4"
+			class="space-y-3 sm:space-y-3.5"
 			onsubmit={(event) => {
 				event.preventDefault();
 				saveProfileDetails();
 			}}
 		>
-			<Field.Group class="gap-3.5 sm:gap-4">
+			<Field.Group class="gap-3 sm:gap-3.5">
 				<ProfileAvatarSection
 					{activeAvatarUrl}
 					initials={avatarPreviewInitials}
@@ -215,7 +214,7 @@
 					onRemove={removeSelectedAvatar}
 				/>
 
-				<div class="grid gap-3.5 md:grid-cols-2 md:gap-4">
+				<div class="grid gap-3 md:grid-cols-2 md:gap-3.5">
 					<Field.Field>
 						<Field.Content>
 							<Field.Label for="profile-name">Name</Field.Label>

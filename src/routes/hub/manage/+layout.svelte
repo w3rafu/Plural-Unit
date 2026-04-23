@@ -120,18 +120,19 @@
 		<HubManageSummaryCard />
 
 		<Card.Root size="sm" class="border-border/70 bg-card">
-			<Card.Content class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-				<div class="space-y-1">
-					<p class="text-sm font-medium text-foreground">Choose a section</p>
-					<p class="text-sm text-muted-foreground">Switch between section setup and content editors.</p>
+			<Card.Content class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
+				<div class="space-y-0.5">
+					<p class="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
+					<p class="text-[0.84rem] font-medium text-foreground">Sections or content.</p>
 				</div>
 
-				<nav aria-label="Hub manage sections" class="w-full sm:w-auto">
-					<ButtonGroup.Root class="segmented-control w-full sm:w-auto">
+				<nav aria-label="Hub manage sections" class="w-full sm:max-w-sm">
+					<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
 						<Button
 							href="/hub/manage/sections"
+							size="sm"
 							variant="ghost"
-							class="segmented-control__button w-full sm:w-auto"
+							class="segmented-control__button h-9 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
 							aria-current={isActiveManageSubroute('/hub/manage/sections') ? 'page' : undefined}
 							onclick={(event) => {
 								event.preventDefault();
@@ -142,8 +143,9 @@
 						</Button>
 						<Button
 							href="/hub/manage/content"
+							size="sm"
 							variant="ghost"
-							class="segmented-control__button w-full sm:w-auto"
+							class="segmented-control__button h-9 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
 							aria-current={isActiveManageSubroute('/hub/manage/content') ? 'page' : undefined}
 							onclick={(event) => {
 								event.preventDefault();

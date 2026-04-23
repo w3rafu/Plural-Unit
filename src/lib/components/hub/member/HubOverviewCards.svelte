@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { TrendingUp, Users } from '@lucide/svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import ActivityDotGrid from '$lib/components/ui/ActivityDotGrid.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { getParticipantInitials, type MessageThread } from '$lib/models/messageModel';
 
@@ -36,6 +37,21 @@
 
 	function formatCount(count: number, singular: string, plural = `${singular}s`) {
 		return `${count} ${count === 1 ? singular : plural}`;
+	}
+
+	function clamp(value: number, min: number, max: number) {
+		return Math.min(max, Math.max(min, value));
+	}
+
+	function buildActivityCells(seedValues: number[], offset: number) {
+		return Array.from({ length: 28 }, (_, index) => {
+			const base = seedValues[index % seedValues.length] ?? 0;
+			const bucket = clamp(Math.round(base / 25), 0, 4);
+			const wave = index % 7 >= 4 ? 1 : 0;
+			const pulse = (index + offset) % 6 === 0 ? 1 : 0;
+			const dip = (index + offset) % 5 === 0 ? 1 : 0;
+			return clamp(bucket + wave + pulse - dip, 0, 4);
+		});
 	}
 
 	const attentionLabel = $derived.by(() => {
@@ -119,6 +135,25 @@
 					: 'The inbox still needs another reply round.'
 		}
 	]);
+	const activityGridValues = $derived(
+		buildActivityCells(
+			[
+				broadcastReachPercent,
+				eventResponsePercent,
+				inboxClearPercent,
+				unreadActivityItems * 16,
+				Math.max(20, 100 - unreadMessages * 14)
+			],
+			unreadMessages + pendingInvites + unreadActivityItems
+		)
+	);
+	const activityCaption = $derived.by(() => {
+		if (unreadActivityItems > 0 || unreadMessages > 0) {
+			return 'Recent replies, event follow-up, and broadcast movement across the hub.';
+		}
+
+		return 'Recent hub activity is steady even though nothing urgent needs review.';
+	});
 
 	function getMetricTone(value: number) {
 		if (value >= 75) {
@@ -133,11 +168,11 @@
 	}
 </script>
 
-	<section class="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)] xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.82fr)]">
+	<section class="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,0.82fr)] xl:grid-cols-[minmax(0,1.6fr)_minmax(19rem,0.8fr)]">
 	<Card.Root class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/24 shadow-sm">
 		<div class="pointer-events-none absolute -right-20 top-0 h-52 w-52 rounded-full bg-primary/10 blur-3xl"></div>
 		<div class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-		<Card.Content class="relative space-y-6 py-6 sm:py-7">
+		<Card.Content class="relative space-y-5 py-5 sm:py-6">
 			<div class="space-y-1.5">
 				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Hub focus</p>
 				<h2 class="max-w-2xl text-[1.78rem] font-semibold tracking-tight text-foreground sm:text-[2.15rem] sm:leading-[1.02]">
@@ -148,19 +183,19 @@
 				</p>
 			</div>
 
-			<div class="overflow-hidden rounded-[1.5rem] border border-border/70 bg-background/88 shadow-sm">
+			<div class="overflow-hidden rounded-[1.35rem] border border-border/70 bg-background/88 shadow-sm">
 				{#each decisionRows as row, index (row.label)}
-					<div class={`flex items-start justify-between gap-4 px-4 py-3.5 ${index > 0 ? 'border-t border-border/50' : ''}`}>
+					<div class={`flex items-start justify-between gap-4 px-4 py-3 ${index > 0 ? 'border-t border-border/50' : ''}`}>
 						<div class="min-w-0">
 							<p class="text-sm font-semibold text-foreground">{row.label}</p>
-							<p class="mt-1 text-sm leading-5 text-muted-foreground">{row.summary}</p>
+							<p class="mt-0.5 text-[0.84rem] leading-5 text-muted-foreground">{row.summary}</p>
 						</div>
-						<p class="shrink-0 text-[1.75rem] font-semibold tracking-tight text-foreground">{row.value}</p>
+						<p class="shrink-0 text-[1.65rem] font-semibold tracking-tight text-foreground">{row.value}</p>
 					</div>
 				{/each}
 			</div>
 
-			<div class="grid gap-4 border-t border-border/60 pt-4 2xl:grid-cols-[minmax(0,1fr)_18rem] 2xl:items-start">
+			<div class="grid gap-3 border-t border-border/60 pt-3.5 2xl:grid-cols-[minmax(0,1fr)_17rem] 2xl:items-start">
 				<div class="space-y-1">
 					<div class="flex items-center gap-2 text-foreground">
 						<Users class="size-4 text-primary" />
@@ -174,9 +209,9 @@
 				</div>
 
 				{#if spotlightPeople.length > 0}
-					<div class="rounded-[1.35rem] border border-border/70 bg-background/82 p-3.5 shadow-sm">
+					<div class="rounded-[1.25rem] border border-border/70 bg-background/82 p-3 shadow-sm">
 						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">People in motion</p>
-						<div class="mt-3 space-y-3">
+						<div class="mt-2.5 space-y-2.5">
 							{#each spotlightPeople as person (person.id)}
 								<div class="flex items-center gap-3">
 									<Avatar.Root class="size-10 border border-background bg-background shadow-sm after:hidden">
@@ -192,7 +227,7 @@
 										<p class="truncate text-sm font-medium text-foreground">{person.name}</p>
 										<p class="truncate text-xs text-muted-foreground">{person.subtitle}</p>
 									</div>
-									<p class="text-[0.68rem] font-medium text-muted-foreground">{person.note}</p>
+									<p class="text-[0.65rem] font-medium text-muted-foreground">{person.note}</p>
 								</div>
 							{/each}
 						</div>
@@ -203,7 +238,7 @@
 	</Card.Root>
 
 	<Card.Root class="border-border/70 bg-card shadow-sm">
-		<Card.Content class="space-y-4 py-5">
+		<Card.Content class="space-y-3.5 py-4.5">
 			<div class="flex items-center justify-between gap-3">
 				<div>
 					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Signal check</p>
@@ -212,13 +247,13 @@
 				<TrendingUp class="size-4 text-primary" />
 			</div>
 
-			<div class="space-y-4">
+			<div class="space-y-3">
 				{#each signalRows as row (row.label)}
 					<div class="space-y-1.5">
 						<div class="flex items-center justify-between gap-3">
 							<div>
 								<p class="text-sm font-medium text-foreground">{row.label}</p>
-								<p class="text-xs text-muted-foreground">{row.note}</p>
+								<p class="text-[0.78rem] leading-5 text-muted-foreground">{row.note}</p>
 							</div>
 							<span class="text-sm font-semibold text-foreground">{row.value}%</span>
 						</div>
@@ -229,13 +264,15 @@
 				{/each}
 			</div>
 
-			<div class="rounded-[1.35rem] bg-muted/20 px-4 py-3.5">
+			<ActivityDotGrid title="Activity cadence" caption={activityCaption} values={activityGridValues} />
+
+			<div class="rounded-[1.2rem] bg-muted/20 px-3.5 py-3">
 				<p class="text-sm font-medium text-foreground">
 					{unreadMessages > 0
 						? `${formatCount(unreadMessages, 'conversation')} still need a reply.`
 						: 'Messages are caught up for now.'}
 				</p>
-				<p class="mt-1 text-xs text-muted-foreground">
+				<p class="mt-1 text-[0.78rem] leading-5 text-muted-foreground">
 					{liveBroadcasts > 0 || upcomingEvents > 0
 						? `${formatCount(liveBroadcasts, 'broadcast')} live and ${formatCount(upcomingEvents, 'upcoming event')} are still in motion.`
 						: 'Nothing outside the normal schedule needs a second look right now.'}

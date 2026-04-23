@@ -157,7 +157,7 @@
 	actions={hubActions}
 />
 
-<main class="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:gap-7" aria-busy={currentHub.isLoading}>
+<main class="mx-auto flex w-full max-w-6xl flex-col gap-5 lg:gap-6" aria-busy={currentHub.isLoading}>
 	{#if hasBlockingHubError}
 		<Card.Root class="border-destructive/30 bg-destructive/5">
 			<Card.Content class="flex flex-wrap items-center gap-3 py-4">
@@ -186,7 +186,7 @@
 			</Card.Root>
 		{/if}
 
-		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.58fr)_minmax(0,0.9fr)] xl:items-start">
+		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,0.88fr)] xl:items-start">
 			<HubOverviewCards
 				memberCount={currentOrganization.memberCount}
 				{pendingInvites}

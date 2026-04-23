@@ -3,6 +3,7 @@
   Shows day-grouped messages, message bubbles, and the composer.
 -->
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
 	import type { MessageThread } from '$lib/models/messageModel';
 	import {
 		getParticipantInitials,
@@ -64,26 +65,27 @@
 	const archived = $derived(isThreadArchived(thread));
 	const muted = $derived(isThreadMuted(thread));
 	const lastUpdatedLabel = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)) || 'now');
-	const headerMeta = $derived.by(() => {
-		const parts = [`Updated ${lastUpdatedLabel}`];
+	const headerMeta = $derived(`Updated ${lastUpdatedLabel}`);
+	const statusBadges = $derived.by(() => {
+		const badges: Array<{ label: string; variant: 'warning' | 'muted' }> = [];
 
 		if (thread.unreadCount > 0) {
-			parts.push(`${thread.unreadCount} unread`);
+			badges.push({ label: `${thread.unreadCount} unread`, variant: 'warning' });
 		}
 
 		if (archived) {
-			parts.push('Archived');
+			badges.push({ label: 'Archived', variant: 'muted' });
 		}
 
 		if (muted) {
-			parts.push('Muted');
+			badges.push({ label: 'Muted', variant: 'muted' });
 		}
 
 		if (thread.participant.isFakeUser) {
-			parts.push('Demo thread');
+			badges.push({ label: 'Demo thread', variant: 'muted' });
 		}
 
-		return parts.join(' · ');
+		return badges;
 	});
 
 	const lastSeenMessageId = $derived.by(() => {
@@ -122,13 +124,13 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-muted/10 px-2.5 py-1.5 sm:px-4 sm:py-3">
-		<div class="flex items-start gap-2 sm:gap-3">
+	<div class="border-b border-border/70 bg-muted/10 px-2.5 py-2 sm:px-4 sm:py-2.5">
+		<div class="flex items-start gap-2.5 sm:gap-3">
 			{#if onBack}
 				<Button
 					variant="ghost"
 					size="icon-sm"
-					class="mt-0.5 h-8 w-8 shrink-0 md:hidden"
+					class="mt-0.5 h-7 w-7 shrink-0 rounded-xl md:hidden"
 					onclick={onBack}
 					aria-label="Back to inbox"
 				>
@@ -136,7 +138,7 @@
 				</Button>
 			{/if}
 
-			<Avatar.Root class="size-8 border border-primary/15 bg-background shadow-sm after:hidden sm:size-11">
+			<Avatar.Root class="size-7 border border-primary/15 bg-background shadow-sm after:hidden sm:size-10">
 				{#if thread.participant.avatar_url}
 					<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
 				{:else}
@@ -147,15 +149,15 @@
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-2">
 					<div class="min-w-0 space-y-0.5">
-						<p class="truncate text-[1rem] font-semibold text-foreground sm:text-[1.08rem] lg:text-[1.18rem]">
+						<p class="truncate text-[0.95rem] font-semibold leading-5 text-foreground sm:text-[1.02rem] lg:text-[1.1rem]">
 							{thread.participant.name}
 						</p>
-						<p class="hidden truncate text-[0.84rem] text-muted-foreground sm:block sm:text-sm lg:text-[0.95rem]">
+						<p class="hidden truncate text-[0.8rem] text-muted-foreground sm:block sm:text-[0.84rem] lg:text-[0.9rem]">
 							{thread.participant.subtitle || 'Direct conversation'}
 						</p>
 					</div>
 
-					<div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+					<div class="flex shrink-0 flex-wrap items-center justify-end gap-1 sm:gap-2">
 						{#if muted ? onUnmuteThread : onMuteThread}
 							<Button
 								variant="outline"
@@ -169,7 +171,7 @@
 									}
 								}}
 								aria-label={muted ? 'Unmute conversation' : 'Mute conversation'}
-								class="h-7.5 rounded-full px-2 sm:h-8 sm:px-2.5"
+								class="h-7 w-7 rounded-xl px-0 sm:h-8 sm:w-auto sm:rounded-full sm:px-2.5"
 							>
 								{#if muted}
 									<Bell class="h-3.5 w-3.5 sm:mr-1.5" />
@@ -194,7 +196,7 @@
 									}
 								}}
 								aria-label={archived ? 'Restore conversation' : 'Archive conversation'}
-								class="h-7.5 rounded-full px-2 sm:h-8 sm:px-2.5"
+								class="h-7 w-7 rounded-xl px-0 sm:h-8 sm:w-auto sm:rounded-full sm:px-2.5"
 							>
 								{#if archived}
 									<Undo2 class="h-3.5 w-3.5 sm:mr-1.5" />
@@ -213,7 +215,7 @@
 								disabled={isResetting}
 								onclick={onResetDemo}
 								aria-label="Reset demo conversation"
-								class="h-7.5 rounded-full px-2 sm:h-8 sm:px-2.5"
+								class="h-7 w-7 rounded-xl px-0 sm:h-8 sm:w-auto sm:rounded-full sm:px-2.5"
 							>
 								<RotateCcw class="h-3.5 w-3.5 sm:mr-1.5" />
 								<span class="hidden sm:inline">Reset</span>
@@ -222,7 +224,18 @@
 					</div>
 				</div>
 
-				<p class="mt-1 text-[0.74rem] text-muted-foreground sm:mt-1.5 sm:text-[0.8rem] lg:text-[0.86rem]">{headerMeta}</p>
+				<div class="mt-0.5 space-y-1 sm:mt-1">
+					<p class="text-[0.72rem] text-muted-foreground sm:text-[0.78rem] lg:text-[0.84rem]">{headerMeta}</p>
+					{#if statusBadges.length > 0}
+						<div class="flex flex-wrap gap-1.5">
+							{#each statusBadges as badge (badge.label)}
+								<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium sm:text-[0.64rem]">
+									{badge.label}
+								</Badge>
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -243,7 +256,7 @@
 	{/if}
 
 	<div
-		class="min-h-0 flex-1 overflow-y-auto bg-muted/10 px-2.5 py-2.5 sm:px-4 sm:py-3"
+		class="min-h-0 flex-1 overflow-y-auto bg-muted/10 px-2 py-2 sm:px-3.5 sm:py-2.5"
 		{@attach keepScrolledToBottom(`${thread.id}:${thread.messages.length}`)}
 		{@attach handleScrollTop}
 	>
@@ -263,7 +276,7 @@
 			</div>
 		{/if}
 		{#each dayGroups as group (group.dateKey)}
-			<div class="my-3 flex items-center gap-2 lg:my-3.5">
+			<div class="my-2.5 flex items-center gap-2 lg:my-3">
 				<div class="h-px flex-1 bg-border/50"></div>
 				<span class="rounded-full border border-border/70 bg-background px-2.5 py-0.85 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.75 sm:py-1 sm:text-[0.68rem]">
 					{group.label}
@@ -274,11 +287,11 @@
 			{#each group.messages as message (message.id)}
 				<div
 					class={cn(
-						'mb-1.5 flex sm:mb-2',
+						'mb-1.5 flex',
 						message.senderKind === 'owner' ? 'justify-end' : 'justify-start'
 					)}
 				>
-					<div class="max-w-[86%] sm:max-w-[82%] xl:max-w-[76%]">
+					<div class="max-w-[84%] sm:max-w-[80%] xl:max-w-[72%]">
 						{#if message.senderKind === 'owner' && !message.isDeleted && onDeleteMessage}
 							<div class="mb-1 flex justify-end">
 								<Button
@@ -297,7 +310,7 @@
 
 						<div
 							class={cn(
-								'rounded-[1.35rem] border px-3.5 py-2.5 shadow-sm sm:rounded-2xl sm:px-4 sm:py-3',
+								'rounded-[1.2rem] border px-3 py-2.25 shadow-sm sm:rounded-[1.35rem] sm:px-3.5 sm:py-2.5',
 								message.isDeleted
 									? 'border-border/70 bg-muted/30 text-muted-foreground'
 									: message.senderKind === 'owner'
@@ -306,7 +319,7 @@
 							)}
 						>
 							{#if message.isDeleted}
-								<p class="text-[0.96rem] italic leading-7 whitespace-pre-wrap wrap-break-word lg:text-[1.02rem]">
+								<p class="text-[0.92rem] italic leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.98rem]">
 									{message.body}
 								</p>
 							{:else if message.kind === 'image' && message.imageUrl}
@@ -318,13 +331,13 @@
 										loading="lazy"
 									/>
 									{#if message.body.trim()}
-										<p class="text-[0.96rem] leading-7 whitespace-pre-wrap wrap-break-word lg:text-[1.02rem]">
+										<p class="text-[0.92rem] leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.98rem]">
 											{message.body}
 										</p>
 									{/if}
 								</div>
 							{:else}
-								<p class="text-[0.96rem] leading-7 whitespace-pre-wrap wrap-break-word lg:text-[1.02rem]">
+								<p class="text-[0.92rem] leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.98rem]">
 									{message.body}
 								</p>
 							{/if}
@@ -362,7 +375,7 @@
 	</div>
 
 	{#if contactTyping}
-		<div class="px-2.5 py-1 sm:px-4">
+		<div class="px-2.5 py-0.75 sm:px-4">
 			<p class="text-xs text-muted-foreground animate-pulse">{thread.participant.name} is typing…</p>
 		</div>
 	{/if}

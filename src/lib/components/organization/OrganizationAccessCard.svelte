@@ -191,15 +191,15 @@
 					<Card.Description>Share this when someone should be able to join without a direct invite.</Card.Description>
 				</Card.Header>
 
-				<Card.Content class="space-y-3.5">
-					<div class="metric-card min-h-0">
+				<Card.Content class="space-y-3 p-4 sm:p-5">
+					<div class="rounded-[1.15rem] border border-border/70 bg-muted/12 px-4 py-3.5">
 						<div>
-							<p class="metric-label">Active code</p>
-							<p class="mt-1.5 font-mono text-[1.6rem] font-semibold tracking-[0.22em] text-foreground wrap-break-word">
+							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Active code</p>
+							<p class="mt-1.5 font-mono text-[1.45rem] font-semibold tracking-[0.18em] text-foreground wrap-break-word sm:text-[1.6rem]">
 								{currentOrganization.organization?.join_code ?? '—'}
 							</p>
 						</div>
-						<p class="metric-copy">Anyone with this code can join until you rotate it.</p>
+						<p class="mt-2 text-[0.82rem] leading-5 text-muted-foreground">Anyone with this code can join until you rotate it.</p>
 					</div>
 
 					<div class="flex flex-wrap gap-2">
@@ -214,50 +214,50 @@
 			<InviteForm />
 		</div>
 
-		<Card.Root size="sm" class="border-border/70 bg-card">
+			<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<Card.Title class="text-lg font-semibold tracking-tight">Pending invitations</Card.Title>
 				<Card.Description>Review active and expired invites, then resend anything that needs a fresh token.</Card.Description>
 			</Card.Header>
 
-			<Card.Content class="space-y-3.5">
+				<Card.Content class="space-y-3 p-4 sm:p-5">
 				{#if currentOrganization.invitations.length > 0}
-					<div class="metric-grid">
-						<div class="metric-card">
+						<div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-								<p class="metric-label">Pending</p>
-								<p class="metric-value">{activeInviteCount}</p>
+									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pending</p>
+									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{activeInviteCount}</p>
 							</div>
 						</div>
 
-						<div class="metric-card">
+							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-								<p class="metric-label">Stale</p>
-								<p class="metric-value">{staleInviteCount}</p>
+									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Stale</p>
+									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{staleInviteCount}</p>
 							</div>
 						</div>
 
-						<div class="metric-card">
+							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-								<p class="metric-label">Expiring soon</p>
-								<p class="metric-value">{expiringSoonInviteCount}</p>
+									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expiring soon</p>
+									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{expiringSoonInviteCount}</p>
 							</div>
 						</div>
 
-						<div class="metric-card">
+							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-								<p class="metric-label">Expired</p>
-								<p class="metric-value">{expiredInviteCount}</p>
+									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expired</p>
+									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{expiredInviteCount}</p>
 							</div>
 						</div>
 					</div>
 				{/if}
 
 				{#if currentOrganization.invitations.length > 0}
-					<div class="space-y-3">
+					<div class="space-y-2.5">
 						<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 							<div class="space-y-1">
-								<p class="text-sm text-muted-foreground">{invitationSummary}</p>
+								<p class="text-[0.84rem] text-muted-foreground">{invitationSummary}</p>
 							</div>
 
 							<label class="relative block w-full lg:max-w-xs">
@@ -277,7 +277,7 @@
 									type="button"
 									size="sm"
 									variant={invitationFilter === option.value ? 'secondary' : 'outline'}
-									class="rounded-xl"
+									class="h-8 rounded-xl px-3 text-[0.72rem]"
 									onclick={() => (invitationFilter = option.value)}
 								>
 									{option.label}
