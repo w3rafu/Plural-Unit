@@ -14,7 +14,7 @@ import {
 
 describe('uiPreviewFixtures', () => {
 	it('keeps the preview dataset counts stable', () => {
-		expect(uiPreviewFixtures.organizationName).toBe('Harbor Unit');
+		expect(uiPreviewFixtures.organizationName).toBe('Old Town Cape');
 		expect(uiPreviewFixtures.currentUserProfileId).toBe('profile-ariana-lopez');
 		expect(uiPreviewFixtures.members).toHaveLength(8);
 		expect(uiPreviewFixtures.threads).toHaveLength(5);
@@ -35,7 +35,7 @@ describe('uiPreviewFixtures', () => {
 	it('looks up members by profile id and returns null for unknown ids', () => {
 		expect(getUiPreviewMember('profile-ariana-lopez')).toMatchObject({
 			profile_id: 'profile-ariana-lopez',
-			name: 'Ariana Lopez',
+			name: 'Avery Brooks',
 			role: 'admin'
 		});
 		expect(getUiPreviewMember('profile-lucia-costa')).toMatchObject({
@@ -86,7 +86,7 @@ describe('uiPreviewFixtures', () => {
 		});
 
 		expect(originalThread.unreadCount).toBe(2);
-		expect(originalThread.participant.name).toBe('Elena Rossi');
+		expect(originalThread.participant.name).toBe('Chloe Bennett');
 		expect(originalThread.messages[0]?.body).toBe(
 			'I locked the community hall for Thursday night. Can you confirm the room setup plan?'
 		);

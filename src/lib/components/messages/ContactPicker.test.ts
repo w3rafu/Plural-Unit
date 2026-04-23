@@ -8,7 +8,7 @@ import ContactPicker from './ContactPicker.svelte';
 function makeMember(overrides: Partial<OrganizationMember> = {}): OrganizationMember {
 	return {
 		profile_id: 'member-1',
-		name: 'Ariana Lopez',
+		name: 'Avery Brooks',
 		email: 'ariana@example.com',
 		phone_number: '+1 415 555 0101',
 		avatar_url: '',
@@ -45,25 +45,25 @@ describe('ContactPicker', () => {
 			props: {
 				open: true,
 				members: [
-					makeMember({ profile_id: 'current-user', name: 'Ariana Lopez', email: 'ariana@example.com' }),
-					makeMember({ profile_id: 'member-2', name: 'Elena Rossi', email: 'elena@example.com', role: 'member' }),
-					makeMember({ profile_id: 'member-3', name: 'Malik Johnson', email: 'malik@example.com', role: 'member' })
+					makeMember({ profile_id: 'current-user', name: 'Avery Brooks', email: 'avery@example.com' }),
+					makeMember({ profile_id: 'member-2', name: 'Chloe Bennett', email: 'chloe@example.com', role: 'member' }),
+					makeMember({ profile_id: 'member-3', name: 'Caleb Foster', email: 'caleb@example.com', role: 'member' })
 				],
 				currentProfileId: 'current-user',
 				onSelectMember: () => {}
 			}
 		});
 
-		expect(screen.queryByText('Ariana Lopez')).toBeNull();
-		expect(screen.getByText('Elena Rossi')).toBeTruthy();
-		expect(screen.getByText('Malik Johnson')).toBeTruthy();
+		expect(screen.queryByText('Avery Brooks')).toBeNull();
+		expect(screen.getByText('Chloe Bennett')).toBeTruthy();
+		expect(screen.getByText('Caleb Foster')).toBeTruthy();
 
 		await fireEvent.input(screen.getByPlaceholderText('Search by name or email'), {
-			target: { value: 'malik' }
+			target: { value: 'caleb' }
 		});
 
-		expect(screen.queryByText('Elena Rossi')).toBeNull();
-		expect(screen.getByText('Malik Johnson')).toBeTruthy();
+		expect(screen.queryByText('Chloe Bennett')).toBeNull();
+		expect(screen.getByText('Caleb Foster')).toBeTruthy();
 	});
 
 	it('calls onSelectMember when a member is picked', async () => {
@@ -73,14 +73,14 @@ describe('ContactPicker', () => {
 			props: {
 				open: true,
 				members: [
-					makeMember({ profile_id: 'member-2', name: 'Elena Rossi', email: 'elena@example.com', role: 'member' })
+					makeMember({ profile_id: 'member-2', name: 'Chloe Bennett', email: 'chloe@example.com', role: 'member' })
 				],
 				currentProfileId: 'current-user',
 				onSelectMember
 			}
 		});
 
-		await fireEvent.click(screen.getByRole('button', { name: /Elena Rossi/i }));
+		await fireEvent.click(screen.getByRole('button', { name: /Chloe Bennett/i }));
 		expect(onSelectMember).toHaveBeenCalledWith('member-2');
 	});
 
@@ -89,7 +89,7 @@ describe('ContactPicker', () => {
 			props: {
 				open: true,
 				members: [
-					makeMember({ profile_id: 'member-2', name: 'Elena Rossi', email: 'elena@example.com', role: 'member' })
+					makeMember({ profile_id: 'member-2', name: 'Chloe Bennett', email: 'chloe@example.com', role: 'member' })
 				],
 				currentProfileId: 'current-user',
 				onSelectMember: () => {}

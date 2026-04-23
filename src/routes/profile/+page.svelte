@@ -17,28 +17,36 @@
 	}
 </script>
 
-<ProfileSection />
+<main class="mx-auto flex w-full max-w-6xl flex-col gap-3.5 lg:gap-4">
+	<ProfileSection />
 
-<ProfileDetailsCard />
-<ProfileNotificationPreferencesCard />
-<ProfileSecurityCard />
+	<div class="grid gap-3.5 xl:grid-cols-[minmax(0,1.08fr)_21rem] xl:items-start">
+		<ProfileDetailsCard />
 
-<ProfileDangerZoneCard />
-
-<Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="flex items-center justify-between p-3.5">
-		<div class="space-y-1">
-			<p class="text-sm font-medium text-foreground">Sign out</p>
-			<p class="text-sm text-muted-foreground">End your current session.</p>
+		<div class="space-y-3.5 xl:sticky xl:top-24">
+			<ProfileSecurityCard />
 		</div>
-		<Button
-			variant="outline"
-			size="sm"
-			disabled={isSigningOut}
-			onclick={handleSignOut}
-		>
-			<LogOut class="mr-2 size-4" />
-			{isSigningOut ? 'Signing out…' : 'Sign out'}
-		</Button>
-	</Card.Content>
-</Card.Root>
+	</div>
+
+	<ProfileNotificationPreferencesCard />
+
+	<Card.Root size="sm" class="border-border/70 bg-muted/10 shadow-none">
+		<Card.Content class="flex flex-wrap items-center justify-between gap-3 p-3.5">
+			<div class="space-y-1">
+				<p class="text-sm font-medium text-foreground">Sign out</p>
+				<p class="text-sm text-muted-foreground">End your current session.</p>
+			</div>
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={isSigningOut}
+				onclick={handleSignOut}
+			>
+				<LogOut class="mr-2 size-4" />
+				{isSigningOut ? 'Signing out…' : 'Sign out'}
+			</Button>
+		</Card.Content>
+	</Card.Root>
+
+	<ProfileDangerZoneCard />
+</main>

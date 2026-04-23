@@ -24,7 +24,7 @@
  * hardcoding copy.
  */
 
-export type PluginKey = 'broadcasts' | 'events' | 'resources';
+export type PluginKey = 'broadcasts' | 'events' | 'resources' | 'volunteers';
 
 export type PluginDefinition = {
 	key: PluginKey;
@@ -69,6 +69,13 @@ export const PLUGIN_REGISTRY: Record<PluginKey, PluginDefinition> = {
 		description: 'Reference links, forms, documents, and contact points members can reopen anytime.',
 		memberOrder: 30,
 		adminOrder: 30
+	},
+	volunteers: {
+		key: 'volunteers',
+		title: 'Volunteers',
+		description: 'Coordinate volunteer shifts and let anyone sign up without an account.',
+		memberOrder: 40,
+		adminOrder: 40
 	}
 };
 
@@ -88,7 +95,8 @@ export function buildPluginStateMap(
 	const map: PluginStateMap = {
 		broadcasts: { isEnabled: false, visibility: 'all_members' },
 		events: { isEnabled: false, visibility: 'all_members' },
-		resources: { isEnabled: false, visibility: 'all_members' }
+		resources: { isEnabled: false, visibility: 'all_members' },
+		volunteers: { isEnabled: false, visibility: 'all_members' }
 	};
 	for (const row of rows) {
 		if (row.plugin_key in map) {

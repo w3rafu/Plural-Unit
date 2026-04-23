@@ -7,6 +7,9 @@
 			variant: {
 				default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
 				secondary: "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+				muted: "border-border/70 bg-background/82 text-muted-foreground [a]:hover:bg-muted/26 [a]:hover:text-foreground dark:border-white/10 dark:bg-black/44",
+				success: "border-emerald-200 bg-emerald-50 text-emerald-800 [a]:hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
+				warning: "border-amber-200 bg-amber-50 text-amber-900 [a]:hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200",
 				destructive: "bg-destructive/10 [a]:hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive dark:bg-destructive/20",
 				outline: "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
 				ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",

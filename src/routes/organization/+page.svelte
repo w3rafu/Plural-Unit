@@ -99,21 +99,19 @@
 
 {#if currentOrganization.isAdmin}
 	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
-			<div class="space-y-1">
-				<p class="text-sm font-medium text-foreground">Choose a section</p>
-				<p class="text-sm text-muted-foreground">
-					Switch between access tools and member management.
-				</p>
+		<Card.Content class="flex flex-col gap-2 p-2.75 sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
+			<div class="space-y-0.5">
+				<p class="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
+				<p class="text-[0.84rem] font-medium text-foreground">Access or member review.</p>
 			</div>
 
-			<nav aria-label="Organization sections" class="w-full">
+			<nav aria-label="Organization sections" class="w-full sm:max-w-md">
 				<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
 					{#each sections as section (section.id)}
 						<Button
 							size="sm"
 							variant="ghost"
-							class="segmented-control__button min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
+							class="segmented-control__button h-9 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
 							aria-current={activeSection === section.id ? 'page' : undefined}
 							onclick={() => (activeSection = section.id)}
 						>

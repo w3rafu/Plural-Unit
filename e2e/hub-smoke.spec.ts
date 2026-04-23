@@ -57,7 +57,7 @@ test.describe('hub smoke routes', () => {
 		await expect(page.getByText('Admin context')).toBeVisible();
 		await expect(page.getByText('Acknowledgment follow-up', { exact: true })).toBeVisible();
 		await expect(page.getByText('2 acknowledged, 6 pending on the current roster.')).toBeVisible();
-		await expect(page.getByText('Lucia Costa')).toBeVisible();
+		await expect(page.getByText('Natalie Quinn')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Open in manage' })).toBeVisible();
 	});
 

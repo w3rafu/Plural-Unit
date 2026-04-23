@@ -210,9 +210,9 @@ function cloneSmokeMessages() {
 	return cloneUiPreviewThreads().map((thread) => ({
 		...thread,
 		archivedAt:
-			thread.participant.name === 'Yara Haddad' ? '2026-04-16T09:30:00.000Z' : thread.archivedAt ?? null,
+			thread.participant.name === 'Sydney Harper' ? '2026-04-16T09:30:00.000Z' : thread.archivedAt ?? null,
 		mutedAt:
-			thread.participant.name === 'Malik Johnson' ? '2026-04-16T10:15:00.000Z' : thread.mutedAt ?? null
+			thread.participant.name === 'Caleb Foster' ? '2026-04-16T10:15:00.000Z' : thread.mutedAt ?? null
 	}));
 }
 
@@ -493,7 +493,8 @@ export function buildSmokeHubState(now = Date.now()): CurrentHubHydratedState {
 		plugins: {
 			broadcasts: { isEnabled: true, visibility: 'all_members' },
 			events: { isEnabled: true, visibility: 'admins_only' },
-			resources: { isEnabled: true, visibility: 'all_members' }
+			resources: { isEnabled: true, visibility: 'all_members' },
+			volunteers: { isEnabled: true, visibility: 'all_members' }
 		},
 		broadcasts,
 		events,

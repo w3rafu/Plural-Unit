@@ -1,4 +1,5 @@
 import rawFixtures from './ui-visual-fixtures.json';
+import { getMemberPortraitAvatar } from './portraitAvatars';
 
 import {
 	buildEventResponseMap,
@@ -24,7 +25,26 @@ export type UiPreviewFixtures = {
 	events: EventRow[];
 };
 
-export const uiPreviewFixtures = rawFixtures as UiPreviewFixtures;
+const previewMembers = rawFixtures.members.map((member) => ({
+	...member,
+	avatar_url: getMemberPortraitAvatar(member.profile_id, member.avatar_url)
+}));
+
+const previewThreads = rawFixtures.threads.map((thread) => ({
+	...thread,
+	participant: {
+		...thread.participant,
+		avatar_url: thread.participant.profileId
+			? getMemberPortraitAvatar(thread.participant.profileId, thread.participant.avatar_url)
+			: thread.participant.avatar_url
+	}
+}));
+
+export const uiPreviewFixtures = {
+	...rawFixtures,
+	members: previewMembers,
+	threads: previewThreads
+} as UiPreviewFixtures;
 
 export const uiPreviewEventResponses: EventResponseRow[] = [
 	{

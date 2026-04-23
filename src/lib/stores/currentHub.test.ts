@@ -2689,7 +2689,8 @@ describe('currentHub.reset', () => {
 		expect(currentHub.plugins).toEqual({
 			broadcasts: { isEnabled: false, visibility: 'all_members' },
 			events: { isEnabled: false, visibility: 'all_members' },
-			resources: { isEnabled: false, visibility: 'all_members' }
+			resources: { isEnabled: false, visibility: 'all_members' },
+			volunteers: { isEnabled: false, visibility: 'all_members' }
 		});
 		expect(currentHub.lastError).toBeNull();
 		expect(currentHub.isLoading).toBe(false);

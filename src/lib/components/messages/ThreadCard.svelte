@@ -4,6 +4,7 @@
   timestamp, and optional unread badge.
 -->
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
 	import type { MessageThread } from '$lib/models/messageModel';
 	import {
 		getParticipantInitials,
@@ -13,7 +14,6 @@
 		isThreadMuted
 	} from '$lib/models/messageModel';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { Badge } from '$lib/components/ui/badge';
 	import { formatThreadTimestamp } from './messageUi';
 	import { cn } from '$lib/utils';
 
@@ -32,25 +32,40 @@
 	const timestamp = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)));
 	const archived = $derived(isThreadArchived(thread));
 	const muted = $derived(isThreadMuted(thread));
+	const statusBadges = $derived.by(() => {
+		const badges: Array<{ label: string; variant: 'warning' | 'muted' }> = [];
+
+		if (thread.unreadCount > 0) {
+			badges.push({ label: `${thread.unreadCount} unread`, variant: 'warning' });
+		}
+
+		if (archived) {
+			badges.push({ label: 'Archived', variant: 'muted' });
+		} else if (muted) {
+			badges.push({ label: 'Muted', variant: 'muted' });
+		}
+
+		return badges;
+	});
 </script>
 
 <button
 	type="button"
 	class={cn(
-		'group flex w-full items-start gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition-[background-color,border-color,box-shadow]',
+		'group flex w-full items-start gap-2.5 rounded-[1.2rem] border border-transparent px-2.5 py-2.5 text-left transition-[background-color,border-color,box-shadow]',
 		isActive
-			? 'border-border/70 bg-accent/60 text-accent-foreground shadow-sm'
+			? 'border-border/70 bg-accent/35 text-accent-foreground shadow-sm dark:border-border/80 dark:bg-background/68'
 			: archived
-				? 'border-border/30 bg-background/80 text-muted-foreground hover:border-border/60 hover:bg-muted/25'
+				? 'border-border/30 bg-background/78 text-muted-foreground hover:border-border/60 hover:bg-muted/20 dark:border-border/60 dark:bg-background/54 dark:hover:bg-background/66'
 			: thread.unreadCount > 0
-				? 'border-border/40 bg-muted/30 hover:border-border/70 hover:bg-muted/50'
-				: 'hover:border-border/60 hover:bg-muted/40'
+					? 'border-border/40 bg-muted/18 hover:border-border/70 hover:bg-muted/28 dark:border-border/60 dark:bg-background/58 dark:hover:bg-background/70'
+				: 'hover:border-border/60 hover:bg-muted/28 dark:hover:bg-background/66'
 	)}
 	{onclick}
 >
 	<Avatar.Root
 		class={cn(
-			'size-10 border bg-muted/50 shadow-sm after:hidden',
+			'size-9 border bg-muted/50 shadow-sm after:hidden',
 			thread.unreadCount > 0 ? 'border-primary/25 bg-primary/5' : 'border-border/70'
 		)}
 	>
@@ -63,29 +78,17 @@
 
 	<div class="min-w-0 flex-1">
 		<div class="flex items-start justify-between gap-2">
-			<div class="min-w-0 space-y-1">
+			<div class="min-w-0 space-y-0.5">
 				<div class="flex items-center gap-2">
-					<span class="truncate text-sm font-semibold text-foreground">{thread.participant.name}</span>
-					{#if archived}
-						<Badge variant="outline" class="rounded-full px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.16em]">
-							Archived
-						</Badge>
-					{/if}
-					{#if muted}
-						<Badge variant="outline" class="rounded-full px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.16em]">
-							Muted
-						</Badge>
-					{/if}
+					<span class="truncate text-[0.95rem] font-semibold leading-5 text-foreground">{thread.participant.name}</span>
 					{#if thread.unreadCount > 0}
 						<span class="size-2 rounded-full bg-primary"></span>
 					{/if}
 				</div>
 
-				{#if thread.participant.subtitle}
-					<p class="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						{thread.participant.subtitle}
-					</p>
-				{/if}
+				<p class="truncate text-[0.74rem] text-muted-foreground">
+					{thread.participant.subtitle || 'Direct conversation'}
+				</p>
 			</div>
 
 			<span
@@ -98,29 +101,18 @@
 			</span>
 		</div>
 
-		<p
-			class={cn(
-				'mt-2 truncate text-xs',
-				thread.unreadCount > 0 && !archived ? 'text-foreground' : 'text-muted-foreground'
-			)}
-		>
+		<p class={cn('mt-1.5 truncate text-[0.84rem] leading-5', thread.unreadCount > 0 && !archived ? 'text-foreground' : 'text-muted-foreground')}>
 			{preview}
 		</p>
 
-		<div class="mt-2 flex items-center justify-between gap-2">
-			{#if thread.participant.isFakeUser}
-				<Badge variant="outline" class="rounded-full border-border/70 bg-background px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-muted-foreground">
-					Demo contact
-				</Badge>
-			{:else}
-				<span class="text-[11px] text-muted-foreground">Direct conversation</span>
-			{/if}
-
-			{#if thread.unreadCount > 0}
-				<Badge variant="default" class="shrink-0 rounded-full tabular-nums">
-					{thread.unreadCount} new
-				</Badge>
-			{/if}
-		</div>
+		{#if statusBadges.length > 0}
+			<div class="mt-1.5 flex flex-wrap gap-1.5">
+				{#each statusBadges as badge (badge.label)}
+					<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium">
+						{badge.label}
+					</Badge>
+				{/each}
+			</div>
+		{/if}
 	</div>
 </button>

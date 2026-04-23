@@ -69,11 +69,15 @@
 	function handleSelectMember(profileId: string) {
 		void currentMessages.openConversationForProfile(profileId);
 	}
+
+	const headerSubtitle = $derived(
+		currentMessages.activeThreadId ? '' : 'Direct and group threads'
+	);
 </script>
 
-<PageHeader preset="section" title="Messages" subtitle="Conversations and threads" />
+<PageHeader preset="section" title="Messages" subtitle={headerSubtitle} />
 
-<main class="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+<main class="flex h-full min-h-0 flex-1 flex-col gap-1.5 overflow-hidden sm:gap-2">
 	{#if !currentMessages.isReady}
 		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content>

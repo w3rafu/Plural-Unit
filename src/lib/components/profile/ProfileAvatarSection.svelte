@@ -33,22 +33,22 @@
 	let avatarInput = $state<HTMLInputElement | null>(null);
 </script>
 
-<div class="rounded-xl border border-border/70 bg-muted/25 p-4">
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex items-center gap-4">
-			<Avatar.Root class="size-20 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+
+	<div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex items-center gap-3">
+			<Avatar.Root class="size-14 border border-border/70 bg-muted/40 after:hidden">
 				{#if activeAvatarUrl}
 					<Avatar.Image src={activeAvatarUrl} alt="Profile preview" />
 				{:else}
-					<Avatar.Fallback class="text-xl font-semibold tracking-tight text-foreground">
+					<Avatar.Fallback class="text-lg font-semibold tracking-tight text-foreground">
 						{initials}
 					</Avatar.Fallback>
 				{/if}
 			</Avatar.Root>
 
-			<div class="space-y-1">
-				<p class="text-sm font-medium text-foreground">Profile photo</p>
-				<p class="text-sm text-muted-foreground">
+			<div class="space-y-0.5">
+				<p class="text-sm font-medium text-foreground">Photo</p>
+				<p class="text-[0.78rem] leading-5 text-muted-foreground">
 					{#if willRemove}
 						Photo will be removed when you save.
 					{:else if previewUrl}
@@ -66,6 +66,8 @@
 			<Button
 				type="button"
 				variant="outline"
+				size="xs"
+				class="h-7 px-3 text-[0.72rem]"
 				onclick={() => avatarInput?.click()}
 				disabled={isSubmitting}
 			>
@@ -75,6 +77,8 @@
 				<Button
 					type="button"
 					variant="ghost"
+					size="xs"
+					class="h-7 px-2.5 text-[0.72rem]"
 					onclick={onRemove}
 					disabled={isSubmitting}
 				>
@@ -93,6 +97,5 @@
 	/>
 
 	{#if fieldError}
-		<p class="mt-4 text-sm text-destructive" role="alert">{fieldError}</p>
+		<p class="mt-3 text-sm text-destructive" role="alert">{fieldError}</p>
 	{/if}
-</div>

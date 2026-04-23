@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Building2Icon from '@lucide/svelte/icons/building-2';
-	import AuthHelpSheet from '$lib/components/ui/AuthHelpSheet.svelte';
+	import HouseIcon from '@lucide/svelte/icons/house';
+	import MessageSquareIcon from '@lucide/svelte/icons/message-square';
+	import UserRoundIcon from '@lucide/svelte/icons/user-round';
+	import UsersIcon from '@lucide/svelte/icons/users';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
+	import { BOTTOM_NAV_TABS, getActiveBottomNavTab } from '$lib/components/ui/bottomNavModel';
 	import HubNotificationsSheet from '$lib/components/ui/HubNotificationsSheet.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -11,9 +15,9 @@
 	import {
 		pageHeader,
 		resolvePageHeaderPreset,
-		shouldShowPageHeaderSubtitle,
-		type PageHeaderAction
+		shouldShowPageHeaderSubtitle
 	} from '$lib/stores/pageHeader.svelte';
+	import { cn } from '$lib/utils';
 
 	const rawPreset = $derived(resolvePageHeaderPreset(pageHeader.config));
 	const isBrandHeader = $derived(rawPreset === 'brand');
@@ -23,6 +27,7 @@
 	const showSubtitle = $derived(
 		Boolean(pageHeader.config.subtitle) && shouldShowPageHeaderSubtitle(rawPreset)
 	);
+	const headerActions = $derived(pageHeader.config.actions ?? []);
 	const showBrandMark = $derived(!hasBack);
 	const showContextAvatar = $derived(
 		hasBack && Boolean(pageHeader.config.avatarText)
@@ -51,6 +56,8 @@
 			: undefined
 	);
 	const controlButtonClass = 'shell-header__control';
+	const activeSectionNavId = $derived(getActiveBottomNavTab(page.url.pathname));
+	const showSectionNav = $derived(currentUser.isLoggedIn);
 </script>
 
 <header class="shell-header">
@@ -100,8 +107,62 @@
 				</div>
 			</div>
 
+			{#if showSectionNav}
+				<nav aria-label="Primary sections" class="shell-header__section-nav">
+					{#each BOTTOM_NAV_TABS as tab (tab.id)}
+						<a
+							href={tab.href}
+							class={cn(
+								'shell-header__section-link',
+								activeSectionNavId === tab.id && 'shell-header__section-link--active'
+							)}
+							aria-current={activeSectionNavId === tab.id ? 'page' : undefined}
+						>
+							{#if tab.id === 'hub'}
+								<HouseIcon class="shell-header__section-icon" aria-hidden="true" />
+							{:else if tab.id === 'messages'}
+								<MessageSquareIcon class="shell-header__section-icon" aria-hidden="true" />
+							{:else if tab.id === 'directory'}
+								<UsersIcon class="shell-header__section-icon" aria-hidden="true" />
+							{:else}
+								<UserRoundIcon class="shell-header__section-icon" aria-hidden="true" />
+							{/if}
+							<span>{tab.shortLabel ?? tab.label}</span>
+						</a>
+					{/each}
+				</nav>
+			{/if}
+
 			<div class="shell-header__controls">
 				<div role="group" aria-label="Header controls" class="shell-header__control-group">
+					{#each headerActions as action, index (action.id)}
+						{#if action.href}
+							<Button
+								href={action.href}
+								type="button"
+								variant={index === 0 ? 'default' : 'outline'}
+								size="sm"
+								class={`${controlButtonClass} ${index === 0 ? 'shell-header__control--primary' : ''}`}
+								disabled={action.disabled}
+								aria-label={action.ariaLabel ?? action.label}
+							>
+								{action.label}
+							</Button>
+						{:else}
+							<Button
+								type="button"
+								variant={index === 0 ? 'default' : 'outline'}
+								size="sm"
+								class={`${controlButtonClass} ${index === 0 ? 'shell-header__control--primary' : ''}`}
+								disabled={action.disabled}
+								aria-label={action.ariaLabel ?? action.label}
+								onclick={() => action.onClick?.()}
+							>
+								{action.label}
+							</Button>
+						{/if}
+					{/each}
+
 					{#if showOrganizationControl}
 						<Button
 							href="/organization"
@@ -113,7 +174,7 @@
 							aria-label="Open organization admin tools"
 						>
 							<Building2Icon class="shell-header__control-icon" aria-hidden="true" />
-							<span class="shell-header__control-label">Org</span>
+							<span class="shell-header__control-label">Admin</span>
 						</Button>
 					{/if}
 
@@ -127,8 +188,6 @@
 							{manageBroadcastsHref}
 							{manageEventsHref}
 						/>
-					{:else}
-						<AuthHelpSheet triggerLabel="Help" triggerClass={controlButtonClass} />
 					{/if}
 
 					<ThemeToggle class={controlButtonClass} />
@@ -140,7 +199,7 @@
 
 <style>
 	.shell-header {
-		padding-top: max(0.1rem, env(safe-area-inset-top));
+		padding-top: max(0.05rem, env(safe-area-inset-top));
 	}
 
 	.shell-header__surface {
@@ -162,10 +221,14 @@
 
 	.shell-header__row {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-columns: minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: 0.85rem;
 		width: 100%;
+	}
+
+	.shell-header__section-nav {
+		display: none;
 	}
 
 	.shell-header__identity {
@@ -181,8 +244,8 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 3.05rem;
-		height: 3.05rem;
+		width: 3.72rem;
+		height: 3.72rem;
 		border: 0;
 		border-radius: 0;
 		background: transparent;
@@ -192,8 +255,8 @@
 
 	.shell-header__brand-image {
 		display: block;
-		width: 2.45rem;
-		height: 2.45rem;
+		width: 3.08rem;
+		height: 3.08rem;
 		object-fit: contain;
 		filter: invert(1) brightness(0.1);
 		transform: none;
@@ -204,13 +267,13 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 2.35rem;
-		height: 2.35rem;
+		width: 2.7rem;
+		height: 2.7rem;
 		overflow: hidden;
 		border: 1px solid var(--border);
 		border-radius: 9999px;
 		background: var(--background);
-		font-size: 0.92rem;
+		font-size: 1rem;
 		font-weight: 700;
 		letter-spacing: -0.02em;
 		color: var(--foreground);
@@ -234,17 +297,19 @@
 	.shell-header__title-block {
 		min-width: 0;
 		display: grid;
-		gap: 0;
+		gap: 0.08rem;
 		align-content: center;
+		max-width: min(100%, 34rem);
 	}
 
 	.shell-header__title {
 		margin: 0;
 		font-size: clamp(1.25rem, 2.5vw, 1.7rem);
 		font-weight: 700;
-		line-height: 1;
+		line-height: 1.08;
 		letter-spacing: -0.045em;
 		color: var(--foreground);
+		text-wrap: balance;
 	}
 
 	.shell-header__title--brand {
@@ -256,19 +321,19 @@
 	}
 
 	.shell-header__surface--page .shell-header__brand-mark {
-		width: 2.75rem;
-		height: 2.75rem;
+		width: 3.35rem;
+		height: 3.35rem;
 	}
 
 	.shell-header__surface--page .shell-header__brand-image {
-		width: 2.2rem;
-		height: 2.2rem;
+		width: 2.74rem;
+		height: 2.74rem;
 	}
 
 	.shell-header__subtitle {
-		margin: 0.16rem 0 0;
-		max-width: 34rem;
-		font-size: 0.82rem;
+		margin: 0.14rem 0 0;
+		max-width: 30rem;
+		font-size: 0.8rem;
 		line-height: 1.35;
 		color: var(--muted-foreground);
 	}
@@ -290,21 +355,19 @@
 		display: flex;
 		align-items: center;
 		justify-self: end;
+		min-width: 0;
 	}
 
 	:global(.shell-header__control-group) {
-		display: inline-flex;
+		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.12rem;
-		border: 1px solid var(--border);
-		border-radius: 9999px;
-		padding: 0.16rem;
-		background: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32);
+		justify-content: flex-end;
+		gap: 0.45rem;
 	}
 
 	:global(.shell-header__control) {
-		border-color: transparent;
+		border-color: color-mix(in srgb, var(--border) 86%, transparent);
 		border-radius: 9999px;
 		background: transparent;
 		box-shadow: none;
@@ -334,9 +397,24 @@
 	}
 
 	:global(.shell-header__control:hover) {
-		background: color-mix(in srgb, var(--color-muted) 88%, white 12%);
+		background: var(--muted);
 		color: var(--foreground);
 		opacity: 1;
+	}
+
+	:global(.shell-header__control--primary) {
+		background: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
+	}
+
+	:global(.shell-header__control--primary:visited) {
+		color: var(--background);
+	}
+
+	:global(.shell-header__control--primary:hover) {
+		background: color-mix(in srgb, var(--foreground) 90%, white 10%);
+		color: var(--background);
 	}
 
 	:global(.shell-header__control:active),
@@ -344,11 +422,9 @@
 	:global(.shell-header__control[aria-current='page']) {
 		position: relative;
 		z-index: 1;
-		background: color-mix(in srgb, var(--color-muted) 76%, var(--foreground) 8%);
-		border-color: transparent;
-		box-shadow:
-			0 1px 2px rgb(15 23 42 / 0.08),
-			inset 0 1px 0 rgb(255 255 255 / 0.18);
+		background: var(--muted);
+		border-color: var(--border);
+		box-shadow: none;
 		opacity: 1;
 	}
 
@@ -363,21 +439,108 @@
 		opacity: 0.72;
 	}
 
-	:global(.shell-header__control-group > * + *) {
-		position: relative;
+	@media (min-width: 1024px) {
+		.shell-header__surface--page .shell-header__title-block {
+			max-width: min(100%, 25rem);
+		}
+
+		.shell-header__section-nav {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+			padding: 0.25rem;
+			border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+			border-radius: 9999px;
+			background: color-mix(in srgb, var(--card) 92%, transparent);
+			box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+		}
+
+		.shell-header__section-link {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.45rem;
+			min-height: 2.2rem;
+			padding: 0.45rem 0.8rem;
+			border: 1px solid transparent;
+			border-radius: 9999px;
+			font-size: 0.76rem;
+			font-weight: 600;
+			line-height: 1;
+			color: var(--muted-foreground);
+			transition:
+				background-color 150ms ease,
+				color 150ms ease,
+				border-color 150ms ease,
+				box-shadow 150ms ease;
+		}
+
+		.shell-header__section-link:hover {
+			background: var(--muted);
+			color: var(--foreground);
+			opacity: 1;
+		}
+
+		.shell-header__section-link--active {
+			border-color: color-mix(in srgb, var(--border) 88%, transparent);
+			background: var(--card);
+			color: var(--foreground);
+			box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+		}
+
+		.shell-header__section-icon {
+			width: 0.95rem;
+			height: 0.95rem;
+			flex: none;
+		}
+
+		:global(.dark .shell-header__section-nav) {
+			background: color-mix(in srgb, var(--card) 82%, transparent);
+			box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+		}
+
+		:global(.dark .shell-header__section-link:hover),
+		:global(.dark .shell-header__section-link--active) {
+			background: color-mix(in srgb, var(--muted) 88%, transparent);
+			color: var(--foreground);
+		}
 	}
 
-	:global(.shell-header__control-group > * + *::before) {
-		content: '';
-		position: absolute;
-		left: -0.06rem;
-		top: 0.5rem;
-		bottom: 0.5rem;
-		width: 1px;
-		background: var(--border);
+	@media (min-width: 1024px) and (max-width: 1180px) {
+		.shell-header__surface--page .shell-header__title {
+			font-size: clamp(1.16rem, 1.9vw, 1.42rem);
+		}
+
+		.shell-header__surface--page .shell-header__title-block {
+			max-width: min(100%, 22rem);
+		}
+	}
+
+	@media (min-width: 1024px) and (max-width: 1100px) {
+		.shell-header__section-nav {
+			gap: 0.15rem;
+			padding: 0.2rem;
+		}
+
+		.shell-header__section-link {
+			gap: 0;
+			padding-inline: 0.58rem;
+		}
+
+		.shell-header__section-link span {
+			display: none;
+		}
+
+		:global(.shell-header__control-group) {
+			gap: 0.35rem;
+		}
+
+		.shell-header__surface--page .shell-header__title-block {
+			max-width: min(100%, 20rem);
+		}
 	}
 
 	:global(.dark .shell-header__surface) {
+		background: transparent;
 		box-shadow: none;
 	}
 
@@ -397,13 +560,9 @@
 		color: var(--muted-foreground);
 	}
 
-	:global(.dark .shell-header__control-group) {
-		background: var(--card);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
-	}
-
 	:global(.dark .shell-header__control) {
 		color: var(--foreground);
+		background: transparent;
 	}
 
 	:global(.dark .shell-header__control:visited) {
@@ -411,18 +570,21 @@
 	}
 
 	:global(.dark .shell-header__control:hover) {
-		background: color-mix(in srgb, var(--color-muted) 82%, white 10%);
+		background: var(--muted);
 		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__control:active),
 	:global(.dark .shell-header__control[aria-expanded='true']),
 	:global(.dark .shell-header__control[aria-current='page']) {
-		background: color-mix(in srgb, var(--color-muted) 72%, white 14%);
-		border-color: transparent;
-		box-shadow:
-			0 1px 3px rgb(0 0 0 / 0.24),
-			inset 0 1px 0 rgb(255 255 255 / 0.08);
+		background: var(--muted);
+	}
+
+	:global(.dark .shell-header__control--primary),
+	:global(.dark .shell-header__control--primary:visited) {
+		background: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
 	}
 
 	:global(.dark .shell-header__control:disabled),
@@ -430,37 +592,58 @@
 		color: var(--muted-foreground);
 	}
 
-	:global(.dark .shell-header__control-group > * + *::before) {
-		background: var(--border);
+	@media (max-width: 720px) {
+		.shell-header__surface,
+		.shell-header__surface--page {
+			padding-inline: 0.65rem;
+		}
+
+		.shell-header__row {
+			grid-template-columns: 1fr;
+			align-items: start;
+		}
+
+		.shell-header__controls {
+			justify-self: stretch;
+		}
+
+		:global(.shell-header__control-group) {
+			justify-content: flex-start;
+		}
 	}
 
 	@media (max-width: 640px) {
 		.shell-header__surface {
-			padding: 0.45rem 0 0.55rem;
+			padding: 0.45rem 0.55rem 0.55rem;
 		}
 
 		.shell-header__row {
-			grid-template-columns: minmax(0, 1fr) auto;
-			align-items: center;
-			gap: 0.5rem;
+			grid-template-columns: 1fr;
+			align-items: start;
+			gap: 0.4rem;
 		}
 
 		.shell-header__identity {
-			gap: 0.6rem;
+			gap: 0.55rem;
 		}
 
 		.shell-header__controls {
-			align-self: center;
-			justify-self: end;
+			align-self: start;
+			justify-self: stretch;
+		}
+
+		:global(.shell-header__control-group) {
+			gap: 0.35rem;
+			justify-content: flex-start;
 		}
 
 		.shell-header__title {
-			font-size: clamp(1.02rem, 5vw, 1.22rem);
+			font-size: clamp(0.98rem, 4.8vw, 1.16rem);
 		}
 
 		.shell-header__subtitle {
-			max-width: 14rem;
-			font-size: 0.74rem;
+			max-width: none;
+			font-size: 0.72rem;
 			line-height: 1.25;
 		}
 
@@ -470,27 +653,23 @@
 		}
 
 		:global(.shell-header__control) {
-			min-width: 2.2rem;
-			padding-inline: 0.55rem;
-		}
-
-		:global(.shell-header__control-group) {
-			padding: 0.12rem;
+			min-width: 2.05rem;
+			padding-inline: 0.45rem;
 		}
 
 		.shell-header__brand-mark {
-			width: 2.45rem;
-			height: 2.45rem;
+			width: 2.3rem;
+			height: 2.3rem;
 		}
 
 		.shell-header__brand-image {
-			width: 2rem;
-			height: 2rem;
+			width: 1.85rem;
+			height: 1.85rem;
 		}
 
 		.shell-header__avatar-badge {
-			width: 2.1rem;
-			height: 2.1rem;
+			width: 2rem;
+			height: 2rem;
 		}
 	}
 </style>

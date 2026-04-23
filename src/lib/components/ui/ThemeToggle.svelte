@@ -2,14 +2,10 @@
 <script lang="ts">
   import SunIcon from "@lucide/svelte/icons/sun";
   import MoonIcon from "@lucide/svelte/icons/moon";
-  import PaletteIcon from "@lucide/svelte/icons/palette";
   import { toggleMode } from "mode-watcher";
   import { Button } from "$lib/components/ui/button";
-  import { currentTheme, AVAILABLE_THEMES } from "$lib/stores/currentTheme.svelte";
 
   let { class: className = "" }: { class?: string } = $props();
-
-  const hasMultipleThemes = AVAILABLE_THEMES.length > 1;
 </script>
 
 <Button
@@ -27,16 +23,3 @@
   />
   <span class="sr-only">Toggle light/dark mode</span>
 </Button>
-
-{#if hasMultipleThemes}
-  <Button
-    onclick={() => currentTheme.next()}
-    variant="outline"
-    size="icon-sm"
-    class={className}
-    aria-label="Switch colour theme ({currentTheme.name})"
-  >
-    <PaletteIcon class="h-[1.1rem] w-[1.1rem]" />
-    <span class="sr-only">Switch colour theme</span>
-  </Button>
-{/if}

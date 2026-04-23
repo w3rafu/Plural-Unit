@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import * as Table from '$lib/components/ui/table';
 	import {
 		buildOrganizationMembersSummary,
 		countRecentOrganizationMembers,
@@ -202,36 +201,36 @@
 			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-3.5">
+		<Card.Content class="space-y-3 p-4 sm:p-5">
 			<DeletionRequestsCard />
 
-			<div class="metric-grid">
-				<div class="metric-card">
+			<div class="grid gap-2.5 sm:grid-cols-3">
+				<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 					<div>
-						<p class="metric-label">Total members</p>
-						<p class="metric-value">{organizationMembers.length}</p>
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Total members</p>
+						<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{organizationMembers.length}</p>
 					</div>
 				</div>
 
-				<div class="metric-card">
+				<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 					<div>
-						<p class="metric-label">Admins</p>
-						<p class="metric-value">{adminCount}</p>
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Admins</p>
+						<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{adminCount}</p>
 					</div>
 				</div>
 
-				<div class="metric-card">
+				<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 					<div>
-						<p class="metric-label">Recent joins</p>
-						<p class="metric-value">{recentJoinCount}</p>
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent joins</p>
+						<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{recentJoinCount}</p>
 					</div>
 				</div>
 			</div>
 
-			<div class="space-y-3">
+			<div class="space-y-2.5">
 				<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
 					<div class="space-y-1">
-						<p class="text-sm text-muted-foreground">{reviewSummary}</p>
+						<p class="text-[0.84rem] text-muted-foreground">{reviewSummary}</p>
 						{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
 							<p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
 								Refreshing the latest access roster
@@ -256,7 +255,7 @@
 							type="button"
 							size="sm"
 							variant={memberFilter === option.value ? 'secondary' : 'outline'}
-							class="rounded-xl"
+							class="h-8 rounded-xl px-3 text-[0.72rem]"
 							onclick={() => (memberFilter = option.value)}
 						>
 							{option.label}
@@ -265,51 +264,35 @@
 				</div>
 			</div>
 
-			<div class="overflow-x-auto overflow-y-hidden rounded-xl border border-border/70 bg-muted/10">
-				<Table.Root class="min-w-176">
-					<Table.Caption class="sr-only">Organization members and roles.</Table.Caption>
-					<Table.Header class="bg-muted/25">
-						<Table.Row>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Member</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Role</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined via</Table.Head>
-							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined</Table.Head>
-							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
-							<Table.Row class="border-0 hover:bg-transparent">
-								<Table.Cell colspan={5} class="py-10 text-center">
-									<p class="text-sm text-muted-foreground">Loading members…</p>
-								</Table.Cell>
-							</Table.Row>
-						{:else if visibleMembers.length > 0}
-							{#each visibleMembers as member (member.profile_id)}
-								<MemberRow
-									{member}
-									{adminCount}
-									draftRole={getDraftRole(member)}
-									isMutating={currentOrganization.isMutating}
-									canMessage={member.profile_id !== currentUser.details.id}
-									onDraftRoleChange={(role) => setDraftRole(member, role)}
-									onRoleConfirm={() => openRoleConfirmation(member)}
-									onRemove={() => openRemoveConfirmation(member)}
-									onMessage={() => messageMember(member)}
-								/>
-							{/each}
-						{:else}
-							<Table.Row class="border-0 hover:bg-transparent">
-								<Table.Cell colspan={5} class="py-10 text-center">
-									<div class="space-y-1">
-										<p class="font-medium text-foreground">{emptyState.title}</p>
-										<p class="text-sm text-muted-foreground">{emptyState.description}</p>
-									</div>
-								</Table.Cell>
-							</Table.Row>
-						{/if}
-					</Table.Body>
-				</Table.Root>
+			<div class="rounded-xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
+				{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
+					<div class="py-10 text-center">
+						<p class="text-sm text-muted-foreground">Loading members…</p>
+					</div>
+				{:else if visibleMembers.length > 0}
+					<div class="space-y-2.5">
+						{#each visibleMembers as member (member.profile_id)}
+							<MemberRow
+								{member}
+								{adminCount}
+								draftRole={getDraftRole(member)}
+								isMutating={currentOrganization.isMutating}
+								canMessage={member.profile_id !== currentUser.details.id}
+								onDraftRoleChange={(role) => setDraftRole(member, role)}
+								onRoleConfirm={() => openRoleConfirmation(member)}
+								onRemove={() => openRemoveConfirmation(member)}
+								onMessage={() => messageMember(member)}
+							/>
+						{/each}
+					</div>
+				{:else}
+					<div class="py-10 text-center">
+						<div class="space-y-1">
+							<p class="font-medium text-foreground">{emptyState.title}</p>
+							<p class="text-sm text-muted-foreground">{emptyState.description}</p>
+						</div>
+					</div>
+				{/if}
 			</div>
 		</Card.Content>
 	{/if}

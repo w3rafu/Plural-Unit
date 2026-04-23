@@ -91,6 +91,8 @@
 
 		return null;
 	});
+	const visibilityLabel = $derived(deliveryStatus?.label ?? 'Draft');
+	const utilityButtonClass = 'h-7 rounded-full px-2.5 text-[0.72rem] font-medium text-muted-foreground hover:text-foreground';
 
 	async function respondToEvent(response: EventResponseStatus) {
 		try {
@@ -126,103 +128,96 @@
 			{/if}
 		</div>
 
-		<div class="space-y-1.5 text-sm text-muted-foreground">
-			<div class="flex items-center gap-2">
+		<div class="grid gap-2 text-sm text-muted-foreground sm:flex sm:flex-wrap sm:gap-2">
+			<div class="flex items-center gap-2 sm:inline-flex sm:rounded-full sm:border sm:border-border/70 sm:bg-background/70 sm:px-3 sm:py-1.5 sm:shadow-sm">
 				<Clock class="size-4 shrink-0" />
 				<span>{formatEventDateTime(event.starts_at)}</span>
 			</div>
 			{#if event.ends_at}
-				<div class="flex items-center gap-2 pl-6">
+				<div class="flex items-center gap-2 sm:inline-flex sm:rounded-full sm:border sm:border-border/70 sm:bg-background/70 sm:px-3 sm:py-1.5 sm:shadow-sm">
+					<Clock class="hidden size-4 shrink-0 opacity-0 sm:block" />
 					<span>Ends {formatShortDateTime(event.ends_at)}</span>
 				</div>
 			{/if}
 			{#if locationLabel}
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 sm:inline-flex sm:rounded-full sm:border sm:border-border/70 sm:bg-background/70 sm:px-3 sm:py-1.5 sm:shadow-sm">
 					<MapPin class="size-4 shrink-0" />
 					<span>{locationLabel}</span>
 				</div>
 			{/if}
 		</div>
 
-		<div class="space-y-3 border-t border-border/70 pt-4">
-			<h2 class="text-sm font-semibold text-foreground">Your response</h2>
-			<div class="flex flex-wrap gap-1.5">
-				{#each EVENT_RESPONSE_OPTIONS as option (option.value)}
-					<Button
-						type="button"
-						size="sm"
-						variant={ownResponse === option.value ? 'secondary' : 'outline'}
-						class="rounded-xl px-3"
-						aria-pressed={ownResponse === option.value}
-						disabled={isSavingResponse || isCanceled}
-						onclick={() => respondToEvent(option.value)}
-					>
-						{option.label}
-					</Button>
-				{/each}
+		<div class="grid gap-3 border-t border-border/70 pt-3.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+			<div class="space-y-2.5">
+				<h2 class="text-sm font-semibold text-foreground">Your response</h2>
+				<div class="flex flex-wrap gap-1.5">
+					{#each EVENT_RESPONSE_OPTIONS as option (option.value)}
+						<Button
+							type="button"
+							size="sm"
+							variant={ownResponse === option.value ? 'secondary' : 'outline'}
+							class="rounded-xl px-3"
+							aria-pressed={ownResponse === option.value}
+							disabled={isSavingResponse || isCanceled}
+							onclick={() => respondToEvent(option.value)}
+						>
+							{option.label}
+						</Button>
+					{/each}
+				</div>
+				{#if isCanceled}
+					<p class="text-xs text-muted-foreground">
+						Responses are closed because this event was canceled.
+					</p>
+				{:else if isSavingResponse}
+					<p class="text-xs text-muted-foreground">Saving your response...</p>
+				{:else if attendance.total > 0}
+					<p class="text-xs text-muted-foreground">{formatEventAttendanceSummary(attendance)}</p>
+				{/if}
 			</div>
-			{#if isCanceled}
-				<p class="text-xs text-muted-foreground">
-					Responses are closed because this event was canceled.
-				</p>
-			{:else if isSavingResponse}
-				<p class="text-xs text-muted-foreground">Saving your response...</p>
-			{:else if attendance.total > 0}
-				<p class="text-xs text-muted-foreground">{formatEventAttendanceSummary(attendance)}</p>
-			{/if}
-		</div>
 
-		<div class="space-y-2 border-t border-border/70 pt-4">
-			<h2 class="text-sm font-semibold text-foreground">Add to calendar</h2>
-			<div class="flex flex-wrap gap-1.5">
-				<Button href={googleCalendarHref} variant="outline" size="sm" target="_blank" rel="noreferrer">
-					<CalendarPlus class="size-4" />
-					Google Calendar
-				</Button>
-				<Button href={calendarDownloadHref} variant="ghost" size="sm" download={buildEventCalendarFileName(event)}>
-					<Download class="size-4" />
-					Download .ics
-				</Button>
+			<div class="space-y-2 lg:justify-self-end">
+				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Calendar</p>
+				<div class="flex flex-wrap gap-1.5 lg:justify-end">
+					<Button href={googleCalendarHref} variant="ghost" size="xs" target="_blank" rel="noreferrer" class={utilityButtonClass}>
+						<CalendarPlus class="size-4" />
+						Google Calendar
+					</Button>
+					<Button href={calendarDownloadHref} variant="ghost" size="xs" download={buildEventCalendarFileName(event)} class={utilityButtonClass}>
+						<Download class="size-4" />
+						Download .ics
+					</Button>
+				</div>
 			</div>
 		</div>
 
 		{#if isAdmin}
-			<div class="space-y-3 border-t border-border/70 pt-4">
+			<div class="space-y-2.5 border-t border-border/70 pt-3.5">
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div class="space-y-1">
 						<h2 class="text-sm font-semibold text-foreground">Admin context</h2>
-						<p class="text-xs text-muted-foreground">
-							Delivery, reminder, and roster context for this event.
-						</p>
+						<p class="text-xs text-muted-foreground">Visibility: {visibilityLabel}.</p>
 					</div>
-					<Button href={manageHref} variant="outline" size="sm">
+					<Button href={manageHref} variant="ghost" size="xs" class={utilityButtonClass}>
 						Open in manage
 					</Button>
 				</div>
 
-				<div class="grid gap-3 sm:grid-cols-2">
-					<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+				<div class="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+					<div class="space-y-1 rounded-[1rem] border border-border/70 bg-background/70 px-3 py-2.5 shadow-sm">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-							Visibility
+							RSVP follow-up
 						</p>
-						<p class="text-sm font-medium text-foreground">{deliveryStatus?.label ?? 'Draft'}</p>
-						<p class="text-xs text-muted-foreground">{deliveryCopy}</p>
+						<p class="text-xs text-muted-foreground">{responseRosterCopy}</p>
 					</div>
 
-					<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+					<div class="space-y-1 rounded-[1rem] border border-border/70 bg-background/70 px-3 py-2.5 shadow-sm">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 							Reminders
 						</p>
 						<p class="text-sm font-medium text-foreground">{reminderLabel}</p>
 						<p class="text-xs text-muted-foreground">{reminderCopy}</p>
 					</div>
-				</div>
-
-				<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						RSVP follow-up
-					</p>
-					<p class="text-xs text-muted-foreground">{responseRosterCopy}</p>
 				</div>
 
 				{#if isLoadingMemberRoster}

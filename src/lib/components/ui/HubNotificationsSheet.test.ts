@@ -8,7 +8,7 @@ import type { EventRow } from '$lib/repositories/hubRepository';
 const { mockCurrentOrganization, mockLoadMembers } = vi.hoisted(() => ({
 	mockLoadMembers: vi.fn().mockResolvedValue(undefined),
 	mockCurrentOrganization: {
-		organization: { id: 'org-1', name: 'Harbor Unit' },
+		organization: { id: 'org-1', name: 'Old Town Cape' },
 		membership: { profile_id: 'profile-1', role: 'admin' as const },
 		isAdmin: true,
 		members: [],

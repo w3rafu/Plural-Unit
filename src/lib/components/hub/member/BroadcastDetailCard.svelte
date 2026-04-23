@@ -85,6 +85,19 @@
 
 		return snapshot;
 	});
+	const metadataRows = $derived.by(() => {
+		const rows = [
+			`${broadcast.publish_at ? 'Published' : 'Created'} ${publishedAtLabel}`,
+			`Last updated ${formatShortDateTime(broadcast.updated_at)}`
+		];
+
+		if (broadcast.expires_at) {
+			rows.push(`Expires ${formatShortDateTime(broadcast.expires_at)}`);
+		}
+
+		return rows;
+	});
+	const utilityButtonClass = 'h-7 rounded-full px-2.5 text-[0.72rem] font-medium text-muted-foreground hover:text-foreground';
 
 	async function toggleAcknowledgment() {
 		try {
@@ -121,24 +134,24 @@
 			</p>
 		</div>
 
-		<div class="space-y-3 border-t border-border/70 pt-4">
-			<div class="grid gap-3 sm:grid-cols-2">
-				<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+		<div class="space-y-2.5 border-t border-border/70 pt-3.5">
+			<div class="grid grid-cols-2 gap-2 sm:gap-2.5">
+				<div class="space-y-0.75 rounded-[0.95rem] border border-border/70 bg-background/70 px-2.5 py-2.25 shadow-sm sm:space-y-1 sm:rounded-[1rem] sm:px-3 sm:py-2.5">
 					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 						Visibility
 					</p>
-					<p class="text-sm font-medium text-foreground">{deliveryStatus?.label ?? stateLabel}</p>
-					<p class="text-xs text-muted-foreground">{detailCopy}</p>
+					<p class="text-[0.94rem] font-medium text-foreground sm:text-sm">{deliveryStatus?.label ?? stateLabel}</p>
+					<p class="text-[0.74rem] leading-4 text-muted-foreground sm:text-xs">{detailCopy}</p>
 				</div>
 
-				<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+				<div class="space-y-0.75 rounded-[0.95rem] border border-border/70 bg-background/70 px-2.5 py-2.25 shadow-sm sm:space-y-1 sm:rounded-[1rem] sm:px-3 sm:py-2.5">
 					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 						Acknowledgments
 					</p>
-					<p class="text-sm font-medium text-foreground">
+					<p class="text-[0.94rem] font-medium text-foreground sm:text-sm">
 						{acknowledgmentCount} {acknowledgmentCount === 1 ? 'member' : 'members'} acknowledged
 					</p>
-					<p class="text-xs text-muted-foreground">
+					<p class="text-[0.74rem] leading-4 text-muted-foreground sm:text-xs">
 						{hasAcknowledged
 							? 'You already acknowledged this broadcast.'
 							: 'Acknowledge it once you have read and understood the update.'}
@@ -146,26 +159,25 @@
 				</div>
 			</div>
 
-			<div class="space-y-1.5 text-sm text-muted-foreground">
-				<div class="flex items-center gap-2">
-					<Clock class="size-4 shrink-0" />
-					<span>
-						{broadcast.publish_at ? 'Published' : 'Created'} {publishedAtLabel}
-					</span>
-				</div>
-				<div class="flex items-center gap-2 pl-6">
-					<span>Last updated {formatShortDateTime(broadcast.updated_at)}</span>
-				</div>
-				{#if broadcast.expires_at}
-					<div class="flex items-center gap-2 pl-6">
-						<span>Expires {formatShortDateTime(broadcast.expires_at)}</span>
+			<div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[0.84rem] text-muted-foreground">
+				{#each metadataRows as row, index (row)}
+					<div class={`flex items-center gap-2 ${index === 0 ? '' : 'sm:pl-0'}`}>
+						{#if index === 0}
+							<Clock class="size-4 shrink-0" />
+						{/if}
+						<span>{row}</span>
 					</div>
-				{/if}
+				{/each}
 			</div>
 		</div>
 
-		<div class="space-y-3 border-t border-border/70 pt-4">
-			<h2 class="text-sm font-semibold text-foreground">Your acknowledgment</h2>
+		<div class="space-y-2.5 border-t border-border/70 pt-3.5">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<h2 class="text-sm font-semibold text-foreground">Your acknowledgment</h2>
+				<p class="text-xs text-muted-foreground">
+					{acknowledgmentCount} {acknowledgmentCount === 1 ? 'acknowledgment' : 'acknowledgments'} total
+				</p>
+			</div>
 			<div class="flex flex-wrap items-center gap-3">
 				<Button
 					type="button"
@@ -182,36 +194,30 @@
 						Acknowledge
 					{/if}
 				</Button>
-				<p class="text-xs text-muted-foreground">
-					{acknowledgmentCount} {acknowledgmentCount === 1 ? 'acknowledgment' : 'acknowledgments'} total
-				</p>
 			</div>
 		</div>
 
 		{#if isAdmin}
-			<div class="space-y-3 border-t border-border/70 pt-4">
+			<div class="space-y-2.5 border-t border-border/70 pt-3.5">
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div class="space-y-1">
 						<h2 class="text-sm font-semibold text-foreground">Admin context</h2>
-						<p class="text-xs text-muted-foreground">
-							Delivery, timing, and acknowledgment follow-up for this broadcast.
-						</p>
 					</div>
-					<Button href={manageHref} variant="outline" size="sm">
+					<Button href={manageHref} variant="ghost" size="xs" class={utilityButtonClass}>
 						Open in manage
 					</Button>
 				</div>
 
-				<div class="grid gap-3 sm:grid-cols-2">
-					<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+				<div class="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+					<div class="space-y-1 rounded-[1rem] border border-border/70 bg-background/70 px-3 py-2.5 shadow-sm">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-							Visibility
+							Acknowledgment follow-up
 						</p>
-						<p class="text-sm font-medium text-foreground">{deliveryStatus?.label ?? stateLabel}</p>
-						<p class="text-xs text-muted-foreground">{detailCopy}</p>
+						<p class="text-sm font-medium text-foreground">{acknowledgmentCount} acknowledged so far</p>
+						<p class="text-xs text-muted-foreground">{acknowledgmentRosterCopy}</p>
 					</div>
 
-					<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
+					<div class="space-y-1 rounded-[1rem] border border-border/70 bg-background/70 px-3 py-2.5 shadow-sm">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 							Lifecycle
 						</p>
@@ -220,13 +226,6 @@
 						</p>
 						<p class="text-xs text-muted-foreground">{engagementCopy}</p>
 					</div>
-				</div>
-
-				<div class="space-y-1 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						Follow-up snapshot
-					</p>
-					<p class="text-xs text-muted-foreground">{acknowledgmentRosterCopy}</p>
 				</div>
 
 				{#if isLoadingMemberRoster}

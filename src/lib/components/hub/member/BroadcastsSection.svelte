@@ -21,13 +21,13 @@
 	const items = $derived(sortActiveBroadcasts(broadcasts ?? currentHub.activeBroadcasts));
 
 	function getMetaCopy(broadcast: BroadcastRow) {
-		const parts = [broadcast.publish_at ? formatShortDateTime(broadcast.publish_at) : formatShortDate(broadcast.created_at)];
-
 		if (broadcast.expires_at) {
-			parts.push(`Expires ${formatShortDateTime(broadcast.expires_at)}`);
+			return `Expires ${formatShortDateTime(broadcast.expires_at)}`;
 		}
 
-		return parts.join(' · ');
+		return broadcast.publish_at
+			? `Published ${formatShortDateTime(broadcast.publish_at)}`
+			: `Created ${formatShortDate(broadcast.created_at)}`;
 	}
 </script>
 
@@ -56,14 +56,14 @@
 				{@const ackBusy = currentHub.broadcastAcknowledgmentTargetId === broadcast.id}
 				{@const detailHref = `/hub/broadcast/${broadcast.id}`}
 				<Card.Root size="sm" class="border-border/70 bg-card">
-					<Card.Content class="space-y-3">
+					<Card.Content class="space-y-4">
 						<div class="flex items-center justify-between gap-3">
 							<div class="flex flex-wrap gap-2">
-								<Badge variant="secondary" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+								<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
 									Broadcast
 								</Badge>
 								{#if broadcast.is_pinned || broadcast.expires_at}
-									<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+									<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
 										{getBroadcastStateLabel(broadcast)}
 									</Badge>
 								{/if}
@@ -79,7 +79,7 @@
 							<p class="text-sm leading-6 text-muted-foreground">{broadcast.body}</p>
 							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
 						</div>
-						<div class="flex items-center justify-between gap-3 pt-1">
+						<div class="flex items-center justify-between gap-3 border-t border-border/70 pt-3">
 							<p class="text-xs text-muted-foreground">
 								{ackCount} {ackCount === 1 ? 'acknowledgment' : 'acknowledgments'}
 							</p>

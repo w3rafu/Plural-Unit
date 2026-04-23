@@ -47,7 +47,7 @@ test.describe('organization smoke routes', () => {
 
 		await page.getByLabel('Organization sections').getByRole('button', { name: 'Members' }).click();
 		await expect(page.getByText('Deletion requests', { exact: true })).toBeVisible();
-		await expect(page.getByText('Nico Park').first()).toBeVisible();
+		await expect(page.getByText('Mason Reed').first()).toBeVisible();
 
 		await page.getByRole('button', { name: 'Mark reviewed' }).click();
 

@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import ActivityDotGrid from '$lib/components/ui/ActivityDotGrid.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Card from '$lib/components/ui/card';
 	import { computeAvatarInitials } from '$lib/components/profile/avatarUploadModel';
+	import { currentHub } from '$lib/stores/currentHub.svelte';
+	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 
@@ -32,18 +34,6 @@
 		}
 	});
 
-	const supportingText = $derived.by(() => {
-		if (currentOrganization.organization && currentUser.details.name.trim()) {
-			return `${currentUser.details.name.trim()} is connected to ${currentOrganization.organization.name} and can manage account details from this page.`;
-		}
-
-		if (currentOrganization.organization) {
-			return `Your account is connected to ${currentOrganization.organization.name}. Finish adding profile details so teammates know who is showing up.`;
-		}
-
-		return 'Profile details will appear here once your membership is loaded.';
-	});
-
 	const contactLabel = $derived.by(() => {
 		if (currentUser.details.phone_number.trim()) {
 			return currentUser.details.phone_number.trim();
@@ -55,25 +45,57 @@
 
 		return 'Add contact details';
 	});
+	const memberCountLabel = $derived(
+		currentOrganization.memberCount === null
+			? 'Loading members'
+			: `${currentOrganization.memberCount} members`
+	);
+	const profileSummary = $derived.by(() => {
+		const bio = currentUser.details.bio.trim();
 
-	const overviewStats = $derived.by(() => [
-		{
-			label: 'Organization',
-			value: currentOrganization.organization?.name ?? 'Not connected'
-		},
-		{
-			label: 'Role',
-			value: currentOrganization.membership?.role ?? '—'
-		},
-		{
-			label: 'Contact',
-			value: contactLabel
-		},
-		{
-			label: 'Members',
-			value: currentOrganization.memberCount === null ? 'Loading...' : String(currentOrganization.memberCount)
+		if (bio) {
+			return bio;
 		}
-	]);
+
+		return 'Keep your photo and contact details current so members know who to reach first.';
+	});
+	const unreadMessages = $derived(currentMessages.totalUnreadCount);
+	const activeBroadcasts = $derived(currentHub.activeBroadcasts.length);
+
+	function clamp(value: number, min: number, max: number) {
+		return Math.min(max, Math.max(min, value));
+	}
+
+	function buildActivityCells(seedValues: number[], offset: number) {
+		return Array.from({ length: 28 }, (_, index) => {
+			const base = seedValues[index % seedValues.length] ?? 0;
+			const bucket = clamp(Math.round(base / 25), 0, 4);
+			const wave = index % 7 >= 3 ? 1 : 0;
+			const pulse = (index + offset) % 6 === 0 ? 1 : 0;
+			const dip = (index + offset) % 5 === 0 ? 1 : 0;
+			return clamp(bucket + wave + pulse - dip, 0, 4);
+		});
+	}
+
+	const personalActivityValues = $derived(
+		buildActivityCells(
+			[
+				unreadMessages * 18,
+				activeBroadcasts * 24,
+				(currentOrganization.memberCount ?? 0) * 4,
+				currentOrganization.membership?.role === 'admin' ? 72 : 48,
+				currentUser.details.bio.trim() ? 58 : 28
+			],
+			unreadMessages + activeBroadcasts + (currentOrganization.memberCount ?? 0)
+		)
+	);
+	const personalActivityCaption = $derived.by(() => {
+		if (unreadMessages > 0 || activeBroadcasts > 0) {
+			return 'Inbox, broadcast, and org coordination activity across the last few weeks.';
+		}
+
+		return 'Recent personal activity is steady even though nothing urgent needs attention right now.';
+	});
 
 	$effect(() => {
 		if (currentOrganization.organization && currentOrganization.memberCount === null) {
@@ -83,9 +105,10 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-3 border-b border-border/70">
-		<div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3.5">
-			<Avatar.Root class="size-14 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+	<Card.Content class="p-4 sm:p-5 lg:grid lg:grid-cols-[minmax(0,1.15fr)_17rem] lg:items-start lg:gap-5">
+		<div class="space-y-3.5">
+			<div class="flex items-start gap-3.5 sm:gap-4">
+			<Avatar.Root class="size-14 border border-border/70 bg-muted/40 after:hidden sm:size-16">
 				{#if currentUser.details.avatar_url}
 					<Avatar.Image
 						src={currentUser.details.avatar_url}
@@ -98,39 +121,26 @@
 				{/if}
 			</Avatar.Root>
 
-			<div class="min-w-0 space-y-1.5">
-				<div class="space-y-0.5">
-					<div class="space-y-0.5">
-						<Card.Title class="text-lg font-semibold tracking-tight text-foreground">
-							{currentUser.details.name || 'Profile snapshot'}
-						</Card.Title>
-						<Card.Description>{roleLabel}</Card.Description>
-						<Card.Description>{joinLabel}</Card.Description>
-					</div>
+				<div class="min-w-0 space-y-1.5">
+					<Card.Title class="text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.72rem]">
+						{currentUser.details.name || 'Profile snapshot'}
+					</Card.Title>
+					<p class="text-sm text-muted-foreground">
+						{roleLabel} · {currentOrganization.organization?.name ?? 'No organization'}
+					</p>
+					<p class="text-sm text-muted-foreground">{contactLabel}</p>
 				</div>
 			</div>
-		</div>
-	</Card.Header>
 
-	<Card.Content class="space-y-3">
-		<div class="metric-grid">
-			{#each overviewStats as stat (stat.label)}
-				<div class="metric-card min-w-0">
-					<div>
-						<p class="metric-label">{stat.label}</p>
-						<p class="metric-value metric-value--compact wrap-break-word">{stat.value}</p>
-					</div>
-				</div>
-			{/each}
+			<div class="flex flex-wrap gap-2">
+				<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
+			</div>
+
+			<p class="max-w-2xl text-[0.84rem] leading-6 text-muted-foreground">{profileSummary}</p>
 		</div>
 
-		<p class="max-w-2xl text-sm leading-5 text-muted-foreground">{supportingText}</p>
+		<ActivityDotGrid title="Personal rhythm" caption={personalActivityCaption} values={personalActivityValues} compact={true} footer="Past 4 weeks" />
 	</Card.Content>
-
-	<Card.Footer class="border-t border-border/70 pt-3">
-		<div class="flex flex-wrap gap-2">
-			<Badge variant="secondary">{currentOrganization.membership?.role ?? 'member'}</Badge>
-			<Badge variant="outline">{currentOrganization.organization?.name ?? 'No organization'}</Badge>
-		</div>
-	</Card.Footer>
 </Card.Root>

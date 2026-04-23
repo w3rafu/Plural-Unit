@@ -64,64 +64,40 @@
 		return formatShortDate(createdAt) || '—';
 	});
 
-	const overviewStats = $derived.by(() => {
-		const base = [
-			{
-				label: 'Organization',
-				value: currentOrganization.organization?.name ?? 'No organization yet'
-			},
-			{
-				label: 'Role',
-				value: currentOrganization.membership?.role ?? '—'
-			},
-			{
-				label: 'Joined',
-				value: joinedLabel
-			},
-			{
-				label: 'Created',
-				value: createdLabel
-			}
+	const memberCountLabel = $derived(
+		currentOrganization.memberCount === null ? '— members' : `${currentOrganization.memberCount} members`
+	);
+	const inviteCountLabel = $derived(`${currentOrganization.invitations.length} pending invites`);
+	const overviewChips = $derived.by(() => {
+		const chips = [
+			joinedLabel,
+			createdLabel === '—' ? 'Created date pending' : `Created ${createdLabel}`,
+			memberCountLabel
 		];
 
-		const membersValue =
-			currentOrganization.memberCount === null ? '—' : String(currentOrganization.memberCount);
-
 		if (currentOrganization.isAdmin) {
-			return [
-				...base,
-				{ label: 'Members', value: membersValue },
-				{ label: 'Pending invites', value: String(currentOrganization.invitations.length) }
-			];
+			chips.push(inviteCountLabel);
 		}
 
-		return [...base, { label: 'Members', value: membersValue }];
+		return chips;
 	});
+
 </script>
 
-<Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
-		<Card.Title class="text-lg font-semibold tracking-tight">Overview</Card.Title>
-		<Card.Description>Your organization membership at a glance.</Card.Description>
-	</Card.Header>
-
-	<Card.Content>
-		<div class="metric-grid">
-			{#each overviewStats as stat (stat.label)}
-				<div class="metric-card">
-					<div>
-						<p class="metric-label">{stat.label}</p>
-						{#if stat.label === 'Organization' && isEditing}
-							<form
-								class="mt-1 flex items-center gap-2"
-								onsubmit={(e) => { e.preventDefault(); saveName(); }}
-							>
-								<Input
-									bind:value={editName}
-									class="h-8 text-sm"
-									placeholder="Organization name"
-									disabled={currentOrganization.isMutating}
-								/>
+	<Card.Root size="sm" class="border-border/70 bg-card">
+		<Card.Content class="space-y-3.5 px-4 py-4 sm:px-5 sm:py-4.5 lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(15rem,0.92fr)] lg:items-start lg:gap-5 lg:space-y-0">
+			<div class="space-y-3">
+				<div class="space-y-1.5">
+					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Overview</p>
+					{#if isEditing}
+						<form class="flex flex-col gap-2.5 sm:flex-row sm:items-center" onsubmit={(e) => { e.preventDefault(); saveName(); }}>
+							<Input
+								bind:value={editName}
+								class="h-9 rounded-xl text-sm"
+								placeholder="Organization name"
+								disabled={currentOrganization.isMutating}
+							/>
+							<div class="flex items-center gap-2">
 								<Button
 									type="submit"
 									size="sm"
@@ -139,25 +115,52 @@
 								>
 									Cancel
 								</Button>
-							</form>
-						{:else}
-							<p class="metric-value metric-value--compact">
-								{stat.value}
-								{#if stat.label === 'Organization' && currentOrganization.isAdmin}
-									<button
-										type="button"
-										class="text-muted-foreground hover:text-foreground ml-1 inline-flex align-middle transition-colors"
-										onclick={startEditing}
-										aria-label="Edit organization name"
-									>
-										<Pencil class="h-3.5 w-3.5" />
-									</button>
-								{/if}
-							</p>
-						{/if}
-					</div>
+							</div>
+						</form>
+					{:else}
+						<div class="flex flex-wrap items-center gap-2">
+							<h2 class="text-[1.2rem] font-semibold tracking-tight text-foreground sm:text-[1.72rem]">
+								{currentOrganization.organization?.name ?? 'No organization yet'}
+							</h2>
+							{#if currentOrganization.isAdmin}
+								<button
+									type="button"
+									class="inline-flex size-7 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground transition-colors hover:text-foreground dark:border-white/10 dark:bg-black/56 sm:size-8"
+									onclick={startEditing}
+									aria-label="Edit organization name"
+								>
+									<Pencil class="h-3.5 w-3.5" />
+								</button>
+							{/if}
+						</div>
+					{/if}
+					<p class="text-[0.84rem] leading-5 text-muted-foreground sm:text-[0.92rem]">
+						{currentOrganization.membership?.role ?? '—'} access with join code, invitation, and roster controls below.
+					</p>
 				</div>
-			{/each}
-		</div>
-	</Card.Content>
+
+			<div class="flex flex-wrap gap-1.5 sm:gap-2">
+					{#each overviewChips as chip (chip)}
+					<div class="rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56 sm:px-3 sm:py-1.5 sm:text-[0.72rem]">
+							{chip}
+						</div>
+					{/each}
+				</div>
+			</div>
+
+		<div class="grid grid-cols-3 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+			<div class="rounded-[1rem] border border-border/70 bg-muted/12 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Role</p>
+				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.membership?.role ?? '—'}</p>
+				</div>
+			<div class="rounded-[1rem] border border-border/70 bg-muted/12 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Members</p>
+				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}</p>
+				</div>
+			<div class="rounded-[1rem] border border-border/70 bg-muted/12 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invites</p>
+				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.invitations.length}</p>
+				</div>
+			</div>
+		</Card.Content>
 </Card.Root>

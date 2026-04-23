@@ -23,13 +23,13 @@
 	}
 </script>
 
-<Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
-		<Card.Title class="text-lg font-semibold tracking-tight">Deletion requests</Card.Title>
+<Card.Root size="sm" class="border-border/70 bg-muted/10 shadow-none">
+	<Card.Header class="gap-1.5 border-b border-border/60 pb-3">
+		<Card.Title class="text-base font-semibold tracking-tight">Deletion requests</Card.Title>
 		<Card.Description>Pending member offboarding requests that still need admin review.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-3.5">
+	<Card.Content class="space-y-3 p-4 sm:p-4.5">
 		{#if currentOrganization.isLoadingDeletionRequests && currentOrganization.deletionRequests.length === 0}
 			<p class="text-sm text-muted-foreground">Loading pending requests…</p>
 		{:else if currentOrganization.deletionRequests.length === 0}
@@ -40,9 +40,9 @@
 				</p>
 			</div>
 		{:else}
-			<div class="space-y-3">
+			<div class="space-y-2.5">
 				{#each currentOrganization.deletionRequests as request (request.profile_id)}
-					<div class="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+					<div class="rounded-[1.15rem] border border-border/70 bg-background px-3.5 py-3.5">
 						<div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
 							<div class="min-w-0 space-y-2">
 								<div class="space-y-1">

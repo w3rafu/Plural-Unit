@@ -40,7 +40,8 @@ describe('getActivePluginsForMember', () => {
 		const result = getActivePluginsForMember({
 			broadcasts: { isEnabled: false, visibility: 'all_members' },
 			events: { isEnabled: false, visibility: 'all_members' },
-			resources: { isEnabled: false, visibility: 'all_members' }
+			resources: { isEnabled: false, visibility: 'all_members' },
+			volunteers: { isEnabled: false, visibility: 'all_members' }
 		});
 		expect(result).toEqual([]);
 	});
@@ -49,7 +50,8 @@ describe('getActivePluginsForMember', () => {
 		const result = getActivePluginsForMember({
 			broadcasts: { isEnabled: true, visibility: 'all_members' },
 			events: { isEnabled: true, visibility: 'all_members' },
-			resources: { isEnabled: true, visibility: 'admins_only' }
+			resources: { isEnabled: true, visibility: 'admins_only' },
+			volunteers: { isEnabled: false, visibility: 'all_members' }
 		});
 		expect(result.map((p) => p.key)).toEqual(['broadcasts', 'events']);
 	});
@@ -58,7 +60,8 @@ describe('getActivePluginsForMember', () => {
 		const result = getActivePluginsForMember({
 			broadcasts: { isEnabled: false, visibility: 'all_members' },
 			events: { isEnabled: false, visibility: 'all_members' },
-			resources: { isEnabled: true, visibility: 'all_members' }
+			resources: { isEnabled: true, visibility: 'all_members' },
+			volunteers: { isEnabled: false, visibility: 'all_members' }
 		});
 		expect(result).toHaveLength(1);
 		expect(result[0].key).toBe('resources');
@@ -71,7 +74,8 @@ describe('getVisiblePluginsForRole', () => {
 			{
 				broadcasts: { isEnabled: true, visibility: 'all_members' },
 				events: { isEnabled: true, visibility: 'admins_only' },
-				resources: { isEnabled: false, visibility: 'all_members' }
+				resources: { isEnabled: false, visibility: 'all_members' },
+				volunteers: { isEnabled: false, visibility: 'all_members' }
 			},
 			'admin'
 		);
@@ -83,7 +87,8 @@ describe('getVisiblePluginsForRole', () => {
 			{
 				broadcasts: { isEnabled: true, visibility: 'all_members' },
 				events: { isEnabled: true, visibility: 'admins_only' },
-				resources: { isEnabled: true, visibility: 'admins_only' }
+				resources: { isEnabled: true, visibility: 'admins_only' },
+				volunteers: { isEnabled: false, visibility: 'all_members' }
 			},
 			'member'
 		);
@@ -100,7 +105,7 @@ describe('getPluginAudienceLabel', () => {
 describe('getAllPluginsForAdmin', () => {
 	it('returns all plugins in admin order', () => {
 		const result = getAllPluginsForAdmin();
-		expect(result.map((p) => p.key)).toEqual(['broadcasts', 'events', 'resources']);
+		expect(result.map((p) => p.key)).toEqual(['broadcasts', 'events', 'resources', 'volunteers']);
 	});
 });
 

@@ -20,14 +20,18 @@ complete set of CSS custom-property overrides for `light` and `dark` mode.
 3. Replace `:root` with `[data-theme='<your-theme>']` and `.dark` with
    `[data-theme='<your-theme>'].dark`.
 4. Import the new file in `src/routes/layout.css`:
+
    ```css
    @import '../themes/<your-theme>.css';
    ```
+
 5. Register the name in `src/lib/stores/currentTheme.svelte.ts`:
+
    ```ts
    export const AVAILABLE_THEMES = ['zinc', 'midnight', '<your-theme>'] as const;
    ```
-6. Done — the palette button in the header will cycle through it.
+
+6. Wire it up through the theme store if you need a custom switcher or developer-only theme control.
 
 ## Token reference
 
