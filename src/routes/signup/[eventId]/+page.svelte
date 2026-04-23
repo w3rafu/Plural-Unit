@@ -75,13 +75,8 @@
 		>
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-5 px-5 py-6 lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)] lg:items-start lg:gap-6 lg:space-y-0 lg:px-7 lg:py-7">
-				<div class="space-y-5 lg:space-y-6">
-					<div class="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/85 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-						<span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
-						Volunteer confirmed
-					</div>
-
+			<Card.Content class="relative space-y-6 px-5 py-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.9fr)] lg:items-start lg:gap-6 lg:space-y-0 lg:px-7 lg:py-7">
+				<div class="space-y-5">
 					<div class="flex items-start gap-4">
 						<div class="flex h-13 w-13 shrink-0 items-center justify-center rounded-[1.2rem] border border-primary/15 bg-primary/10 text-primary shadow-sm">
 							<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -89,6 +84,7 @@
 							</svg>
 						</div>
 						<div class="min-w-0">
+							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer confirmed</p>
 							<h1 class="text-[2rem] font-semibold tracking-tight text-foreground lg:text-[2.45rem] lg:leading-[0.96]">
 								You are all set for {selectedShift?.title ?? 'your shift'}
 							</h1>
@@ -96,55 +92,30 @@
 								Confirmation is on its way to {email}. Bring yourself, arrive a few minutes early,
 								and we will take care of the rest.
 							</p>
-							<div class="mt-4 flex flex-wrap gap-2 text-[0.72rem] font-medium text-muted-foreground">
-								<span class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1">{event.date}</span>
-								<span class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1">{selectedShift?.startTime} – {selectedShift?.endTime}</span>
-								<span class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1">{event.location}</span>
-							</div>
+							<p class="mt-3 text-sm text-muted-foreground">{event.date} · {selectedShift?.startTime} – {selectedShift?.endTime} · {event.location}</p>
 						</div>
 					</div>
 
-					<div class="grid gap-3 sm:grid-cols-3">
-						<div class="rounded-[1.15rem] border border-border/70 bg-background/82 px-3.5 py-3.5 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Reminder</p>
-							<p class="mt-2 text-sm font-medium text-foreground">Sent to {email}</p>
-							<p class="mt-1 text-sm leading-5 text-muted-foreground">No account is required. Keep the email handy if you need to confirm details.</p>
-						</div>
-						<div class="rounded-[1.15rem] border border-border/70 bg-background/82 px-3.5 py-3.5 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Arrival</p>
-							<p class="mt-2 text-sm font-medium text-foreground">Check in 10 minutes early</p>
-							<p class="mt-1 text-sm leading-5 text-muted-foreground">That gives the team enough time to point you to the right area and answer questions.</p>
-						</div>
-						<div class="rounded-[1.15rem] border border-border/70 bg-background/82 px-3.5 py-3.5 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Need another hand?</p>
-							<p class="mt-2 text-sm font-medium text-foreground">Share the signup page</p>
-							<p class="mt-1 text-sm leading-5 text-muted-foreground">You can reopen this event and reserve another open role if someone wants to join you.</p>
-						</div>
-					</div>
-
-					<div class="rounded-[1.4rem] border border-border/70 bg-muted/20 px-4 py-4 shadow-sm">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">What happens next</p>
-						<div class="mt-3 space-y-3">
-							<div class="flex items-start gap-3">
-								<span class="mt-2 h-2 w-2 rounded-full bg-primary"></span>
-								<div>
-									<p class="text-sm font-medium text-foreground">Your shift is saved</p>
-									<p class="text-sm leading-5 text-muted-foreground">We reserved {selectedShift?.title} for {name}, and the team will expect you during that window.</p>
-								</div>
+					<div class="space-y-3 border-t border-border/60 pt-4">
+						<div class="flex items-start gap-3">
+							<span class="mt-2 h-2 w-2 rounded-full bg-primary"></span>
+							<div>
+								<p class="text-sm font-medium text-foreground">Your shift is reserved</p>
+								<p class="text-sm leading-5 text-muted-foreground">We saved {selectedShift?.title} for {name}, and the team will expect you during that window.</p>
 							</div>
-							<div class="flex items-start gap-3">
-								<span class="mt-2 h-2 w-2 rounded-full bg-primary/70"></span>
-								<div>
-									<p class="text-sm font-medium text-foreground">A reminder can go to your inbox</p>
-									<p class="text-sm leading-5 text-muted-foreground">If plans change, use the same signup page to send updated details before the event.</p>
-								</div>
+						</div>
+						<div class="flex items-start gap-3">
+							<span class="mt-2 h-2 w-2 rounded-full bg-primary/70"></span>
+							<div>
+								<p class="text-sm font-medium text-foreground">Show up a few minutes early</p>
+								<p class="text-sm leading-5 text-muted-foreground">Come to {event.location} about 10 minutes before {selectedShift?.startTime} so the coordinator can point you in.</p>
 							</div>
-							<div class="flex items-start gap-3">
-								<span class="mt-2 h-2 w-2 rounded-full bg-primary/45"></span>
-								<div>
-									<p class="text-sm font-medium text-foreground">Questions are easy to sort out on arrival</p>
-									<p class="text-sm leading-5 text-muted-foreground">Come to {event.location} a few minutes before {selectedShift?.startTime} and the coordinator will point you in.</p>
-								</div>
+						</div>
+						<div class="flex items-start gap-3">
+							<span class="mt-2 h-2 w-2 rounded-full bg-primary/45"></span>
+							<div>
+								<p class="text-sm font-medium text-foreground">Need another hand?</p>
+								<p class="text-sm leading-5 text-muted-foreground">Reopen this event if you want to reserve another open role or share the signup page with someone else.</p>
 							</div>
 						</div>
 					</div>
@@ -186,11 +157,6 @@
 						</div>
 					</div>
 
-					<div class="rounded-[1.15rem] border border-border/70 bg-muted/20 px-4 py-3.5">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Keep this handy</p>
-						<p class="mt-2 text-sm leading-5 text-muted-foreground">Need to make a change or sign up another person? Reopen this event and submit an updated response.</p>
-					</div>
-
 					<div class="flex flex-col gap-2 pt-1 sm:flex-row">
 						<Button href={page.url.pathname} variant="outline" class="sm:flex-1">Reserve another spot</Button>
 						<Button href={page.url.pathname} class="sm:flex-1">View shifts again</Button>
@@ -203,7 +169,7 @@
 			<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-card shadow-sm lg:sticky lg:top-24">
 				<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 				<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-				<Card.Content class="relative space-y-5 px-4 py-5 sm:px-5 lg:space-y-6 lg:px-6 lg:py-6">
+				<Card.Content class="relative space-y-5 px-4 py-5 sm:px-5 lg:space-y-5 lg:px-6 lg:py-6">
 					<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 						<div class="flex items-start gap-4">
 							<div class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[1.1rem] border border-border/70 bg-muted/30 text-center">
@@ -215,30 +181,18 @@
 								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer signup</p>
 								<h1 class="text-[2rem] font-semibold tracking-tight text-foreground lg:text-[2.55rem] lg:leading-[0.95]">{event.title}</h1>
 								<p class="text-sm text-muted-foreground">{event.location}</p>
+								<p class="text-sm text-muted-foreground">{event.date} · {event.timeRange}</p>
 							</div>
 						</div>
 					</div>
 
-					<div class="flex flex-wrap gap-2 text-[0.72rem] font-medium text-muted-foreground lg:max-w-md">
-						<span class="rounded-full border border-border/70 bg-background/70 px-2.5 py-1">{openShiftCount} open shifts</span>
-						<span class="rounded-full border border-border/70 bg-background/70 px-2.5 py-1">48h reminder</span>
-						<span class="rounded-full border border-border/70 bg-background/70 px-2.5 py-1">No account required</span>
-						<span class="rounded-full border border-border/70 bg-background/70 px-2.5 py-1">{event.date}</span>
-						<span class="rounded-full border border-border/70 bg-background/70 px-2.5 py-1">{event.timeRange}</span>
-					</div>
+					<p class="text-sm text-muted-foreground">{openShiftCount} open shift{openShiftCount === 1 ? '' : 's'} remain. No account is required, and confirmation goes to your email.</p>
 
 					<div class="rounded-[1.45rem] border border-border/70 bg-background/82 px-4 py-4 shadow-sm">
 						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current selection</p>
 						{#if selectedShift}
-							<div class="mt-3 flex flex-wrap items-start justify-between gap-3">
-								<div>
-									<p class="text-base font-semibold tracking-tight text-foreground">{selectedShift.title}</p>
-									<p class="mt-1 text-sm text-muted-foreground">{selectedShift.startTime} – {selectedShift.endTime}</p>
-								</div>
-								<div class="rounded-full border border-border/70 bg-muted/35 px-3 py-1.5 text-sm font-medium text-foreground">
-									{selectedShiftOpenSlots} spot{selectedShiftOpenSlots === 1 ? '' : 's'} left
-								</div>
-							</div>
+							<p class="mt-2 text-base font-semibold tracking-tight text-foreground">{selectedShift.title}</p>
+							<p class="mt-1 text-sm text-muted-foreground">{selectedShift.startTime} – {selectedShift.endTime} · {selectedShiftOpenSlots} spot{selectedShiftOpenSlots === 1 ? '' : 's'} left</p>
 							<p class="mt-3 text-sm text-muted-foreground">
 								Pick a role, add your contact details, and you are done.
 							</p>
@@ -268,7 +222,7 @@
 									<button
 										type="button"
 										disabled={isFull}
-										class={`appearance-none flex w-full items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all ${selectedShiftId === shift.id ? 'border-primary/25 bg-primary/10 shadow-sm dark:border-white/10 dark:bg-black/58 dark:text-foreground' : 'border-border/70 bg-background/80 dark:border-white/10 dark:bg-black/44 dark:text-foreground'} ${isFull ? 'cursor-not-allowed opacity-50' : 'hover:border-primary/15 hover:bg-muted/30 dark:hover:bg-black/56'}`}
+										class={`appearance-none flex w-full items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all ${selectedShiftId === shift.id ? 'border-primary/25 bg-primary/8 shadow-sm dark:border-white/10 dark:bg-black/58 dark:text-foreground' : 'border-border/70 bg-background/80 dark:border-white/10 dark:bg-black/44 dark:text-foreground'} ${isFull ? 'cursor-not-allowed opacity-50' : 'hover:border-primary/15 hover:bg-muted/20 dark:hover:bg-black/56'}`}
 										onclick={() => !isFull && (selectedShiftId = shift.id)}
 									>
 										<div class="min-w-0 flex-1">

@@ -33,10 +33,10 @@
 	let avatarInput = $state<HTMLInputElement | null>(null);
 </script>
 
-<div class="rounded-xl border border-border/70 bg-muted/15 p-3.5">
+
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex items-center gap-3">
-			<Avatar.Root class="size-16 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+			<Avatar.Root class="size-16 border border-border/70 bg-muted/40 after:hidden">
 				{#if activeAvatarUrl}
 					<Avatar.Image src={activeAvatarUrl} alt="Profile preview" />
 				{:else}
@@ -95,6 +95,5 @@
 	/>
 
 	{#if fieldError}
-		<p class="mt-4 text-sm text-destructive" role="alert">{fieldError}</p>
+		<p class="mt-3 text-sm text-destructive" role="alert">{fieldError}</p>
 	{/if}
-</div>

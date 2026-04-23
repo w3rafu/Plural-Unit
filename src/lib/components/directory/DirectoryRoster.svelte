@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { Search, MessageSquare, ChevronRight } from '@lucide/svelte';
+	import { Search } from '@lucide/svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -139,9 +138,9 @@
 			<div class="min-h-0 flex-1 overflow-auto p-2.5 md:p-4">
 				<div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
 					{#each visibleMembers as member (member.profile_id)}
-						<div class="rounded-2xl border border-border/70 bg-background px-3 py-3 shadow-sm">
+						<div class="rounded-xl bg-muted/10 px-3 py-3">
 							<div class="flex items-start gap-2.5">
-								<Avatar.Root class="size-9 border border-border/70 bg-muted/50 shadow-sm after:hidden sm:size-10">
+								<Avatar.Root class="size-9 border border-border/70 bg-muted/40 after:hidden sm:size-10">
 									{#if member.avatar_url}
 										<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 									{:else}
@@ -152,8 +151,8 @@
 								</Avatar.Root>
 
 								<div class="min-w-0 flex-1">
-									<div class="flex items-start justify-between gap-2">
-										<div class="min-w-0 space-y-0.5">
+									<div class="min-w-0 space-y-0.5">
+										<div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 											<Button
 												href={getDetailHref(member)}
 												variant="ghost"
@@ -162,23 +161,21 @@
 											>
 												{member.name || 'Unnamed member'}
 											</Button>
-											<p class="text-sm text-muted-foreground">
-												{getMemberDirectoryMeta(member, currentUserId)}
-											</p>
+											<span class="text-[0.72rem] text-muted-foreground">
+												{getMemberDirectoryRoleLabel(member.role)}
+											</span>
 										</div>
-
-										<Badge variant={member.role === 'admin' ? 'default' : 'outline'}>
-											{getMemberDirectoryRoleLabel(member.role)}
-										</Badge>
+										<p class="text-sm text-muted-foreground">
+											{getMemberDirectoryMeta(member, currentUserId)}
+										</p>
 									</div>
 
 									<p class="mt-2 text-sm text-muted-foreground wrap-break-word">{formatContact(member)}</p>
 									<p class="mt-1 text-xs text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</p>
 
-									<div class="mt-2.5 flex flex-wrap gap-1.5">
-										<Button href={getDetailHref(member)} variant="outline" size="xs">
+									<div class="mt-2.5 flex flex-wrap items-center gap-3 text-[0.78rem]">
+										<Button href={getDetailHref(member)} variant="ghost" size="xs" class="h-auto px-0 text-muted-foreground hover:text-foreground">
 											{detailLabel}
-											<ChevronRight class="size-4" />
 										</Button>
 
 										{#if showsMessageAction && member.profile_id !== currentUserId}
@@ -186,10 +183,10 @@
 												type="button"
 												variant="ghost"
 												size="xs"
+												class="h-auto px-0 text-muted-foreground hover:text-foreground"
 												onclick={() => handleMessageMember(member)}
 												disabled={openingThreadForProfileId === member.profile_id}
 											>
-												<MessageSquare class="size-4" />
 												{openingThreadForProfileId === member.profile_id ? 'Opening...' : 'Message'}
 											</Button>
 										{/if}

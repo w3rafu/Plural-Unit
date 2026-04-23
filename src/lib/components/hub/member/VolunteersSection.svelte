@@ -24,14 +24,18 @@
 </script>
 
 <div id={sectionId} class="flex flex-col gap-3">
-	<div class="flex items-center justify-between gap-3">
-		<h2 class="text-lg font-semibold tracking-tight">{definition.title}</h2>
-		<p class="rounded-full border border-primary/15 bg-primary/8 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-primary/90 shadow-sm">
-			{openSlots} open
-		</p>
+	<div class="flex flex-wrap items-end justify-between gap-2">
+		<div>
+			<h2 class="text-lg font-semibold tracking-tight">{definition.title}</h2>
+			<p class="text-sm text-muted-foreground">
+				{openSlots > 0
+					? `${openSlots} spot${openSlots === 1 ? '' : 's'} still need coverage.`
+					: 'Upcoming volunteer events are fully covered.'}
+			</p>
+		</div>
 	</div>
 
-	<Card.Root size="sm" class="overflow-hidden border-border/70 bg-linear-to-b from-card to-muted/12">
+	<Card.Root size="sm" class="overflow-hidden border-border/70 bg-card">
 		<Card.Content class="divide-y divide-border/50 px-4 py-0">
 			{#if upcomingEvents.length === 0}
 				<div class="py-6 text-center">

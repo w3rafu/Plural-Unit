@@ -35,14 +35,14 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-muted/10 px-3 py-3">
+	<div class="border-b border-border/70 bg-muted/10 px-3 py-2.5">
 		<div class="space-y-3">
 			<div class="flex items-center gap-2">
 				<label class="relative block flex-1">
 				<Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					type="search"
-						placeholder="Search people or groups"
+						placeholder="Search conversations"
 					class="h-10 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 					bind:value={query}
 				/>
@@ -60,7 +60,9 @@
 					{#if query.trim()}
 						Showing {threadLabel.toLowerCase()} that match your search.
 					{:else}
-						{threadLabel} in this inbox.
+						{sections.unreadThreads.length > 0
+							? `${sections.unreadThreads.length} need a reply right now.`
+							: `${threadLabel} in this inbox.`}
 					{/if}
 				</p>
 
@@ -116,7 +118,7 @@
 		{:else}
 			{#if sections.unreadThreads.length > 0}
 				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Unread</span>
+					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Need reply</span>
 					<span class="text-[11px] text-muted-foreground">{sections.unreadThreads.length}</span>
 				</div>
 				{#each sections.unreadThreads as thread (thread.id)}
@@ -130,7 +132,7 @@
 
 			{#if sections.recentThreads.length > 0}
 				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent</span>
+					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recently active</span>
 					<span class="text-[11px] text-muted-foreground">Last 7 days</span>
 				</div>
 				{#each sections.recentThreads as thread (thread.id)}
@@ -144,8 +146,8 @@
 
 			{#if sections.olderThreads.length > 0}
 				<div class="flex items-center justify-between px-2 pb-1 pt-2">
-					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Older</span>
-					<span class="text-[11px] text-muted-foreground">Archive-ready</span>
+					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Quiet</span>
+					<span class="text-[11px] text-muted-foreground">Low activity</span>
 				</div>
 				{#each sections.olderThreads as thread (thread.id)}
 					<ThreadCard
@@ -159,7 +161,7 @@
 			{#if sections.archivedThreads.length > 0}
 				<div class="flex items-center justify-between px-2 pb-1 pt-2">
 					<span class="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Archived</span>
-					<span class="text-[11px] text-muted-foreground">Hidden from triage</span>
+					<span class="text-[11px] text-muted-foreground">Out of triage</span>
 				</div>
 				{#each sections.archivedThreads as thread (thread.id)}
 					<ThreadCard

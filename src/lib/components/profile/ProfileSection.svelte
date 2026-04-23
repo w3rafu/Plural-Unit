@@ -59,7 +59,7 @@
 	<Card.Content class="p-4 sm:p-5">
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
 			<div class="flex items-center gap-3 sm:gap-4">
-			<Avatar.Root class="size-12 border border-border/70 bg-muted/50 shadow-sm after:hidden sm:size-14">
+			<Avatar.Root class="size-12 border border-border/70 bg-muted/40 after:hidden sm:size-14">
 				{#if currentUser.details.avatar_url}
 					<Avatar.Image
 						src={currentUser.details.avatar_url}
@@ -83,9 +83,9 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap gap-2.5 text-[0.92rem] text-muted-foreground sm:justify-end sm:gap-3 sm:text-sm">
-				<span>{joinLabel}</span>
-				<span>{memberCountLabel}</span>
+			<div class="space-y-0.5 text-[0.92rem] text-muted-foreground sm:text-right sm:text-sm">
+				<p>{joinLabel}</p>
+				<p>{memberCountLabel}</p>
 			</div>
 		</div>
 	</Card.Content>

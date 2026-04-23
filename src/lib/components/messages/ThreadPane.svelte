@@ -11,7 +11,6 @@
 		isThreadMuted
 	} from '$lib/models/messageModel';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { Badge } from '$lib/components/ui/badge';
 	import { formatThreadTimestamp, groupMessagesByDay, formatMessageTime } from './messageUi';
 	import MessageComposer from './MessageComposer.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -64,14 +63,27 @@
 	const initials = $derived(getParticipantInitials(thread.participant.name));
 	const archived = $derived(isThreadArchived(thread));
 	const muted = $derived(isThreadMuted(thread));
-	const messageCount = $derived(thread.messages.length);
 	const lastUpdatedLabel = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)) || 'now');
-	const activityBars = $derived.by(() => {
-		const counts = dayGroups.slice(-5).map((group) => group.messages.length);
-		const padded = Array.from({ length: 5 }, (_, index) => counts.at(index - (5 - counts.length)) ?? 1);
-		const maxCount = Math.max(...padded, 1);
+	const headerMeta = $derived.by(() => {
+		const parts = [`Updated ${lastUpdatedLabel}`];
 
-		return padded.map((count) => Math.max(22, Math.round((count / maxCount) * 100)));
+		if (thread.unreadCount > 0) {
+			parts.push(`${thread.unreadCount} unread`);
+		}
+
+		if (archived) {
+			parts.push('Archived');
+		}
+
+		if (muted) {
+			parts.push('Muted');
+		}
+
+		if (thread.participant.isFakeUser) {
+			parts.push('Demo thread');
+		}
+
+		return parts.join(' · ');
 	});
 
 	const lastSeenMessageId = $derived.by(() => {
@@ -110,13 +122,13 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-linear-to-br from-primary/8 via-card to-card px-3 py-2 sm:px-4 sm:py-3">
-		<div class="flex items-start gap-2.5 sm:gap-3">
+	<div class="border-b border-border/70 bg-muted/10 px-2.5 py-1.5 sm:px-4 sm:py-3">
+		<div class="flex items-start gap-2 sm:gap-3">
 			{#if onBack}
 				<Button
 					variant="ghost"
 					size="icon-sm"
-					class="mt-0.5 shrink-0 md:hidden"
+					class="mt-0.5 h-8 w-8 shrink-0 md:hidden"
 					onclick={onBack}
 					aria-label="Back to inbox"
 				>
@@ -124,7 +136,7 @@
 				</Button>
 			{/if}
 
-			<Avatar.Root class="size-9 border border-primary/15 bg-background shadow-sm after:hidden sm:size-11">
+			<Avatar.Root class="size-8 border border-primary/15 bg-background shadow-sm after:hidden sm:size-11">
 				{#if thread.participant.avatar_url}
 					<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
 				{:else}
@@ -135,10 +147,10 @@
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-2">
 					<div class="min-w-0 space-y-0.5">
-						<p class="truncate text-[1.03rem] font-semibold text-foreground sm:text-base">
+						<p class="truncate text-[0.98rem] font-semibold text-foreground sm:text-base">
 							{thread.participant.name}
 						</p>
-						<p class="truncate text-[0.84rem] text-muted-foreground sm:text-sm">
+						<p class="hidden truncate text-[0.84rem] text-muted-foreground sm:block sm:text-sm">
 							{thread.participant.subtitle || 'Direct conversation'}
 						</p>
 					</div>
@@ -157,7 +169,7 @@
 									}
 								}}
 								aria-label={muted ? 'Unmute conversation' : 'Mute conversation'}
-								class="h-9 rounded-full px-2 sm:px-3"
+								class="h-7.5 rounded-full px-2 sm:h-8 sm:px-2.5"
 							>
 								{#if muted}
 									<Bell class="h-3.5 w-3.5 sm:mr-1.5" />
@@ -182,7 +194,7 @@
 									}
 								}}
 								aria-label={archived ? 'Restore conversation' : 'Archive conversation'}
-								class="h-9 rounded-full px-2 sm:px-3"
+								class="h-7.5 rounded-full px-2 sm:h-8 sm:px-2.5"
 							>
 								{#if archived}
 									<Undo2 class="h-3.5 w-3.5 sm:mr-1.5" />
@@ -201,7 +213,7 @@
 								disabled={isResetting}
 								onclick={onResetDemo}
 								aria-label="Reset demo conversation"
-								class="h-9 rounded-full px-2 sm:px-3"
+								class="h-7.5 rounded-full px-2 sm:h-8 sm:px-2.5"
 							>
 								<RotateCcw class="h-3.5 w-3.5 sm:mr-1.5" />
 								<span class="hidden sm:inline">Reset</span>
@@ -210,51 +222,8 @@
 					</div>
 				</div>
 
-				<div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:mt-2 sm:gap-2">
-					<span class="rounded-full bg-primary/10 px-2.25 py-0.75 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-primary sm:px-2.5 sm:py-1 sm:text-[0.62rem]">
-						Direct thread
-					</span>
-					{#if thread.unreadCount > 0}
-						<span class="rounded-full border border-border/70 bg-background px-2.25 py-0.75 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-foreground shadow-sm sm:px-2.5 sm:py-1 sm:text-[0.62rem]">
-							{thread.unreadCount} unread
-						</span>
-					{/if}
-					<Badge variant="secondary" class="hidden rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em] sm:inline-flex">
-						{messageCount} {messageCount === 1 ? 'message' : 'messages'}
-					</Badge>
-					<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
-						Updated {lastUpdatedLabel}
-					</Badge>
-					{#if archived}
-						<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
-							Archived
-						</Badge>
-					{/if}
-
-					{#if muted}
-						<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
-							Muted
-						</Badge>
-					{/if}
-
-					{#if thread.participant.isFakeUser}
-						<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
-							Demo conversation
-						</Badge>
-					{/if}
-				</div>
+				<p class="mt-1 text-[0.72rem] text-muted-foreground sm:mt-1.5 sm:text-[0.78rem]">{headerMeta}</p>
 			</div>
-		</div>
-
-		<div class="mt-2.5 hidden h-12 items-end gap-1.5 rounded-2xl border border-primary/12 bg-background/75 px-3 py-2 lg:flex">
-			{#each activityBars as height, index (`activity-${index}`)}
-				<div class="flex h-full w-3 items-end">
-					<span
-						class={`w-full rounded-full ${index >= 3 ? 'bg-primary/35' : index % 2 === 0 ? 'bg-primary' : 'bg-primary/65'}`}
-						style:height={`${height}%`}
-					></span>
-				</div>
-			{/each}
 		</div>
 	</div>
 

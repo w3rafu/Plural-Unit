@@ -87,6 +87,23 @@
 		signups.length ? Math.round((checkedCount / signups.length) * 100) : 0
 	);
 	const remainingCheckIns = $derived(Math.max(signups.length - checkedCount, 0));
+	const activeShiftWindow = $derived(
+		activeShift ? `${activeShift.startTime} – ${activeShift.endTime}` : ''
+	);
+	const activeShiftSummary = $derived.by(() => {
+		if (!activeShift) {
+			return 'Choose a shift to start day-of check-in.';
+		}
+
+		if (signups.length === 0) {
+			return `No one is assigned to ${activeShift.title} yet.`;
+		}
+
+		return `${remainingCheckIns} of ${signups.length} people on ${activeShift.title} still need check-in.`;
+	});
+	const rosterStatusLabel = $derived(
+		signups.length ? `${checkedCount} checked in · ${remainingCheckIns} pending` : 'No one is assigned yet.'
+	);
 
 	function toggle(key: string) {
 		const next = new Set(checkedIn);
@@ -155,58 +172,40 @@
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
 						<h1 class="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem]">{event.title}</h1>
 						<p class="text-sm text-muted-foreground">{event.date} · {event.location}</p>
+						<p class="max-w-2xl text-sm leading-6 text-muted-foreground">{activeShiftSummary}</p>
 					</div>
 
-					<div class="flex flex-wrap gap-2">
-						<div class="rounded-full border border-border/70 bg-background/85 px-3 py-1.5 text-sm text-foreground dark:border-border/80 dark:bg-background/60">
-							<span class="font-semibold">{event.shifts.length}</span>
-							<span class="ml-1.5 text-muted-foreground">shifts</span>
-						</div>
-						<div class="rounded-full border border-border/70 bg-background/85 px-3 py-1.5 text-sm text-foreground dark:border-border/80 dark:bg-background/60">
-							<span class="font-semibold">{totalRegistered}</span>
-							<span class="ml-1.5 text-muted-foreground">registered</span>
-						</div>
-						<div class="rounded-full border border-border/70 bg-background/85 px-3 py-1.5 text-sm text-foreground dark:border-border/80 dark:bg-background/60">
-							<span class="font-semibold">{checkedCount}</span>
-							<span class="ml-1.5 text-muted-foreground">checked in</span>
-						</div>
+					<div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+						<span>{event.shifts.length} shifts</span>
+						<span>{totalRegistered} registered</span>
+						<span>{checkedCount} checked in</span>
 					</div>
 
-					<div class="rounded-[1.3rem] border border-border/70 bg-background/82 px-3.5 py-3.5 shadow-sm dark:border-border/80 dark:bg-background/56 lg:max-w-xl">
-						<div class="flex flex-wrap items-start justify-between gap-3">
-							<div>
-								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Active shift</p>
-								<p class="mt-1.5 text-base font-semibold tracking-tight text-foreground">{activeShift?.title ?? 'Choose a shift'}</p>
-								<p class="mt-1 text-sm text-muted-foreground">{signups.length} expected on this check-in list.</p>
-							</div>
-							<div class="rounded-full border border-border/70 bg-muted/35 px-3 py-1.5 text-sm font-medium text-foreground dark:border-border/80 dark:bg-background/72">
-								{remainingCheckIns} pending
-							</div>
-						</div>
-						<p class="mt-2.5 text-sm text-muted-foreground">
-							Mark arrivals as they happen so late follow-up stays obvious for the team.
+					<div class="hidden rounded-[1.2rem] bg-muted/20 px-4 py-3.5 dark:bg-background/56 lg:block lg:max-w-xl">
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Working now</p>
+						<p class="mt-1.5 text-base font-semibold tracking-tight text-foreground">{activeShift?.title ?? 'Choose a shift'}</p>
+						<p class="mt-1 text-sm text-muted-foreground">
+							{activeShift ? `${activeShiftWindow} · ${remainingCheckIns} pending` : 'Use the shift switcher below to begin check-in.'}
 						</p>
 					</div>
 				</div>
 
-				<div class="rounded-[1.3rem] border border-border/70 bg-background/88 p-3.5 shadow-sm dark:border-border/80 dark:bg-background/56 lg:h-full">
+				<div class="rounded-[1.3rem] border border-border/70 bg-background/88 p-3 sm:p-3.5 shadow-sm dark:border-border/80 dark:bg-background/56 lg:h-full">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
 					{#if activeShift}
 						<p class="mt-1.5 text-base font-semibold tracking-tight text-foreground">{activeShift.title}</p>
-						<p class="mt-1 text-sm text-muted-foreground">{activeShift.startTime} – {activeShift.endTime}</p>
+						<p class="mt-1 text-sm text-muted-foreground">{activeShift.startTime} – {activeShift.endTime} · {remainingCheckIns} pending</p>
 					{/if}
-					<div class="mt-3.5 flex items-end justify-between gap-3">
+					<div class="mt-4 flex items-end justify-between gap-3">
 						<p class="text-3xl font-semibold tracking-tight text-foreground">{completionPercent}%</p>
 						<p class="text-xs text-muted-foreground">{checkedCount}/{signups.length || 0} checked in</p>
 					</div>
-					<div class="mt-2.5 h-2 overflow-hidden rounded-full bg-muted">
+					<p class="mt-1 text-sm text-muted-foreground">{rosterStatusLabel}</p>
+					<div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
 						<div class="h-full rounded-full bg-foreground/75 transition-all" style="width: {completionPercent}%"></div>
 					</div>
-					<div class="mt-3.5 rounded-[1.05rem] border border-border/70 bg-muted/20 px-3 py-2.5 dark:border-border/80 dark:bg-background/68">
-						<p class="text-sm font-medium text-foreground">{remainingCheckIns} still to check in</p>
-						<p class="mt-1 text-xs text-muted-foreground">Keep the active shift moving before volunteers arrive in clusters.</p>
-					</div>
-					<Button href="/signup/{event.id}" variant="outline" size="sm" class="mt-3.5 h-8 w-full justify-center border-white/10 bg-black/28 px-3 text-xs text-foreground/88 hover:bg-black/40 hover:text-foreground dark:border-white/10 dark:bg-black/28 dark:text-foreground/88">Open public signup</Button>
+					<p class="mt-2.5 text-sm text-muted-foreground">Keep marking arrivals as they happen so late follow-up stays visible for the team.</p>
+					<Button href="/signup/{event.id}" variant="outline" size="sm" class="mt-3.5 h-8 w-full justify-center px-3 text-xs">Open public signup</Button>
 				</div>
 			</Card.Content>
 		</Card.Root>
@@ -223,25 +222,19 @@
 					<div class="flex flex-wrap gap-2">
 				{#each event.shifts as shift (shift.id)}
 					{@const isActive = activeShiftId === shift.id}
+					{@const expected = mockSignups[shift.id]?.length ?? shift.filled}
 					<button
 						type="button"
 						onclick={() => (selectedShiftId = shift.id)}
-						class={`appearance-none flex items-center gap-1.5 rounded-full border px-2.75 py-1.25 text-[0.72rem] font-medium transition-all ${isActive ? 'border-primary bg-primary text-primary-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border bg-muted text-muted-foreground dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
+						class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-2 text-[0.74rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
 					>
-						{shift.title}
-						<span
-							class={`rounded-full px-1.5 py-0.5 text-[0.62rem] tabular-nums ${isActive ? 'bg-primary-foreground text-primary dark:bg-white/12 dark:text-foreground' : 'bg-muted-foreground text-background dark:bg-white/10 dark:text-foreground/78'}`}
-						>
-							{shift.filled}
-						</span>
+						<span>{shift.title}</span>
+						<span class="text-[0.68rem] text-muted-foreground/80 dark:text-foreground/60">{expected} expected</span>
 					</button>
 				{/each}
 					</div>
 
-					<div class="flex items-center gap-2 text-[0.72rem] font-medium text-muted-foreground">
-						<span class="rounded-full border border-border/70 bg-background px-2.5 py-1 dark:border-border/80 dark:bg-background/60">{completionPercent}% complete</span>
-						<span>{remainingCheckIns} left</span>
-					</div>
+					<p class="text-[0.74rem] text-muted-foreground">{rosterStatusLabel}</p>
 				</div>
 
 				{#if activeShift}
@@ -258,10 +251,7 @@
 								<button
 									type="button"
 									onclick={() => toggle(key)}
-									class="appearance-none flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors"
-									style:background={done
-										? 'color-mix(in srgb, var(--card) 86%, black 14%)'
-										: 'color-mix(in srgb, var(--card) 94%, var(--background) 6%)'}
+									class={`appearance-none flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors ${done ? 'bg-muted/20 dark:bg-black/58' : 'bg-background hover:bg-muted/18 dark:bg-black/72 dark:hover:bg-black/66'}`}
 								>
 									<div
 										class={`flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${done ? 'border-foreground/70 bg-foreground/70' : 'border-border'}`}
@@ -303,9 +293,9 @@
 										{/if}
 									</div>
 
-									{#if done}
-											<span class="shrink-0 rounded-full border border-border/70 bg-background/80 px-2 py-0.75 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:border-border/80 dark:bg-background/66">Checked in</span>
-									{/if}
+									<span class={`shrink-0 text-[0.68rem] font-medium ${done ? 'text-muted-foreground' : 'text-foreground/80'}`}>
+										{done ? 'Checked in' : 'Pending'}
+									</span>
 								</button>
 							{/each}
 							</div>

@@ -189,12 +189,12 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-1.5 border-b border-border/70">
+	<Card.Header class="gap-1.5">
 		<Card.Title class="text-lg font-semibold tracking-tight">Profile details</Card.Title>
-		<Card.Description>Update the name and contact details people see.</Card.Description>
+		<Card.Description>Update the details people see most often.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-3.5 sm:space-y-4">
+	<Card.Content class="space-y-3.5 pt-0 sm:space-y-4">
 		<form
 			class="space-y-3.5 sm:space-y-4"
 			onsubmit={(event) => {

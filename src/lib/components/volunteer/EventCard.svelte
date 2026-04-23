@@ -25,36 +25,31 @@
 	}
 </script>
 
-<div class="grid grid-cols-[auto,minmax(0,1fr)] gap-3 py-4 sm:grid-cols-[auto,minmax(0,1fr)_auto] sm:items-end sm:py-5">
+<div class="grid grid-cols-[auto,minmax(0,1fr)] gap-3 py-4 sm:grid-cols-[auto,minmax(0,1fr)_auto] sm:items-center">
 	<div class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl border border-border/70 bg-background/85 text-center shadow-sm">
 		<p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
 		<p class="text-base font-semibold tracking-tight text-foreground">{getDateParts(event.date).day}</p>
 	</div>
 
-	<div class="min-w-0 space-y-2">
+	<div class="min-w-0 space-y-1.5">
 		<div class="flex flex-wrap items-center gap-2">
 			<p class="text-[0.98rem] font-semibold tracking-tight text-foreground">{event.title}</p>
 			<FillPill {filled} needed={total} {status} />
 		</div>
-		<div class="flex flex-wrap gap-2 text-[0.72rem] font-medium text-muted-foreground">
-			<span class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 shadow-sm">{event.timeRange}</span>
+		<p class="text-sm text-muted-foreground">{event.location}</p>
+		<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.78rem] text-muted-foreground">
+			<span>{event.timeRange}</span>
+			<span>{filled}/{total} filled</span>
 			{#if openSpots > 0}
-				<span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 shadow-sm">{openSpots} open</span>
+				<span>{openSpots} open</span>
 			{/if}
 		</div>
-		<p class="text-sm text-muted-foreground">{event.location}</p>
-		<div class="min-w-0 flex-1 rounded-[1.05rem] border border-border/60 bg-muted/15 px-3 py-2.5">
-			<div class="flex items-center justify-between gap-3 text-xs">
-				<p class="font-medium text-foreground/85">{filled}/{total} filled</p>
-				<p class="text-muted-foreground">{openSpots} open</p>
-			</div>
-			<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-				<div
-					class={`h-full rounded-full ${status === 'full' ? 'bg-muted-foreground' : status === 'need-more' ? 'bg-chart-4/90' : 'bg-primary/75'}`}
-					style="width: {fillPercent}%"
-				></div>
-			</div>
+		<div class="h-1.5 overflow-hidden rounded-full bg-muted">
+			<div
+				class={`h-full rounded-full ${status === 'full' ? 'bg-muted-foreground' : status === 'need-more' ? 'bg-chart-4/90' : 'bg-primary/75'}`}
+				style="width: {fillPercent}%"
+			></div>
 		</div>
 	</div>
-	<Button href={signupHref} variant="outline" size="sm" class="col-span-2 h-8 w-fit shrink-0 rounded-full border-border/80 bg-background/85 px-3 text-xs shadow-sm sm:col-span-1 sm:self-center sm:justify-self-end">Sign up</Button>
+	<Button href={signupHref} variant="outline" size="sm" class="col-span-2 h-8 w-fit shrink-0 rounded-full border-border/80 bg-background/85 px-3 text-xs shadow-sm sm:col-span-1 sm:justify-self-end">Sign up</Button>
 </div>

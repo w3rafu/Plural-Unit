@@ -86,9 +86,9 @@
 				{onLoadOlderMessages}
 			/>
 		{:else}
-			<div class="flex h-full items-center justify-center bg-muted/12 p-6">
-				<div class="max-w-sm rounded-3xl border border-dashed border-border/70 bg-background px-6 py-8 text-center shadow-sm">
-					<div class="mx-auto flex size-12 items-center justify-center rounded-2xl border border-border/70 bg-muted/40">
+			<div class="flex h-full items-center justify-center bg-muted/12 p-6 text-center">
+				<div class="max-w-sm">
+					<div class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-background shadow-sm">
 						<MessageSquare class="size-5 text-muted-foreground" />
 					</div>
 					<p class="mt-4 font-medium text-foreground">Select a conversation</p>

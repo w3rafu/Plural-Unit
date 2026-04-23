@@ -13,7 +13,6 @@
 		isThreadMuted
 	} from '$lib/models/messageModel';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { Badge } from '$lib/components/ui/badge';
 	import { formatThreadTimestamp } from './messageUi';
 	import { cn } from '$lib/utils';
 
@@ -32,6 +31,21 @@
 	const timestamp = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)));
 	const archived = $derived(isThreadArchived(thread));
 	const muted = $derived(isThreadMuted(thread));
+	const metaLabel = $derived.by(() => {
+		const parts = [] as string[];
+
+		if (thread.unreadCount > 0) {
+			parts.push(`${thread.unreadCount} unread`);
+		}
+
+		if (archived) {
+			parts.push('Archived');
+		} else if (muted) {
+			parts.push('Muted');
+		}
+
+		return parts.join(' · ');
+	});
 </script>
 
 <button
@@ -39,12 +53,12 @@
 	class={cn(
 		'group flex w-full items-start gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition-[background-color,border-color,box-shadow]',
 		isActive
-			? 'border-border/70 bg-accent/45 text-accent-foreground shadow-sm dark:border-border/80 dark:bg-background/68'
+			? 'border-border/70 bg-accent/35 text-accent-foreground shadow-sm dark:border-border/80 dark:bg-background/68'
 			: archived
-				? 'border-border/30 bg-background/80 text-muted-foreground hover:border-border/60 hover:bg-muted/25 dark:border-border/60 dark:bg-background/54 dark:hover:bg-background/66'
+				? 'border-border/30 bg-background/78 text-muted-foreground hover:border-border/60 hover:bg-muted/20 dark:border-border/60 dark:bg-background/54 dark:hover:bg-background/66'
 			: thread.unreadCount > 0
-					? 'border-border/40 bg-muted/25 hover:border-border/70 hover:bg-muted/40 dark:border-border/60 dark:bg-background/58 dark:hover:bg-background/70'
-				: 'hover:border-border/60 hover:bg-muted/40 dark:hover:bg-background/66'
+					? 'border-border/40 bg-muted/18 hover:border-border/70 hover:bg-muted/28 dark:border-border/60 dark:bg-background/58 dark:hover:bg-background/70'
+				: 'hover:border-border/60 hover:bg-muted/28 dark:hover:bg-background/66'
 	)}
 	{onclick}
 >
@@ -72,7 +86,7 @@
 				</div>
 
 				<p class="truncate text-xs text-muted-foreground">
-					{thread.participant.subtitle || (archived ? 'Archived conversation' : muted ? 'Muted conversation' : 'Direct conversation')}
+					{thread.participant.subtitle || 'Direct conversation'}
 				</p>
 			</div>
 
@@ -90,15 +104,8 @@
 			{preview}
 		</p>
 
-		<div class="mt-2 flex items-center justify-between gap-2">
-			<span class="text-[11px] text-muted-foreground">
-				{archived ? 'Archived' : muted ? 'Muted' : 'Direct conversation'}
-			</span>
-			{#if thread.unreadCount > 0}
-				<Badge variant="default" class="shrink-0 rounded-full tabular-nums">
-					{thread.unreadCount} new
-				</Badge>
-			{/if}
-		</div>
+		{#if metaLabel}
+			<p class="mt-2 text-[11px] text-muted-foreground">{metaLabel}</p>
+		{/if}
 	</div>
 </button>

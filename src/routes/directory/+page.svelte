@@ -32,9 +32,9 @@
 	}
 </script>
 
-<PageHeader preset="section" title="Directory" subtitle="People in your organization" />
+<PageHeader preset="section" title="Directory" subtitle="Find and contact people in your organization" />
 
-<main class="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col gap-2 overflow-hidden">
+<main class="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col gap-1.5 overflow-hidden sm:gap-2">
 	<DirectoryRoster
 		members={currentOrganization.members}
 		currentUserId={currentUser.details.id}

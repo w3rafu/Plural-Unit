@@ -25,7 +25,7 @@
 
 <ProfileDangerZoneCard />
 
-<Card.Root size="sm" class="border-border/70 bg-card">
+<Card.Root size="sm" class="border-transparent bg-muted/10 shadow-none">
 	<Card.Content class="flex items-center justify-between p-3.5">
 		<div class="space-y-1">
 			<p class="text-sm font-medium text-foreground">Sign out</p>

@@ -2,6 +2,20 @@
 
 This document is the next visual planning handoff after the 0.2.2 presentation pass.
 
+## Final review note
+
+The final 0.2.3 desktop and mobile review sweep passed.
+
+What shipped well in the final review:
+
+- The simplification pass now holds together across home, volunteers, signup, check-in, messages, directory, and profile.
+- The quieter directory and profile changes improved scanability without making those routes feel empty.
+- The mobile messages and check-in reductions were the right call; both routes now spend more of the screen on the useful surface.
+
+One practical note from the screenshot review:
+
+- Volunteer presentation captures should use the volunteer fixture ids such as `vol-event-1` for signup and check-in routes rather than the hub smoke fixture ids.
+
 The app is now materially stronger than the original `prototype/0.2` baseline and more polished than the first two presentation rounds, but it still reads as a product that is trying to show too much surface treatment at once.
 
 The next branch should aim for a calmer product language:

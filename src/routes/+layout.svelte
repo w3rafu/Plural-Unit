@@ -20,8 +20,12 @@
 		currentUser.hasResolvedSession && (!currentUser.isLoggedIn || pageHeader.hasRegisteredHeader)
 	);
 	const isLockedContentRoute = $derived(getIsLockedContentRoute(page.url.pathname));
+	const isMessagesRoute = $derived(page.url.pathname.startsWith('/messages'));
 	const isSignupRoute = $derived(page.url.pathname.startsWith('/signup'));
 	const isPublicRoute = $derived(isSignupRoute || page.url.pathname.startsWith('/volunteers'));
+	const collapseHeaderOnMobile = $derived(
+		isMessagesRoute && Boolean(currentMessages.activeThreadId)
+	);
 
 	$effect(() => {
 		syncSmokeModeFromUrl(page.url);
@@ -57,7 +61,12 @@
 <div class="flex h-dvh min-h-dvh flex-col overflow-hidden">
 	<div class="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col overflow-hidden px-2.5 sm:px-4 lg:px-6">
 		{#if !isPublicRoute}
-			<div class="z-30 flex-none pt-1.5 sm:pt-2" style:min-height="4.95rem">
+			<div
+				class={collapseHeaderOnMobile
+					? 'z-30 hidden md:block md:flex-none md:pt-2'
+					: 'z-30 flex-none pt-1.5 sm:pt-2'}
+				style:min-height={collapseHeaderOnMobile ? '' : '4.95rem'}
+			>
 				{#if shouldRenderHeader}
 					<Header />
 				{/if}
