@@ -184,16 +184,14 @@
 				</p>
 			</div>
 
-			<div class="grid gap-3 md:grid-cols-3">
+			<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{#each decisionRows as row (row.label)}
 					<div class="rounded-[1.2rem] border border-border/70 bg-background/88 px-4 py-3 shadow-sm">
-						<div class="flex items-start justify-between gap-4">
-							<div class="min-w-0">
-								<p class="text-sm font-semibold text-foreground">{row.label}</p>
-								<p class="mt-0.5 text-[0.84rem] leading-5 text-muted-foreground">{row.summary}</p>
-							</div>
-							<p class="shrink-0 text-[1.65rem] font-semibold tracking-tight text-foreground">{row.value}</p>
+						<div class="flex items-start justify-between gap-3">
+							<p class="text-sm font-semibold text-foreground">{row.label}</p>
+							<p class="shrink-0 text-[1.65rem] leading-none font-semibold tracking-tight text-foreground">{row.value}</p>
 						</div>
+						<p class="mt-2 text-[0.84rem] leading-5 text-muted-foreground">{row.summary}</p>
 					</div>
 				{/each}
 			</div>
