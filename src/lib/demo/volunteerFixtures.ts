@@ -1,3 +1,5 @@
+import { getVolunteerPortraitAvatar } from './portraitAvatars';
+
 export type VolunteerShift = {
 	id: string;
 	eventId: string;
@@ -26,6 +28,7 @@ export type VolunteerContact = {
 	pastEventCount: number;
 	totalHours: number;
 	lastActive: string;
+	avatarUrl: string;
 };
 
 export type VolunteerSeasonStats = {
@@ -155,7 +158,7 @@ export const volunteerEvents: VolunteerEvent[] = [
 	}
 ];
 
-export const volunteerContacts: VolunteerContact[] = [
+const rawVolunteerContacts = [
 	{
 		id: 'vc1',
 		name: 'Marguerite Okafor',
@@ -230,7 +233,16 @@ export const volunteerContacts: VolunteerContact[] = [
 		totalHours: 30,
 		lastActive: 'Apr 7, 2026'
 	}
-];
+] satisfies Array<Omit<VolunteerContact, 'avatarUrl'>>;
+
+export const volunteerContacts: VolunteerContact[] = rawVolunteerContacts.map((contact) => ({
+	...contact,
+	avatarUrl: getVolunteerPortraitAvatar(contact.id)
+}));
+
+export function findVolunteerContactByName(name: string): VolunteerContact | undefined {
+	return volunteerContacts.find((contact) => contact.name === name);
+}
 
 export const volunteerSeasonStats: VolunteerSeasonStats = {
 	totalVolunteers: 127,

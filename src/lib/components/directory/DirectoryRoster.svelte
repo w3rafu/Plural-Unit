@@ -136,11 +136,11 @@
 			</div>
 		{:else if visibleMembers.length > 0}
 			<div class="min-h-0 flex-1 overflow-auto p-2.5 md:p-4">
-				<div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+				<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 					{#each visibleMembers as member (member.profile_id)}
-						<div class="rounded-xl bg-muted/10 px-3 py-3">
-							<div class="flex items-start gap-2.5">
-								<Avatar.Root class="size-9 border border-border/70 bg-muted/40 after:hidden sm:size-10">
+						<div class="rounded-[1.15rem] bg-muted/10 px-3.5 py-3.5">
+							<div class="flex items-start gap-3">
+								<Avatar.Root class="size-10 border border-border/70 bg-muted/40 after:hidden sm:size-11">
 									{#if member.avatar_url}
 										<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 									{:else}
@@ -157,7 +157,7 @@
 												href={getDetailHref(member)}
 												variant="ghost"
 												size="sm"
-												class="h-auto justify-start px-0 py-0 font-semibold hover:bg-transparent"
+												class="h-auto justify-start px-0 py-0 text-[1.02rem] font-semibold hover:bg-transparent"
 											>
 												{member.name || 'Unnamed member'}
 											</Button>

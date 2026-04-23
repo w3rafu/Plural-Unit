@@ -299,3 +299,49 @@ Do these five things first:
 3. Turn directory into a more confident avatar-first three-column people grid.
 4. Restructure profile into a cleaner two-column desktop workspace.
 5. Tighten typography and spacing across all route heroes so the app feels more intentional without becoming louder.
+
+## What landed in 0.2.4
+
+The branch followed the intended direction.
+
+The main change was not more decoration.
+
+It was stronger composition, better portrait use, and clearer route purpose.
+
+Implemented work:
+
+- Added a shared portrait-avatar set for demo people across member, volunteer, directory, and message surfaces.
+- Rebuilt home into a more confident desktop composition with a clearer dominant summary area and stronger people context.
+- Reworked volunteers into a broader staffing workspace with a more useful desktop split and more human contributor cues.
+- Pushed directory into an avatar-first multi-column roster that reads faster on large screens.
+- Reorganized profile into a calmer desktop workspace with better separation between identity and settings surfaces.
+- Extended messages into a true three-region desktop layout with a context rail and stronger thread typography.
+- Reframed signup as a more editorial public page with a clearer event lead, calmer selection summary, and a visible on-site coordinator.
+- Reframed check-in as a roster-plus-operations workspace with portrait-backed rows, pending vs. checked-in grouping, and a dedicated live rail.
+
+## Full review sweep notes
+
+The 0.2.4 screenshot sweep now includes:
+
+- home desktop and mobile
+- volunteers desktop and mobile
+- directory desktop
+- profile desktop
+- messages desktop and mobile
+- signup desktop and mobile
+- check-in desktop and mobile
+
+What held up well:
+
+- The product reads more intentionally when each route has one dominant object and one quieter support region.
+- Portrait avatars materially improved recognition on directory, volunteers, messages, signup, and check-in without making the UI noisier.
+- Desktop routes benefited from wider compositions and selective third-rail layouts when the third region carried real context instead of duplicate summary.
+- The volunteer public flow now feels connected to the rest of the product rather than looking like a generic form pair.
+
+What still matters for the next branch:
+
+- Keep simplifying before adding anything new; the strongest screens are still the ones with the fewest competing boxes.
+- Continue reducing card-within-card feeling on public and utility routes where type can do more of the work.
+- Tighten mobile check-in and signup even further once the broader cross-route desktop language is stable.
+- Push home and directory toward even more useful prioritization, not more density.
+- Treat messages as the benchmark for when a third desktop column is justified: only keep it when the added rail genuinely improves decisions.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import FillPill from '$lib/components/volunteer/FillPill.svelte';
@@ -43,6 +44,7 @@
 	const topContacts = [...volunteerContacts]
 		.sort((left, right) => right.totalHours - left.totalHours)
 		.slice(0, 5);
+	const quickContacts = topContacts.slice(0, 3);
 
 	function getContactInitials(name: string) {
 		return name
@@ -91,11 +93,11 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/30 shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-5 px-4 py-5 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.1fr)_16rem] lg:gap-6 lg:space-y-0">
+			<Card.Content class="relative space-y-5 px-4 py-6 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.08fr)_16rem] lg:gap-6 lg:space-y-0 xl:grid-cols-[minmax(0,1.08fr)_16rem_18rem]">
 				<div class="space-y-4 lg:max-w-2xl">
 					<div class="space-y-1.5">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer coordinator</p>
-						<h1 class="text-[2.05rem] font-semibold tracking-tight text-foreground sm:text-[2.35rem] sm:leading-[1.02]">{heroTitle}</h1>
+						<h1 class="text-[2.15rem] font-semibold tracking-tight text-foreground sm:text-[2.55rem] sm:leading-[0.98] lg:text-[2.8rem]">{heroTitle}</h1>
 						<p class="max-w-2xl text-sm leading-6 text-muted-foreground">{heroSummary}</p>
 					</div>
 
@@ -129,12 +131,42 @@
 						</div>
 					{/if}
 				</div>
+
+				<div class="space-y-3 border-t border-border/60 pt-4 lg:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
+					<div>
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">People to call</p>
+						<p class="mt-1 text-sm text-muted-foreground">Trusted volunteers who usually close the next staffing gap fastest.</p>
+					</div>
+					<div class="space-y-3">
+						{#each quickContacts as contact (contact.id)}
+							<div class="flex items-center gap-3 rounded-[1.15rem] bg-background/84 px-3 py-3 shadow-sm">
+								<Avatar.Root class="size-11 border border-border/70 bg-background shadow-sm after:hidden">
+									{#if contact.avatarUrl}
+										<Avatar.Image src={contact.avatarUrl} alt={contact.name} />
+									{:else}
+										<Avatar.Fallback class="text-sm font-semibold text-foreground">
+											{getContactInitials(contact.name)}
+										</Avatar.Fallback>
+									{/if}
+								</Avatar.Root>
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm font-medium text-foreground">{contact.name}</p>
+									<p class="truncate text-xs text-muted-foreground">{contact.businessAffiliation ?? contact.email}</p>
+								</div>
+								<div class="text-right text-xs">
+									<p class="font-semibold tabular-nums text-foreground">{contact.totalHours}h</p>
+									<p class="text-muted-foreground">{contact.pastEventCount} events</p>
+								</div>
+							</div>
+						{/each}
+					</div>
+				</div>
 			</Card.Content>
 		</Card.Root>
 	</section>
 
-	<div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start">
-		<Card.Root size="sm" class="border-border/70 bg-card">
+	<div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.92fr)_18rem]">
+		<Card.Root size="sm" class="border-border/70 bg-card xl:col-span-2">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<div class="flex items-end justify-between gap-3">
 					<div>
@@ -195,15 +227,21 @@
 		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<Card.Title class="text-lg font-semibold tracking-tight">Reliable volunteers</Card.Title>
-				<Card.Description>People who most often help close the staffing gap.</Card.Description>
+				<Card.Description>Real people who repeatedly help the schedule land on time.</Card.Description>
 			</Card.Header>
 			<Card.Content class="space-y-3.5">
 				<div class="space-y-3">
 					{#each topContacts as contact (contact.id)}
 						<div class="flex items-center gap-3">
-							<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-								{getContactInitials(contact.name)}
-							</div>
+							<Avatar.Root class="size-10 shrink-0 border border-border/70 bg-background shadow-sm after:hidden">
+								{#if contact.avatarUrl}
+									<Avatar.Image src={contact.avatarUrl} alt={contact.name} />
+								{:else}
+									<Avatar.Fallback class="text-xs font-semibold text-primary">
+										{getContactInitials(contact.name)}
+									</Avatar.Fallback>
+								{/if}
+							</Avatar.Root>
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium text-foreground">{contact.name}</p>
 								<p class="truncate text-xs text-muted-foreground">{contact.businessAffiliation ?? contact.email}</p>

@@ -147,10 +147,10 @@
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-2">
 					<div class="min-w-0 space-y-0.5">
-						<p class="truncate text-[0.98rem] font-semibold text-foreground sm:text-base">
+						<p class="truncate text-[1rem] font-semibold text-foreground sm:text-[1.08rem] lg:text-[1.18rem]">
 							{thread.participant.name}
 						</p>
-						<p class="hidden truncate text-[0.84rem] text-muted-foreground sm:block sm:text-sm">
+						<p class="hidden truncate text-[0.84rem] text-muted-foreground sm:block sm:text-sm lg:text-[0.95rem]">
 							{thread.participant.subtitle || 'Direct conversation'}
 						</p>
 					</div>
@@ -222,7 +222,7 @@
 					</div>
 				</div>
 
-				<p class="mt-1 text-[0.72rem] text-muted-foreground sm:mt-1.5 sm:text-[0.78rem]">{headerMeta}</p>
+				<p class="mt-1 text-[0.74rem] text-muted-foreground sm:mt-1.5 sm:text-[0.8rem] lg:text-[0.86rem]">{headerMeta}</p>
 			</div>
 		</div>
 	</div>
@@ -263,9 +263,9 @@
 			</div>
 		{/if}
 		{#each dayGroups as group (group.dateKey)}
-			<div class="my-2.5 flex items-center gap-2">
+			<div class="my-3 flex items-center gap-2 lg:my-3.5">
 				<div class="h-px flex-1 bg-border/50"></div>
-				<span class="rounded-full border border-border/70 bg-background px-2.25 py-0.75 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
+				<span class="rounded-full border border-border/70 bg-background px-2.5 py-0.85 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.75 sm:py-1 sm:text-[0.68rem]">
 					{group.label}
 				</span>
 				<div class="h-px flex-1 bg-border/50"></div>
@@ -278,7 +278,7 @@
 						message.senderKind === 'owner' ? 'justify-end' : 'justify-start'
 					)}
 				>
-					<div class="max-w-[86%] sm:max-w-[82%]">
+					<div class="max-w-[86%] sm:max-w-[82%] xl:max-w-[76%]">
 						{#if message.senderKind === 'owner' && !message.isDeleted && onDeleteMessage}
 							<div class="mb-1 flex justify-end">
 								<Button
@@ -297,7 +297,7 @@
 
 						<div
 							class={cn(
-								'rounded-[1.35rem] border px-3 py-2 shadow-sm sm:rounded-2xl sm:py-2.5',
+								'rounded-[1.35rem] border px-3.5 py-2.5 shadow-sm sm:rounded-2xl sm:px-4 sm:py-3',
 								message.isDeleted
 									? 'border-border/70 bg-muted/30 text-muted-foreground'
 									: message.senderKind === 'owner'
@@ -306,7 +306,9 @@
 							)}
 						>
 							{#if message.isDeleted}
-								<p class="text-sm italic whitespace-pre-wrap wrap-break-word">{message.body}</p>
+								<p class="text-[0.96rem] italic leading-7 whitespace-pre-wrap wrap-break-word lg:text-[1.02rem]">
+									{message.body}
+								</p>
 							{:else if message.kind === 'image' && message.imageUrl}
 								<div class="space-y-2">
 									<img
@@ -316,15 +318,19 @@
 										loading="lazy"
 									/>
 									{#if message.body.trim()}
-										<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
+										<p class="text-[0.96rem] leading-7 whitespace-pre-wrap wrap-break-word lg:text-[1.02rem]">
+											{message.body}
+										</p>
 									{/if}
 								</div>
 							{:else}
-								<p class="text-sm whitespace-pre-wrap wrap-break-word">{message.body}</p>
+								<p class="text-[0.96rem] leading-7 whitespace-pre-wrap wrap-break-word lg:text-[1.02rem]">
+									{message.body}
+								</p>
 							{/if}
 							<p
 								class={cn(
-									'mt-0.5 text-right text-[0.65rem]',
+									'mt-1 text-right text-[0.66rem]',
 									message.isDeleted
 										? 'text-muted-foreground'
 										: message.senderKind === 'owner'

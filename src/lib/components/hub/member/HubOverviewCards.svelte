@@ -21,6 +21,18 @@
 	const memberCountLabel = $derived(
 		memberCount === null ? 'Loading members' : `${memberCount} members`
 	);
+	const spotlightPeople = $derived.by(() =>
+		spotlightThreads.map((thread) => ({
+			id: thread.id,
+			name: thread.participant.name,
+			subtitle: thread.participant.subtitle || 'Direct conversation',
+			avatarUrl: thread.participant.avatar_url,
+			note:
+				thread.unreadCount > 0
+					? `${formatCount(thread.unreadCount, 'message')} unread`
+					: 'Caught up'
+		}))
+	);
 
 	function formatCount(count: number, singular: string, plural = `${singular}s`) {
 		return `${count} ${count === 1 ? singular : plural}`;
@@ -121,14 +133,14 @@
 	}
 </script>
 
-	<section class="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)] xl:grid-cols-[minmax(0,1.55fr)_minmax(19rem,0.8fr)]">
+	<section class="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)] xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.82fr)]">
 	<Card.Root class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/24 shadow-sm">
 		<div class="pointer-events-none absolute -right-20 top-0 h-52 w-52 rounded-full bg-primary/10 blur-3xl"></div>
 		<div class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-		<Card.Content class="relative space-y-5 py-5 sm:py-6">
+		<Card.Content class="relative space-y-6 py-6 sm:py-7">
 			<div class="space-y-1.5">
 				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Hub focus</p>
-				<h2 class="max-w-2xl text-[1.65rem] font-semibold tracking-tight text-foreground sm:text-[1.9rem] sm:leading-[1.04]">
+				<h2 class="max-w-2xl text-[1.78rem] font-semibold tracking-tight text-foreground sm:text-[2.15rem] sm:leading-[1.02]">
 					{attentionLabel}
 				</h2>
 				<p class="max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -148,7 +160,7 @@
 				{/each}
 			</div>
 
-			<div class="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
+			<div class="grid gap-4 border-t border-border/60 pt-4 2xl:grid-cols-[minmax(0,1fr)_18rem] 2xl:items-start">
 				<div class="space-y-1">
 					<div class="flex items-center gap-2 text-foreground">
 						<Users class="size-4 text-primary" />
@@ -161,22 +173,29 @@
 					</p>
 				</div>
 
-				{#if spotlightThreads.length > 0}
-					<div class="flex items-center gap-2.5">
-						<div class="flex -space-x-2">
-							{#each spotlightThreads as thread (thread.id)}
-								<Avatar.Root class="size-9 border border-background bg-background shadow-sm after:hidden">
-									{#if thread.participant.avatar_url}
-										<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
-									{:else}
-										<Avatar.Fallback class="text-xs font-semibold text-foreground">
-											{getParticipantInitials(thread.participant.name)}
-										</Avatar.Fallback>
-									{/if}
-								</Avatar.Root>
+				{#if spotlightPeople.length > 0}
+					<div class="rounded-[1.35rem] border border-border/70 bg-background/82 p-3.5 shadow-sm">
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">People in motion</p>
+						<div class="mt-3 space-y-3">
+							{#each spotlightPeople as person (person.id)}
+								<div class="flex items-center gap-3">
+									<Avatar.Root class="size-10 border border-background bg-background shadow-sm after:hidden">
+										{#if person.avatarUrl}
+											<Avatar.Image src={person.avatarUrl} alt={person.name} />
+										{:else}
+											<Avatar.Fallback class="text-xs font-semibold text-foreground">
+												{getParticipantInitials(person.name)}
+											</Avatar.Fallback>
+										{/if}
+									</Avatar.Root>
+									<div class="min-w-0 flex-1">
+										<p class="truncate text-sm font-medium text-foreground">{person.name}</p>
+										<p class="truncate text-xs text-muted-foreground">{person.subtitle}</p>
+									</div>
+									<p class="text-[0.68rem] font-medium text-muted-foreground">{person.note}</p>
+								</div>
 							{/each}
 						</div>
-						<p class="text-xs text-muted-foreground">Recent inbox context</p>
 					</div>
 				{/if}
 			</div>

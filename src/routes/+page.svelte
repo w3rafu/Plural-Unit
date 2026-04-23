@@ -157,7 +157,7 @@
 	actions={hubActions}
 />
 
-<main class="mx-auto flex w-full max-w-5xl flex-col gap-5 lg:gap-6" aria-busy={currentHub.isLoading}>
+<main class="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:gap-7" aria-busy={currentHub.isLoading}>
 	{#if hasBlockingHubError}
 		<Card.Root class="border-destructive/30 bg-destructive/5">
 			<Card.Content class="flex flex-wrap items-center gap-3 py-4">
@@ -186,28 +186,32 @@
 			</Card.Root>
 		{/if}
 
-		<HubOverviewCards
-			memberCount={currentOrganization.memberCount}
-			{pendingInvites}
-			liveBroadcasts={canSeeBroadcasts ? currentHub.activeBroadcasts.length : 0}
-			upcomingEvents={upcomingVisibleEvents.length}
-			{unreadMessages}
-			{unreadActivityItems}
-			{broadcastReachPercent}
-			{eventResponsePercent}
-			{inboxClearPercent}
-			threads={spotlightThreads}
-		/>
-
-		{#if canSeeBroadcasts || canSeeEvents}
-			<HubActivityFeed
-				items={visibleActivityItems}
-				broadcastHref="#hub-broadcasts"
-				eventHref="#hub-events"
-				{manageBroadcastsHref}
-				{manageEventsHref}
+		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.58fr)_minmax(0,0.9fr)] xl:items-start">
+			<HubOverviewCards
+				memberCount={currentOrganization.memberCount}
+				{pendingInvites}
+				liveBroadcasts={canSeeBroadcasts ? currentHub.activeBroadcasts.length : 0}
+				upcomingEvents={upcomingVisibleEvents.length}
+				{unreadMessages}
+				{unreadActivityItems}
+				{broadcastReachPercent}
+				{eventResponsePercent}
+				{inboxClearPercent}
+				threads={spotlightThreads}
 			/>
-		{/if}
+
+			{#if canSeeBroadcasts || canSeeEvents}
+				<div class="min-w-0 xl:pt-0.5">
+					<HubActivityFeed
+						items={visibleActivityItems}
+						broadcastHref="#hub-broadcasts"
+						eventHref="#hub-events"
+						{manageBroadcastsHref}
+						{manageEventsHref}
+					/>
+				</div>
+			{/if}
+		</div>
 
 		{#if currentHub.isLoading}
 			<p class="text-sm text-muted-foreground">Loading the hub...</p>

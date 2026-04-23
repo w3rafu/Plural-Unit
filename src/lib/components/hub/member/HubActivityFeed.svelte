@@ -67,7 +67,7 @@
 	}
 </script>
 
-<Card.Root size="sm" class="border-border/70 bg-card">
+<Card.Root size="sm" class="h-full border-border/70 bg-card">
 	<Card.Content class="space-y-3 py-4" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
 			<div class="space-y-1">
