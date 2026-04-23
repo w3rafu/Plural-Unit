@@ -182,6 +182,7 @@
 						<HubNotificationsSheet
 							triggerLabel="Alerts"
 							triggerClass={controlButtonClass}
+							isInteractive={false}
 							broadcastHref={hubBroadcastHref}
 							eventHref={hubEventHref}
 							{manageContentHref}

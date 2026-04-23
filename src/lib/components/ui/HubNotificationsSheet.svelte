@@ -39,6 +39,7 @@
 	let {
 		triggerLabel = 'Alerts',
 		triggerClass = '',
+		isInteractive = true,
 		broadcastHref = '/#hub-broadcasts',
 		eventHref = '/#hub-events',
 		settingsHref = '/profile#notification-preferences',
@@ -48,6 +49,7 @@
 	}: {
 		triggerLabel?: string;
 		triggerClass?: string;
+		isInteractive?: boolean;
 		broadcastHref?: string;
 		eventHref?: string;
 		settingsHref?: string;
@@ -348,6 +350,17 @@
 	}
 </script>
 
+{#if !isInteractive}
+	<Button type="button" variant="outline" size="sm" class={`gap-2 ${triggerClass}`} aria-disabled="true">
+		<BellIcon class="shell-header__control-icon" aria-hidden="true" />
+		<span class="shell-header__control-label">{triggerLabel}</span>
+		{#if unreadCount > 0}
+			<span class="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-background">
+				{unreadCount}
+			</span>
+		{/if}
+	</Button>
+{:else}
 <Sheet.Root open={open} onOpenChange={handleOpenChange}>
 	<Sheet.Trigger>
 		{#snippet child({ props })}
@@ -906,3 +919,4 @@
 		</Sheet.Footer>
 	</Sheet.Content>
 </Sheet.Root>
+{/if}

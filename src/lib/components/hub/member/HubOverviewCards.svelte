@@ -173,8 +173,8 @@
 		<div class="pointer-events-none absolute -right-20 top-0 h-52 w-52 rounded-full bg-primary/14 blur-3xl"></div>
 		<div class="pointer-events-none absolute left-8 top-10 h-28 w-28 rounded-full bg-primary/6 blur-3xl"></div>
 		<div class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-		<Card.Content class="relative space-y-5 py-5 sm:py-6">
-			<div class="space-y-1.5">
+		<Card.Content class="relative space-y-4 py-4 sm:py-5">
+			<div class="space-y-1">
 				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Hub focus</p>
 				<h2 class="max-w-2xl text-[1.78rem] font-semibold tracking-tight text-foreground sm:text-[2.15rem] sm:leading-[1.02]">
 					{attentionLabel}
@@ -184,16 +184,14 @@
 				</p>
 			</div>
 
-			<div class="grid gap-3 md:grid-cols-3">
+			<div class="flex flex-col gap-2.5">
 				{#each decisionRows as row (row.label)}
 					<div class="rounded-[1.2rem] border border-border/70 bg-background/88 px-4 py-3 shadow-sm">
-						<div class="flex items-start justify-between gap-4">
-							<div class="min-w-0">
-								<p class="text-sm font-semibold text-foreground">{row.label}</p>
-								<p class="mt-0.5 text-[0.84rem] leading-5 text-muted-foreground">{row.summary}</p>
-							</div>
-							<p class="shrink-0 text-[1.65rem] font-semibold tracking-tight text-foreground">{row.value}</p>
+						<div class="flex items-start justify-between gap-3">
+							<p class="text-sm font-semibold text-foreground">{row.label}</p>
+							<p class="shrink-0 text-[1.65rem] leading-none font-semibold tracking-tight text-foreground">{row.value}</p>
 						</div>
+						<p class="mt-1.5 text-[0.84rem] leading-5 text-muted-foreground">{row.summary}</p>
 					</div>
 				{/each}
 			</div>
