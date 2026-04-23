@@ -48,7 +48,6 @@
 	const coordinator = $derived(
 		findVolunteerContactByName('Megan Carter') ?? volunteerContacts[0] ?? null
 	);
-	const featuredVolunteers = $derived(volunteerContacts.slice(1, 4));
 	const selectedShiftSummary = $derived.by(() => {
 		if (!selectedShift) {
 			return 'Choose any open shift to continue.';
@@ -59,13 +58,6 @@
 		}
 
 		return `${selectedShiftOpenSlots} spot${selectedShiftOpenSlots === 1 ? '' : 's'} still open in this block.`;
-	});
-	const signupLeadCopy = $derived.by(() => {
-		if (!event) {
-			return 'Pick an open shift, leave your details, and you are done.';
-		}
-
-		return `${openShiftCount} open shift${openShiftCount === 1 ? '' : 's'} still need coverage across ${totalOpenSlots} volunteer spot${totalOpenSlots === 1 ? '' : 's'}. Pick the window that fits and the event lead will be ready for you when you arrive.`;
 	});
 	const signupLeadCopyCompact = $derived.by(() => {
 		if (!event) {
@@ -261,11 +253,11 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<div class="grid gap-4 lg:grid-cols-[minmax(19rem,0.82fr)_minmax(0,1.18fr)] lg:items-start lg:gap-5 xl:grid-cols-[minmax(20rem,0.78fr)_minmax(0,1.22fr)]">
-			<Card.Root size="sm" class="order-2 relative overflow-hidden border-border/70 bg-card shadow-sm lg:order-1 lg:sticky lg:top-24">
+		<div class="grid gap-4 lg:grid-cols-[minmax(17.5rem,0.72fr)_minmax(0,1.28fr)] lg:items-start lg:gap-5 xl:grid-cols-[minmax(18.5rem,0.68fr)_minmax(0,1.32fr)]">
+			<Card.Root size="sm" class="relative hidden overflow-hidden border-border/70 bg-card shadow-sm lg:sticky lg:top-24 lg:block">
 				<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 				<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-				<Card.Content class="relative space-y-3.5 px-4 py-4 sm:px-5 lg:px-5 lg:py-4.5">
+				<Card.Content class="relative space-y-3 px-4 py-4 lg:px-5 lg:py-4.25">
 					<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 						<div class="flex items-start gap-4">
 							<div class="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-2xl border border-border/70 bg-muted/30 text-center">
@@ -282,10 +274,7 @@
 						</div>
 					</div>
 
-					<p class="max-w-xl text-[0.9rem] leading-5.5 text-muted-foreground lg:text-[0.92rem]">
-						<span class="sm:hidden">{signupLeadCopyCompact}</span>
-						<span class="hidden sm:inline">{signupLeadCopy}</span>
-					</p>
+					<p class="max-w-lg text-[0.9rem] leading-5.5 text-muted-foreground lg:text-[0.92rem]">{signupLeadCopyCompact}</p>
 
 					<div class="flex flex-wrap gap-1.5 text-[0.8rem] text-muted-foreground sm:gap-2 sm:text-sm">
 						{#each signupChips as chip, index (chip)}
@@ -293,7 +282,7 @@
 						{/each}
 					</div>
 
-					<div class="grid gap-2.5 lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)] xl:items-start">
+					<div class="grid gap-2.5">
 						<div class="rounded-[1.1rem] bg-muted/20 px-3 py-3 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3.5">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current selection</p>
 							{#if selectedShift}
@@ -312,7 +301,7 @@
 						</div>
 
 						{#if coordinator}
-							<div class="rounded-[1.1rem] border border-border/70 bg-background/82 px-3 py-3 shadow-sm sm:rounded-[1.2rem] sm:px-3.5 sm:py-3.5">
+							<div class="rounded-[1.1rem] border border-border/70 bg-background/82 px-3 py-3 shadow-sm sm:rounded-[1.2rem] sm:px-3.5 sm:py-3.25">
 								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">On-site coordinator</p>
 								<div class="mt-2 flex items-center gap-2.5 sm:mt-2.5 sm:gap-3">
 									<Avatar.Root class="size-9 border border-border/70 bg-muted/30 shadow-sm after:hidden sm:size-10">
@@ -328,23 +317,10 @@
 							</div>
 						{/if}
 					</div>
-
-					{#if featuredVolunteers.length > 0}
-						<div class="flex items-center gap-3 border-t border-border/60 pt-3">
-							<div class="flex -space-x-3">
-								{#each featuredVolunteers as volunteer (volunteer.id)}
-									<Avatar.Root class="size-9 border-2 border-background bg-muted/30 shadow-sm after:hidden">
-										<Avatar.Image src={volunteer.avatarUrl} alt={volunteer.name} />
-									</Avatar.Root>
-								{/each}
-							</div>
-							<p class="text-[0.84rem] leading-5 text-muted-foreground">Regular volunteers are already rotating through this event.</p>
-						</div>
-					{/if}
 				</Card.Content>
 			</Card.Root>
 
-			<Card.Root size="sm" class="order-1 border-border/70 bg-card shadow-sm ring-1 ring-primary/10 lg:order-2">
+			<Card.Root size="sm" class="border-border/70 bg-card shadow-sm ring-1 ring-primary/10 lg:order-2">
 				<Card.Header class="gap-2 border-b border-border/70">
 					<div class="flex items-start gap-3 lg:hidden">
 						<div class="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-[0.9rem] border border-border/70 bg-muted/30 text-center">

@@ -85,8 +85,8 @@
 </script>
 
 	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="space-y-3.5 px-4 py-4 sm:px-5 sm:py-4.5 lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(15rem,0.92fr)] lg:items-start lg:gap-5 lg:space-y-0">
-			<div class="space-y-3">
+		<Card.Content class="space-y-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:grid lg:grid-cols-[minmax(0,1.14fr)_minmax(14rem,0.86fr)] lg:items-start lg:gap-4.5 lg:space-y-0">
+			<div class="space-y-2.5">
 				<div class="space-y-1.5">
 					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Overview</p>
 					{#if isEditing}
@@ -134,14 +134,14 @@
 							{/if}
 						</div>
 					{/if}
-					<p class="text-[0.84rem] leading-5 text-muted-foreground sm:text-[0.92rem]">
+					<p class="text-[0.82rem] leading-5 text-muted-foreground sm:text-[0.9rem]">
 						{currentOrganization.membership?.role ?? '—'} access with join code, invitation, and roster controls below.
 					</p>
 				</div>
 
 			<div class="flex flex-wrap gap-1.5 sm:gap-2">
 					{#each overviewChips as chip (chip)}
-					<div class="rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56 sm:px-3 sm:py-1.5 sm:text-[0.72rem]">
+					<div class="rounded-full border border-border/70 bg-background px-2.5 py-1.15 text-[0.66rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56 sm:px-3 sm:py-1.35 sm:text-[0.7rem]">
 							{chip}
 						</div>
 					{/each}
@@ -149,15 +149,15 @@
 			</div>
 
 		<div class="grid grid-cols-3 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-			<div class="rounded-[1rem] border border-border/70 bg-muted/12 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2.25 sm:px-3 sm:py-2.75">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Role</p>
 				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.membership?.role ?? '—'}</p>
 				</div>
-			<div class="rounded-[1rem] border border-border/70 bg-muted/12 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2.25 sm:px-3 sm:py-2.75">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Members</p>
 				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}</p>
 				</div>
-			<div class="rounded-[1rem] border border-border/70 bg-muted/12 px-2.5 py-2.5 sm:px-3.5 sm:py-3">
+			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2.25 sm:px-3 sm:py-2.75">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invites</p>
 				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.invitations.length}</p>
 				</div>

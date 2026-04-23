@@ -17,13 +17,13 @@
 	}
 </script>
 
-<main class="mx-auto flex w-full max-w-6xl flex-col gap-3.5 lg:gap-4">
+<main class="mx-auto flex w-full max-w-5xl flex-col gap-3 lg:gap-3.5">
 	<ProfileSection />
 
-	<div class="grid gap-3.5 xl:grid-cols-[minmax(0,1.08fr)_21rem] xl:items-start">
+	<div class="grid gap-3 xl:grid-cols-[minmax(0,1.08fr)_19.5rem] xl:items-start">
 		<ProfileDetailsCard />
 
-		<div class="space-y-3.5 xl:sticky xl:top-24">
+		<div class="space-y-3 xl:sticky xl:top-24">
 			<ProfileSecurityCard />
 		</div>
 	</div>

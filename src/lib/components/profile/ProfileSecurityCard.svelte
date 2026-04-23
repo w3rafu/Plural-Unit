@@ -125,13 +125,13 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
+	<Card.Header class="gap-1.5 border-b border-border/70 py-4">
 		<Card.Title class="text-lg font-semibold tracking-tight">Security</Card.Title>
 	</Card.Header>
 
-	<Card.Content class="space-y-4 py-5">
+	<Card.Content class="space-y-3.5 py-4">
 		<form
-			class="space-y-3.5"
+			class="space-y-2.75"
 			onsubmit={(event) => {
 				event.preventDefault();
 				saveEmailChange();
@@ -155,12 +155,12 @@
 			</Field.Field>
 
 			<div class="flex justify-start">
-				<Button type="submit" disabled={currentUser.isLoggingIn}>Change email</Button>
+				<Button type="submit" size="sm" disabled={currentUser.isLoggingIn}>Change email</Button>
 			</div>
 		</form>
 
 		<form
-			class="space-y-3.5 border-t border-border/70 pt-4"
+			class="space-y-3 border-t border-border/70 pt-3.5"
 			onsubmit={(event) => {
 				event.preventDefault();
 				savePasswordChange();
@@ -171,7 +171,7 @@
 				<p class="text-sm text-muted-foreground">Set a new password when you want to refresh access.</p>
 			</div>
 
-			<Field.Group class="gap-3.5">
+			<Field.Group class="gap-3">
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="new-password">New password</Field.Label>
@@ -208,7 +208,7 @@
 			</Field.Group>
 
 			<div class="flex justify-start">
-				<Button type="submit" disabled={currentUser.isLoggingIn}>Change password</Button>
+				<Button type="submit" size="sm" disabled={currentUser.isLoggingIn}>Change password</Button>
 			</div>
 		</form>
 	</Card.Content>

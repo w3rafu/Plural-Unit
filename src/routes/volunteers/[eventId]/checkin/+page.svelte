@@ -163,7 +163,7 @@
 </svelte:head>
 
 <div class="sticky top-0 z-20 -mx-3 border-b border-border/60 bg-background/90 backdrop-blur-sm sm:-mx-4">
-	<div class="flex items-center gap-3 px-4 py-2.5">
+	<div class="flex items-center gap-3 px-4 py-2">
 		<Button href="/volunteers" variant="ghost" size="sm" class="-ml-1 h-8 gap-1.5 px-2 text-xs">
 			<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M10 12L6 8l4-4" />
@@ -178,7 +178,7 @@
 	</div>
 </div>
 
-<div class="relative isolate page-stack py-5">
+<div class="relative isolate page-stack py-4">
 	<div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.08),transparent_65%)]"></div>
 	{#if !event}
 		<Card.Root>
@@ -190,8 +190,8 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-card shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-3.5 px-4 py-3.5 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.18fr)_17rem] lg:items-start lg:gap-4.5 lg:space-y-0 lg:px-5">
-				<div class="space-y-2.5">
+			<Card.Content class="relative space-y-3 px-4 py-3.25 sm:px-5 lg:px-5">
+				<div class="space-y-2.25">
 					<div class="space-y-1.25">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
 						<h1 class="max-w-3xl text-[1.8rem] font-semibold tracking-tight text-foreground sm:text-[1.95rem] sm:leading-[0.98]">{event.title}</h1>
@@ -204,45 +204,30 @@
 						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
 						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
 					</div>
-				</div>
 
-				<div class="rounded-[1.1rem] bg-muted/20 px-3.5 py-3.5 dark:bg-background/56">
-					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Working now</p>
-					<p class="mt-1.5 text-lg font-semibold tracking-tight text-foreground">{activeShift?.title ?? 'Choose a shift'}</p>
-					<p class="mt-1 text-sm text-muted-foreground">{activeShift ? `${activeShiftWindow} · ${remainingCheckIns} pending` : 'Use the shift switcher below to begin check-in.'}</p>
-
-					{#if shiftLead}
-						<div class="mt-3 flex items-center gap-3 border-t border-border/60 pt-3">
-							<div class="flex -space-x-2">
-								{#each quickRoster as person (person.key)}
-									<Avatar.Root class="size-8 border-2 border-background bg-muted/30 shadow-sm after:hidden">
-										{#if person.avatarUrl}
-											<Avatar.Image src={person.avatarUrl} alt={person.name} />
-										{:else}
-											<Avatar.Fallback class="text-[0.65rem] font-semibold text-foreground">{person.initials}</Avatar.Fallback>
-										{/if}
-									</Avatar.Root>
-								{/each}
-							</div>
-							<div class="min-w-0">
-								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">First expected</p>
-								<p class="truncate text-sm font-medium text-foreground">{shiftLead.name}</p>
-							</div>
+					{#if activeShift}
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.76rem] text-muted-foreground">
+							<p class="font-medium text-foreground">Working now: {activeShift.title}</p>
+							<p>{activeShiftWindow}</p>
+							<p>{remainingCheckIns} pending</p>
+							{#if shiftLead}
+								<p>First expected: {shiftLead.name}</p>
+							{/if}
 						</div>
 					{/if}
 				</div>
 			</Card.Content>
 		</Card.Root>
 
-		<div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
+		<div class="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_16rem] xl:items-start">
 			<Card.Root size="sm" class="border-border/70 bg-card">
-				<Card.Header class="gap-2 border-b border-border/70">
+				<Card.Header class="gap-1.5 border-b border-border/70 py-4">
 					<Card.Title class="text-lg font-semibold tracking-tight">Check-in list</Card.Title>
 					{#if activeShift}
 						<Card.Description>{activeShift.title} · {activeShift.startTime}–{activeShift.endTime}</Card.Description>
 					{/if}
 				</Card.Header>
-				<Card.Content class="space-y-4">
+				<Card.Content class="space-y-3.5">
 					<div class="flex flex-wrap items-center justify-between gap-3">
 						<div class="flex flex-wrap gap-2">
 							{#each event.shifts as shift (shift.id)}
@@ -251,7 +236,7 @@
 								<button
 									type="button"
 									onclick={() => (selectedShiftId = shift.id)}
-									class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-1.75 text-[0.74rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
+									class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[0.74rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
 								>
 									<span>{shift.title}</span>
 									<span class="text-[0.68rem] text-muted-foreground/80 dark:text-foreground/60">{expected} expected</span>
@@ -355,9 +340,9 @@
 				</Card.Content>
 			</Card.Root>
 
-			<div class="space-y-3.5 xl:sticky xl:top-24">
+			<div class="space-y-3 xl:sticky xl:top-24">
 				<Card.Root size="sm" class="border-border/70 bg-card">
-					<Card.Content class="space-y-3.5 py-4">
+					<Card.Content class="space-y-3 py-3.5">
 						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
 						{#if activeShift}
 							<p class="text-base font-semibold tracking-tight text-foreground">{activeShift.title}</p>
@@ -370,7 +355,7 @@
 						<div class="h-2 overflow-hidden rounded-full bg-muted">
 							<div class="h-full rounded-full bg-foreground/75 transition-all" style="width: {completionPercent}%"></div>
 						</div>
-						<div class="space-y-2.5 border-t border-border/60 pt-3">
+						<div class="space-y-2 border-t border-border/60 pt-3">
 							<div class="flex items-start justify-between gap-3">
 								<p class="text-sm text-muted-foreground">Still to check in</p>
 								<p class="text-sm font-semibold text-foreground">{remainingCheckIns}</p>
@@ -387,7 +372,7 @@
 
 				{#if shiftLead}
 					<Card.Root size="sm" class="border-border/70 bg-card">
-						<Card.Content class="space-y-3.5 py-4">
+						<Card.Content class="space-y-3 py-3.5">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Up next</p>
 							<div class="flex items-center gap-3">
 								<Avatar.Root class="size-12 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">
@@ -404,7 +389,7 @@
 							</div>
 
 							{#if quickRoster.length > 1}
-								<div class="space-y-2 border-t border-border/60 pt-4">
+								<div class="space-y-2 border-t border-border/60 pt-3.5">
 									{#each quickRoster.slice(1) as person (person.key)}
 										<div class="flex items-center gap-3">
 											<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">

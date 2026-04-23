@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
 	import { toast } from '$lib/stores/toast.svelte';
 	import { formatShortDateTime } from '$lib/utils/dateFormat';
@@ -23,59 +22,60 @@
 	}
 </script>
 
-<Card.Root size="sm" class="border-border/70 bg-muted/10 shadow-none">
-	<Card.Header class="gap-1.5 border-b border-border/60 pb-3">
-		<Card.Title class="text-base font-semibold tracking-tight">Deletion requests</Card.Title>
-		<Card.Description>Pending member offboarding requests that still need admin review.</Card.Description>
-	</Card.Header>
-
-	<Card.Content class="space-y-3 p-4 sm:p-4.5">
-		{#if currentOrganization.isLoadingDeletionRequests && currentOrganization.deletionRequests.length === 0}
-			<p class="text-sm text-muted-foreground">Loading pending requests…</p>
-		{:else if currentOrganization.deletionRequests.length === 0}
-			<div class="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-8 text-center">
-				<p class="font-medium text-foreground">No pending deletion requests</p>
-				<p class="mt-1 text-sm text-muted-foreground">
-					Member offboarding requests will appear here once someone flags their account for removal.
+{#if currentOrganization.isLoadingDeletionRequests && currentOrganization.deletionRequests.length === 0}
+	<div class="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3">
+		<p class="text-sm text-muted-foreground">Loading pending requests…</p>
+	</div>
+{:else if currentOrganization.deletionRequests.length === 0}
+	<div class="flex flex-col gap-1 rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+		<div>
+			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Deletion requests</p>
+			<p class="text-[0.82rem] text-muted-foreground">No pending offboarding requests right now.</p>
+		</div>
+	</div>
+{:else}
+	<section class="rounded-2xl border border-border/70 bg-muted/10">
+		<div class="flex flex-col gap-1.5 border-b border-border/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+			<div>
+				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Deletion requests</p>
+				<p class="text-[0.82rem] text-muted-foreground">
+					{currentOrganization.deletionRequests.length} pending offboarding {currentOrganization.deletionRequests.length === 1 ? 'request' : 'requests'}
 				</p>
 			</div>
-		{:else}
-			<div class="space-y-2.5">
-				{#each currentOrganization.deletionRequests as request (request.profile_id)}
-					<div class="rounded-[1.15rem] border border-border/70 bg-background px-3.5 py-3.5">
-						<div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-							<div class="min-w-0 space-y-2">
-								<div class="space-y-1">
-									<p class="text-sm font-medium text-foreground">{request.name || 'Unnamed member'}</p>
-									<p class="text-xs text-muted-foreground">
-										{request.email || request.phone_number || 'No contact added'}
-									</p>
-								</div>
+		</div>
 
-								<p class="text-sm text-muted-foreground">
-									Requested {formatShortDateTime(request.deletion_requested_at)}
+		<div class="space-y-2 p-3 sm:p-3.5">
+			{#each currentOrganization.deletionRequests as request (request.profile_id)}
+				<div class="rounded-xl border border-border/70 bg-background px-3 py-2.5">
+					<div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+						<div class="min-w-0 space-y-1">
+							<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+								<p class="text-sm font-medium text-foreground">{request.name || 'Unnamed member'}</p>
+								<p class="text-[0.76rem] text-muted-foreground">
+									{request.email || request.phone_number || 'No contact added'}
 								</p>
-
-								{#if request.bio}
-									<p class="text-sm text-muted-foreground wrap-break-word">{request.bio}</p>
-								{/if}
 							</div>
-
-							<div class="flex shrink-0 items-center gap-2">
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									disabled={currentOrganization.isMutating}
-									onclick={() => reviewRequest(request.profile_id, request.name)}
-								>
-									Mark reviewed
-								</Button>
-							</div>
+							<p class="text-[0.78rem] text-muted-foreground">
+								Requested {formatShortDateTime(request.deletion_requested_at)}
+							</p>
+							{#if request.bio}
+								<p class="text-[0.82rem] leading-5 text-muted-foreground wrap-break-word">{request.bio}</p>
+							{/if}
 						</div>
+
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							class="h-8.5 rounded-xl px-3"
+							disabled={currentOrganization.isMutating}
+							onclick={() => reviewRequest(request.profile_id, request.name)}
+						>
+							Mark reviewed
+						</Button>
 					</div>
-				{/each}
-			</div>
-		{/if}
-	</Card.Content>
-</Card.Root>
+				</div>
+			{/each}
+		</div>
+	</section>
+{/if}

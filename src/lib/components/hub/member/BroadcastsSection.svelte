@@ -49,15 +49,16 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<div class="space-y-3">
+		<div class={`space-y-3 ${items.length === 1 ? 'max-w-3xl' : ''}`}>
 			{#each items as broadcast (broadcast.id)}
 				{@const acknowledged = currentHub.hasAcknowledged(broadcast.id)}
 				{@const ackCount = currentHub.getAcknowledgmentCount(broadcast.id)}
 				{@const ackBusy = currentHub.broadcastAcknowledgmentTargetId === broadcast.id}
 				{@const detailHref = `/hub/broadcast/${broadcast.id}`}
 				<Card.Root size="sm" class="border-border/70 bg-card">
-					<Card.Content class="space-y-4">
-						<div class="flex items-center justify-between gap-3">
+					<Card.Content class={`space-y-3 ${items.length === 1 ? 'sm:grid sm:grid-cols-[minmax(0,1fr)_10.5rem] sm:items-start sm:gap-4 sm:space-y-0' : ''}`}>
+						<div class="space-y-3">
+							<div class="flex items-center justify-between gap-3">
 							<div class="flex flex-wrap gap-2">
 								<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
 									Broadcast
@@ -68,25 +69,29 @@
 									</Badge>
 								{/if}
 							</div>
-							<time class="text-xs uppercase tracking-[0.12em] text-muted-foreground" datetime={broadcast.publish_at ?? broadcast.created_at}>
+								<time class="text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground" datetime={broadcast.publish_at ?? broadcast.created_at}>
 								{broadcast.publish_at ? formatShortDateTime(broadcast.publish_at) : formatShortDate(broadcast.created_at)}
 							</time>
 						</div>
-						<div class="space-y-1">
-							<h3 class="text-base font-medium text-foreground">
+								<div class="space-y-1">
+									<h3 class="text-[0.98rem] font-medium text-foreground">
 								<a href={detailHref} class="hover:underline">{broadcast.title}</a>
-							</h3>
-							<p class="text-sm leading-6 text-muted-foreground">{broadcast.body}</p>
-							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
+									</h3>
+									<p class="text-[0.92rem] leading-5.5 text-muted-foreground">{broadcast.body}</p>
+									<p class="text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
+								</div>
 						</div>
-						<div class="flex items-center justify-between gap-3 border-t border-border/70 pt-3">
-							<p class="text-xs text-muted-foreground">
-								{ackCount} {ackCount === 1 ? 'acknowledgment' : 'acknowledgments'}
-							</p>
+							<div class={`flex items-center justify-between gap-3 border-t border-border/70 pt-3 ${items.length === 1 ? 'sm:min-h-full sm:flex-col sm:items-stretch sm:justify-between sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0' : ''}`}>
+								<div class="space-y-1">
+									<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Acknowledgment</p>
+									<p class="text-sm text-muted-foreground">
+										{ackCount} {ackCount === 1 ? 'person has' : 'people have'} responded
+									</p>
+								</div>
 							<Button
 								variant={acknowledged ? 'secondary' : 'outline'}
 								size="sm"
-								class="h-7 text-xs"
+									class={`h-7 text-xs ${items.length === 1 ? 'sm:w-full sm:justify-center' : ''}`}
 								disabled={ackBusy}
 								onclick={() => {
 									if (acknowledged) {

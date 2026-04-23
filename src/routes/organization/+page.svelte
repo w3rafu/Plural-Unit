@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as ButtonGroup from '$lib/components/ui/button-group';
-	import * as Card from '$lib/components/ui/card';
 	import OrganizationOverviewCard from '$lib/components/organization/OrganizationOverviewCard.svelte';
 	import OrganizationAccessCard from '$lib/components/organization/OrganizationAccessCard.svelte';
 	import OrganizationMembersCard from '$lib/components/organization/OrganizationMembersCard.svelte';
@@ -98,30 +97,28 @@
 <OrganizationOverviewCard />
 
 {#if currentOrganization.isAdmin}
-	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="flex flex-col gap-2 p-2.75 sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
-			<div class="space-y-0.5">
-				<p class="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
-				<p class="text-[0.84rem] font-medium text-foreground">Access or member review.</p>
-			</div>
+	<div class="flex flex-col gap-2 rounded-[1.25rem] border border-border/60 bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5">
+		<div class="space-y-0.5">
+			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
+			<p class="text-[0.82rem] font-medium text-foreground">Review access or roster changes.</p>
+		</div>
 
-			<nav aria-label="Organization sections" class="w-full sm:max-w-md">
-				<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
-					{#each sections as section (section.id)}
-						<Button
-							size="sm"
-							variant="ghost"
-							class="segmented-control__button h-9 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.82rem]"
-							aria-current={activeSection === section.id ? 'page' : undefined}
-							onclick={() => (activeSection = section.id)}
-						>
-							{section.label}
-						</Button>
-					{/each}
-				</ButtonGroup.Root>
-			</nav>
-		</Card.Content>
-	</Card.Root>
+		<nav aria-label="Organization sections" class="w-full sm:max-w-sm">
+			<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
+				{#each sections as section (section.id)}
+					<Button
+						size="sm"
+						variant="ghost"
+						class="segmented-control__button h-8.5 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.8rem]"
+						aria-current={activeSection === section.id ? 'page' : undefined}
+						onclick={() => (activeSection = section.id)}
+					>
+						{section.label}
+					</Button>
+				{/each}
+			</ButtonGroup.Root>
+		</nav>
+	</div>
 {/if}
 
 {#if activeSection === 'access'}

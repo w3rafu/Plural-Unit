@@ -46,7 +46,9 @@
 		.sort((left, right) => right.totalHours - left.totalHours)
 		.slice(0, 5);
 	const featuredContact = topContacts[0] ?? null;
-	const quickContacts = topContacts.slice(0, 3);
+	const priorityNote = attentionEvent
+		? `${featuredContact?.name ?? 'Your regular lead crew'} usually closes the final gap fastest, so this schedule should move straight into the active events below.`
+		: 'Coverage is healthy right now, so the board can stay focused on the live schedule instead of more top-level summary cards.';
 
 	function clamp(value: number, min: number, max: number) {
 		return Math.min(max, Math.max(min, value));
@@ -123,14 +125,14 @@
 </div>
 
 <!-- page body -->
-<div class="relative isolate page-stack py-5">
+<div class="relative isolate page-stack py-4">
 	<div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.08),transparent_65%)]"></div>
 	<section>
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/30 shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-3.5 px-4 py-4 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:items-start lg:gap-4.5 lg:space-y-0">
-				<div class="space-y-3 lg:max-w-2xl">
+			<Card.Content class="relative space-y-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:grid lg:grid-cols-[minmax(0,1.18fr)_minmax(18rem,0.82fr)] lg:items-start lg:gap-4 lg:space-y-0">
+				<div class="space-y-2.75 lg:max-w-2xl">
 					<div class="space-y-1.25">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer coordinator</p>
 						<h1 class="text-[1.95rem] font-semibold tracking-tight text-foreground sm:text-[2.35rem] sm:leading-[0.98] lg:text-[2.55rem]">{heroTitle}</h1>
@@ -149,72 +151,35 @@
 						</div>
 					</div>
 
-					<div class="rounded-[1.1rem] border border-border/70 bg-background/82 px-3.5 py-3 shadow-sm">
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Why this matters</p>
-						<p class="mt-1.5 text-sm font-medium text-foreground">Coverage is strong, but the clearest gap still needs a final push.</p>
-						<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">The schedule should start reading immediately below the hero, so the top band stays focused on what still needs action.</p>
+					<div class="rounded-[1.05rem] border border-primary/12 bg-primary/4.5 px-3.5 py-2.75 shadow-sm">
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-primary/80">Priority note</p>
+						<p class="mt-1.25 text-[0.84rem] leading-5 text-foreground/90">{priorityNote}</p>
 					</div>
 
 				</div>
 
-				<div class="space-y-3 border-t border-border/60 pt-3.5 lg:border-l lg:border-t-0 lg:pl-4.5 lg:pt-0">
+				<div class="space-y-2.75 border-t border-border/60 pt-3.25 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
 					<div class="grid grid-cols-2 gap-2.5">
-						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm">
+						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
 							<p class="mt-1 text-[2rem] font-semibold tracking-tight text-foreground">{coveragePercent}%</p>
 							<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">{filledUpcomingSlots}/{totalUpcomingSlots} positions filled.</p>
 						</div>
 
-						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Next up</p>
-							<p class="mt-1 text-sm font-semibold text-foreground">{nextEvent?.title ?? 'No event scheduled'}</p>
-							<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">{nextEvent ? `${nextEvent.date} · ${nextEvent.timeRange}` : 'Nothing queued yet.'}</p>
-						</div>
-
-						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Open gap</p>
-							<p class="mt-1 text-[1.55rem] font-semibold tracking-tight text-foreground">{attentionGap}</p>
-							<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">{attentionEvent ? `${attentionEvent.title} still needs coverage.` : 'No staffing gap is active right now.'}</p>
-						</div>
-
-						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm">
+						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Season snapshot</p>
 							<p class="mt-1 text-[1.55rem] font-semibold tracking-tight text-foreground">{volunteerSeasonStats.eventsHeld}</p>
 							<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">{volunteerSeasonStats.totalHours} hours from {volunteerSeasonStats.totalVolunteers} volunteers.</p>
 						</div>
+
+						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm col-span-2">
+							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Next on deck</p>
+							<p class="mt-1 text-sm font-semibold text-foreground">{nextEvent?.title ?? 'No event scheduled'} is next on deck</p>
+							<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">{nextEvent ? `${nextEvent.date} · ${nextEvent.timeRange}` : 'Nothing queued yet.'}</p>
+						</div>
 					</div>
 
 					<ActivityDotGrid title="Staffing activity" caption={staffingActivityCaptionCompact} values={staffingActivityValues} compact={true} />
-
-					<div class="rounded-[1.1rem] border border-border/70 bg-background/82 px-3.5 py-3.5 shadow-sm">
-						<div>
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">People to call</p>
-							<p class="mt-1 text-sm text-muted-foreground">Trusted volunteers who usually close the next staffing gap fastest.</p>
-						</div>
-						<div class="mt-3 space-y-2.5">
-							{#each quickContacts as contact (contact.id)}
-								<div class="flex items-center gap-3 rounded-2xl bg-muted/12 px-3 py-2.5">
-									<Avatar.Root class="size-10 border border-border/70 bg-background shadow-sm after:hidden">
-										{#if contact.avatarUrl}
-											<Avatar.Image src={contact.avatarUrl} alt={contact.name} />
-										{:else}
-											<Avatar.Fallback class="text-sm font-semibold text-foreground">
-												{getContactInitials(contact.name)}
-											</Avatar.Fallback>
-										{/if}
-									</Avatar.Root>
-									<div class="min-w-0 flex-1">
-										<p class="truncate text-sm font-medium text-foreground">{contact.name}</p>
-										<p class="truncate text-xs text-muted-foreground">{contact.businessAffiliation ?? contact.email}</p>
-									</div>
-									<div class="text-right text-xs">
-										<p class="font-semibold tabular-nums text-foreground">{contact.totalHours}h</p>
-										<p class="text-muted-foreground">{contact.pastEventCount} events</p>
-									</div>
-								</div>
-							{/each}
-						</div>
-					</div>
 				</div>
 			</Card.Content>
 		</Card.Root>

@@ -168,8 +168,8 @@
 	}
 </script>
 
-	<section class="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(17rem,0.82fr)] xl:grid-cols-[minmax(0,1.6fr)_minmax(19rem,0.8fr)]">
-	<Card.Root class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-background to-primary/[0.035] shadow-sm">
+	<section class="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(15.5rem,0.68fr)] xl:grid-cols-[minmax(0,1.82fr)_minmax(16.5rem,0.62fr)]">
+	<Card.Root class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-background to-primary/5.5 shadow-sm">
 		<div class="pointer-events-none absolute -right-20 top-0 h-52 w-52 rounded-full bg-primary/14 blur-3xl"></div>
 		<div class="pointer-events-none absolute left-8 top-10 h-28 w-28 rounded-full bg-primary/6 blur-3xl"></div>
 		<div class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
@@ -238,8 +238,8 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root class="border-border/70 bg-card shadow-sm">
-		<Card.Content class="space-y-3.5 py-4.5">
+	<Card.Root class="border-border/70 bg-card/96 shadow-sm">
+		<Card.Content class="space-y-3 py-4">
 			<div class="flex items-center justify-between gap-3">
 				<div>
 					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Signal check</p>
@@ -248,13 +248,13 @@
 				<TrendingUp class="size-4 text-primary" />
 			</div>
 
-			<div class="space-y-3">
+			<div class="space-y-2.5">
 				{#each signalRows as row (row.label)}
-					<div class="space-y-1.5">
+					<div class="space-y-1.25">
 						<div class="flex items-center justify-between gap-3">
 							<div>
 								<p class="text-sm font-medium text-foreground">{row.label}</p>
-								<p class="text-[0.78rem] leading-5 text-muted-foreground">{row.note}</p>
+								<p class="text-[0.76rem] leading-5 text-muted-foreground">{row.note}</p>
 							</div>
 							<span class="text-sm font-semibold text-foreground">{row.value}%</span>
 						</div>
@@ -267,7 +267,7 @@
 
 			<ActivityDotGrid title="Activity cadence" caption={activityCaption} values={activityGridValues} />
 
-			<div class="rounded-[1.2rem] bg-muted/20 px-3.5 py-3">
+			<div class="rounded-[1.2rem] bg-muted/20 px-3.5 py-2.75">
 				<p class="text-sm font-medium text-foreground">
 					{unreadMessages > 0
 						? `${formatCount(unreadMessages, 'conversation')} still need a reply.`

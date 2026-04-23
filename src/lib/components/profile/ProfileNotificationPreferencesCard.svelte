@@ -214,32 +214,32 @@
 </script>
 
 <Card.Root id="notification-preferences" size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
+	<Card.Header class="gap-1.5 border-b border-border/70 py-4">
 		<Card.Title class="text-lg font-semibold tracking-tight">Notifications</Card.Title>
 		<Card.Description>Choose what reaches you in the app and on this device.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-4">
+	<Card.Content class="space-y-3.5">
 		{#if !canManagePreferences}
 			<p class="text-sm text-muted-foreground">
 				Join an organization to manage your notification settings.
 			</p>
 		{:else}
 			<form
-				class="space-y-4"
+				class="space-y-3.5"
 				onsubmit={(event) => {
 					event.preventDefault();
 					savePreferences();
 				}}
 			>
-				<div class="space-y-4">
-					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
+				<div class="space-y-3.5">
+					<section class="space-y-2.5 rounded-2xl border border-border/70 bg-background/60 p-3.5 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Preferred communication</h3>
 							<p class="text-xs text-muted-foreground">Set the channel that should usually reach you first when someone needs a response.</p>
 						</div>
 
-						<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+						<div class="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-5">
 							{#each communicationOptions as option (option.id)}
 								<Button
 									type="button"
@@ -257,19 +257,19 @@
 							{/each}
 						</div>
 
-						<div class="rounded-xl border border-border/60 bg-muted/18 px-3 py-2.5">
+						<div class="rounded-xl border border-border/60 bg-muted/18 px-3 py-2.25">
 							<p class="text-sm font-medium text-foreground">{communicationPreferenceCaption}</p>
 							<p class="mt-1 text-xs leading-5 text-muted-foreground">{communicationPreferenceSummary}</p>
 						</div>
 					</section>
 
-					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
+					<section class="space-y-2.5 rounded-2xl border border-border/70 bg-background/60 p-3.5 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Hub alerts in the app</h3>
 							<p class="text-xs text-muted-foreground">Show broadcasts and event updates in the app.</p>
 						</div>
 
-						<Field.Group class="gap-4">
+						<Field.Group class="gap-3.5">
 							<Field.Field orientation="horizontal">
 								<Checkbox
 									id="notification-preferences-broadcasts"
@@ -316,13 +316,13 @@
 						</Field.Group>
 					</section>
 
-					<section class="space-y-3 rounded-2xl border border-border/70 bg-background/60 p-4 shadow-sm">
+					<section class="space-y-2.5 rounded-2xl border border-border/70 bg-background/60 p-3.5 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Direct message push</h3>
 							<p class="text-xs text-muted-foreground">Allow push for new direct messages from this organization.</p>
 						</div>
 
-						<Field.Group class="gap-4">
+						<Field.Group class="gap-3.5">
 							<Field.Field orientation="horizontal">
 								<Checkbox
 									id="notification-preferences-messages"

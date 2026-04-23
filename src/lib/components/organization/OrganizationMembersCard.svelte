@@ -191,9 +191,8 @@
 />
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
+	<Card.Header class="gap-1.5 border-b border-border/70 py-4">
 		<Card.Title class="text-lg font-semibold tracking-tight">Members</Card.Title>
-		<Card.Description>Who belongs to this organization and their roles.</Card.Description>
 	</Card.Header>
 
 	{#if !currentOrganization.isAdmin}
@@ -201,76 +200,65 @@
 			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-3 p-4 sm:p-5">
+		<Card.Content class="space-y-3 p-4 sm:p-4.5">
 			<DeletionRequestsCard />
 
-			<div class="grid gap-2.5 sm:grid-cols-3">
-				<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
-					<div>
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Total members</p>
-						<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{organizationMembers.length}</p>
-					</div>
-				</div>
-
-				<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
-					<div>
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Admins</p>
-						<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{adminCount}</p>
-					</div>
-				</div>
-
-				<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
-					<div>
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent joins</p>
-						<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{recentJoinCount}</p>
-					</div>
-				</div>
-			</div>
-
 			<div class="space-y-2.5">
-				<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-					<div class="space-y-1">
-						<p class="text-[0.84rem] text-muted-foreground">{reviewSummary}</p>
+				<div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+					<div class="flex flex-wrap items-center gap-2">
+						<div class="rounded-full border border-border/70 bg-muted/12 px-3 py-1.25 text-[0.72rem] font-medium text-foreground">
+							{organizationMembers.length} members
+						</div>
+						<div class="rounded-full border border-border/70 bg-muted/12 px-3 py-1.25 text-[0.72rem] font-medium text-foreground">
+							{adminCount} admins
+						</div>
+						<div class="rounded-full border border-border/70 bg-muted/12 px-3 py-1.25 text-[0.72rem] font-medium text-foreground">
+							{recentJoinCount} recent
+						</div>
 						{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
-							<p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-								Refreshing the latest access roster
+							<p class="text-[0.68rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								Refreshing roster
 							</p>
 						{/if}
 					</div>
 
-					<label class="relative block w-full lg:max-w-xs">
+					<label class="relative block w-full lg:max-w-sm">
 						<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Search members"
-							class="h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+							class="h-8.5 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 							bind:value={searchQuery}
 						/>
 					</label>
 				</div>
 
-				<div class="flex flex-wrap gap-2">
-					{#each memberFilterOptions as option (option.value)}
-						<Button
-							type="button"
-							size="sm"
-							variant={memberFilter === option.value ? 'secondary' : 'outline'}
-							class="h-8 rounded-xl px-3 text-[0.72rem]"
-							onclick={() => (memberFilter = option.value)}
-						>
-							{option.label}
-						</Button>
-					{/each}
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<p class="text-[0.82rem] text-muted-foreground">{reviewSummary}</p>
+
+					<div class="flex flex-wrap gap-1.5">
+						{#each memberFilterOptions as option (option.value)}
+							<Button
+								type="button"
+								size="sm"
+								variant={memberFilter === option.value ? 'secondary' : 'outline'}
+								class="h-7.5 rounded-full px-3 text-[0.7rem]"
+								onclick={() => (memberFilter = option.value)}
+							>
+								{option.label}
+							</Button>
+						{/each}
+					</div>
 				</div>
 			</div>
 
-			<div class="rounded-xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
+			<div class="rounded-2xl border border-border/70 bg-muted/10 p-2 sm:p-2.5">
 				{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
 					<div class="py-10 text-center">
 						<p class="text-sm text-muted-foreground">Loading members…</p>
 					</div>
 				{:else if visibleMembers.length > 0}
-					<div class="space-y-2.5">
+					<div class="space-y-2">
 						{#each visibleMembers as member (member.profile_id)}
 							<MemberRow
 								{member}
