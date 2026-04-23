@@ -189,20 +189,20 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70">
+	<Card.Header class="gap-1.5 border-b border-border/70">
 		<Card.Title class="text-lg font-semibold tracking-tight">Profile details</Card.Title>
 		<Card.Description>Update the name and contact details people see.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-4">
+	<Card.Content class="space-y-3.5 sm:space-y-4">
 		<form
-			class="space-y-4"
+			class="space-y-3.5 sm:space-y-4"
 			onsubmit={(event) => {
 				event.preventDefault();
 				saveProfileDetails();
 			}}
 		>
-			<Field.Group class="gap-4">
+			<Field.Group class="gap-3.5 sm:gap-4">
 				<ProfileAvatarSection
 					{activeAvatarUrl}
 					initials={avatarPreviewInitials}
@@ -215,7 +215,7 @@
 					onRemove={removeSelectedAvatar}
 				/>
 
-				<div class="grid gap-4 md:grid-cols-2">
+				<div class="grid gap-3.5 md:grid-cols-2 md:gap-4">
 					<Field.Field>
 						<Field.Content>
 							<Field.Label for="profile-name">Name</Field.Label>
@@ -250,7 +250,7 @@
 						<Field.Label for="profile-bio">Bio</Field.Label>
 						<textarea
 							id="profile-bio"
-							class="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							class="flex min-h-16 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 							maxlength={500}
 							rows={2}
 							bind:value={bio}

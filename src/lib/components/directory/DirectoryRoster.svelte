@@ -136,12 +136,12 @@
 				</div>
 			</div>
 		{:else if visibleMembers.length > 0}
-			<div class="min-h-0 flex-1 overflow-auto p-3 md:p-4">
-				<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+			<div class="min-h-0 flex-1 overflow-auto p-2.5 md:p-4">
+				<div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
 					{#each visibleMembers as member (member.profile_id)}
-						<div class="rounded-2xl border border-border/70 bg-background px-3.5 py-3.5 shadow-sm">
-							<div class="flex items-start gap-3">
-								<Avatar.Root class="size-10 border border-border/70 bg-muted/50 shadow-sm after:hidden">
+						<div class="rounded-2xl border border-border/70 bg-background px-3 py-3 shadow-sm">
+							<div class="flex items-start gap-2.5">
+								<Avatar.Root class="size-9 border border-border/70 bg-muted/50 shadow-sm after:hidden sm:size-10">
 									{#if member.avatar_url}
 										<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 									{:else}
@@ -172,10 +172,10 @@
 										</Badge>
 									</div>
 
-									<p class="mt-2.5 text-sm text-muted-foreground wrap-break-word">{formatContact(member)}</p>
+									<p class="mt-2 text-sm text-muted-foreground wrap-break-word">{formatContact(member)}</p>
 									<p class="mt-1 text-xs text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</p>
 
-									<div class="mt-3 flex flex-wrap gap-2">
+									<div class="mt-2.5 flex flex-wrap gap-1.5">
 										<Button href={getDetailHref(member)} variant="outline" size="xs">
 											{detailLabel}
 											<ChevronRight class="size-4" />

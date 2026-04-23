@@ -39,12 +39,12 @@
 	class={cn(
 		'group flex w-full items-start gap-3 rounded-2xl border border-transparent px-3 py-3 text-left transition-[background-color,border-color,box-shadow]',
 		isActive
-			? 'border-border/70 bg-accent/45 text-accent-foreground shadow-sm'
+			? 'border-border/70 bg-accent/45 text-accent-foreground shadow-sm dark:border-border/80 dark:bg-background/68'
 			: archived
-				? 'border-border/30 bg-background/80 text-muted-foreground hover:border-border/60 hover:bg-muted/25'
+				? 'border-border/30 bg-background/80 text-muted-foreground hover:border-border/60 hover:bg-muted/25 dark:border-border/60 dark:bg-background/54 dark:hover:bg-background/66'
 			: thread.unreadCount > 0
-					? 'border-border/40 bg-muted/25 hover:border-border/70 hover:bg-muted/40'
-				: 'hover:border-border/60 hover:bg-muted/40'
+					? 'border-border/40 bg-muted/25 hover:border-border/70 hover:bg-muted/40 dark:border-border/60 dark:bg-background/58 dark:hover:bg-background/70'
+				: 'hover:border-border/60 hover:bg-muted/40 dark:hover:bg-background/66'
 	)}
 	{onclick}
 >

@@ -157,7 +157,7 @@
 	actions={hubActions}
 />
 
-<main class="mx-auto flex w-full max-w-3xl flex-col gap-4" aria-busy={currentHub.isLoading}>
+<main class="mx-auto flex w-full max-w-5xl flex-col gap-5 lg:gap-6" aria-busy={currentHub.isLoading}>
 	{#if hasBlockingHubError}
 		<Card.Root class="border-destructive/30 bg-destructive/5">
 			<Card.Content class="flex flex-wrap items-center gap-3 py-4">

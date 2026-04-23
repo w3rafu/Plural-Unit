@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Building2Icon from '@lucide/svelte/icons/building-2';
+	import HouseIcon from '@lucide/svelte/icons/house';
+	import MessageSquareIcon from '@lucide/svelte/icons/message-square';
+	import UserRoundIcon from '@lucide/svelte/icons/user-round';
+	import UsersIcon from '@lucide/svelte/icons/users';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
+	import { BOTTOM_NAV_TABS, getActiveBottomNavTab } from '$lib/components/ui/bottomNavModel';
 	import HubNotificationsSheet from '$lib/components/ui/HubNotificationsSheet.svelte';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -12,6 +17,7 @@
 		resolvePageHeaderPreset,
 		shouldShowPageHeaderSubtitle
 	} from '$lib/stores/pageHeader.svelte';
+	import { cn } from '$lib/utils';
 
 	const rawPreset = $derived(resolvePageHeaderPreset(pageHeader.config));
 	const isBrandHeader = $derived(rawPreset === 'brand');
@@ -50,6 +56,8 @@
 			: undefined
 	);
 	const controlButtonClass = 'shell-header__control';
+	const activeSectionNavId = $derived(getActiveBottomNavTab(page.url.pathname));
+	const showSectionNav = $derived(currentUser.isLoggedIn);
 </script>
 
 <header class="shell-header">
@@ -98,6 +106,32 @@
 					{/if}
 				</div>
 			</div>
+
+			{#if showSectionNav}
+				<nav aria-label="Primary sections" class="shell-header__section-nav">
+					{#each BOTTOM_NAV_TABS as tab (tab.id)}
+						<a
+							href={tab.href}
+							class={cn(
+								'shell-header__section-link',
+								activeSectionNavId === tab.id && 'shell-header__section-link--active'
+							)}
+							aria-current={activeSectionNavId === tab.id ? 'page' : undefined}
+						>
+							{#if tab.id === 'hub'}
+								<HouseIcon class="shell-header__section-icon" aria-hidden="true" />
+							{:else if tab.id === 'messages'}
+								<MessageSquareIcon class="shell-header__section-icon" aria-hidden="true" />
+							{:else if tab.id === 'directory'}
+								<UsersIcon class="shell-header__section-icon" aria-hidden="true" />
+							{:else}
+								<UserRoundIcon class="shell-header__section-icon" aria-hidden="true" />
+							{/if}
+							<span>{tab.shortLabel ?? tab.label}</span>
+						</a>
+					{/each}
+				</nav>
+			{/if}
 
 			<div class="shell-header__controls">
 				<div role="group" aria-label="Header controls" class="shell-header__control-group">
@@ -165,7 +199,7 @@
 
 <style>
 	.shell-header {
-		padding-top: max(0.1rem, env(safe-area-inset-top));
+		padding-top: max(0.05rem, env(safe-area-inset-top));
 	}
 
 	.shell-header__surface {
@@ -187,10 +221,14 @@
 
 	.shell-header__row {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-columns: minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: 0.85rem;
 		width: 100%;
+	}
+
+	.shell-header__section-nav {
+		display: none;
 	}
 
 	.shell-header__identity {
@@ -398,6 +436,68 @@
 		opacity: 0.72;
 	}
 
+	@media (min-width: 1024px) {
+		.shell-header__section-nav {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+			padding: 0.25rem;
+			border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+			border-radius: 9999px;
+			background: color-mix(in srgb, var(--card) 92%, transparent);
+			box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+		}
+
+		.shell-header__section-link {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.45rem;
+			min-height: 2.2rem;
+			padding: 0.45rem 0.8rem;
+			border: 1px solid transparent;
+			border-radius: 9999px;
+			font-size: 0.76rem;
+			font-weight: 600;
+			line-height: 1;
+			color: var(--muted-foreground);
+			transition:
+				background-color 150ms ease,
+				color 150ms ease,
+				border-color 150ms ease,
+				box-shadow 150ms ease;
+		}
+
+		.shell-header__section-link:hover {
+			background: var(--muted);
+			color: var(--foreground);
+			opacity: 1;
+		}
+
+		.shell-header__section-link--active {
+			border-color: color-mix(in srgb, var(--border) 88%, transparent);
+			background: var(--card);
+			color: var(--foreground);
+			box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+		}
+
+		.shell-header__section-icon {
+			width: 0.95rem;
+			height: 0.95rem;
+			flex: none;
+		}
+
+		:global(.dark .shell-header__section-nav) {
+			background: color-mix(in srgb, var(--card) 82%, transparent);
+			box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+		}
+
+		:global(.dark .shell-header__section-link:hover),
+		:global(.dark .shell-header__section-link--active) {
+			background: color-mix(in srgb, var(--muted) 88%, transparent);
+			color: var(--foreground);
+		}
+	}
+
 	:global(.dark .shell-header__surface) {
 		background: transparent;
 		box-shadow: none;
@@ -454,7 +554,7 @@
 	@media (max-width: 720px) {
 		.shell-header__surface,
 		.shell-header__surface--page {
-			padding-inline: 0.8rem;
+			padding-inline: 0.65rem;
 		}
 
 		.shell-header__row {
@@ -473,17 +573,17 @@
 
 	@media (max-width: 640px) {
 		.shell-header__surface {
-			padding: 0.55rem 0.7rem;
+			padding: 0.45rem 0.55rem 0.55rem;
 		}
 
 		.shell-header__row {
 			grid-template-columns: 1fr;
 			align-items: start;
-			gap: 0.5rem;
+			gap: 0.4rem;
 		}
 
 		.shell-header__identity {
-			gap: 0.6rem;
+			gap: 0.55rem;
 		}
 
 		.shell-header__controls {
@@ -492,16 +592,17 @@
 		}
 
 		:global(.shell-header__control-group) {
+			gap: 0.35rem;
 			justify-content: flex-start;
 		}
 
 		.shell-header__title {
-			font-size: clamp(1.02rem, 5vw, 1.22rem);
+			font-size: clamp(0.98rem, 4.8vw, 1.16rem);
 		}
 
 		.shell-header__subtitle {
 			max-width: none;
-			font-size: 0.74rem;
+			font-size: 0.72rem;
 			line-height: 1.25;
 		}
 
@@ -511,23 +612,23 @@
 		}
 
 		:global(.shell-header__control) {
-			min-width: 2.2rem;
-			padding-inline: 0.55rem;
+			min-width: 2.05rem;
+			padding-inline: 0.45rem;
 		}
 
 		.shell-header__brand-mark {
-			width: 2.45rem;
-			height: 2.45rem;
+			width: 2.3rem;
+			height: 2.3rem;
 		}
 
 		.shell-header__brand-image {
-			width: 2rem;
-			height: 2rem;
+			width: 1.85rem;
+			height: 1.85rem;
 		}
 
 		.shell-header__avatar-badge {
-			width: 2.1rem;
-			height: 2.1rem;
+			width: 2rem;
+			height: 2rem;
 		}
 	}
 </style>

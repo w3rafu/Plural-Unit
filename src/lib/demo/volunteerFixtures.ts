@@ -188,6 +188,7 @@ export const volunteerContacts: VolunteerContact[] = [
 		id: 'vc4',
 		name: 'Dana Whitfield',
 		email: 'dwhitfield@harboryacht.org',
+		businessAffiliation: 'Harbor Youth Sailing',
 		pastEventCount: 3,
 		totalHours: 18,
 		lastActive: 'Mar 15, 2026'
@@ -197,6 +198,7 @@ export const volunteerContacts: VolunteerContact[] = [
 		name: 'Carlos Fuentes',
 		email: 'cfuentes@hotmail.com',
 		phone: '(773) 555-0341',
+		businessAffiliation: 'West End Hardware',
 		pastEventCount: 6,
 		totalHours: 36,
 		lastActive: 'Apr 19, 2026'
@@ -214,6 +216,7 @@ export const volunteerContacts: VolunteerContact[] = [
 		id: 'vc7',
 		name: 'James Osei',
 		email: 'james.osei@gmail.com',
+		businessAffiliation: 'South Harbor Music Collective',
 		pastEventCount: 8,
 		totalHours: 48,
 		lastActive: 'Apr 19, 2026'

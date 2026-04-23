@@ -53,10 +53,11 @@
   The AuthGate handles login, name onboarding, and organization
   onboarding before any page content is shown.
 -->
+
 <div class="flex h-dvh min-h-dvh flex-col overflow-hidden">
-	<div class="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col overflow-hidden px-3 sm:px-4 lg:px-6">
+	<div class="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-1 flex-col overflow-hidden px-2.5 sm:px-4 lg:px-6">
 		{#if !isPublicRoute}
-			<div class="z-30 flex-none pt-2" style:min-height="4.95rem">
+			<div class="z-30 flex-none pt-1.5 sm:pt-2" style:min-height="4.95rem">
 				{#if shouldRenderHeader}
 					<Header />
 				{/if}
@@ -65,8 +66,8 @@
 		<div
 			id="main-content"
 			class={isLockedContentRoute
-				? 'min-h-0 flex-1 overflow-hidden py-3 sm:py-4'
-				: 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 sm:py-4'}
+				? 'min-h-0 flex-1 overflow-hidden py-2.5 sm:py-4'
+				: 'min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-2.5 sm:py-4'}
 		>
 			<div class="flex h-full min-h-0 flex-col">
 				{#if isPublicRoute}

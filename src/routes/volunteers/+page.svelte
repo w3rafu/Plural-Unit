@@ -20,6 +20,14 @@
 	const coveragePercent = totalUpcomingSlots ? Math.round((filledUpcomingSlots / totalUpcomingSlots) * 100) : 0;
 	const nextEvent = upcoming[0] ?? null;
 	const latestCompleted = completed[0] ?? null;
+	const attentionEvent =
+		[...upcoming].sort(
+			(left, right) =>
+				getEventTotalSlots(right) - getEventFilledSlots(right) - (getEventTotalSlots(left) - getEventFilledSlots(left))
+		)[0] ?? null;
+	const attentionGap = attentionEvent
+		? getEventTotalSlots(attentionEvent) - getEventFilledSlots(attentionEvent)
+		: 0;
 	const topContacts = [...volunteerContacts]
 		.sort((left, right) => right.totalHours - left.totalHours)
 		.slice(0, 5);
@@ -66,12 +74,12 @@
 
 <!-- page body -->
 <div class="relative isolate page-stack py-5">
-	<div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.08),_transparent_65%)]"></div>
+	<div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.08),transparent_65%)]"></div>
 	<section>
-		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-card shadow-sm">
+		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/30 shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
-			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-5 px-4 py-5 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:gap-6 lg:space-y-0">
+			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
+			<Card.Content class="relative space-y-5 px-4 py-5 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.05fr)_19rem] lg:items-end lg:gap-6 lg:space-y-0">
 				<div class="space-y-5 lg:max-w-2xl">
 					<div class="space-y-4">
 						<div class="flex flex-wrap items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -79,8 +87,31 @@
 							<span>{upcoming.length} live events</span>
 						</div>
 						<div class="space-y-1.5">
-							<h1 class="text-[2.2rem] font-semibold tracking-tight text-foreground sm:text-[2.35rem]">{openSlots} open slots</h1>
-							<p class="max-w-2xl text-sm text-muted-foreground">Coverage across the current volunteer schedule.</p>
+							<h1 class="text-[2.2rem] font-semibold tracking-tight text-foreground sm:text-[2.45rem]">{openSlots} open volunteer slots</h1>
+							<p class="max-w-2xl text-sm text-muted-foreground">
+								A clean read on where the schedule needs follow-up before the next events go live.
+							</p>
+						</div>
+					</div>
+
+					<div class="rounded-[1.6rem] border border-border/70 bg-background/85 px-4 py-4 shadow-sm">
+						<div class="flex flex-wrap items-start justify-between gap-4">
+							<div>
+								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Needs attention</p>
+								<p class="mt-2 text-lg font-semibold tracking-tight text-foreground">{attentionEvent?.title ?? 'Schedule looks covered'}</p>
+								<p class="mt-1 text-sm text-muted-foreground">
+									{#if attentionEvent}
+										{attentionGap} open spot{attentionGap === 1 ? '' : 's'} remain across the most exposed event.
+									{:else}
+										Every current event is fully staffed.
+									{/if}
+								</p>
+							</div>
+							{#if attentionEvent}
+								<div class="rounded-full border border-border/70 bg-muted/40 px-3 py-2 text-sm font-medium text-foreground">
+									{attentionGap} open
+								</div>
+							{/if}
 						</div>
 					</div>
 
@@ -101,7 +132,7 @@
 				</div>
 
 				<div class="hidden lg:block">
-					<div class="rounded-[1.6rem] border border-border/70 bg-background/85 p-4 shadow-sm">
+					<div class="rounded-[1.6rem] border border-border/70 bg-background/88 p-4 shadow-sm">
 						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
 						<div class="mt-2 flex items-end justify-between gap-3">
 							<p class="text-3xl font-semibold tracking-tight text-foreground">{coveragePercent}%</p>
@@ -117,13 +148,20 @@
 								<p class="mt-1 text-sm text-muted-foreground">{nextEvent.date}</p>
 							</div>
 						{/if}
+						{#if attentionEvent}
+							<div class="mt-4 rounded-[1.2rem] border border-border/70 bg-muted/25 px-3.5 py-3">
+								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Biggest gap</p>
+								<p class="mt-2 text-sm font-medium text-foreground">{attentionEvent.title}</p>
+								<p class="mt-1 text-sm text-muted-foreground">{attentionGap} spot{attentionGap === 1 ? '' : 's'} still open</p>
+							</div>
+						{/if}
 					</div>
 				</div>
 			</Card.Content>
 		</Card.Root>
 	</section>
 
-	<div class="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start">
+	<div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start">
 		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<div class="flex items-end justify-between gap-3">
@@ -141,7 +179,7 @@
 						{@const filled = getEventFilledSlots(event)}
 						{@const status = getFillStatus(filled, total)}
 						{@const fillPct = Math.round((filled / total) * 100)}
-						<div class="space-y-3 px-4 py-3.5 sm:px-5">
+						<div class="space-y-3 px-4 py-4 sm:px-5">
 							<div class="flex items-start gap-3">
 								<div class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[1.1rem] border border-border/70 bg-muted/30 text-center">
 									<p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
@@ -170,7 +208,7 @@
 											></div>
 										</div>
 									</div>
-									<div class="flex flex-wrap gap-2 pt-1">
+									<div class="flex flex-wrap gap-2 pt-1.5">
 										<Button href="/volunteers/{event.id}/checkin" size="sm" class="h-8 rounded-full px-4 text-xs">Check-In</Button>
 										<Button href="/signup/{event.id}" variant="outline" size="sm" class="h-8 rounded-full px-4 text-xs text-muted-foreground">Public Signup</Button>
 									</div>

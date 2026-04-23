@@ -17,17 +17,17 @@
 	<nav
 		id="bottom-nav"
 		aria-label="Primary"
-		class="app-bottom-nav z-20 flex-none pt-0.5"
-		style:padding-bottom="max(0.6rem, env(safe-area-inset-bottom))"
+		class="app-bottom-nav z-20 flex-none pt-0.5 lg:hidden"
+		style:padding-bottom="max(0.5rem, env(safe-area-inset-bottom))"
 	>
 		<div
-			class="grid grid-cols-4 gap-1.5 rounded-3xl border border-border/80 bg-card/95 px-1.5 py-1.5 shadow-[0_-1px_2px_rgba(15,23,42,0.04)] backdrop-blur"
+			class="grid grid-cols-4 gap-1 rounded-3xl border border-border/80 bg-card/95 px-1.25 py-1.25 shadow-[0_-1px_2px_rgba(15,23,42,0.04)] backdrop-blur"
 		>
 			{#each BOTTOM_NAV_TABS as tab (tab.id)}
 				<a
 					href={tab.href}
 					class={cn(
-						'relative flex min-h-[2.9rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl border px-2 py-1.5 text-center text-[0.7rem] font-medium leading-tight transition-[background-color,border-color,color,box-shadow] duration-150 sm:text-[0.76rem]',
+						'relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1.5 py-1.25 text-center text-[0.68rem] font-medium leading-tight transition-[background-color,border-color,color,box-shadow] duration-150 sm:text-[0.76rem]',
 						activeTabId === tab.id
 							? 'border-border/80 bg-background text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
 							: 'border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground'
@@ -48,7 +48,7 @@
 						{/if}
 					{#if tab.id === 'messages' && unreadCount > 0}
 						<span
-							class="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.6rem] font-bold leading-none text-destructive-foreground"
+							class="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.6rem] font-bold leading-none text-destructive-foreground"
 							aria-label={`${unreadCount} unread`}
 						>
 							{unreadCount > 99 ? '99+' : unreadCount}

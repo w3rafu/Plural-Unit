@@ -110,69 +110,143 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-linear-to-br from-primary/8 via-card to-card px-3 py-2.5 sm:px-4 sm:py-3">
-		<div class="flex items-start gap-3">
-		{#if onBack}
-			<Button variant="ghost" size="icon" class="shrink-0 md:hidden" onclick={onBack} aria-label="Back to inbox">
-				<ArrowLeft class="h-4 w-4" />
-			</Button>
-		{/if}
-
-		<Avatar.Root class="size-10 border border-primary/15 bg-background shadow-sm after:hidden sm:size-11">
-			{#if thread.participant.avatar_url}
-				<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
-			{:else}
-				<Avatar.Fallback class="text-sm font-medium text-muted-foreground">{initials}</Avatar.Fallback>
+	<div class="border-b border-border/70 bg-linear-to-br from-primary/8 via-card to-card px-3 py-2 sm:px-4 sm:py-3">
+		<div class="flex items-start gap-2.5 sm:gap-3">
+			{#if onBack}
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					class="mt-0.5 shrink-0 md:hidden"
+					onclick={onBack}
+					aria-label="Back to inbox"
+				>
+					<ArrowLeft class="h-4 w-4" />
+				</Button>
 			{/if}
-		</Avatar.Root>
 
-		<div class="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
-			<div class="flex flex-wrap items-center gap-2">
-				<span class="rounded-full bg-primary/10 px-2.5 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-primary sm:text-[0.62rem]">
-					Direct thread
-				</span>
-				{#if thread.unreadCount > 0}
-					<span class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-foreground shadow-sm sm:text-[0.62rem]">
-						{thread.unreadCount} unread
+			<Avatar.Root class="size-9 border border-primary/15 bg-background shadow-sm after:hidden sm:size-11">
+				{#if thread.participant.avatar_url}
+					<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
+				{:else}
+					<Avatar.Fallback class="text-sm font-medium text-muted-foreground">{initials}</Avatar.Fallback>
+				{/if}
+			</Avatar.Root>
+
+			<div class="min-w-0 flex-1">
+				<div class="flex items-start justify-between gap-2">
+					<div class="min-w-0 space-y-0.5">
+						<p class="truncate text-[1.03rem] font-semibold text-foreground sm:text-base">
+							{thread.participant.name}
+						</p>
+						<p class="truncate text-[0.84rem] text-muted-foreground sm:text-sm">
+							{thread.participant.subtitle || 'Direct conversation'}
+						</p>
+					</div>
+
+					<div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+						{#if muted ? onUnmuteThread : onMuteThread}
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={isMuting}
+								onclick={() => {
+									if (muted) {
+										onUnmuteThread?.();
+									} else {
+										onMuteThread?.();
+									}
+								}}
+								aria-label={muted ? 'Unmute conversation' : 'Mute conversation'}
+								class="h-9 rounded-full px-2 sm:px-3"
+							>
+								{#if muted}
+									<Bell class="h-3.5 w-3.5 sm:mr-1.5" />
+									<span class="hidden sm:inline">{isMuting ? 'Unmuting...' : 'Unmute'}</span>
+								{:else}
+									<BellOff class="h-3.5 w-3.5 sm:mr-1.5" />
+									<span class="hidden sm:inline">{isMuting ? 'Muting...' : 'Mute'}</span>
+								{/if}
+							</Button>
+						{/if}
+
+						{#if archived ? onUnarchiveThread : onArchiveThread}
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={isArchiving}
+								onclick={() => {
+									if (archived) {
+										onUnarchiveThread?.();
+									} else {
+										onArchiveThread?.();
+									}
+								}}
+								aria-label={archived ? 'Restore conversation' : 'Archive conversation'}
+								class="h-9 rounded-full px-2 sm:px-3"
+							>
+								{#if archived}
+									<Undo2 class="h-3.5 w-3.5 sm:mr-1.5" />
+									<span class="hidden sm:inline">{isArchiving ? 'Restoring...' : 'Restore'}</span>
+								{:else}
+									<Archive class="h-3.5 w-3.5 sm:mr-1.5" />
+									<span class="hidden sm:inline">{isArchiving ? 'Archiving...' : 'Archive'}</span>
+								{/if}
+							</Button>
+						{/if}
+
+						{#if thread.participant.isFakeUser && onResetDemo}
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={isResetting}
+								onclick={onResetDemo}
+								aria-label="Reset demo conversation"
+								class="h-9 rounded-full px-2 sm:px-3"
+							>
+								<RotateCcw class="h-3.5 w-3.5 sm:mr-1.5" />
+								<span class="hidden sm:inline">Reset</span>
+							</Button>
+						{/if}
+					</div>
+				</div>
+
+				<div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:mt-2 sm:gap-2">
+					<span class="rounded-full bg-primary/10 px-2.25 py-0.75 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-primary sm:px-2.5 sm:py-1 sm:text-[0.62rem]">
+						Direct thread
 					</span>
-				{/if}
-			</div>
-
-			<div class="space-y-0.5">
-				<p class="truncate text-base font-semibold text-foreground">{thread.participant.name}</p>
-				<p class="truncate text-sm text-muted-foreground">
-					{thread.participant.subtitle || 'Direct conversation'}
-				</p>
-			</div>
-
-			<div class="flex flex-wrap gap-2">
-				<Badge variant="secondary" class="hidden rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em] sm:inline-flex">
-					{messageCount} {messageCount === 1 ? 'message' : 'messages'}
-				</Badge>
-				<Badge variant="outline" class="hidden rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em] sm:inline-flex">
-					Updated {lastUpdatedLabel}
-				</Badge>
-				{#if archived}
-					<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-						Archived
+					{#if thread.unreadCount > 0}
+						<span class="rounded-full border border-border/70 bg-background px-2.25 py-0.75 text-[0.56rem] font-semibold uppercase tracking-[0.16em] text-foreground shadow-sm sm:px-2.5 sm:py-1 sm:text-[0.62rem]">
+							{thread.unreadCount} unread
+						</span>
+					{/if}
+					<Badge variant="secondary" class="hidden rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em] sm:inline-flex">
+						{messageCount} {messageCount === 1 ? 'message' : 'messages'}
 					</Badge>
-				{/if}
-
-				{#if muted}
-					<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-						Muted
+					<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
+						Updated {lastUpdatedLabel}
 					</Badge>
-				{/if}
+					{#if archived}
+						<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
+							Archived
+						</Badge>
+					{/if}
 
-				{#if thread.participant.isFakeUser}
-					<Badge variant="outline" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
-						Demo conversation
-					</Badge>
-				{/if}
+					{#if muted}
+						<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
+							Muted
+						</Badge>
+					{/if}
+
+					{#if thread.participant.isFakeUser}
+						<Badge variant="outline" class="rounded-full px-2.25 py-0.75 text-[0.56rem] uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
+							Demo conversation
+						</Badge>
+					{/if}
+				</div>
 			</div>
 		</div>
 
-		<div class="hidden h-12 items-end gap-1.5 rounded-2xl border border-primary/12 bg-background/75 px-3 py-2 lg:flex">
+		<div class="mt-2.5 hidden h-12 items-end gap-1.5 rounded-2xl border border-primary/12 bg-background/75 px-3 py-2 lg:flex">
 			{#each activityBars as height, index (`activity-${index}`)}
 				<div class="flex h-full w-3 items-end">
 					<span
@@ -181,73 +255,6 @@
 					></span>
 				</div>
 			{/each}
-		</div>
-
-		<div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
-			{#if muted ? onUnmuteThread : onMuteThread}
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={isMuting}
-					onclick={() => {
-						if (muted) {
-							onUnmuteThread?.();
-						} else {
-							onMuteThread?.();
-						}
-					}}
-					aria-label={muted ? 'Unmute conversation' : 'Mute conversation'}
-					class="rounded-full"
-				>
-					{#if muted}
-						<Bell class="h-3.5 w-3.5 sm:mr-1.5" />
-						<span class="hidden sm:inline">{isMuting ? 'Unmuting...' : 'Unmute'}</span>
-					{:else}
-						<BellOff class="h-3.5 w-3.5 sm:mr-1.5" />
-						<span class="hidden sm:inline">{isMuting ? 'Muting...' : 'Mute'}</span>
-					{/if}
-				</Button>
-			{/if}
-
-			{#if archived ? onUnarchiveThread : onArchiveThread}
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={isArchiving}
-					onclick={() => {
-						if (archived) {
-							onUnarchiveThread?.();
-						} else {
-							onArchiveThread?.();
-						}
-					}}
-					aria-label={archived ? 'Restore conversation' : 'Archive conversation'}
-					class="rounded-full"
-				>
-					{#if archived}
-						<Undo2 class="h-3.5 w-3.5 sm:mr-1.5" />
-						<span class="hidden sm:inline">{isArchiving ? 'Restoring...' : 'Restore'}</span>
-					{:else}
-						<Archive class="h-3.5 w-3.5 sm:mr-1.5" />
-						<span class="hidden sm:inline">{isArchiving ? 'Archiving...' : 'Archive'}</span>
-					{/if}
-				</Button>
-			{/if}
-
-			{#if thread.participant.isFakeUser && onResetDemo}
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={isResetting}
-					onclick={onResetDemo}
-					aria-label="Reset demo conversation"
-					class="rounded-full"
-				>
-					<RotateCcw class="h-3.5 w-3.5 sm:mr-1.5" />
-					<span class="hidden sm:inline">Reset</span>
-				</Button>
-			{/if}
-		</div>
 		</div>
 	</div>
 
@@ -267,16 +274,16 @@
 	{/if}
 
 	<div
-		class="min-h-0 flex-1 overflow-y-auto bg-muted/10 px-3 py-3 sm:px-4"
+		class="min-h-0 flex-1 overflow-y-auto bg-muted/10 px-2.5 py-2.5 sm:px-4 sm:py-3"
 		{@attach keepScrolledToBottom(`${thread.id}:${thread.messages.length}`)}
 		{@attach handleScrollTop}
 	>
 		{#if isLoadingOlderMessages}
-			<div class="mb-3 flex justify-center">
+			<div class="mb-2.5 flex justify-center">
 				<span class="text-xs text-muted-foreground animate-pulse">Loading older messages…</span>
 			</div>
 		{:else if thread.hasMoreMessages}
-			<div class="mb-3 flex justify-center">
+			<div class="mb-2.5 flex justify-center">
 				<button
 					type="button"
 					class="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -287,9 +294,9 @@
 			</div>
 		{/if}
 		{#each dayGroups as group (group.dateKey)}
-			<div class="my-3 flex items-center gap-3">
+			<div class="my-2.5 flex items-center gap-2">
 				<div class="h-px flex-1 bg-border/50"></div>
-				<span class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+				<span class="rounded-full border border-border/70 bg-background px-2.25 py-0.75 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.5 sm:py-1 sm:text-[0.68rem]">
 					{group.label}
 				</span>
 				<div class="h-px flex-1 bg-border/50"></div>
@@ -298,11 +305,11 @@
 			{#each group.messages as message (message.id)}
 				<div
 					class={cn(
-						'mb-2 flex',
+						'mb-1.5 flex sm:mb-2',
 						message.senderKind === 'owner' ? 'justify-end' : 'justify-start'
 					)}
 				>
-					<div class="max-w-[82%]">
+					<div class="max-w-[86%] sm:max-w-[82%]">
 						{#if message.senderKind === 'owner' && !message.isDeleted && onDeleteMessage}
 							<div class="mb-1 flex justify-end">
 								<Button
@@ -321,7 +328,7 @@
 
 						<div
 							class={cn(
-								'rounded-2xl border px-3 py-2.5 shadow-sm',
+								'rounded-[1.35rem] border px-3 py-2 shadow-sm sm:rounded-2xl sm:py-2.5',
 								message.isDeleted
 									? 'border-border/70 bg-muted/30 text-muted-foreground'
 									: message.senderKind === 'owner'
@@ -380,7 +387,7 @@
 	</div>
 
 	{#if contactTyping}
-		<div class="px-3 py-1 sm:px-4">
+		<div class="px-2.5 py-1 sm:px-4">
 			<p class="text-xs text-muted-foreground animate-pulse">{thread.participant.name} is typing…</p>
 		</div>
 	{/if}

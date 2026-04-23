@@ -72,7 +72,7 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="space-y-4 py-4" aria-busy={resolvedIsLoading}>
+	<Card.Content class="space-y-3.5 py-4" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
 			<div class="space-y-1">
 				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
@@ -91,7 +91,7 @@
 			<div role="status" aria-live="polite" class="space-y-3">
 				<span class="sr-only">Loading recent activity.</span>
 				{#each Array.from({ length: 3 }) as _, index (`hub-activity-loading-${index}`)}
-					<div class="animate-pulse rounded-2xl border border-border/70 bg-muted/20 px-4 py-3.5">
+					<div class="animate-pulse rounded-[1.4rem] border border-border/70 bg-muted/20 px-3.5 py-3">
 						<div class="mb-3 flex items-center justify-between gap-3">
 							<div class="h-4 w-28 rounded bg-muted"></div>
 							<div class="h-5 w-18 rounded-full bg-muted"></div>
@@ -110,14 +110,14 @@
 				</p>
 			</div>
 		{:else}
-			<div class="space-y-2">
+			<div class="space-y-1.5">
 				{#each activityItems as item (item.id)}
 					{@const primaryAction = getPrimaryAction(item)}
-					<a href={primaryAction.href} class={`block rounded-3xl border px-4 py-4 shadow-sm transition-[transform,background-color,border-color] hover:-translate-y-px hover:bg-muted/20 hover:opacity-100 ${getActivityRowTone(item)}`}>
-						<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-							<div class="flex min-w-0 gap-3">
+					<a href={primaryAction.href} class={`block rounded-[1.55rem] border px-3.5 py-3 shadow-sm transition-[transform,background-color,border-color] hover:-translate-y-px hover:bg-muted/20 hover:opacity-100 ${getActivityRowTone(item)}`}>
+						<div class="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+							<div class="flex min-w-0 gap-2.5">
 								<div
-									class={`flex size-11 shrink-0 items-center justify-center rounded-2xl border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
+									class={`flex size-10 shrink-0 items-center justify-center rounded-[1.05rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
 								>
 									{#if item.kind === 'broadcast'}
 										<Megaphone class="size-4" />
@@ -131,25 +131,25 @@
 								</div>
 
 								<div class="min-w-0">
-									<div class="flex flex-wrap items-center gap-2">
+									<div class="flex flex-wrap items-center gap-1.5">
 										<p class="truncate text-sm font-medium text-foreground">{item.title}</p>
-										<span class={`rounded-full px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] ${item.kind === 'broadcast' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground/80'}`}>
+										<span class={`rounded-full px-2.5 py-0.75 text-[0.6rem] font-semibold uppercase tracking-[0.16em] ${item.kind === 'broadcast' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground/80'}`}>
 											{item.label}
 										</span>
 										{#if !item.isRead}
 											<span class="inline-flex size-2 rounded-full bg-primary"></span>
 										{/if}
 									</div>
-									<p class="mt-1 text-sm text-muted-foreground">{item.summary}</p>
-									<p class="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+									<p class="mt-1 text-[0.93rem] leading-5 text-muted-foreground">{item.summary}</p>
+									<p class="mt-1.5 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 										{item.meta}
 									</p>
 								</div>
 							</div>
 
-							<p class={`shrink-0 text-xs font-semibold uppercase tracking-[0.16em] ${getActivityActionTone(item)}`}>
+							<span class={`inline-flex shrink-0 items-center rounded-full border border-border/70 bg-background/85 px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] ${getActivityActionTone(item)}`}>
 								{primaryAction.label}
-							</p>
+							</span>
 						</div>
 					</a>
 				{/each}

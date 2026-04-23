@@ -26,12 +26,12 @@
 <div id={sectionId} class="flex flex-col gap-3">
 	<div class="flex items-center justify-between gap-3">
 		<h2 class="text-lg font-semibold tracking-tight">{definition.title}</h2>
-		<p class="rounded-full border border-border/70 bg-background/70 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+		<p class="rounded-full border border-primary/15 bg-primary/8 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-primary/90 shadow-sm">
 			{openSlots} open
 		</p>
 	</div>
 
-	<Card.Root size="sm" class="border-border/70 bg-card">
+	<Card.Root size="sm" class="overflow-hidden border-border/70 bg-linear-to-b from-card to-muted/12">
 		<Card.Content class="divide-y divide-border/50 px-4 py-0">
 			{#if upcomingEvents.length === 0}
 				<div class="py-6 text-center">
