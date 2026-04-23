@@ -671,7 +671,7 @@ describe('smoke mode local messaging', () => {
 		mockIsSmokeModeEnabled.mockReturnValue(true);
 
 		await store.loadForUser('user-1');
-		const archivedThread = store.threads.find((thread) => thread.participant.name === 'Yara Haddad');
+		const archivedThread = store.threads.find((thread) => thread.participant.name === 'Sydney Harper');
 		if (!archivedThread) {
 			throw new Error('Expected archived smoke thread to exist.');
 		}
@@ -688,7 +688,7 @@ describe('smoke mode local messaging', () => {
 		mockIsSmokeModeEnabled.mockReturnValue(true);
 
 		await store.loadForUser('user-1');
-		const mutedThread = store.threads.find((thread) => thread.participant.name === 'Malik Johnson');
+		const mutedThread = store.threads.find((thread) => thread.participant.name === 'Caleb Foster');
 		if (!mutedThread) {
 			throw new Error('Expected muted smoke thread to exist.');
 		}

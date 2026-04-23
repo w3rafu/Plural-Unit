@@ -31,6 +31,11 @@ export type VolunteerContact = {
 	avatarUrl: string;
 };
 
+export type VolunteerEventTeam = {
+	lead: VolunteerContact | null;
+	participants: VolunteerContact[];
+};
+
 export type VolunteerSeasonStats = {
 	totalVolunteers: number;
 	totalHours: number;
@@ -161,36 +166,36 @@ export const volunteerEvents: VolunteerEvent[] = [
 const rawVolunteerContacts = [
 	{
 		id: 'vc1',
-		name: 'Marguerite Okafor',
-		email: 'marguerite.o@gmail.com',
-		businessAffiliation: 'Harbor Community Bank',
+		name: 'Megan Carter',
+		email: 'megan.carter@gmail.com',
+		businessAffiliation: 'Cape Shore Bank',
 		pastEventCount: 7,
 		totalHours: 42,
 		lastActive: 'Apr 19, 2026'
 	},
 	{
 		id: 'vc2',
-		name: 'Tom Bellacino',
-		email: 'tom@bellacino.net',
+		name: 'Tyler Dawson',
+		email: 'tyler@dawsongrounds.com',
 		phone: '(312) 555-0182',
-		businessAffiliation: 'Bellacino & Sons Landscaping',
+		businessAffiliation: 'Dawson Grounds Co.',
 		pastEventCount: 5,
 		totalHours: 28,
 		lastActive: 'Apr 19, 2026'
 	},
 	{
 		id: 'vc3',
-		name: 'Priya Nambiar',
-		email: 'priya.nambiar@lawpartners.com',
-		businessAffiliation: 'Nambiar Law Partners',
+		name: 'Lauren Mitchell',
+		email: 'lauren.mitchell@mitchelllaw.com',
+		businessAffiliation: 'Mitchell Family Law',
 		pastEventCount: 4,
 		totalHours: 24,
 		lastActive: 'Apr 7, 2026'
 	},
 	{
 		id: 'vc4',
-		name: 'Dana Whitfield',
-		email: 'dwhitfield@harboryacht.org',
+		name: 'Brooke Simmons',
+		email: 'brooke.simmons@harboryouth.org',
 		businessAffiliation: 'Harbor Youth Sailing',
 		pastEventCount: 3,
 		totalHours: 18,
@@ -198,8 +203,8 @@ const rawVolunteerContacts = [
 	},
 	{
 		id: 'vc5',
-		name: 'Carlos Fuentes',
-		email: 'cfuentes@hotmail.com',
+		name: 'Connor Hayes',
+		email: 'connor.hayes@hotmail.com',
 		phone: '(773) 555-0341',
 		businessAffiliation: 'West End Hardware',
 		pastEventCount: 6,
@@ -208,8 +213,8 @@ const rawVolunteerContacts = [
 	},
 	{
 		id: 'vc6',
-		name: 'Ruth Kim',
-		email: 'ruth.kim@northsidehealth.org',
+		name: 'Erin Wallace',
+		email: 'erin.wallace@northsidehealth.org',
 		businessAffiliation: 'Northside Health Clinic',
 		pastEventCount: 2,
 		totalHours: 12,
@@ -217,18 +222,18 @@ const rawVolunteerContacts = [
 	},
 	{
 		id: 'vc7',
-		name: 'James Osei',
-		email: 'james.osei@gmail.com',
-		businessAffiliation: 'South Harbor Music Collective',
+		name: 'Garrett Cole',
+		email: 'garrett.cole@gmail.com',
+		businessAffiliation: 'Cape Sound Collective',
 		pastEventCount: 8,
 		totalHours: 48,
 		lastActive: 'Apr 19, 2026'
 	},
 	{
 		id: 'vc8',
-		name: 'Linda Marchetti',
-		email: 'linda@marchetti-catering.com',
-		businessAffiliation: 'Marchetti Catering',
+		name: 'Melissa Hart',
+		email: 'melissa@hartcatering.com',
+		businessAffiliation: 'Hart Catering Co.',
 		pastEventCount: 5,
 		totalHours: 30,
 		lastActive: 'Apr 7, 2026'
@@ -240,8 +245,44 @@ export const volunteerContacts: VolunteerContact[] = rawVolunteerContacts.map((c
 	avatarUrl: getVolunteerPortraitAvatar(contact.id)
 }));
 
+const volunteerEventTeamIds: Record<string, { leadId: string; participantIds: string[] }> = {
+	'vol-event-1': {
+		leadId: 'vc1',
+		participantIds: ['vc7', 'vc5', 'vc8']
+	},
+	'vol-event-2': {
+		leadId: 'vc3',
+		participantIds: ['vc2', 'vc6', 'vc4']
+	},
+	'vol-event-3': {
+		leadId: 'vc5',
+		participantIds: ['vc1', 'vc7', 'vc3']
+	}
+};
+
 export function findVolunteerContactByName(name: string): VolunteerContact | undefined {
 	return volunteerContacts.find((contact) => contact.name === name);
+}
+
+export function getVolunteerContactById(id: string): VolunteerContact | undefined {
+	return volunteerContacts.find((contact) => contact.id === id);
+}
+
+export function getVolunteerEventTeam(eventId: string): VolunteerEventTeam {
+	const assignment = volunteerEventTeamIds[eventId];
+	if (!assignment) {
+		return {
+			lead: null,
+			participants: []
+		};
+	}
+
+	return {
+		lead: getVolunteerContactById(assignment.leadId) ?? null,
+		participants: assignment.participantIds
+			.map((contactId) => getVolunteerContactById(contactId))
+			.filter((contact): contact is VolunteerContact => Boolean(contact))
+	};
 }
 
 export const volunteerSeasonStats: VolunteerSeasonStats = {

@@ -57,19 +57,19 @@ describe('eventCalendarModel', () => {
 	});
 
 	it('builds a Google Calendar link with normalized details', () => {
-		const href = buildGoogleCalendarHref(makeEvent(), { organizationName: 'Harbor Unit' });
+		const href = buildGoogleCalendarHref(makeEvent(), { organizationName: 'Old Town Cape' });
 
 		expect(href).toContain('https://calendar.google.com/calendar/render?');
 		expect(href).toContain('action=TEMPLATE');
 		expect(href).toContain('Neighborhood+dinner');
 		expect(href).toContain('Location%3A+North+Hall');
-		expect(href).toContain('Organization%3A+Harbor+Unit');
+		expect(href).toContain('Organization%3A+Old+Town+Cape');
 	});
 
 	it('builds calendar file content and a matching download URL', () => {
 		const event = makeEvent({ ends_at: null });
-		const ics = buildEventCalendarIcs(event, { organizationName: 'Harbor Unit' });
-		const dataUrl = buildEventCalendarDataUrl(event, { organizationName: 'Harbor Unit' });
+		const ics = buildEventCalendarIcs(event, { organizationName: 'Old Town Cape' });
+		const dataUrl = buildEventCalendarDataUrl(event, { organizationName: 'Old Town Cape' });
 
 		expect(ics).toContain('BEGIN:VCALENDAR');
 		expect(ics).toContain('SUMMARY:Neighborhood dinner');

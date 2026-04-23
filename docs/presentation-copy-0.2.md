@@ -25,6 +25,10 @@ Plural Unit
 A simple coordination platform  
 for organized communities
 
+Suggested image:
+
+- `tmp/screens-0.2.8-review/home-desktop.png`
+
 Speaker notes:
 
 Plural Unit is built to help organized communities stay coordinated without relying on a patchwork of separate tools. The goal is to make everyday coordination feel simpler, friendlier, and easier to manage for both leaders and members.
@@ -37,6 +41,10 @@ Too many tools.
 Too much friction.  
 Too much follow-up.
 
+Suggested image:
+
+- none; keep this slide text-only
+
 Speaker notes:
 
 Most communities are managing communication, events, signups, and volunteer coordination across group chats, spreadsheets, forms, calendars, and email. Each tool solves one piece of the problem, but none of them creates one clear place to keep everyone aligned. That leads to extra admin work, missed details, and scattered participation.
@@ -48,6 +56,10 @@ On-screen copy:
 Community work is relational.  
 The software usually isn’t.
 
+Suggested image:
+
+- none; keep this slide text-only
+
 Speaker notes:
 
 A lot of software is built either for businesses or for one narrow task. Communities work differently. They need to coordinate people, participation, communication, and live activity in a way that feels human and approachable. That is the gap we are trying to close.
@@ -58,6 +70,10 @@ On-screen copy:
 
 One friendly hub  
 for the workflows communities use most
+
+Suggested image:
+
+- `tmp/screens-0.2.8-review/home-desktop.png` cropped tighter to the top fold
 
 Speaker notes:
 
@@ -72,6 +88,13 @@ Events
 Volunteers  
 Engagement
 
+Suggested image:
+
+- use a 3-image collage:
+- `tmp/screens-0.2.8-review/signup-desktop.png`
+- `tmp/screens-0.2.8-review/checkin-desktop.png`
+- `tmp/screens-0.2.8-review/volunteers-mobile.png`
+
 Speaker notes:
 
 The MVP focuses on the areas that create the most recurring coordination work. Leaders can communicate more clearly, organize events, manage volunteer shifts, and get better visibility into participation. The point is not to pack in everything at once. The point is to make the most important workflows easier right away.
@@ -83,6 +106,10 @@ On-screen copy:
 Clear communication  
 Better coordination  
 Less admin overhead
+
+Suggested image:
+
+- `tmp/screens-0.2.8-review/checkin-desktop.png`
 
 Speaker notes:
 
@@ -96,6 +123,10 @@ We want real use.
 Real feedback.  
 Real community partners.
 
+Suggested image:
+
+- none; keep this slide text-only
+
 Speaker notes:
 
 At this stage, the most valuable thing is not a polished pitch. It is getting the MVP into real hands. We want to learn from leaders, organizers, and members using it in real situations so the product improves in the right direction. That is why we are sharing it now.
@@ -107,6 +138,10 @@ On-screen copy:
 Try it  
 Share it  
 Shape it
+
+Suggested image:
+
+- `tmp/screens-0.2.8-review/signup-desktop.png`
 
 Speaker notes:
 

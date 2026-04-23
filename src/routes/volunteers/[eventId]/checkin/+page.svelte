@@ -10,54 +10,54 @@
 	// Mock signups: distribute contacts across shifts for demo purposes
 	const mockSignups: Record<string, { name: string; affiliation?: string }[]> = {
 		s1: [
-			{ name: 'Marguerite Okafor', affiliation: 'Harbor Community Bank' },
-			{ name: 'Tom Bellacino', affiliation: 'Bellacino & Sons Landscaping' },
-			{ name: 'Priya Nambiar', affiliation: 'Nambiar Law Partners' },
-			{ name: 'Dana Whitfield', affiliation: 'Harbor Youth Sailing' },
-			{ name: 'Carlos Fuentes', affiliation: 'West End Hardware' },
-			{ name: 'Ruth Kim', affiliation: 'Northside Health Clinic' },
-			{ name: 'James Osei', affiliation: 'South Harbor Music Collective' },
-			{ name: 'Linda Marchetti', affiliation: 'Marchetti Catering' }
+			{ name: 'Megan Carter', affiliation: 'Cape Shore Bank' },
+			{ name: 'Tyler Dawson', affiliation: 'Dawson Grounds Co.' },
+			{ name: 'Lauren Mitchell', affiliation: 'Mitchell Family Law' },
+			{ name: 'Brooke Simmons', affiliation: 'Harbor Youth Sailing' },
+			{ name: 'Connor Hayes', affiliation: 'West End Hardware' },
+			{ name: 'Erin Wallace', affiliation: 'Northside Health Clinic' },
+			{ name: 'Garrett Cole', affiliation: 'Cape Sound Collective' },
+			{ name: 'Melissa Hart', affiliation: 'Hart Catering Co.' }
 		],
 		s2: [
-			{ name: 'Tom Bellacino', affiliation: 'Bellacino & Sons Landscaping' },
-			{ name: 'Carlos Fuentes', affiliation: 'West End Hardware' },
-			{ name: 'James Osei', affiliation: 'South Harbor Music Collective' },
-			{ name: 'Dana Whitfield', affiliation: 'Harbor Youth Sailing' },
-			{ name: 'Marguerite Okafor', affiliation: 'Harbor Community Bank' },
-			{ name: 'Priya Nambiar', affiliation: 'Nambiar Law Partners' },
-			{ name: 'Linda Marchetti', affiliation: 'Marchetti Catering' },
-			{ name: 'Ruth Kim', affiliation: 'Northside Health Clinic' },
+			{ name: 'Tyler Dawson', affiliation: 'Dawson Grounds Co.' },
+			{ name: 'Connor Hayes', affiliation: 'West End Hardware' },
+			{ name: 'Garrett Cole', affiliation: 'Cape Sound Collective' },
+			{ name: 'Brooke Simmons', affiliation: 'Harbor Youth Sailing' },
+			{ name: 'Megan Carter', affiliation: 'Cape Shore Bank' },
+			{ name: 'Lauren Mitchell', affiliation: 'Mitchell Family Law' },
+			{ name: 'Melissa Hart', affiliation: 'Hart Catering Co.' },
+			{ name: 'Erin Wallace', affiliation: 'Northside Health Clinic' },
 			{ name: 'Aiden Clarke', affiliation: 'Riverside Commons' },
 			{ name: 'Sofia Reyes', affiliation: 'City Press' }
 		],
 		s3: [
-			{ name: 'Carlos Fuentes', affiliation: 'West End Hardware' },
-			{ name: 'James Osei', affiliation: 'South Harbor Music Collective' },
-			{ name: 'Dana Whitfield', affiliation: 'Harbor Youth Sailing' }
+			{ name: 'Connor Hayes', affiliation: 'West End Hardware' },
+			{ name: 'Garrett Cole', affiliation: 'Cape Sound Collective' },
+			{ name: 'Brooke Simmons', affiliation: 'Harbor Youth Sailing' }
 		],
 		s4: [
-			{ name: 'Tom Bellacino', affiliation: 'Bellacino & Sons Landscaping' },
-			{ name: 'Marguerite Okafor', affiliation: 'Harbor Community Bank' },
-			{ name: 'Ruth Kim', affiliation: 'Northside Health Clinic' },
-			{ name: 'James Osei', affiliation: 'South Harbor Music Collective' },
-			{ name: 'Linda Marchetti', affiliation: 'Marchetti Catering' }
+			{ name: 'Tyler Dawson', affiliation: 'Dawson Grounds Co.' },
+			{ name: 'Megan Carter', affiliation: 'Cape Shore Bank' },
+			{ name: 'Erin Wallace', affiliation: 'Northside Health Clinic' },
+			{ name: 'Garrett Cole', affiliation: 'Cape Sound Collective' },
+			{ name: 'Melissa Hart', affiliation: 'Hart Catering Co.' }
 		],
 		s5: [
-			{ name: 'Carlos Fuentes', affiliation: 'West End Hardware' },
-			{ name: 'Dana Whitfield', affiliation: 'Harbor Youth Sailing' },
-			{ name: 'Priya Nambiar', affiliation: 'Nambiar Law Partners' },
+			{ name: 'Connor Hayes', affiliation: 'West End Hardware' },
+			{ name: 'Brooke Simmons', affiliation: 'Harbor Youth Sailing' },
+			{ name: 'Lauren Mitchell', affiliation: 'Mitchell Family Law' },
 			{ name: 'Aiden Clarke', affiliation: 'Riverside Commons' }
 		],
 		s6: [
-			{ name: 'Marguerite Okafor', affiliation: 'Harbor Community Bank' },
-			{ name: 'Tom Bellacino', affiliation: 'Bellacino & Sons Landscaping' },
-			{ name: 'Ruth Kim', affiliation: 'Northside Health Clinic' },
-			{ name: 'James Osei', affiliation: 'South Harbor Music Collective' },
-			{ name: 'Dana Whitfield', affiliation: 'Harbor Youth Sailing' },
-			{ name: 'Carlos Fuentes', affiliation: 'West End Hardware' },
-			{ name: 'Priya Nambiar', affiliation: 'Nambiar Law Partners' },
-			{ name: 'Linda Marchetti', affiliation: 'Marchetti Catering' },
+			{ name: 'Megan Carter', affiliation: 'Cape Shore Bank' },
+			{ name: 'Tyler Dawson', affiliation: 'Dawson Grounds Co.' },
+			{ name: 'Erin Wallace', affiliation: 'Northside Health Clinic' },
+			{ name: 'Garrett Cole', affiliation: 'Cape Sound Collective' },
+			{ name: 'Brooke Simmons', affiliation: 'Harbor Youth Sailing' },
+			{ name: 'Connor Hayes', affiliation: 'West End Hardware' },
+			{ name: 'Lauren Mitchell', affiliation: 'Mitchell Family Law' },
+			{ name: 'Melissa Hart', affiliation: 'Hart Catering Co.' },
 			{ name: 'Sofia Reyes', affiliation: 'City Press' },
 			{ name: 'Aiden Clarke', affiliation: 'Riverside Commons' },
 			{ name: 'Marcus Webb', affiliation: 'Civic Design Studio' },
@@ -66,10 +66,10 @@
 			{ name: 'Yuki Tanaka', affiliation: 'Sterling & Co.' }
 		],
 		s7: [
-			{ name: 'Marguerite Okafor', affiliation: 'Harbor Community Bank' },
-			{ name: 'Tom Bellacino', affiliation: 'Bellacino & Sons Landscaping' },
-			{ name: 'Priya Nambiar', affiliation: 'Nambiar Law Partners' },
-			{ name: 'James Osei', affiliation: 'South Harbor Music Collective' }
+			{ name: 'Megan Carter', affiliation: 'Cape Shore Bank' },
+			{ name: 'Tyler Dawson', affiliation: 'Dawson Grounds Co.' },
+			{ name: 'Lauren Mitchell', affiliation: 'Mitchell Family Law' },
+			{ name: 'Garrett Cole', affiliation: 'Cape Sound Collective' }
 		]
 	};
 
@@ -190,23 +190,23 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-card shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-4 px-4 py-4 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.14fr)_18rem] lg:items-start lg:gap-5 lg:space-y-0 lg:px-6">
-				<div class="space-y-3">
-					<div class="space-y-1.5">
+			<Card.Content class="relative space-y-3.5 px-4 py-3.5 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.18fr)_17rem] lg:items-start lg:gap-4.5 lg:space-y-0 lg:px-5">
+				<div class="space-y-2.5">
+					<div class="space-y-1.25">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
-						<h1 class="max-w-3xl text-2xl font-semibold tracking-tight text-foreground sm:text-[2.1rem] sm:leading-[0.98]">{event.title}</h1>
+						<h1 class="max-w-3xl text-[1.8rem] font-semibold tracking-tight text-foreground sm:text-[1.95rem] sm:leading-[0.98]">{event.title}</h1>
 						<p class="text-sm text-muted-foreground">{event.date} · {event.location}</p>
-						<p class="max-w-2xl text-sm leading-6 text-muted-foreground">{activeShiftSummary}</p>
+						<p class="max-w-2xl text-sm leading-5.5 text-muted-foreground">{activeShiftSummary}</p>
 					</div>
 
 					<div class="flex flex-wrap gap-2">
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{event.shifts.length} shifts</div>
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
+						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{event.shifts.length} shifts</div>
+						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
+						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
 					</div>
 				</div>
 
-				<div class="rounded-[1.15rem] bg-muted/20 px-4 py-4 dark:bg-background/56">
+				<div class="rounded-[1.1rem] bg-muted/20 px-3.5 py-3.5 dark:bg-background/56">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Working now</p>
 					<p class="mt-1.5 text-lg font-semibold tracking-tight text-foreground">{activeShift?.title ?? 'Choose a shift'}</p>
 					<p class="mt-1 text-sm text-muted-foreground">{activeShift ? `${activeShiftWindow} · ${remainingCheckIns} pending` : 'Use the shift switcher below to begin check-in.'}</p>
@@ -234,7 +234,7 @@
 			</Card.Content>
 		</Card.Root>
 
-		<div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-start">
+		<div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_17.5rem] xl:items-start">
 			<Card.Root size="sm" class="border-border/70 bg-card">
 				<Card.Header class="gap-2 border-b border-border/70">
 					<Card.Title class="text-lg font-semibold tracking-tight">Check-in list</Card.Title>
@@ -242,7 +242,7 @@
 						<Card.Description>{activeShift.title} · {activeShift.startTime}–{activeShift.endTime}</Card.Description>
 					{/if}
 				</Card.Header>
-				<Card.Content class="space-y-5">
+				<Card.Content class="space-y-4">
 					<div class="flex flex-wrap items-center justify-between gap-3">
 						<div class="flex flex-wrap gap-2">
 							{#each event.shifts as shift (shift.id)}
@@ -251,7 +251,7 @@
 								<button
 									type="button"
 									onclick={() => (selectedShiftId = shift.id)}
-									class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-2 text-[0.74rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
+									class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-1.75 text-[0.74rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
 								>
 									<span>{shift.title}</span>
 									<span class="text-[0.68rem] text-muted-foreground/80 dark:text-foreground/60">{expected} expected</span>
@@ -282,10 +282,10 @@
 													<button
 														type="button"
 														onclick={() => toggle(person.key)}
-														class="appearance-none flex w-full items-center gap-3 bg-background px-3.5 py-3 text-left transition-colors hover:bg-muted/18 dark:bg-black/72 dark:hover:bg-black/66"
+														class="appearance-none flex w-full items-center gap-3 bg-background px-3.25 py-2.5 text-left transition-colors hover:bg-primary/5 dark:bg-black/72 dark:hover:bg-black/66"
 													>
-														<div class="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-full border-2 border-border transition-all"></div>
-														<Avatar.Root class="size-10 shrink-0 border border-border/70 bg-primary/8 shadow-sm after:hidden">
+														<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-primary/35 transition-all"></div>
+														<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-primary/8 shadow-sm after:hidden">
 															{#if person.avatarUrl}
 																<Avatar.Image src={person.avatarUrl} alt={person.name} />
 															{:else}
@@ -324,14 +324,14 @@
 													<button
 														type="button"
 														onclick={() => toggle(person.key)}
-														class="appearance-none flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/20 dark:hover:bg-black/60"
+														class="appearance-none flex w-full items-center gap-3 px-3.25 py-2.5 text-left transition-colors hover:bg-muted/20 dark:hover:bg-black/60"
 													>
-														<div class="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-full border-2 border-foreground/70 bg-foreground/70 transition-all">
+														<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-foreground/70 bg-foreground/70 transition-all">
 															<svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2.5">
 																<path stroke-linecap="round" stroke-linejoin="round" d="M3 8l3.5 3.5L13 5" />
 															</svg>
 														</div>
-														<Avatar.Root class="size-10 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">
+														<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">
 															{#if person.avatarUrl}
 																<Avatar.Image src={person.avatarUrl} alt={person.name} />
 															{:else}
@@ -355,9 +355,9 @@
 				</Card.Content>
 			</Card.Root>
 
-			<div class="space-y-4 xl:sticky xl:top-24">
+			<div class="space-y-3.5 xl:sticky xl:top-24">
 				<Card.Root size="sm" class="border-border/70 bg-card">
-					<Card.Content class="space-y-4 py-5">
+					<Card.Content class="space-y-3.5 py-4">
 						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
 						{#if activeShift}
 							<p class="text-base font-semibold tracking-tight text-foreground">{activeShift.title}</p>
@@ -370,7 +370,7 @@
 						<div class="h-2 overflow-hidden rounded-full bg-muted">
 							<div class="h-full rounded-full bg-foreground/75 transition-all" style="width: {completionPercent}%"></div>
 						</div>
-						<div class="space-y-3 border-t border-border/60 pt-4">
+						<div class="space-y-2.5 border-t border-border/60 pt-3">
 							<div class="flex items-start justify-between gap-3">
 								<p class="text-sm text-muted-foreground">Still to check in</p>
 								<p class="text-sm font-semibold text-foreground">{remainingCheckIns}</p>
@@ -380,14 +380,14 @@
 								<p class="text-sm font-semibold text-foreground">{checkedCount}</p>
 							</div>
 						</div>
-						<p class="text-sm leading-6 text-muted-foreground">Keep marking arrivals as they happen so late follow-up stays visible for the team.</p>
-						<Button href="/signup/{event.id}" variant="outline" size="sm" class="h-9 w-full justify-center px-3 text-xs">Open public signup</Button>
+						<p class="text-sm leading-5 text-muted-foreground">Keep marking arrivals as they happen so follow-up stays visible for the team.</p>
+						<Button href="/signup/{event.id}" size="sm" class="h-9 w-full justify-center px-3 text-xs shadow-sm">Open public signup</Button>
 					</Card.Content>
 				</Card.Root>
 
 				{#if shiftLead}
 					<Card.Root size="sm" class="border-border/70 bg-card">
-						<Card.Content class="space-y-4 py-5">
+						<Card.Content class="space-y-3.5 py-4">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Up next</p>
 							<div class="flex items-center gap-3">
 								<Avatar.Root class="size-12 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">

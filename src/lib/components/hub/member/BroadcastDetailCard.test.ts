@@ -197,7 +197,7 @@ describe('BroadcastDetailCard', () => {
 
 		expect(screen.getByText('Admin context')).toBeTruthy();
 		expect(screen.getByText('Lifecycle')).toBeTruthy();
-		expect(screen.getByText('Acknowledgment follow-up')).toBeTruthy();
+		expect(screen.getAllByText('Acknowledgment follow-up').length).toBeGreaterThan(0);
 		expect(screen.getByText('2 acknowledged, 1 pending on the current roster.')).toBeTruthy();
 		expect(
 			(screen.getByRole('link', { name: 'Open in manage' }) as HTMLAnchorElement).getAttribute('href')

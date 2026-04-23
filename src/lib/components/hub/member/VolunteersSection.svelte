@@ -3,6 +3,7 @@
 	import { PLUGIN_REGISTRY } from '$lib/stores/pluginRegistry';
 	import {
 		volunteerEvents,
+		getVolunteerEventTeam,
 		getEventFilledSlots,
 		getEventTotalSlots
 	} from '$lib/demo/volunteerFixtures';
@@ -35,17 +36,23 @@
 		</div>
 	</div>
 
-	<Card.Root size="sm" class="overflow-hidden border-border/70 bg-card">
-		<Card.Content class="divide-y divide-border/50 px-4 py-0">
-			{#if upcomingEvents.length === 0}
-				<div class="py-6 text-center">
-					<p class="text-sm text-muted-foreground">No upcoming volunteer events.</p>
-				</div>
-			{:else}
-				{#each upcomingEvents as event (event.id)}
-					<EventCard {event} signupHref="/signup/{event.id}" />
-				{/each}
-			{/if}
-		</Card.Content>
-	</Card.Root>
+	{#if upcomingEvents.length === 0}
+		<Card.Root size="sm" class="border-border/70 bg-card">
+			<Card.Content class="py-6 text-center">
+				<p class="text-sm text-muted-foreground">No upcoming volunteer events.</p>
+			</Card.Content>
+		</Card.Root>
+	{:else}
+		<div class="grid gap-3 lg:grid-cols-2">
+			{#each upcomingEvents as event (event.id)}
+				{@const team = getVolunteerEventTeam(event.id)}
+				<EventCard
+					{event}
+					signupHref="/signup/{event.id}"
+					leadContact={team.lead}
+					participantContacts={team.participants}
+				/>
+			{/each}
+		</div>
+	{/if}
 </div>

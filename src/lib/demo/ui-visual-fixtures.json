@@ -1,23 +1,23 @@
 {
-	"organizationName": "Harbor Unit",
-	"organizationId": "org_preview_harbor_unit",
+	"organizationName": "Old Town Cape",
+	"organizationId": "org_preview_old_town_cape",
 	"currentUserProfileId": "profile-ariana-lopez",
 	"members": [
 		{
 			"profile_id": "profile-ariana-lopez",
-			"name": "Ariana Lopez",
-			"email": "ariana@pluralunit.test",
+			"name": "Avery Brooks",
+			"email": "avery@pluralunit.test",
 			"phone_number": "+1 415 555 0101",
 			"avatar_url": "",
-			"bio": "Coordinates the Harbor Unit schedule and keeps volunteers aligned across weekly operations.",
+			"bio": "Coordinates the Old Town Cape schedule and keeps volunteers aligned across weekly operations.",
 			"role": "admin",
 			"joined_via": "created",
 			"joined_at": "2026-01-06T15:20:00.000Z"
 		},
 		{
 			"profile_id": "profile-nico-park",
-			"name": "Nico Park",
-			"email": "nico@pluralunit.test",
+			"name": "Mason Reed",
+			"email": "mason@pluralunit.test",
 			"phone_number": "+1 415 555 0102",
 			"avatar_url": "",
 			"bio": "Handles neighborhood outreach and keeps partner follow-ups moving.",
@@ -27,8 +27,8 @@
 		},
 		{
 			"profile_id": "profile-elena-rossi",
-			"name": "Elena Rossi",
-			"email": "elena@pluralunit.test",
+			"name": "Chloe Bennett",
+			"email": "chloe@pluralunit.test",
 			"phone_number": "+1 415 555 0103",
 			"avatar_url": "",
 			"bio": "Supports volunteer onboarding and makes sure first-shift logistics stay clear.",
@@ -38,8 +38,8 @@
 		},
 		{
 			"profile_id": "profile-malik-johnson",
-			"name": "Malik Johnson",
-			"email": "malik@pluralunit.test",
+			"name": "Caleb Foster",
+			"email": "caleb@pluralunit.test",
 			"phone_number": "+1 415 555 0104",
 			"avatar_url": "",
 			"bio": "Focuses on event setup, load-in, and same-day volunteer coordination.",
@@ -49,8 +49,8 @@
 		},
 		{
 			"profile_id": "profile-priya-desai",
-			"name": "Priya Desai",
-			"email": "priya@pluralunit.test",
+			"name": "Hannah Mercer",
+			"email": "hannah@pluralunit.test",
 			"phone_number": "+1 415 555 0105",
 			"avatar_url": "",
 			"bio": "Keeps documentation current and helps new members find the right resources quickly.",
@@ -60,8 +60,8 @@
 		},
 		{
 			"profile_id": "profile-tomas-ibarra",
-			"name": "Tomas Ibarra",
-			"email": "tomas@pluralunit.test",
+			"name": "Owen Parker",
+			"email": "owen@pluralunit.test",
 			"phone_number": "+1 415 555 0106",
 			"avatar_url": "",
 			"bio": "",
@@ -71,8 +71,8 @@
 		},
 		{
 			"profile_id": "profile-yara-haddad",
-			"name": "Yara Haddad",
-			"email": "yara@pluralunit.test",
+			"name": "Sydney Harper",
+			"email": "sydney@pluralunit.test",
 			"phone_number": "+1 415 555 0107",
 			"avatar_url": "",
 			"bio": "Tracks community requests and makes sure follow-up owners are assigned quickly.",
@@ -82,8 +82,8 @@
 		},
 		{
 			"profile_id": "profile-lucia-costa",
-			"name": "Lucia Costa",
-			"email": "lucia@pluralunit.test",
+			"name": "Natalie Quinn",
+			"email": "natalie@pluralunit.test",
 			"phone_number": "+1 415 555 0108",
 			"avatar_url": "",
 			"bio": "Helps with bilingual outreach and member support during live events.",
@@ -98,7 +98,7 @@
 			"participant": {
 				"id": "contact-elena-rossi",
 				"profileId": "profile-elena-rossi",
-				"name": "Elena Rossi",
+				"name": "Chloe Bennett",
 				"avatar_url": "",
 				"subtitle": "Events lead",
 				"isFakeUser": false
@@ -155,7 +155,7 @@
 			"participant": {
 				"id": "contact-yara-haddad",
 				"profileId": "profile-yara-haddad",
-				"name": "Yara Haddad",
+				"name": "Sydney Harper",
 				"avatar_url": "",
 				"subtitle": "Volunteer coordinator",
 				"isFakeUser": false
@@ -177,7 +177,7 @@
 					"senderId": "contact-yara-haddad",
 					"senderKind": "contact",
 					"kind": "text",
-					"body": "Already on it. I can move Tomas and Lucia forward and keep the late cleanup team intact.",
+					"body": "Already on it. I can move Owen and Natalie forward and keep the late cleanup team intact.",
 					"imageUrl": "",
 					"sentAt": "2026-04-09T14:42:00.000Z"
 				},
@@ -202,7 +202,7 @@
 			"participant": {
 				"id": "contact-malik-johnson",
 				"profileId": "profile-malik-johnson",
-				"name": "Malik Johnson",
+				"name": "Caleb Foster",
 				"avatar_url": "",
 				"subtitle": "Facilities captain",
 				"isFakeUser": false
@@ -249,7 +249,7 @@
 			"participant": {
 				"id": "contact-priya-desai",
 				"profileId": "profile-priya-desai",
-				"name": "Priya Desai",
+				"name": "Hannah Mercer",
 				"avatar_url": "",
 				"subtitle": "Treasurer",
 				"isFakeUser": false
@@ -312,7 +312,7 @@
 	"broadcasts": [
 		{
 			"id": "broadcast-1",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Sunday hospitality reset",
 			"body": "Please arrive 20 minutes early if you are serving coffee or greeting at the north entrance.",
 			"updated_at": "2026-04-11T07:30:00.000Z",
@@ -325,7 +325,7 @@
 		},
 		{
 			"id": "broadcast-2",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Youth room volunteers confirmed",
 			"body": "Coverage is full for both rooms. No additional signups needed this week.",
 			"updated_at": "2026-04-09T18:10:00.000Z",
@@ -338,7 +338,7 @@
 		},
 		{
 			"id": "broadcast-3",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Midweek meal count",
 			"body": "Current RSVP count is 86. Kitchen prep should plan for 95 portions.",
 			"updated_at": "2026-04-07T15:42:00.000Z",
@@ -353,7 +353,7 @@
 	"events": [
 		{
 			"id": "event-1",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Neighborhood dinner",
 			"description": "Shared meal for new members and nearby families after the evening gathering.",
 			"starts_at": "2026-04-17T01:30:00.000Z",
@@ -363,7 +363,7 @@
 		},
 		{
 			"id": "event-2",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Volunteer captain sync",
 			"description": "Thirty-minute coordination check for setup, care, and accessibility leads.",
 			"starts_at": "2026-04-15T18:00:00.000Z",
@@ -373,7 +373,7 @@
 		},
 		{
 			"id": "event-3",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Prayer breakfast",
 			"description": "Early-morning gathering with short updates from the care team and finance team.",
 			"starts_at": "2026-04-20T14:00:00.000Z",
@@ -383,7 +383,7 @@
 		},
 		{
 			"id": "event-4",
-			"organization_id": "org_preview_harbor_unit",
+			"organization_id": "org_preview_old_town_cape",
 			"title": "Supply closet reset",
 			"description": "Quick cleanup and relabeling session for operations volunteers.",
 			"starts_at": "2026-04-13T23:00:00.000Z",

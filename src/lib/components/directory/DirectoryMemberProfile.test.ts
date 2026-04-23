@@ -8,7 +8,7 @@ import DirectoryMemberProfile from './DirectoryMemberProfile.svelte';
 function makeMember(overrides: Partial<OrganizationMember> = {}): OrganizationMember {
 	return {
 		profile_id: 'member-1',
-		name: 'Ariana Lopez',
+		name: 'Avery Brooks',
 		email: 'ariana@example.com',
 		phone_number: '+1 415 555 0101',
 		avatar_url: '',

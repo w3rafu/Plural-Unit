@@ -23,7 +23,7 @@ import {
 function makeMember(overrides: Partial<OrganizationMember> = {}): OrganizationMember {
 	return {
 		profile_id: 'member-1',
-		name: 'Ariana Lopez',
+		name: 'Avery Brooks',
 		email: 'ariana@example.com',
 		phone_number: '',
 		avatar_url: '',
@@ -62,7 +62,7 @@ describe('accessReviewModel', () => {
 		const now = new Date('2026-04-12T10:00:00.000Z').getTime();
 		const members = [
 			makeMember({ profile_id: 'member-1', role: 'admin', joined_via: 'created' }),
-			makeMember({ profile_id: 'member-2', name: 'Lucia Costa', email: '', phone_number: '+1555', role: 'member', joined_via: 'code', joined_at: '2026-03-20T10:00:00.000Z' })
+			makeMember({ profile_id: 'member-2', name: 'Natalie Quinn', email: '', phone_number: '+1555', role: 'member', joined_via: 'code', joined_at: '2026-03-20T10:00:00.000Z' })
 		];
 
 		expect(filterOrganizationMembers(members, { filter: 'admin', now }).map((member) => member.profile_id)).toEqual(['member-1']);

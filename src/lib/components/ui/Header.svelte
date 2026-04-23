@@ -244,8 +244,8 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 3.05rem;
-		height: 3.05rem;
+		width: 3.72rem;
+		height: 3.72rem;
 		border: 0;
 		border-radius: 0;
 		background: transparent;
@@ -255,8 +255,8 @@
 
 	.shell-header__brand-image {
 		display: block;
-		width: 2.45rem;
-		height: 2.45rem;
+		width: 3.08rem;
+		height: 3.08rem;
 		object-fit: contain;
 		filter: invert(1) brightness(0.1);
 		transform: none;
@@ -267,13 +267,13 @@
 		flex: none;
 		align-items: center;
 		justify-content: center;
-		width: 2.35rem;
-		height: 2.35rem;
+		width: 2.7rem;
+		height: 2.7rem;
 		overflow: hidden;
 		border: 1px solid var(--border);
 		border-radius: 9999px;
 		background: var(--background);
-		font-size: 0.92rem;
+		font-size: 1rem;
 		font-weight: 700;
 		letter-spacing: -0.02em;
 		color: var(--foreground);
@@ -297,17 +297,19 @@
 	.shell-header__title-block {
 		min-width: 0;
 		display: grid;
-		gap: 0;
+		gap: 0.08rem;
 		align-content: center;
+		max-width: min(100%, 34rem);
 	}
 
 	.shell-header__title {
 		margin: 0;
 		font-size: clamp(1.25rem, 2.5vw, 1.7rem);
 		font-weight: 700;
-		line-height: 1;
+		line-height: 1.08;
 		letter-spacing: -0.045em;
 		color: var(--foreground);
+		text-wrap: balance;
 	}
 
 	.shell-header__title--brand {
@@ -319,13 +321,13 @@
 	}
 
 	.shell-header__surface--page .shell-header__brand-mark {
-		width: 2.75rem;
-		height: 2.75rem;
+		width: 3.35rem;
+		height: 3.35rem;
 	}
 
 	.shell-header__surface--page .shell-header__brand-image {
-		width: 2.15rem;
-		height: 2.15rem;
+		width: 2.74rem;
+		height: 2.74rem;
 	}
 
 	.shell-header__subtitle {
@@ -353,6 +355,7 @@
 		display: flex;
 		align-items: center;
 		justify-self: end;
+		min-width: 0;
 	}
 
 	:global(.shell-header__control-group) {
@@ -437,6 +440,10 @@
 	}
 
 	@media (min-width: 1024px) {
+		.shell-header__surface--page .shell-header__title-block {
+			max-width: min(100%, 25rem);
+		}
+
 		.shell-header__section-nav {
 			display: inline-flex;
 			align-items: center;
@@ -495,6 +502,40 @@
 		:global(.dark .shell-header__section-link--active) {
 			background: color-mix(in srgb, var(--muted) 88%, transparent);
 			color: var(--foreground);
+		}
+	}
+
+	@media (min-width: 1024px) and (max-width: 1180px) {
+		.shell-header__surface--page .shell-header__title {
+			font-size: clamp(1.16rem, 1.9vw, 1.42rem);
+		}
+
+		.shell-header__surface--page .shell-header__title-block {
+			max-width: min(100%, 22rem);
+		}
+	}
+
+	@media (min-width: 1024px) and (max-width: 1100px) {
+		.shell-header__section-nav {
+			gap: 0.15rem;
+			padding: 0.2rem;
+		}
+
+		.shell-header__section-link {
+			gap: 0;
+			padding-inline: 0.58rem;
+		}
+
+		.shell-header__section-link span {
+			display: none;
+		}
+
+		:global(.shell-header__control-group) {
+			gap: 0.35rem;
+		}
+
+		.shell-header__surface--page .shell-header__title-block {
+			max-width: min(100%, 20rem);
 		}
 	}
 

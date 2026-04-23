@@ -5,7 +5,7 @@ test.describe('messages smoke routes', () => {
 		await page.goto('/messages?smoke=1');
 
 		await expect(page.getByRole('heading', { name: 'Messages' })).toBeVisible();
-		await expect(page.getByText('Elena Rossi').first()).toBeVisible();
+		await expect(page.getByText('Chloe Bennett').first()).toBeVisible();
 
 		await page.locator('textarea[placeholder="Write an update or reply..."]:visible').fill(
 			'Smoke mode message for coverage.'
@@ -26,7 +26,7 @@ test.describe('messages smoke routes', () => {
 	test('archives and mutes an active smoke conversation locally', async ({ page }) => {
 		await page.goto('/messages?smoke=1');
 
-		await page.getByRole('button', { name: /Elena Rossi/i }).first().click();
+		await page.getByRole('button', { name: /Chloe Bennett/i }).first().click();
 		await expect(page.getByRole('button', { name: 'Mute conversation' })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Archive conversation' })).toBeVisible();
 
@@ -35,31 +35,31 @@ test.describe('messages smoke routes', () => {
 
 		await page.getByRole('button', { name: 'Archive conversation' }).click();
 		await expect(page.getByRole('button', { name: 'Restore conversation' })).toBeVisible();
-		await expect(page.getByRole('button', { name: /Elena Rossi/i })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: /Chloe Bennett/i })).toHaveCount(0);
 
 		await page.getByRole('button', { name: 'Show archived' }).click();
-		await expect(page.getByRole('button', { name: /Elena Rossi/i }).first()).toBeVisible();
+		await expect(page.getByRole('button', { name: /Chloe Bennett/i }).first()).toBeVisible();
 	});
 
 	test('reveals and restores an archived smoke conversation', async ({ page }) => {
 		await page.goto('/messages?smoke=1');
 
-		await expect(page.getByText('Yara Haddad').first()).toBeHidden();
+		await expect(page.getByText('Sydney Harper').first()).toBeHidden();
 		await page.getByRole('button', { name: 'Show archived' }).click();
-		await expect(page.getByText('Yara Haddad').first()).toBeVisible();
+		await expect(page.getByText('Sydney Harper').first()).toBeVisible();
 
-		await page.getByRole('button', { name: /Yara Haddad/i }).first().click();
+		await page.getByRole('button', { name: /Sydney Harper/i }).first().click();
 		await page.getByRole('button', { name: 'Restore conversation' }).click();
 		await expect(page.getByText('Archived conversations stay out of inbox triage').first()).toBeHidden();
 
 		await page.getByRole('button', { name: 'Hide archived' }).click();
-		await expect(page.getByText('Yara Haddad').first()).toBeVisible();
+		await expect(page.getByText('Sydney Harper').first()).toBeVisible();
 	});
 
 	test('unmutes a muted smoke conversation locally', async ({ page }) => {
 		await page.goto('/messages?smoke=1');
 
-		await page.getByText('Malik Johnson').first().click();
+		await page.getByText('Caleb Foster').first().click();
 		await expect(page.getByRole('button', { name: 'Unmute conversation' })).toBeVisible();
 		await page.getByRole('button', { name: 'Unmute conversation' }).click();
 		await expect(page.getByRole('button', { name: 'Mute conversation' })).toBeVisible();

@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import * as Table from '$lib/components/ui/table';
 	import {
 		buildOrganizationMembersSummary,
 		countRecentOrganizationMembers,
@@ -265,51 +264,35 @@
 				</div>
 			</div>
 
-			<div class="overflow-x-auto overflow-y-hidden rounded-xl border border-border/70 bg-muted/10">
-				<Table.Root class="min-w-176">
-					<Table.Caption class="sr-only">Organization members and roles.</Table.Caption>
-					<Table.Header class="bg-muted/25">
-						<Table.Row>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Member</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Role</Table.Head>
-							<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined via</Table.Head>
-							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Joined</Table.Head>
-							<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
-							<Table.Row class="border-0 hover:bg-transparent">
-								<Table.Cell colspan={5} class="py-10 text-center">
-									<p class="text-sm text-muted-foreground">Loading members…</p>
-								</Table.Cell>
-							</Table.Row>
-						{:else if visibleMembers.length > 0}
-							{#each visibleMembers as member (member.profile_id)}
-								<MemberRow
-									{member}
-									{adminCount}
-									draftRole={getDraftRole(member)}
-									isMutating={currentOrganization.isMutating}
-									canMessage={member.profile_id !== currentUser.details.id}
-									onDraftRoleChange={(role) => setDraftRole(member, role)}
-									onRoleConfirm={() => openRoleConfirmation(member)}
-									onRemove={() => openRemoveConfirmation(member)}
-									onMessage={() => messageMember(member)}
-								/>
-							{/each}
-						{:else}
-							<Table.Row class="border-0 hover:bg-transparent">
-								<Table.Cell colspan={5} class="py-10 text-center">
-									<div class="space-y-1">
-										<p class="font-medium text-foreground">{emptyState.title}</p>
-										<p class="text-sm text-muted-foreground">{emptyState.description}</p>
-									</div>
-								</Table.Cell>
-							</Table.Row>
-						{/if}
-					</Table.Body>
-				</Table.Root>
+			<div class="rounded-xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
+				{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
+					<div class="py-10 text-center">
+						<p class="text-sm text-muted-foreground">Loading members…</p>
+					</div>
+				{:else if visibleMembers.length > 0}
+					<div class="space-y-2.5">
+						{#each visibleMembers as member (member.profile_id)}
+							<MemberRow
+								{member}
+								{adminCount}
+								draftRole={getDraftRole(member)}
+								isMutating={currentOrganization.isMutating}
+								canMessage={member.profile_id !== currentUser.details.id}
+								onDraftRoleChange={(role) => setDraftRole(member, role)}
+								onRoleConfirm={() => openRoleConfirmation(member)}
+								onRemove={() => openRemoveConfirmation(member)}
+								onMessage={() => messageMember(member)}
+							/>
+						{/each}
+					</div>
+				{:else}
+					<div class="py-10 text-center">
+						<div class="space-y-1">
+							<p class="font-medium text-foreground">{emptyState.title}</p>
+							<p class="text-sm text-muted-foreground">{emptyState.description}</p>
+						</div>
+					</div>
+				{/if}
 			</div>
 		</Card.Content>
 	{/if}

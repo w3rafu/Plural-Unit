@@ -72,7 +72,7 @@ Implementation owners most directly involved:
 - Avatar usage is still inconsistent across people-heavy moments.
 - The alerts sheet contains good information, but its priority system is not visually strong enough.
 - The organization members editor still behaves like a raw table with controls attached to the far edge.
-- The demo organization still presents as Harbor Unit instead of the newer Old Town Cape story.
+- The demo organization still needs a consistent Old Town Cape presentation story across the preview layer.
 - Several cards are still fully text-led even when a restrained cover image could establish context faster.
 - Many actionable buttons and icons are still visually neutral, so the UI under-signals what should be tapped first.
 
@@ -130,14 +130,14 @@ Specific recommendation:
 
 What the current fixtures show:
 
-- The preview data still uses Harbor Unit as the organization name.
+- The preview data still uses the older organization story instead of Old Town Cape.
 - That name appears in the fixture layer that powers presentation-facing screenshots.
 - The underlying issue is not product structure. It is presentation naming.
 
 0.2.7 direction:
 
-- Rename the demo organization from Harbor Unit to Old Town Cape in the preview fixtures that drive screenshots and demo state.
-- Update any fixture copy that reads like literal organization storytelling when it still references Harbor Unit.
+- Rename the demo organization in the preview fixtures so screenshots and demo state consistently tell the Old Town Cape story.
+- Update any fixture copy that still points at the older organization storytelling.
 - Treat this as a presentation consistency pass, not a broader product rename.
 
 Desired result:
@@ -316,7 +316,7 @@ They are simplifications that support the requested changes.
 ### Demo identity
 
 - Rename the presentation organization to Old Town Cape in preview fixtures.
-- Update nearby fixture copy only where Harbor Unit still appears as visible demo storytelling.
+- Update nearby fixture copy only where the older organization story still appears in visible demo copy.
 
 ### Header
 

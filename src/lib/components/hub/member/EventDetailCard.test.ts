@@ -212,8 +212,7 @@ describe('EventDetailCard', () => {
 		});
 
 		expect(screen.getByText('Admin context')).toBeTruthy();
-		expect(screen.getByText('Visibility')).toBeTruthy();
-		expect(screen.getByText('Visible on schedule 1 hour ago.')).toBeTruthy();
+		expect(screen.getByText('Visibility: Published.')).toBeTruthy();
 		expect(screen.getByText('Reminders')).toBeTruthy();
 		expect(screen.getByText('2 reminders planned')).toBeTruthy();
 		expect(screen.getByText('RSVP follow-up')).toBeTruthy();

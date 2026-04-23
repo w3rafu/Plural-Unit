@@ -37,7 +37,8 @@ describe('smokeFixtures', () => {
 		expect(state.plugins).toEqual({
 			broadcasts: { isEnabled: true, visibility: 'all_members' },
 			events: { isEnabled: true, visibility: 'admins_only' },
-			resources: { isEnabled: true, visibility: 'all_members' }
+			resources: { isEnabled: true, visibility: 'all_members' },
+			volunteers: { isEnabled: true, visibility: 'all_members' }
 		});
 		expect(state.broadcasts).toHaveLength(3);
 		expect(state.events).toHaveLength(5);
@@ -86,7 +87,7 @@ describe('smokeFixtures', () => {
 		const threads = buildSmokeMessages();
 
 		expect(user.id).toBeTruthy();
-		expect(user.name).toBe('Ariana Lopez');
+		expect(user.name).toBe('Avery Brooks');
 		expect(threads.length).toBeGreaterThan(0);
 		expect(threads[0]?.messages.length).toBeGreaterThan(0);
 	});
