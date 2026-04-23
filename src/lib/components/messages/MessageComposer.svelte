@@ -53,13 +53,13 @@
 </script>
 
 <form
-	class="mt-auto border-t border-border/70 bg-background/95 px-2 py-2 backdrop-blur sm:px-3.5 sm:py-2.5"
+	class="mt-auto border-t border-border/70 bg-background/95 px-2 py-1.75 backdrop-blur sm:px-3 sm:py-2"
 	onsubmit={handleSubmit}
 >
 	<div class="flex items-end gap-2">
 		<label
 			for={imageInputId}
-			class="mb-0.5 shrink-0 rounded-xl border border-border/70 bg-muted/30 p-1.75 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+			class="mb-0.5 shrink-0 rounded-xl border border-border/70 bg-muted/30 p-1.5 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
 			aria-label="Attach image"
 		>
 			<ImagePlus class="h-5 w-5" />
@@ -68,7 +68,7 @@
 		<div class="min-w-0 flex-1">
 			<Textarea
 				placeholder="Write an update or reply..."
-				class="max-h-24 min-h-10 rounded-[1.2rem] border-border/70 bg-muted/20 shadow-sm sm:max-h-28 sm:min-h-11 sm:rounded-[1.35rem]"
+				class="max-h-24 min-h-9 rounded-[1.2rem] border-border/70 bg-muted/20 shadow-sm sm:max-h-28 sm:min-h-10 sm:rounded-[1.35rem]"
 				bind:value={text}
 				onkeydown={handleKeydown}
 				disabled={isSending}
@@ -82,7 +82,7 @@
 			type="submit"
 			size="sm"
 			variant="default"
-			class="mb-0.5 h-9 rounded-[1.1rem] px-3 sm:h-10 sm:rounded-xl sm:px-3.5"
+			class="mb-0.5 h-8.5 rounded-[1.1rem] px-3 sm:h-9.5 sm:rounded-xl sm:px-3.5"
 			disabled={!text.trim() || isSending}
 			aria-label="Send message"
 		>

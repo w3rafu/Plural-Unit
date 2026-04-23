@@ -166,15 +166,15 @@
 </script>
 
 <Card.Root size="sm" class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
-	<Card.Header class="gap-2.5 border-b border-border/70 px-4 py-4 sm:px-5 sm:py-4.5">
-		<div class="space-y-2.5">
-			<div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+	<Card.Header class="gap-2 border-b border-border/70 px-4 py-3.5 sm:px-5 sm:py-4">
+		<div class="space-y-2">
+			<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
 				<label class="relative block w-full lg:max-w-md">
 					<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						type="search"
 						placeholder="Search members"
-						class="h-9 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+						class="h-8.5 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 						bind:value={searchQuery}
 					/>
 				</label>
@@ -185,7 +185,7 @@
 							type="button"
 							variant="ghost"
 							size="sm"
-							class="h-9 justify-center px-4"
+							class="h-8.5 justify-center px-4"
 							aria-current={roleFilter === option.id ? 'page' : undefined}
 							onclick={() => {
 								roleFilter = option.id;
@@ -197,7 +197,7 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap items-center justify-between gap-3 text-[0.76rem] text-muted-foreground">
+			<div class="flex flex-wrap items-center justify-between gap-2.5 text-[0.74rem] text-muted-foreground">
 				<p>{summaryCopy}</p>
 				{#if isRefreshing}
 					<p class="font-medium uppercase tracking-[0.16em] text-muted-foreground">Refreshing</p>
@@ -215,14 +215,15 @@
 				</div>
 			</div>
 		{:else if visibleMembers.length > 0}
-			<div class="min-h-0 flex-1 overflow-auto p-2.5 md:p-3.5">
-				<div class="space-y-3.5">
+			<div class="min-h-0 flex-1 overflow-auto p-2.5 md:p-3">
+				<div class="space-y-3">
 					{#if spotlightMembers.length > 0}
 						<div class="grid gap-2.5 xl:grid-cols-3">
 							{#each spotlightMembers as member (member.profile_id)}
-								<div class="rounded-[1.15rem] border border-border/70 bg-background/82 px-3.5 py-3 shadow-sm">
+								{@const bioPreview = getBioPreview(member)}
+								<div class="rounded-[1.1rem] border border-border/60 bg-muted/10 px-3.5 py-3.5 shadow-sm">
 									<div class="flex items-start gap-3">
-										<Avatar.Root class="size-12 border border-border/70 bg-muted/30 shadow-sm after:hidden">
+										<Avatar.Root class="size-10 border border-border/70 bg-muted/30 shadow-sm after:hidden">
 											{#if member.avatar_url}
 												<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 											{:else}
@@ -232,20 +233,36 @@
 											{/if}
 										</Avatar.Root>
 
-										<div class="min-w-0 flex-1 space-y-1">
+										<div class="min-w-0 flex-1 space-y-0.5">
 											<div class="flex flex-wrap items-center gap-2">
-												<p class="truncate text-sm font-semibold text-foreground">{member.name || 'Unnamed member'}</p>
+												<Button
+													href={getDetailHref(member)}
+													variant="ghost"
+													size="sm"
+													class="h-auto justify-start px-0 py-0 text-sm font-semibold hover:bg-transparent"
+												>
+													{member.name || 'Unnamed member'}
+												</Button>
 												<Badge variant="muted" class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.14em]">
 													{getMemberDirectoryRoleLabel(member.role)}
 												</Badge>
 											</div>
 											<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getSpotlightLabel(member)}</p>
 											<p class="text-[0.84rem] leading-5 text-muted-foreground">{getMemberDirectoryMeta(member, currentUserId)}</p>
+											{#if bioPreview}
+												<p class="pt-1 text-[0.84rem] leading-5 text-foreground/80 wrap-break-word">{bioPreview}</p>
+											{/if}
 										</div>
 									</div>
 
-									<div class="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3 text-[0.76rem] text-muted-foreground">
-										<span>Joined {formatJoinedAt(member.joined_at)}</span>
+									<div class="mt-2.5 space-y-1.5 border-t border-border/50 pt-2.5">
+										<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Best contact</p>
+										<p class="text-[0.84rem] text-muted-foreground wrap-break-word">{formatContact(member)}</p>
+										<p class="text-[0.74rem] text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</p>
+									</div>
+
+									<div class="mt-2 flex items-center justify-between gap-3 text-[0.76rem] text-muted-foreground">
+										<span>{getSpotlightLabel(member)}</span>
 										<div class="flex items-center gap-2.5">
 											<Button href={getDetailHref(member)} variant="ghost" size="xs" class="h-auto px-0 text-muted-foreground hover:text-foreground">
 												{detailLabel}

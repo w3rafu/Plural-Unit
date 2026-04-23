@@ -105,10 +105,10 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="p-4 sm:p-5 lg:grid lg:grid-cols-[minmax(0,1.15fr)_17rem] lg:items-start lg:gap-5">
-		<div class="space-y-3.5">
-			<div class="flex items-start gap-3.5 sm:gap-4">
-			<Avatar.Root class="size-14 border border-border/70 bg-muted/40 after:hidden sm:size-16">
+	<Card.Content class="p-4 sm:p-4.5 lg:grid lg:grid-cols-[minmax(0,1.18fr)_15.5rem] lg:items-start lg:gap-4.5">
+		<div class="space-y-3">
+			<div class="flex items-start gap-3 sm:gap-3.5">
+			<Avatar.Root class="size-12 border border-border/70 bg-muted/40 after:hidden sm:size-14">
 				{#if currentUser.details.avatar_url}
 					<Avatar.Image
 						src={currentUser.details.avatar_url}
@@ -121,8 +121,8 @@
 				{/if}
 			</Avatar.Root>
 
-				<div class="min-w-0 space-y-1.5">
-					<Card.Title class="text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.72rem]">
+				<div class="min-w-0 space-y-1">
+					<Card.Title class="text-[1.32rem] font-semibold tracking-tight text-foreground sm:text-[1.56rem]">
 						{currentUser.details.name || 'Profile snapshot'}
 					</Card.Title>
 					<p class="text-sm text-muted-foreground">
@@ -132,13 +132,13 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap gap-2">
-				<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
-				<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
-				<div class="rounded-full border border-border/70 bg-background px-3 py-1.5 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
+			<div class="flex flex-wrap gap-1.5 sm:gap-2">
+				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
 			</div>
 
-			<p class="max-w-2xl text-[0.84rem] leading-6 text-muted-foreground">{profileSummary}</p>
+			<p class="max-w-xl text-[0.82rem] leading-5.5 text-muted-foreground">{profileSummary}</p>
 		</div>
 
 		<ActivityDotGrid title="Personal rhythm" caption={personalActivityCaption} values={personalActivityValues} compact={true} footer="Past 4 weeks" />

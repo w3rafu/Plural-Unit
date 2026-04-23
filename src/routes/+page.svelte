@@ -186,7 +186,7 @@
 			</Card.Root>
 		{/if}
 
-		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,0.88fr)] xl:items-start">
+		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.82fr)_minmax(18rem,0.74fr)] xl:items-start">
 			<HubOverviewCards
 				memberCount={currentOrganization.memberCount}
 				{pendingInvites}
