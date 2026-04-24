@@ -32,9 +32,9 @@
 		<p class="text-sm font-medium text-foreground" class:line-through={checked} class:text-muted-foreground={checked}>
 			{name}
 		</p>
-		<p class="text-xs text-muted-foreground">{shift}</p>
+		<p class="text-[0.82rem] text-muted-foreground">{shift}</p>
 	</div>
 	{#if checked}
-		<span class="text-xs font-medium text-green-600 dark:text-green-400">Checked in</span>
+		<span class="text-[0.82rem] font-medium text-green-600 dark:text-green-400">Checked in</span>
 	{/if}
 </div>

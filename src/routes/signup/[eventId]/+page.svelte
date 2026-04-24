@@ -160,17 +160,17 @@
 							</svg>
 						</div>
 						<div class="min-w-0">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer confirmed</p>
+							<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer confirmed</p>
 							<h1 class="text-[1.75rem] font-semibold tracking-tight text-foreground sm:text-[1.95rem] lg:text-[2.25rem] lg:leading-[0.96]">
 								You are all set for {selectedShift?.title ?? 'your shift'}
 							</h1>
-							<p class="mt-1.5 max-w-2xl text-[0.92rem] leading-6 text-muted-foreground lg:text-[0.96rem]">
+							<p class="mt-1.5 max-w-2xl text-[0.82rem] leading-6 text-muted-foreground lg:text-[0.86rem]">
 								Confirmation is on its way to {email}. Bring yourself, arrive a few minutes early,
 								and we will take care of the rest.
 							</p>
 							<div class="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
 								{#each confirmationChips as chip (chip)}
-									<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.72rem] font-medium">
+									<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.82rem] font-medium">
 										{chip}
 									</Badge>
 								{/each}
@@ -180,7 +180,7 @@
 
 					{#if coordinator}
 						<div class="rounded-[1.2rem] border border-border/70 bg-background/82 px-3.5 py-3.5 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Need anything before you arrive?</p>
+							<p class="text-[0.74rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Need anything before you arrive?</p>
 							<div class="mt-2.5 flex items-center gap-3">
 								<Avatar.Root class="size-10 border border-border/70 bg-muted/30 shadow-sm after:hidden">
 									<Avatar.Image src={coordinator.avatarUrl} alt={coordinator.name} />
@@ -190,7 +190,7 @@
 									<p class="text-[0.84rem] text-muted-foreground">Volunteer lead · {coordinator.businessAffiliation}</p>
 								</div>
 							</div>
-							<p class="mt-2.5 text-[0.92rem] leading-6 text-muted-foreground">
+							<p class="mt-2.5 text-[0.82rem] leading-6 text-muted-foreground">
 								She will have the day-of team list and the check-in table ready when you arrive.
 							</p>
 						</div>
@@ -203,7 +203,7 @@
 									<span class={`h-2 w-2 rounded-full ${index === 0 ? 'bg-primary' : index === 1 ? 'bg-primary/70' : 'bg-primary/45'}`}></span>
 									<p class="text-sm font-medium text-foreground">{note.title}</p>
 								</div>
-								<p class="mt-2 text-[0.9rem] leading-5 text-muted-foreground">{note.summary}</p>
+								<p class="mt-2 text-[0.8rem] leading-5 text-muted-foreground">{note.summary}</p>
 							</div>
 						{/each}
 					</div>
@@ -212,11 +212,11 @@
 				<div class="space-y-3.5 rounded-[1.35rem] border border-border/70 bg-background/82 px-4 py-4 shadow-sm lg:px-5 lg:py-4.5">
 					<div class="flex items-start gap-3.5 border-b border-border/60 pb-3.5">
 						<div class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl border border-border/70 bg-muted/35 text-center">
-							<p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
+							<p class="text-[0.74rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
 							<p class="text-base font-semibold tracking-tight text-foreground">{getDateParts(event.date).day}</p>
 						</div>
 						<div class="min-w-0">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Event recap</p>
+							<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Event recap</p>
 							<h2 class="mt-1 text-[1.05rem] font-semibold tracking-tight text-foreground">{event.title}</h2>
 							<p class="mt-1 text-sm leading-5 text-muted-foreground">{event.location}</p>
 						</div>
@@ -224,23 +224,23 @@
 
 					<div class="space-y-2.5">
 						<div class="flex items-start justify-between gap-3 border-b border-border/60 pb-2.5">
-							<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer</span>
+							<span class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer</span>
 							<span class="text-right text-sm font-medium text-foreground">{name}</span>
 						</div>
 						<div class="flex items-start justify-between gap-3 border-b border-border/60 pb-2.5">
-							<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Shift</span>
+							<span class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Shift</span>
 							<span class="text-right text-sm font-medium text-foreground">{selectedShift?.title}</span>
 						</div>
 						<div class="flex items-start justify-between gap-3 border-b border-border/60 pb-2.5">
-							<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Time</span>
+							<span class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Time</span>
 							<span class="text-right text-sm font-medium text-foreground">{selectedShift?.startTime} – {selectedShift?.endTime}</span>
 						</div>
 						<div class="flex items-start justify-between gap-3 border-b border-border/60 pb-2.5">
-							<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Email</span>
+							<span class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Email</span>
 							<span class="text-right text-sm font-medium text-foreground">{email}</span>
 						</div>
 						<div class="flex items-start justify-between gap-3">
-							<span class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Affiliation</span>
+							<span class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Affiliation</span>
 							<span class="text-right text-sm font-medium text-foreground">{affiliation || 'Guest volunteer'}</span>
 						</div>
 					</div>
@@ -261,20 +261,20 @@
 					<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 						<div class="flex items-start gap-4">
 							<div class="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-2xl border border-border/70 bg-muted/30 text-center">
-								<p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
+								<p class="text-[0.74rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
 								<p class="text-[0.95rem] font-semibold tracking-tight text-foreground">{getDateParts(event.date).day}</p>
 							</div>
 
 							<div class="space-y-1.5">
-								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer team</p>
+								<p class="text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer team</p>
 								<h1 class="max-w-xl text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.8rem] lg:text-[2.05rem] lg:leading-[0.96]">{event.title}</h1>
-								<p class="text-[0.92rem] leading-5 text-muted-foreground sm:text-sm">{event.location}</p>
-								<p class="text-[0.92rem] leading-5 text-muted-foreground sm:text-sm">{event.date} · {event.timeRange}</p>
+								<p class="text-[0.82rem] leading-5 text-muted-foreground sm:text-sm">{event.location}</p>
+								<p class="text-[0.82rem] leading-5 text-muted-foreground sm:text-sm">{event.date} · {event.timeRange}</p>
 							</div>
 						</div>
 					</div>
 
-					<p class="max-w-lg text-[0.9rem] leading-5.5 text-muted-foreground lg:text-[0.92rem]">{signupLeadCopyCompact}</p>
+					<p class="max-w-lg text-[0.8rem] leading-5.5 text-muted-foreground lg:text-[0.82rem]">{signupLeadCopyCompact}</p>
 
 					<div class="flex flex-wrap gap-1.5 text-[0.8rem] text-muted-foreground sm:gap-2 sm:text-sm">
 						{#each signupChips as chip, index (chip)}
@@ -284,7 +284,7 @@
 
 					<div class="grid gap-2.5">
 						<div class="rounded-[1.1rem] bg-muted/20 px-3 py-3 sm:rounded-[1.2rem] sm:px-3.5 sm:py-3.5">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current selection</p>
+							<p class="text-[0.74rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Current selection</p>
 							{#if selectedShift}
 								<div class="mt-2 flex flex-wrap items-center gap-2">
 									<h2 class="text-[1.05rem] font-semibold tracking-tight text-foreground sm:text-[1.34rem]">{selectedShift.title}</h2>
@@ -294,7 +294,7 @@
 								</div>
 								<p class="mt-1 text-[0.88rem] text-muted-foreground sm:text-sm">{selectedShift.startTime} – {selectedShift.endTime}</p>
 								<p class="mt-1.5 text-[0.84rem] leading-5 text-muted-foreground sm:hidden">{selectedShiftSummaryCompact}</p>
-								<p class="mt-2 hidden text-[0.9rem] leading-5 text-muted-foreground sm:block">{selectedShiftSummary}</p>
+								<p class="mt-2 hidden text-[0.8rem] leading-5 text-muted-foreground sm:block">{selectedShiftSummary}</p>
 							{:else}
 								<p class="mt-2 text-[0.88rem] text-muted-foreground sm:mt-2.5 sm:text-sm">Choose any open shift to continue.</p>
 							{/if}
@@ -302,7 +302,7 @@
 
 						{#if coordinator}
 							<div class="rounded-[1.1rem] border border-border/70 bg-background/82 px-3 py-3 shadow-sm sm:rounded-[1.2rem] sm:px-3.5 sm:py-3.25">
-								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">On-site coordinator</p>
+								<p class="text-[0.74rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">On-site coordinator</p>
 								<div class="mt-2 flex items-center gap-2.5 sm:mt-2.5 sm:gap-3">
 									<Avatar.Root class="size-9 border border-border/70 bg-muted/30 shadow-sm after:hidden sm:size-10">
 										<Avatar.Image src={coordinator.avatarUrl} alt={coordinator.name} />
@@ -313,7 +313,7 @@
 									</div>
 								</div>
 								<p class="mt-2 text-[0.84rem] leading-5 text-muted-foreground sm:hidden">{coordinatorSummaryCompact}</p>
-								<p class="mt-2.5 hidden text-[0.9rem] leading-5 text-muted-foreground sm:block">She will be coordinating arrivals and filling any last-minute gaps at the event table.</p>
+								<p class="mt-2.5 hidden text-[0.8rem] leading-5 text-muted-foreground sm:block">She will be coordinating arrivals and filling any last-minute gaps at the event table.</p>
 							</div>
 						{/if}
 					</div>
@@ -328,8 +328,8 @@
 							<p class="text-[0.95rem] font-semibold tracking-tight text-foreground">{getDateParts(event.date).day}</p>
 						</div>
 						<div class="min-w-0">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer team</p>
-							<p class="truncate text-[0.98rem] font-semibold tracking-tight text-foreground">{event.title}</p>
+							<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Volunteer team</p>
+							<p class="truncate text-[0.88rem] font-semibold tracking-tight text-foreground">{event.title}</p>
 							<p class="text-[0.82rem] leading-5 text-muted-foreground">{event.date} · {event.location}</p>
 						</div>
 					</div>
@@ -355,10 +355,10 @@
 									>
 										<div class="min-w-0 flex-1">
 											<div class="flex flex-wrap items-center gap-2">
-												<span class="text-[0.94rem] font-semibold tracking-tight text-foreground">{shift.title}</span>
+												<span class="text-[0.84rem] font-semibold tracking-tight text-foreground">{shift.title}</span>
 												<FillPill filled={shift.filled} needed={shift.needed} {status} />
 											</div>
-											<p class="mt-1 text-[0.92rem] text-muted-foreground">{shift.startTime} – {shift.endTime}</p>
+											<p class="mt-1 text-[0.82rem] text-muted-foreground">{shift.startTime} – {shift.endTime}</p>
 										</div>
 										{#if selectedShiftId === shift.id}
 											<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -387,12 +387,12 @@
 								</div>
 
 								<div class="flex flex-col gap-1.5">
-									<Label for="signup-phone">Phone <span class="text-xs text-muted-foreground">optional</span></Label>
+									<Label for="signup-phone">Phone <span class="text-[0.82rem] text-muted-foreground">optional</span></Label>
 									<Input id="signup-phone" type="tel" bind:value={phone} placeholder="(555) 000-0000" />
 								</div>
 
 								<div class="flex flex-col gap-1.5">
-									<Label for="signup-affiliation">Business affiliation <span class="text-xs text-muted-foreground">optional</span></Label>
+									<Label for="signup-affiliation">Business affiliation <span class="text-[0.82rem] text-muted-foreground">optional</span></Label>
 									<Input id="signup-affiliation" bind:value={affiliation} placeholder="e.g. Acme Corp" />
 								</div>
 							</div>
@@ -400,12 +400,12 @@
 
 						<div class="space-y-2">
 							{#if selectedShift}
-								<p class="text-center text-xs text-muted-foreground">
+								<p class="text-center text-[0.82rem] text-muted-foreground">
 									Selected: {selectedShift.title} · {selectedShift.startTime} – {selectedShift.endTime}
 								</p>
 							{/if}
 							<Button type="submit" class="h-11 w-full shadow-sm" disabled={!name || !email || !selectedShiftId}>Reserve My Spot</Button>
-							<p class="text-center text-xs text-muted-foreground">No account required. Confirmation goes to your email.</p>
+							<p class="text-center text-[0.82rem] text-muted-foreground">No account required. Confirmation goes to your email.</p>
 						</div>
 					</form>
 				</Card.Content>

@@ -225,14 +225,14 @@
 
 	function getEngagementClass(eventId: string) {
 		return getEngagementSignal(eventId)?.needsAttention
-			? 'text-xs text-foreground'
-			: 'text-xs text-muted-foreground';
+			? 'text-[0.82rem] text-foreground'
+			: 'text-[0.82rem] text-muted-foreground';
 	}
 
 	function getDeliveryClass(eventId: string) {
 		return getDeliveryStatus(eventId)?.needsAttention
-			? 'text-xs text-foreground'
-			: 'text-xs text-muted-foreground';
+			? 'text-[0.82rem] text-foreground'
+			: 'text-[0.82rem] text-muted-foreground';
 	}
 
 	function getDeliveryCopy(eventId: string) {
@@ -517,7 +517,7 @@
 										}}
 									>
 										<p class="text-sm font-medium text-foreground">{option.label}</p>
-										<p class="mt-1 text-xs text-muted-foreground">{option.description}</p>
+										<p class="mt-1 text-[0.82rem] text-muted-foreground">{option.description}</p>
 									</button>
 								{/each}
 							</div>
@@ -534,13 +534,13 @@
 										/>
 										<div class="space-y-1">
 											<p class="text-sm font-medium text-foreground">{option.label}</p>
-											<p class="text-xs text-muted-foreground">{option.description}</p>
+											<p class="text-[0.82rem] text-muted-foreground">{option.description}</p>
 										</div>
 									</label>
 								{/each}
 							</div>
-							<p class="text-xs text-muted-foreground">{selectedReminderPlanCopy}</p>
-							<p class="text-xs text-muted-foreground">
+							<p class="text-[0.82rem] text-muted-foreground">{selectedReminderPlanCopy}</p>
+							<p class="text-[0.82rem] text-muted-foreground">
 								Current channel: {getEventReminderChannelLabel(reminderChannel)}.
 							</p>
 						</Field.Content>
@@ -619,41 +619,41 @@
 								<Badge variant="secondary">{getEventStateLabel(event)}</Badge>
 							</div>
 							<Item.Description>{event.description || 'More details will appear here soon.'}</Item.Description>
-							<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+							<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] text-muted-foreground">
 								<p>{getScheduleCopy(event)}</p>
 								{#if locationLabel}
 									<p>{locationLabel}</p>
 								{/if}
 							</div>
-							<p class="text-xs text-muted-foreground">{getAttendanceCopy(event)}</p>
+							<p class="text-[0.82rem] text-muted-foreground">{getAttendanceCopy(event)}</p>
 							{#if deliveryCopy}
 								<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 							{/if}
 							<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 							<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 							{#if reminderSummary && reminderSummary.count > 0}
-								<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
+								<p class="text-[0.82rem] text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 							{/if}
 							{#if engagementSignal}
 								<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
 							{/if}
 							{#if currentOrganization.isLoadingMembers && currentOrganization.members.length === 0}
-								<p class="text-xs text-muted-foreground">Loading member roster for follow-up...</p>
+								<p class="text-[0.82rem] text-muted-foreground">Loading member roster for follow-up...</p>
 							{:else if responseRoster && responseRoster.totalMembers > 0}
 								<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
 									<div class="space-y-1">
-										<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+										<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 											Response roster
 										</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{getEventResponseRosterSummaryCopy(responseRoster)}
 										</p>
 									</div>
 
 									<div class="space-y-2">
-										<p class="text-xs font-medium text-foreground">Needs follow-up</p>
+										<p class="text-[0.82rem] font-medium text-foreground">Needs follow-up</p>
 										{#if responseRoster.nonResponders.length === 0}
-											<p class="text-xs text-muted-foreground">Everyone on the current roster has replied.</p>
+											<p class="text-[0.82rem] text-muted-foreground">Everyone on the current roster has replied.</p>
 										{:else}
 											<div class="space-y-2">
 												{#each responseRoster.nonResponders.slice(0, 3) as entry (entry.member.profile_id)}
@@ -662,7 +662,7 @@
 															<p class="truncate text-sm font-medium text-foreground">
 																{entry.member.name || 'Unnamed member'}
 															</p>
-															<p class="text-xs text-muted-foreground">
+															<p class="text-[0.82rem] text-muted-foreground">
 																{entry.isCurrentUser ? 'You have not replied yet.' : 'No RSVP yet.'}
 															</p>
 														</div>
@@ -681,7 +681,7 @@
 												{/each}
 											</div>
 											{#if responseRoster.nonResponders.length > 3}
-												<p class="text-xs text-muted-foreground">
+												<p class="text-[0.82rem] text-muted-foreground">
 													+{responseRoster.nonResponders.length - 3} more member{responseRoster.nonResponders.length - 3 === 1 ? '' : 's'} still have not replied.
 												</p>
 											{/if}
@@ -690,7 +690,7 @@
 
 									{#if responseRoster.responders.length > 0}
 										<div class="space-y-2">
-											<p class="text-xs font-medium text-foreground">Recent replies</p>
+											<p class="text-[0.82rem] font-medium text-foreground">Recent replies</p>
 											<div class="space-y-2">
 												{#each responseRoster.responders.slice(0, 3) as entry (entry.member.profile_id)}
 													<div class="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-3 py-2">
@@ -703,7 +703,7 @@
 																	{entry.response ? getEventResponseLabel(entry.response) : 'Responded'}
 																</Badge>
 															</div>
-															<p class="text-xs text-muted-foreground">
+															<p class="text-[0.82rem] text-muted-foreground">
 																{entry.updatedAt ? `Replied ${formatShortDateTime(entry.updatedAt)}.` : 'Response saved.'}
 															</p>
 														</div>
@@ -722,7 +722,7 @@
 												{/each}
 											</div>
 											{#if responseRoster.responders.length > 3}
-												<p class="text-xs text-muted-foreground">
+												<p class="text-[0.82rem] text-muted-foreground">
 													+{responseRoster.responders.length - 3} more member{responseRoster.responders.length - 3 === 1 ? '' : 's'} already replied.
 												</p>
 											{/if}
@@ -730,7 +730,7 @@
 									{/if}
 
 									{#if responseRoster.externalResponseCount > 0}
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{responseRoster.externalResponseCount} saved response{responseRoster.externalResponseCount === 1 ? '' : 's'} came from people no longer on the current roster.
 										</p>
 									{/if}
@@ -792,13 +792,13 @@
 									<Badge variant="outline">{getEventStateLabel(event)}</Badge>
 								</div>
 								<Item.Description>{event.description || 'More details will appear here soon.'}</Item.Description>
-								<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+								<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] text-muted-foreground">
 									<p>{getScheduleCopy(event)}</p>
 									{#if locationLabel}
 										<p>{locationLabel}</p>
 									{/if}
 								</div>
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									{event.publish_at ? `Visible ${formatShortDateTime(event.publish_at)}` : 'Waiting to go live.'}
 								</p>
 								{#if deliveryCopy}
@@ -807,7 +807,7 @@
 								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 								<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 								{#if reminderSummary && reminderSummary.count > 0}
-									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
+									<p class="text-[0.82rem] text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 								{/if}
 								{#if engagementSignal}
 									<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>
@@ -871,21 +871,21 @@
 									<Badge variant="outline">{getEventStateLabel(event)}</Badge>
 								</div>
 								<Item.Description>{event.description || 'More details will appear here soon.'}</Item.Description>
-								<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+								<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] text-muted-foreground">
 									<p>{getScheduleCopy(event)}</p>
 									{#if locationLabel}
 										<p>{locationLabel}</p>
 									{/if}
 								</div>
-								<p class="text-xs text-muted-foreground">{getHistoryCopy(event)}</p>
-								<p class="text-xs text-muted-foreground">{getAttendanceCopy(event)}</p>
+								<p class="text-[0.82rem] text-muted-foreground">{getHistoryCopy(event)}</p>
+								<p class="text-[0.82rem] text-muted-foreground">{getAttendanceCopy(event)}</p>
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(event.id)}>{deliveryCopy}</p>
 								{/if}
 								<ExecutionDiagnosticsPanel entries={executionDiagnostics} />
 								<WorkflowSummaryPanel entries={workflowSummaryEntries} />
 								{#if reminderSummary && reminderSummary.count > 0}
-									<p class="text-xs text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
+									<p class="text-[0.82rem] text-muted-foreground">{getEventReminderSummaryCopy(reminderSummary)}</p>
 								{/if}
 								{#if engagementSignal}
 									<p class={getEngagementClass(event.id)}>{engagementSignal.copy}</p>

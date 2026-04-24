@@ -55,6 +55,7 @@
 
 	html {
 		min-height: 100%;
+		font-size: 16px;
 		font-family: 'Instrument Sans Variable', sans-serif;
 		text-rendering: optimizeLegibility;
 		-webkit-font-smoothing: antialiased;
@@ -88,6 +89,18 @@
 		min-height: 100vh;
 	}
 	}
+
+@media (min-width: 768px) {
+	html {
+		font-size: 16.5px;
+	}
+}
+
+@media (min-width: 1280px) {
+	html {
+		font-size: 17px;
+	}
+}
 
 .card-grid {
 	display: grid;

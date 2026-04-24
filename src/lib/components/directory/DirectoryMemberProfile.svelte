@@ -97,7 +97,7 @@
 								<MessageSquare class="size-4" />
 								{isOpeningConversation ? 'Opening...' : messageLabel}
 							</Button>
-							<p class="text-xs text-muted-foreground">
+							<p class="text-[0.82rem] text-muted-foreground">
 								Jump into a direct thread without leaving the directory context.
 							</p>
 						</div>
@@ -167,7 +167,7 @@
 				<p class="text-sm font-semibold text-foreground">Membership snapshot</p>
 				<div class="mt-3 space-y-3">
 					<div class="rounded-2xl border border-border/70 bg-muted/20 px-3 py-3">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+						<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 							Status
 						</p>
 						<p class="mt-1 text-sm font-medium text-foreground">
@@ -176,7 +176,7 @@
 					</div>
 
 					<div class="rounded-2xl border border-border/70 bg-muted/20 px-3 py-3">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+						<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 							Relationship
 						</p>
 						<p class="mt-1 text-sm font-medium text-foreground">
@@ -185,7 +185,7 @@
 					</div>
 
 					<div class="rounded-2xl border border-border/70 bg-muted/20 px-3 py-3">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+						<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 							Reachability
 						</p>
 						<p class="mt-1 text-sm font-medium text-foreground">
@@ -201,7 +201,7 @@
 					<p class="mt-1 text-sm text-muted-foreground">
 						Use the message action to continue coordination without leaving the member context.
 					</p>
-					<p class="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+					<p class="mt-3 text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 						{hasConversation ? 'Existing thread available' : 'New thread will open'}
 					</p>
 				</div>

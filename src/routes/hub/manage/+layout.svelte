@@ -89,7 +89,7 @@
 				<Button type="button" variant="outline" size="sm" onclick={retryHubToolsLoad}>
 					Try again
 				</Button>
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					Section editors will reappear here once the hub load succeeds.
 				</p>
 			</Card.Content>
@@ -122,7 +122,7 @@
 		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Content class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
 				<div class="space-y-0.5">
-					<p class="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
+					<p class="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
 					<p class="text-[0.84rem] font-medium text-foreground">Sections or content.</p>
 				</div>
 

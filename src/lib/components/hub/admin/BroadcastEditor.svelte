@@ -204,14 +204,14 @@
 
 	function getEngagementClass(broadcastId: string) {
 		return getEngagementSignal(broadcastId)?.needsAttention
-			? 'text-xs text-foreground'
-			: 'text-xs text-muted-foreground';
+			? 'text-[0.82rem] text-foreground'
+			: 'text-[0.82rem] text-muted-foreground';
 	}
 
 	function getDeliveryClass(broadcastId: string) {
 		return getDeliveryStatus(broadcastId)?.needsAttention
-			? 'text-xs text-foreground'
-			: 'text-xs text-muted-foreground';
+			? 'text-[0.82rem] text-foreground'
+			: 'text-[0.82rem] text-muted-foreground';
 	}
 
 	function getDeliveryCopy(broadcastId: string) {
@@ -502,7 +502,7 @@
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
 								</div>
 								<Item.Description>{broadcast.body}</Item.Description>
-								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+								<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 									{getMetaCopy(broadcast)}
 								</p>
 								{#if engagementSignal}
@@ -558,7 +558,7 @@
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
 								</div>
 								<Item.Description>{broadcast.body}</Item.Description>
-								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+								<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 									{getMetaCopy(broadcast)}
 								</p>
 								{#if deliveryCopy}
@@ -624,7 +624,7 @@
 								</Badge>
 							</div>
 							<Item.Description>{broadcast.body}</Item.Description>
-							<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+							<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 								{getMetaCopy(broadcast)}
 							</p>
 							{#if deliveryCopy}
@@ -637,7 +637,7 @@
 							{/if}
 							{@const ackCount = currentHub.getAcknowledgmentCount(broadcast.id)}
 							{#if ackCount > 0}
-								<p class="text-xs text-muted-foreground">{ackCount} {ackCount === 1 ? 'acknowledgment' : 'acknowledgments'}</p>
+								<p class="text-[0.82rem] text-muted-foreground">{ackCount} {ackCount === 1 ? 'acknowledgment' : 'acknowledgments'}</p>
 							{/if}
 						</Item.Content>
 						<Item.Actions>
@@ -699,10 +699,10 @@
 									<Badge variant="outline">{getBroadcastStateLabel(broadcast)}</Badge>
 								</div>
 								<Item.Description>{broadcast.body}</Item.Description>
-								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+								<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 									{getMetaCopy(broadcast)}
 								</p>
-								<p class="text-xs text-muted-foreground">{getHistoryCopy(broadcast)}</p>
+								<p class="text-[0.82rem] text-muted-foreground">{getHistoryCopy(broadcast)}</p>
 								{#if deliveryCopy}
 									<p class={getDeliveryClass(broadcast.id)}>{deliveryCopy}</p>
 								{/if}

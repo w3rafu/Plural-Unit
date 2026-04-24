@@ -87,14 +87,14 @@
 									<div class="flex items-start justify-between gap-2">
 										<div class="min-w-0">
 											<p class="truncate text-sm font-semibold text-foreground">{member.name}</p>
-											<p class="truncate text-xs text-muted-foreground">{formatContact(member)}</p>
+											<p class="truncate text-[0.82rem] text-muted-foreground">{formatContact(member)}</p>
 										</div>
 										<Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
 											{getMemberDirectoryRoleLabel(member.role)}
 										</Badge>
 									</div>
 
-									<div class="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+									<div class="flex flex-wrap gap-2 text-[0.84rem] text-muted-foreground">
 										<span class="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1">
 											Joined {formatJoinedAt(member.joined_at)}
 										</span>
@@ -129,7 +129,7 @@
 						<div class="rounded-2xl border border-border/70 bg-background px-4 py-4 shadow-sm">
 							<div class="flex items-center justify-between gap-3">
 								<Badge variant={item.kind === 'broadcast' ? 'default' : 'outline'}>{item.label}</Badge>
-								<p class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="text-[0.84rem] uppercase tracking-[0.16em] text-muted-foreground">
 									{item.kind === 'event'
 										? formatEventDateTime(
 												uiPreviewFixtures.events.find((event) => `event:${event.id}` === item.id)?.starts_at ?? ''
@@ -141,7 +141,7 @@
 							<div class="mt-3 space-y-1.5">
 								<p class="text-sm font-semibold text-foreground">{item.title}</p>
 								<p class="text-sm text-muted-foreground">{item.summary}</p>
-								<p class="text-xs text-muted-foreground">{item.meta}</p>
+								<p class="text-[0.82rem] text-muted-foreground">{item.meta}</p>
 							</div>
 						</div>
 					{/each}

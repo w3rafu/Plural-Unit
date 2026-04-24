@@ -46,12 +46,12 @@
 		<Table.Caption class="sr-only">Pending invitations for the current organization.</Table.Caption>
 		<Table.Header class="bg-muted/25">
 			<Table.Row>
-				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Recipient</Table.Head>
-				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Channel</Table.Head>
-				<Table.Head class="h-12 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Signals</Table.Head>
-				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Sent</Table.Head>
-				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Expires</Table.Head>
-				<Table.Head class="h-12 text-right text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
+				<Table.Head class="h-12 text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Recipient</Table.Head>
+				<Table.Head class="h-12 text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Channel</Table.Head>
+				<Table.Head class="h-12 text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Signals</Table.Head>
+				<Table.Head class="h-12 text-right text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Sent</Table.Head>
+				<Table.Head class="h-12 text-right text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Expires</Table.Head>
+				<Table.Head class="h-12 text-right text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Actions</Table.Head>
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
@@ -61,7 +61,7 @@
 						<Table.Cell class="whitespace-normal">
 							<div class="space-y-1">
 								<p class="font-medium text-foreground">{getInvitationRecipient(invitation)}</p>
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									Delivered by {formatChannelLabel(invitation).toLowerCase()}
 								</p>
 							</div>

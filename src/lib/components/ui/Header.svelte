@@ -40,6 +40,7 @@
 	);
 	const showOrganizationControl = $derived(currentUser.isLoggedIn && currentOrganization.isAdmin);
 	const isOrganizationRoute = $derived(page.url.pathname.startsWith('/organization'));
+	const showOrganizationShortcut = $derived(showOrganizationControl && !isOrganizationRoute);
 	const hubBroadcastHref = $derived(page.url.pathname === '/' ? '#hub-broadcasts' : '/#hub-broadcasts');
 	const hubEventHref = $derived(page.url.pathname === '/' ? '#hub-events' : '/#hub-events');
 	const manageContentHref = $derived(
@@ -167,7 +168,7 @@
 				{/if}
 
 				<div role="group" aria-label="Shell controls" class="shell-header__control-group">
-					{#if showOrganizationControl}
+					{#if showOrganizationShortcut}
 						<Button
 							href="/organization"
 							type="button"
@@ -363,7 +364,7 @@
 		justify-self: end;
 		justify-content: flex-end;
 		min-width: 0;
-		gap: 0.45rem;
+		gap: 0.35rem;
 	}
 
 	.shell-header__action-group {
@@ -378,17 +379,18 @@
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 0.35rem;
+		gap: 0.3rem;
 	}
 
 	:global(.shell-header__control) {
-		border-color: color-mix(in srgb, var(--border) 72%, transparent);
+		border-color: color-mix(in srgb, var(--border) 58%, transparent);
 		border-radius: 9999px;
-		background: color-mix(in srgb, var(--background) 74%, transparent);
+		background: color-mix(in srgb, var(--background) 42%, transparent);
 		box-shadow: none;
 		color: var(--muted-foreground);
 		min-width: 2.2rem;
 		gap: 0.4rem;
+		font-size: 0.76rem;
 		transition:
 			background-color 150ms ease,
 			color 150ms ease,
@@ -412,15 +414,15 @@
 	}
 
 	:global(.shell-header__control:hover) {
-		background: color-mix(in srgb, var(--muted) 84%, transparent);
-		border-color: color-mix(in srgb, var(--border) 84%, transparent);
+		background: color-mix(in srgb, var(--muted) 74%, transparent);
+		border-color: color-mix(in srgb, var(--border) 72%, transparent);
 		color: var(--foreground);
 		opacity: 1;
 	}
 
 	:global(.shell-header__control--context) {
-		background: color-mix(in srgb, var(--muted) 74%, transparent);
-		border-color: color-mix(in srgb, var(--border) 82%, transparent);
+		background: color-mix(in srgb, var(--muted) 62%, transparent);
+		border-color: color-mix(in srgb, var(--border) 68%, transparent);
 		color: var(--foreground);
 	}
 
@@ -429,7 +431,7 @@
 	}
 
 	:global(.shell-header__control--context:hover) {
-		background: color-mix(in srgb, var(--muted) 94%, transparent);
+		background: color-mix(in srgb, var(--muted) 82%, transparent);
 		color: var(--foreground);
 	}
 
@@ -453,8 +455,8 @@
 	:global(.shell-header__control[aria-current='page']) {
 		position: relative;
 		z-index: 1;
-		background: color-mix(in srgb, var(--muted) 92%, transparent);
-		border-color: color-mix(in srgb, var(--border) 88%, transparent);
+		background: color-mix(in srgb, var(--muted) 82%, transparent);
+		border-color: color-mix(in srgb, var(--border) 76%, transparent);
 		color: var(--foreground);
 		box-shadow: none;
 		opacity: 1;
@@ -594,7 +596,7 @@
 
 	:global(.dark .shell-header__control) {
 		color: var(--muted-foreground);
-		background: color-mix(in srgb, var(--background) 48%, transparent);
+		background: color-mix(in srgb, var(--background) 28%, transparent);
 	}
 
 	:global(.dark .shell-header__control:visited) {
@@ -602,19 +604,19 @@
 	}
 
 	:global(.dark .shell-header__control:hover) {
-		background: color-mix(in srgb, var(--muted) 82%, transparent);
+		background: color-mix(in srgb, var(--muted) 72%, transparent);
 		color: var(--foreground);
 	}
 
 	:global(.dark .shell-header__control:active),
 	:global(.dark .shell-header__control[aria-expanded='true']),
 	:global(.dark .shell-header__control[aria-current='page']) {
-		background: color-mix(in srgb, var(--muted) 92%, transparent);
+		background: color-mix(in srgb, var(--muted) 80%, transparent);
 	}
 
 	:global(.dark .shell-header__control--context),
 	:global(.dark .shell-header__control--context:visited) {
-		background: color-mix(in srgb, var(--muted) 76%, transparent);
+		background: color-mix(in srgb, var(--muted) 62%, transparent);
 		color: var(--foreground);
 	}
 

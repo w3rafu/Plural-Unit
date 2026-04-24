@@ -48,7 +48,7 @@
 
 			<div class="space-y-0.5">
 				<p class="text-sm font-medium text-foreground">Photo</p>
-				<p class="text-[0.78rem] leading-5 text-muted-foreground">
+				<p class="text-[0.88rem] leading-5 text-muted-foreground">
 					{#if willRemove}
 						Photo will be removed when you save.
 					{:else if previewUrl}
@@ -67,7 +67,7 @@
 				type="button"
 				variant="outline"
 				size="xs"
-				class="h-7 px-3 text-[0.72rem]"
+				class="h-7 px-3 text-[0.82rem]"
 				onclick={() => avatarInput?.click()}
 				disabled={isSubmitting}
 			>
@@ -78,7 +78,7 @@
 					type="button"
 					variant="ghost"
 					size="xs"
-					class="h-7 px-2.5 text-[0.72rem]"
+					class="h-7 px-2.5 text-[0.82rem]"
 					onclick={onRemove}
 					disabled={isSubmitting}
 				>

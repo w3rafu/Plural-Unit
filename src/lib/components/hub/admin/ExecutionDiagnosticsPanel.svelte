@@ -13,10 +13,10 @@
 {#if entries.length > 0}
 	<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
 		<div class="space-y-1">
-			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+			<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				{title}
 			</p>
-			<p class="text-xs text-muted-foreground">
+			<p class="text-[0.82rem] text-muted-foreground">
 				Execution-ledger state for this content, including recent attempts and any guidance before you retry or publish.
 			</p>
 		</div>
@@ -32,9 +32,9 @@
 						{/if}
 					</div>
 
-					<p class="text-xs text-muted-foreground">{entry.detailCopy}</p>
+					<p class="text-[0.82rem] text-muted-foreground">{entry.detailCopy}</p>
 
-					<div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+					<div class="flex flex-wrap gap-x-3 gap-y-1 text-[0.82rem] text-muted-foreground">
 						<p>{entry.dueCopy}</p>
 						{#if entry.lastAttemptCopy}
 							<p>{entry.lastAttemptCopy}</p>
@@ -48,7 +48,7 @@
 					</div>
 
 					{#if entry.nextStepCopy}
-						<p class="text-xs text-muted-foreground">{entry.nextStepCopy}</p>
+						<p class="text-[0.82rem] text-muted-foreground">{entry.nextStepCopy}</p>
 					{/if}
 				</div>
 			{/each}

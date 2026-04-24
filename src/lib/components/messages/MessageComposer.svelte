@@ -73,7 +73,7 @@
 				onkeydown={handleKeydown}
 				disabled={isSending}
 			/>
-			<p class="hidden px-1 pt-1 text-[0.68rem] text-muted-foreground sm:block">
+			<p class="hidden px-1 pt-1 text-[0.88rem] text-muted-foreground sm:block">
 				Press Enter to send. Use Shift+Enter for a new line.
 			</p>
 		</div>

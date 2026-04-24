@@ -82,12 +82,12 @@
 							class="w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-left"
 							onclick={() => handleSelect(member.profile_id)}
 						>
-							<div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
+							<div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[0.82rem] font-semibold uppercase">
 								{member.name.trim().charAt(0) || '?'}
 							</div>
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium text-foreground">{member.name}</p>
-								<p class="truncate text-xs text-muted-foreground">{member.email}</p>
+								<p class="truncate text-[0.82rem] text-muted-foreground">{member.email}</p>
 							</div>
 						</Button>
 					{/each}

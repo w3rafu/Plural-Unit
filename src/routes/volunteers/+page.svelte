@@ -89,13 +89,13 @@
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2">
 		<div class="flex items-center gap-2.5">
 			<div
-				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card text-[0.7rem] font-semibold text-foreground"
+				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/70 bg-card text-[0.8rem] font-semibold text-foreground"
 			>
 				O
 			</div>
 			<div>
 				<p class="text-sm font-semibold leading-tight text-foreground">Old Town Cape</p>
-				<p class="text-[0.7rem] leading-tight text-muted-foreground">Coordinator</p>
+				<p class="text-[0.8rem] leading-tight text-muted-foreground">Coordinator</p>
 			</div>
 		</div>
 		<NewEventSheet />
@@ -112,12 +112,12 @@
 			<Card.Content class="relative space-y-2.25 px-4 py-2.5 sm:px-5 sm:py-3 lg:grid lg:grid-cols-[minmax(0,1.42fr)_13.5rem] lg:items-start lg:gap-2.75 lg:space-y-0">
 				<div class="space-y-2 lg:max-w-2xl">
 					<div class="space-y-1">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer coordinator</p>
+						<p class="text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer coordinator</p>
 						<h1 class="text-[1.68rem] font-semibold tracking-tight text-foreground sm:text-[2.08rem] sm:leading-[0.98] lg:text-[2.16rem]">{heroTitle}</h1>
-						<p class="max-w-2xl text-[0.88rem] leading-5 text-muted-foreground sm:text-[0.92rem] sm:leading-5.25">{heroSummary}</p>
+						<p class="max-w-2xl text-[0.84rem] leading-5 text-muted-foreground sm:text-[0.82rem] sm:leading-5.25">{heroSummary}</p>
 					</div>
 
-					<div class="flex flex-wrap gap-1.25 text-[0.72rem] text-muted-foreground">
+					<div class="flex flex-wrap gap-1.25 text-[0.82rem] text-muted-foreground">
 						<div class="rounded-full border border-border/70 bg-background/82 px-2.75 py-1.2 shadow-sm">
 							{filledUpcomingSlots}/{totalUpcomingSlots} positions filled
 						</div>
@@ -132,13 +132,13 @@
 
 					<div class="rounded-xl border border-primary/12 bg-primary/4.5 px-2.75 py-2 shadow-sm">
 						<div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-primary/80">Priority note</p>
-							<p class="text-[0.78rem] leading-4.75 text-foreground/90 sm:hidden">{priorityNoteCompact}</p>
-							<p class="hidden text-[0.78rem] leading-4.75 text-foreground/90 sm:block">{priorityNote}</p>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-primary/80">Priority note</p>
+							<p class="text-[0.82rem] leading-4.75 text-foreground/90 sm:hidden">{priorityNoteCompact}</p>
+							<p class="hidden text-[0.82rem] leading-4.75 text-foreground/90 sm:block">{priorityNote}</p>
 						</div>
 					</div>
 
-					<div class="hidden flex-wrap items-center gap-x-3 gap-y-1 text-[0.74rem] text-muted-foreground sm:flex">
+					<div class="hidden flex-wrap items-center gap-x-3 gap-y-1 text-[0.84rem] text-muted-foreground sm:flex">
 						<p class="font-medium text-foreground">{nextEvent?.title ?? 'No event scheduled'} is next on deck</p>
 						<p>{nextPrioritySummary}</p>
 					</div>
@@ -161,19 +161,19 @@
 				</div>
 
 				<div class="hidden rounded-[1.05rem] border border-border/70 bg-background/82 px-2.75 py-2.5 shadow-sm sm:block lg:mt-0">
-					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Board snapshot</p>
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Board snapshot</p>
 					<div class="mt-2 space-y-2.25">
 						<div class="flex items-end justify-between gap-3">
 							<div>
-								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
 								<p class="mt-1 text-[1.5rem] font-semibold tracking-tight text-foreground">{coveragePercent}%</p>
 							</div>
-							<p class="max-w-32 text-right text-[0.72rem] leading-4.5 text-muted-foreground">
+							<p class="max-w-32 text-right text-[0.82rem] leading-4.5 text-muted-foreground">
 								{filledUpcomingSlots}/{totalUpcomingSlots} positions filled.
 							</p>
 						</div>
 
-						<div class="space-y-1.75 border-t border-border/60 pt-2 text-[0.74rem]">
+						<div class="space-y-1.75 border-t border-border/60 pt-2 text-[0.84rem]">
 							<div class="flex items-start justify-between gap-3">
 								<div>
 									<p class="font-medium text-foreground">Season snapshot</p>
@@ -200,7 +200,7 @@
 						<Card.Title class="text-lg font-semibold tracking-tight">Current schedule</Card.Title>
 						<Card.Description>{upcoming.length} upcoming events, ordered for quick staffing review.</Card.Description>
 					</div>
-					<p class="text-xs text-muted-foreground">{filledUpcomingSlots}/{totalUpcomingSlots} filled</p>
+					<p class="text-[0.82rem] text-muted-foreground">{filledUpcomingSlots}/{totalUpcomingSlots} filled</p>
 				</div>
 			</Card.Header>
 			<Card.Content class="px-0 py-0">
@@ -214,21 +214,21 @@
 						<div class={`space-y-2.5 px-4 py-3.5 sm:px-5 ${attentionEvent?.id === event.id ? 'bg-primary/[0.035]' : ''}`}>
 							<div class="flex items-start gap-3">
 								<div class="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-2xl border border-border/70 bg-muted/30 text-center">
-									<p class="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
+									<p class="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getDateParts(event.date).month}</p>
 									<p class="text-base font-semibold tracking-tight text-foreground">{getDateParts(event.date).day}</p>
 								</div>
 
 								<div class="min-w-0 flex-1 space-y-1.5">
 									<div class="flex flex-wrap items-center gap-2">
-										<p class="text-[0.98rem] font-semibold tracking-tight text-foreground">{event.title}</p>
+										<p class="text-[0.84rem] font-semibold tracking-tight text-foreground">{event.title}</p>
 										<FillPill {filled} needed={total} {status} />
 									</div>
 									<p class="text-sm text-muted-foreground">{event.location}</p>
-									<p class="text-[0.76rem] text-muted-foreground">
+									<p class="text-[0.86rem] text-muted-foreground">
 										{event.timeRange} · {event.shifts.length} shift{event.shifts.length === 1 ? '' : 's'} · {openCount} open
 									</p>
 									<div class="space-y-2">
-										<div class="flex items-center justify-between text-xs text-muted-foreground">
+										<div class="flex items-center justify-between text-[0.82rem] text-muted-foreground">
 											<span>{filled}/{total} filled</span>
 											<span>{openCount} open</span>
 										</div>
@@ -240,8 +240,8 @@
 										</div>
 									</div>
 									<div class="flex flex-wrap gap-2 pt-1">
-										<Button href="/volunteers/{event.id}/checkin" variant="outline" size="sm" class="h-7 rounded-full px-3.5 text-[0.72rem]">Check-In</Button>
-										<Button href="/signup/{event.id}" size="sm" class="h-7 rounded-full px-3.5 text-[0.72rem] shadow-sm">Public Signup</Button>
+										<Button href="/volunteers/{event.id}/checkin" variant="outline" size="sm" class="h-7 rounded-full px-3.5 text-[0.82rem]">Check-In</Button>
+										<Button href="/signup/{event.id}" size="sm" class="h-7 rounded-full px-3.5 text-[0.82rem] shadow-sm">Public Signup</Button>
 									</div>
 								</div>
 							</div>
@@ -268,12 +268,12 @@
 								{/if}
 							</Avatar.Root>
 							<div class="min-w-0 flex-1">
-								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Featured lead</p>
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Featured lead</p>
 								<p class="truncate text-sm font-semibold text-foreground">{featuredContact.name}</p>
-								<p class="truncate text-[0.76rem] text-muted-foreground">{featuredContact.businessAffiliation ?? featuredContact.email}</p>
+								<p class="truncate text-[0.86rem] text-muted-foreground">{featuredContact.businessAffiliation ?? featuredContact.email}</p>
 							</div>
 						</div>
-						<div class="mt-1.75 flex items-center justify-between gap-3 text-[0.72rem] text-muted-foreground">
+						<div class="mt-1.75 flex items-center justify-between gap-3 text-[0.82rem] text-muted-foreground">
 							<span>{featuredContact.totalHours} hours logged</span>
 							<span>{featuredContact.pastEventCount} recent events</span>
 						</div>
@@ -287,16 +287,16 @@
 								{#if contact.avatarUrl}
 									<Avatar.Image src={contact.avatarUrl} alt={contact.name} />
 								{:else}
-									<Avatar.Fallback class="text-xs font-semibold text-primary">
+									<Avatar.Fallback class="text-[0.82rem] font-semibold text-primary">
 										{getContactInitials(contact.name)}
 									</Avatar.Fallback>
 								{/if}
 							</Avatar.Root>
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-medium text-foreground">{contact.name}</p>
-								<p class="truncate text-[0.76rem] text-muted-foreground">{contact.businessAffiliation ?? contact.email}</p>
+								<p class="truncate text-[0.86rem] text-muted-foreground">{contact.businessAffiliation ?? contact.email}</p>
 							</div>
-							<div class="text-right text-[0.72rem]">
+							<div class="text-right text-[0.82rem]">
 								<p class="font-semibold tabular-nums text-foreground">{contact.totalHours}h</p>
 								<p class="text-muted-foreground">{contact.pastEventCount} events</p>
 							</div>
@@ -304,7 +304,7 @@
 					{/each}
 				</div>
 
-				<p class="border-t border-border/60 pt-1.75 text-[0.72rem] leading-4.75 text-muted-foreground">
+				<p class="border-t border-border/60 pt-1.75 text-[0.82rem] leading-4.75 text-muted-foreground">
 					{latestCompleted
 						? `${latestCompleted.title} just wrapped, so the next staffing push can stay focused on ${attentionEvent?.title ?? nextEvent?.title ?? 'upcoming coverage'}.`
 						: seasonSummary}

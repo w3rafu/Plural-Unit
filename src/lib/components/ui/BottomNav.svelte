@@ -27,7 +27,7 @@
 				<a
 					href={tab.href}
 					class={cn(
-						'relative flex min-h-10 min-w-0 flex-col items-center justify-center gap-0.5 rounded-[0.95rem] px-1.25 py-1.1 text-center text-[0.66rem] font-medium leading-tight transition-[background-color,color,box-shadow] duration-150 sm:text-[0.74rem]',
+						'relative flex min-h-10 min-w-0 flex-col items-center justify-center gap-0.5 rounded-[0.95rem] px-1.25 py-1.1 text-center text-[0.86rem] font-medium leading-tight transition-[background-color,color,box-shadow] duration-150 sm:text-[0.84rem]',
 						activeTabId === tab.id
 							? 'bg-background/92 text-foreground shadow-[0_1px_1px_rgba(15,23,42,0.06)]'
 							: 'text-muted-foreground hover:bg-muted/55 hover:text-foreground'

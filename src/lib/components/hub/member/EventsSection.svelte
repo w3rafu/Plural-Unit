@@ -188,7 +188,7 @@
 		return `Recent responses: ${recentNames[0]}, ${recentNames[1]}, and ${recentNames[2]}.`;
 	}
 
-	const utilityButtonClass = 'h-7 rounded-full px-2.5 text-[0.72rem] font-medium text-muted-foreground hover:text-foreground';
+	const utilityButtonClass = 'h-7 rounded-full px-2.5 text-[0.82rem] font-medium text-muted-foreground hover:text-foreground';
 </script>
 
 <section id={sectionId} aria-label="Events" class="space-y-3 scroll-mt-24">
@@ -197,7 +197,7 @@
 			<h2 class="text-lg font-semibold tracking-tight">{PLUGIN_REGISTRY.events.title}</h2>
 			<p class="text-sm text-muted-foreground">{PLUGIN_REGISTRY.events.description}</p>
 		</div>
-		<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+		<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 			{upcomingItems.length} upcoming
 		</p>
 	</div>
@@ -232,7 +232,7 @@
 									<div class="flex flex-wrap items-start justify-between gap-2">
 										<div class="min-w-0 space-y-1.5">
 											<div class="flex flex-wrap items-center gap-1.5">
-												<Badge variant="muted" class="rounded-xl px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+												<Badge variant="muted" class="rounded-xl px-2.5 py-1 text-[0.88rem] uppercase tracking-[0.16em]">
 													{getTimingBadgeCopy(event)}
 												</Badge>
 												{#if savedResponseLabel}
@@ -243,7 +243,7 @@
 												<a href="/hub/event/{event.id}" class="hover:underline">{event.title}</a>
 											</h3>
 										</div>
-										<p class="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-right">
+										<p class="text-[0.82rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-right">
 											{getEventTimeLabel(event.starts_at)}
 										</p>
 									</div>
@@ -252,7 +252,7 @@
 										{event.description || 'More details will appear here soon.'}
 									</p>
 
-									<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+									<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] text-muted-foreground">
 										<span>{formatEventDateTime(event.starts_at)}</span>
 										{#if locationLabel}
 											<span>{locationLabel}</span>
@@ -278,11 +278,11 @@
 											</Button>
 										{/each}
 									</div>
-									<p class="text-xs text-muted-foreground">
+									<p class="text-[0.82rem] text-muted-foreground">
 										{isSavingResponse ? 'Saving your response...' : getRecentResponseCopy(event.id)}
 									</p>
 								{:else if attendance.total > 0}
-									<p class="text-xs text-muted-foreground">{formatEventResponseTotal(attendance.total)} replied.</p>
+									<p class="text-[0.82rem] text-muted-foreground">{formatEventResponseTotal(attendance.total)} replied.</p>
 								{/if}
 
 								<div class="flex flex-wrap items-center justify-between gap-2">
@@ -296,7 +296,7 @@
 											Download .ics
 										</Button>
 									</div>
-									<a href="/hub/event/{event.id}" class="text-xs font-medium text-foreground underline-offset-4 hover:underline">
+									<a href="/hub/event/{event.id}" class="text-[0.82rem] font-medium text-foreground underline-offset-4 hover:underline">
 										Details
 									</a>
 								</div>
@@ -310,7 +310,7 @@
 				<Card.Root size="sm" class="hidden border-border/70 bg-card xl:sticky xl:top-24 xl:block">
 					<Card.Content class="space-y-3.5">
 						<div class="space-y-1">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Schedule</p>
+							<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Schedule</p>
 							<p class="text-sm text-muted-foreground">
 								{schedulePreview.length} active date{schedulePreview.length === 1 ? '' : 's'} coming up.
 							</p>
@@ -327,11 +327,11 @@
 									<div class="min-w-0 space-y-1">
 										<div class="flex items-center justify-between gap-2">
 											<p class="truncate text-sm font-medium text-foreground">{day.label}</p>
-											<Badge variant={day.isToday ? 'secondary' : 'muted'} class="px-2 py-0 text-[0.65rem]">
+											<Badge variant={day.isToday ? 'secondary' : 'muted'} class="px-2 py-0 text-[0.75rem]">
 												{day.isToday ? 'Today' : day.count}
 											</Badge>
 										</div>
-										<p class="text-xs text-muted-foreground">{day.summary}</p>
+										<p class="text-[0.82rem] text-muted-foreground">{day.summary}</p>
 									</div>
 								</div>
 							{/each}

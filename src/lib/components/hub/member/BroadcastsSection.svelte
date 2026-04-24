@@ -35,9 +35,9 @@
 	<div class="flex items-end justify-between gap-3">
 		<div class="space-y-1">
 			<h2 class="text-lg font-semibold tracking-tight">{PLUGIN_REGISTRY.broadcasts.title}</h2>
-			<p class="text-[0.78rem] text-muted-foreground">{PLUGIN_REGISTRY.broadcasts.description}</p>
+			<p class="text-[0.82rem] text-muted-foreground">{PLUGIN_REGISTRY.broadcasts.description}</p>
 		</div>
-		<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+		<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 			{items.length} live
 		</p>
 	</div>
@@ -60,30 +60,30 @@
 						<div class="space-y-2">
 							<div class="flex items-center justify-between gap-3">
 							<div class="flex flex-wrap gap-2">
-								<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+									<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.78rem] uppercase tracking-[0.16em]">
 									Broadcast
 								</Badge>
 								{#if broadcast.is_pinned || broadcast.expires_at}
-									<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+										<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.78rem] uppercase tracking-[0.16em]">
 										{getBroadcastStateLabel(broadcast)}
 									</Badge>
 								{/if}
 							</div>
-								<time class="text-[0.7rem] uppercase tracking-[0.12em] text-muted-foreground" datetime={broadcast.publish_at ?? broadcast.created_at}>
+									<time class="text-[0.76rem] uppercase tracking-[0.12em] text-muted-foreground" datetime={broadcast.publish_at ?? broadcast.created_at}>
 								{broadcast.publish_at ? formatShortDateTime(broadcast.publish_at) : formatShortDate(broadcast.created_at)}
 							</time>
 						</div>
 								<div class="space-y-0.5">
-									<h3 class="text-[0.92rem] font-medium text-foreground">
+									<h3 class="text-[0.82rem] font-medium text-foreground">
 								<a href={detailHref} class="hover:underline">{broadcast.title}</a>
 									</h3>
-									<p class="text-[0.84rem] leading-5.25 text-muted-foreground">{broadcast.body}</p>
-									<p class="text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
+										<p class="text-[0.82rem] leading-5.25 text-muted-foreground">{broadcast.body}</p>
+										<p class="text-[0.78rem] uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
 								</div>
 						</div>
 							<div class={`flex items-center justify-between gap-3 border-t border-border/70 pt-2 ${items.length === 1 ? 'sm:min-h-full sm:flex-col sm:items-stretch sm:justify-between sm:border-l sm:border-t-0 sm:pl-2.5 sm:pt-0' : ''}`}>
 								<div class="space-y-1">
-									<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Acknowledgment</p>
+										<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Acknowledgment</p>
 									<p class="text-sm text-muted-foreground">
 										{ackCount} {ackCount === 1 ? 'person has' : 'people have'} responded
 									</p>
@@ -91,7 +91,7 @@
 							<Button
 								variant={acknowledged ? 'secondary' : 'outline'}
 								size="sm"
-									class={`h-7 text-[0.72rem] ${items.length === 1 ? 'sm:w-full sm:justify-center' : ''}`}
+										class={`h-7 text-[0.78rem] ${items.length === 1 ? 'sm:w-full sm:justify-center' : ''}`}
 								disabled={ackBusy}
 								onclick={() => {
 									if (acknowledged) {

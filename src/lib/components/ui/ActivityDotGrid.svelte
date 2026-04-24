@@ -39,10 +39,10 @@
 <div class={`rounded-[1.2rem] border border-border/70 bg-background/88 shadow-sm ${compact ? 'p-3' : 'p-3.5'}`}>
 	<div class="flex items-start justify-between gap-3">
 		<div class="min-w-0">
-			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+			<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
 			<p class={`mt-1 text-muted-foreground ${compact ? 'text-[0.84rem] leading-5' : 'text-sm leading-5'}`}>{caption}</p>
 		</div>
-		<p class="shrink-0 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+		<p class="shrink-0 text-[0.88rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
 			{footer}
 		</p>
 	</div>
@@ -53,7 +53,7 @@
 		{/each}
 	</div>
 
-	<div class={`flex items-center justify-between text-[0.68rem] text-muted-foreground ${compact ? 'mt-2.5' : 'mt-3'}`}>
+	<div class={`flex items-center justify-between text-[0.88rem] text-muted-foreground ${compact ? 'mt-2.5' : 'mt-3'}`}>
 		<span>Lower</span>
 		<span>Higher activity</span>
 	</div>

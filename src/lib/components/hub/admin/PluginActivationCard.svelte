@@ -115,7 +115,7 @@
 									{/if}
 								</Field.Description>
 								<div class="pt-3">
-									<p class="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Audience</p>
+									<p class="text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">Audience</p>
 									<div class="mt-2 flex flex-wrap gap-2">
 										<Button
 											type="button"
@@ -140,7 +140,7 @@
 											Admins only
 										</Button>
 									</div>
-									<p class="pt-2 text-xs text-muted-foreground">
+									<p class="pt-2 text-[0.82rem] text-muted-foreground">
 										{#if pluginState.isEnabled}
 											Enabled for {getPluginAudienceLabel(pluginState.visibility).toLowerCase()} on the hub home.
 										{:else}

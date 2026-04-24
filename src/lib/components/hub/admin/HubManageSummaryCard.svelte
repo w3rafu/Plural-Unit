@@ -238,15 +238,15 @@
 						href={metric.href}
 						class="flex min-w-0 flex-col gap-1 rounded-[0.95rem] border border-border/70 bg-muted/16 px-2.5 py-2.75 no-underline transition-colors hover:bg-muted/24 dark:border-white/10 dark:bg-black/36 dark:hover:bg-black/52 sm:rounded-[1rem] sm:px-3 sm:py-3"
 					>
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
 						<p class="text-[1.25rem] font-semibold tracking-tight text-foreground sm:text-[1.45rem]">{metric.value}</p>
-						<p class="text-[0.72rem] text-muted-foreground sm:text-[0.76rem]">{metric.detail}</p>
+						<p class="text-[0.82rem] text-muted-foreground sm:text-[0.86rem]">{metric.detail}</p>
 					</a>
 				{:else}
 					<div class="flex min-w-0 flex-col gap-1 rounded-[0.95rem] border border-border/70 bg-muted/16 px-2.5 py-2.75 dark:border-white/10 dark:bg-black/36 sm:rounded-[1rem] sm:px-3 sm:py-3">
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
+						<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
 						<p class="text-[1.25rem] font-semibold tracking-tight text-foreground sm:text-[1.45rem]">{metric.value}</p>
-						<p class="text-[0.72rem] text-muted-foreground sm:text-[0.76rem]">{metric.detail}</p>
+						<p class="text-[0.82rem] text-muted-foreground sm:text-[0.86rem]">{metric.detail}</p>
 					</div>
 				{/if}
 			{/each}
@@ -259,14 +259,14 @@
 				{#if item.href}
 					<a
 						href={item.href}
-						class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.7rem] font-medium text-foreground no-underline transition-colors hover:bg-muted/18 dark:border-white/10 dark:bg-black/44 dark:hover:bg-black/58 sm:gap-2 sm:px-3 sm:py-1.5 sm:text-[0.74rem]"
+						class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.8rem] font-medium text-foreground no-underline transition-colors hover:bg-muted/18 dark:border-white/10 dark:bg-black/44 dark:hover:bg-black/58 sm:gap-2 sm:px-3 sm:py-1.5 sm:text-[0.84rem]"
 					>
-						<span class="text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</span>
+						<span class="text-[0.75rem] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</span>
 						<span>{item.value}</span>
 					</a>
 				{:else}
-					<div class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/44 sm:gap-2 sm:px-3 sm:py-1.5 sm:text-[0.74rem]">
-						<span class="text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</span>
+					<div class="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-2.5 py-1.25 text-[0.8rem] font-medium text-foreground dark:border-white/10 dark:bg-black/44 sm:gap-2 sm:px-3 sm:py-1.5 sm:text-[0.84rem]">
+						<span class="text-[0.75rem] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</span>
 						<span>{item.value}</span>
 					</div>
 				{/if}

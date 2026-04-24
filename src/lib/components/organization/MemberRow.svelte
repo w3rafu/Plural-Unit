@@ -60,24 +60,24 @@
 			<div class="min-w-0 space-y-1.5">
 				<div class="space-y-0.5">
 					<p class="font-medium text-foreground">{member.name || 'Unnamed member'}</p>
-					<p class="text-xs text-muted-foreground">{formatContact(member)}</p>
+					<p class="text-[0.82rem] text-muted-foreground">{formatContact(member)}</p>
 				</div>
 				{#if bioPreview}
 					<p class="max-w-2xl text-[0.82rem] leading-5 text-muted-foreground">{bioPreview}</p>
 				{/if}
 				<div class="flex flex-wrap items-center gap-1.5">
-					<Badge variant={member.role === 'admin' ? 'secondary' : 'muted'} class="rounded-full px-2.25 py-0.75 text-[0.68rem] font-medium">
+					<Badge variant={member.role === 'admin' ? 'secondary' : 'muted'} class="rounded-full px-2.25 py-0.75 text-[0.88rem] font-medium">
 						{member.role === 'admin' ? 'Admin' : 'Member'}
 					</Badge>
-					<Badge variant="muted" class="rounded-full px-2.25 py-0.75 text-[0.68rem] font-medium">
+					<Badge variant="muted" class="rounded-full px-2.25 py-0.75 text-[0.88rem] font-medium">
 						{joinedViaLabel}
 					</Badge>
 					{#if isRecentJoin}
-						<Badge variant="warning" class="rounded-full px-2.25 py-0.75 text-[0.68rem] font-medium">
+						<Badge variant="warning" class="rounded-full px-2.25 py-0.75 text-[0.88rem] font-medium">
 							Recent
 						</Badge>
 					{/if}
-					<span class="text-[0.76rem] text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</span>
+					<span class="text-[0.86rem] text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</span>
 				</div>
 			</div>
 		</div>
@@ -88,7 +88,7 @@
 					type="button"
 					variant="ghost"
 					size="sm"
-					class="h-7 justify-center rounded-full px-2.5 text-[0.7rem] text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+					class="h-7 justify-center rounded-full px-2.5 text-[0.8rem] text-muted-foreground hover:bg-muted/60 hover:text-foreground"
 					aria-label={`Message ${memberLabel}`}
 					onclick={onMessage}
 				>
@@ -121,7 +121,7 @@
 						type="button"
 						variant="secondary"
 						size="sm"
-						class="h-7 rounded-full px-3 text-[0.7rem] ring-1 ring-border/70"
+						class="h-7 rounded-full px-3 text-[0.8rem] ring-1 ring-border/70"
 						disabled={isMutating || wouldDemoteLastAdmin(member, draftRole, adminCount)}
 						title={wouldDemoteLastAdmin(member, draftRole, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 						aria-label={`Update role for ${memberLabel}`}
@@ -136,7 +136,7 @@
 				type="button"
 				variant="ghost"
 				size="sm"
-				class="h-7 justify-center rounded-full px-2.5 text-[0.7rem] text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
+				class="h-7 justify-center rounded-full px-2.5 text-[0.8rem] text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
 				disabled={isMutating || isLastAdmin(member, adminCount)}
 				title={isLastAdmin(member, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 				aria-label={`Remove ${memberLabel} from the organization`}

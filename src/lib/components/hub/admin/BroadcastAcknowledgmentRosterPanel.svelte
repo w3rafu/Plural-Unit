@@ -42,21 +42,21 @@
 {#if acknowledgmentRoster}
 	<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
 		<div class="space-y-1">
-			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+			<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				Acknowledgment follow-up
 			</p>
-			<p class="text-xs text-muted-foreground">{summaryCopy}</p>
+			<p class="text-[0.82rem] text-muted-foreground">{summaryCopy}</p>
 			{#if acknowledgmentRoster.externalAcknowledgmentCount > 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					{acknowledgmentRoster.externalAcknowledgmentCount} saved acknowledgment outcome{acknowledgmentRoster.externalAcknowledgmentCount === 1 ? '' : 's'} belong{acknowledgmentRoster.externalAcknowledgmentCount === 1 ? 's' : ''} to people no longer on the current roster.
 				</p>
 			{/if}
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-medium text-foreground">Still needs follow-up</p>
+			<p class="text-[0.82rem] font-medium text-foreground">Still needs follow-up</p>
 			{#if acknowledgmentRoster.pendingEntries.length === 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					Everyone on the current roster has acknowledged this broadcast.
 				</p>
 			{:else}
@@ -72,7 +72,7 @@
 										<Badge variant="outline">You</Badge>
 									{/if}
 								</div>
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									{entry.member.email || entry.member.phone_number || 'No contact added'}
 								</p>
 							</div>
@@ -91,7 +91,7 @@
 					{/each}
 				</div>
 				{#if acknowledgmentRoster.pendingEntries.length > 4}
-					<p class="text-xs text-muted-foreground">
+					<p class="text-[0.82rem] text-muted-foreground">
 						+{acknowledgmentRoster.pendingEntries.length - 4} more member{acknowledgmentRoster.pendingEntries.length - 4 === 1 ? '' : 's'} still need acknowledgment follow-up.
 					</p>
 				{/if}
@@ -100,7 +100,7 @@
 
 		{#if acknowledgmentRoster.acknowledgedEntries.length > 0}
 			<div class="space-y-2">
-				<p class="text-xs font-medium text-foreground">Recently acknowledged</p>
+				<p class="text-[0.82rem] font-medium text-foreground">Recently acknowledged</p>
 				<div class="space-y-2">
 					{#each acknowledgmentRoster.acknowledgedEntries.slice(0, 4) as entry (entry.member.profile_id)}
 						<div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-3 py-2">
@@ -114,7 +114,7 @@
 										<Badge variant="outline">You</Badge>
 									{/if}
 								</div>
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									{entry.acknowledgedAt
 										? `Acknowledged ${formatShortDateTime(entry.acknowledgedAt)}.`
 										: 'Acknowledged.'}
