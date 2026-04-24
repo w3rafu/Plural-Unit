@@ -85,9 +85,9 @@
 </script>
 
 	<Card.Root size="sm" class="border-border/70 bg-card">
-		<Card.Content class="space-y-3 px-4 py-3.5 sm:px-5 sm:py-4 lg:grid lg:grid-cols-[minmax(0,1.14fr)_minmax(14rem,0.86fr)] lg:items-start lg:gap-4.5 lg:space-y-0">
-			<div class="space-y-2.5">
-				<div class="space-y-1.5">
+		<Card.Content class="space-y-2.5 px-4 py-3 sm:px-5 sm:py-3.5 lg:grid lg:grid-cols-[minmax(0,1.18fr)_minmax(13rem,0.82fr)] lg:items-start lg:gap-4 lg:space-y-0">
+			<div class="space-y-2.25">
+				<div class="space-y-1.25">
 					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Overview</p>
 					{#if isEditing}
 						<form class="flex flex-col gap-2.5 sm:flex-row sm:items-center" onsubmit={(e) => { e.preventDefault(); saveName(); }}>
@@ -119,7 +119,7 @@
 						</form>
 					{:else}
 						<div class="flex flex-wrap items-center gap-2">
-							<h2 class="text-[1.2rem] font-semibold tracking-tight text-foreground sm:text-[1.72rem]">
+							<h2 class="text-[1.08rem] font-semibold tracking-tight text-foreground sm:text-[1.52rem]">
 								{currentOrganization.organization?.name ?? 'No organization yet'}
 							</h2>
 							{#if currentOrganization.isAdmin}
@@ -134,14 +134,14 @@
 							{/if}
 						</div>
 					{/if}
-					<p class="text-[0.82rem] leading-5 text-muted-foreground sm:text-[0.9rem]">
+					<p class="text-[0.78rem] leading-4.5 text-muted-foreground sm:text-[0.84rem]">
 						{currentOrganization.membership?.role ?? '—'} access with join code, invitation, and roster controls below.
 					</p>
 				</div>
 
-			<div class="flex flex-wrap gap-1.5 sm:gap-2">
+			<div class="flex flex-wrap gap-1.25 sm:gap-1.5">
 					{#each overviewChips as chip (chip)}
-					<div class="rounded-full border border-border/70 bg-background px-2.5 py-1.15 text-[0.66rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56 sm:px-3 sm:py-1.35 sm:text-[0.7rem]">
+					<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.64rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56 sm:px-2.75 sm:py-1.15 sm:text-[0.68rem]">
 							{chip}
 						</div>
 					{/each}
@@ -149,17 +149,17 @@
 			</div>
 
 		<div class="grid grid-cols-3 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2.25 sm:px-3 sm:py-2.75">
+			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2 sm:px-3 sm:py-2.5">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Role</p>
-				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.membership?.role ?? '—'}</p>
+				<p class="mt-0.75 text-[0.86rem] font-semibold text-foreground sm:text-[0.94rem]">{currentOrganization.membership?.role ?? '—'}</p>
 				</div>
-			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2.25 sm:px-3 sm:py-2.75">
+			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2 sm:px-3 sm:py-2.5">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Members</p>
-				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}</p>
+				<p class="mt-0.75 text-[0.86rem] font-semibold text-foreground sm:text-[0.94rem]">{currentOrganization.memberCount === null ? '—' : currentOrganization.memberCount}</p>
 				</div>
-			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2.25 sm:px-3 sm:py-2.75">
+			<div class="rounded-2xl border border-border/70 bg-muted/12 px-2.5 py-2 sm:px-3 sm:py-2.5">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Invites</p>
-				<p class="mt-1 text-[0.9rem] font-semibold text-foreground sm:text-[0.98rem]">{currentOrganization.invitations.length}</p>
+				<p class="mt-0.75 text-[0.86rem] font-semibold text-foreground sm:text-[0.94rem]">{currentOrganization.invitations.length}</p>
 				</div>
 			</div>
 		</Card.Content>

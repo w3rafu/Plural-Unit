@@ -31,11 +31,11 @@
 	}
 </script>
 
-<section id={sectionId} aria-label="Broadcasts" class="space-y-2.5 scroll-mt-24">
+<section id={sectionId} aria-label="Broadcasts" class="space-y-2 scroll-mt-24">
 	<div class="flex items-end justify-between gap-3">
 		<div class="space-y-1">
 			<h2 class="text-lg font-semibold tracking-tight">{PLUGIN_REGISTRY.broadcasts.title}</h2>
-			<p class="text-[0.82rem] text-muted-foreground">{PLUGIN_REGISTRY.broadcasts.description}</p>
+			<p class="text-[0.78rem] text-muted-foreground">{PLUGIN_REGISTRY.broadcasts.description}</p>
 		</div>
 		<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 			{items.length} live
@@ -49,15 +49,15 @@
 			</Card.Content>
 		</Card.Root>
 	{:else}
-		<div class={`space-y-3 ${items.length === 1 ? 'max-w-3xl' : ''}`}>
+		<div class={`space-y-2.5 ${items.length === 1 ? 'max-w-4xl' : ''}`}>
 			{#each items as broadcast (broadcast.id)}
 				{@const acknowledged = currentHub.hasAcknowledged(broadcast.id)}
 				{@const ackCount = currentHub.getAcknowledgmentCount(broadcast.id)}
 				{@const ackBusy = currentHub.broadcastAcknowledgmentTargetId === broadcast.id}
 				{@const detailHref = `/hub/broadcast/${broadcast.id}`}
 				<Card.Root size="sm" class="border-border/70 bg-card">
-					<Card.Content class={`space-y-2.5 ${items.length === 1 ? 'sm:grid sm:grid-cols-[minmax(0,1fr)_9.5rem] sm:items-start sm:gap-3 sm:space-y-0' : ''}`}>
-						<div class="space-y-2.25">
+					<Card.Content class={`space-y-2 ${items.length === 1 ? 'sm:grid sm:grid-cols-[minmax(0,1fr)_8.75rem] sm:items-start sm:gap-2.5 sm:space-y-0' : ''}`}>
+						<div class="space-y-2">
 							<div class="flex items-center justify-between gap-3">
 							<div class="flex flex-wrap gap-2">
 								<Badge variant="muted" class="rounded-full px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
@@ -73,15 +73,15 @@
 								{broadcast.publish_at ? formatShortDateTime(broadcast.publish_at) : formatShortDate(broadcast.created_at)}
 							</time>
 						</div>
-								<div class="space-y-0.75">
-									<h3 class="text-[0.94rem] font-medium text-foreground">
+								<div class="space-y-0.5">
+									<h3 class="text-[0.92rem] font-medium text-foreground">
 								<a href={detailHref} class="hover:underline">{broadcast.title}</a>
 									</h3>
-									<p class="text-[0.88rem] leading-5.5 text-muted-foreground">{broadcast.body}</p>
+									<p class="text-[0.84rem] leading-5.25 text-muted-foreground">{broadcast.body}</p>
 									<p class="text-[0.68rem] uppercase tracking-[0.12em] text-muted-foreground">{getMetaCopy(broadcast)}</p>
 								</div>
 						</div>
-							<div class={`flex items-center justify-between gap-3 border-t border-border/70 pt-2.5 ${items.length === 1 ? 'sm:min-h-full sm:flex-col sm:items-stretch sm:justify-between sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0' : ''}`}>
+							<div class={`flex items-center justify-between gap-3 border-t border-border/70 pt-2 ${items.length === 1 ? 'sm:min-h-full sm:flex-col sm:items-stretch sm:justify-between sm:border-l sm:border-t-0 sm:pl-2.5 sm:pt-0' : ''}`}>
 								<div class="space-y-1">
 									<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Acknowledgment</p>
 									<p class="text-sm text-muted-foreground">

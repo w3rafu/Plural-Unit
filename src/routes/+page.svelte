@@ -157,7 +157,7 @@
 	actions={hubActions}
 />
 
-<main class="mx-auto flex w-full max-w-6xl flex-col gap-5 lg:gap-6" aria-busy={currentHub.isLoading}>
+<main class="mx-auto flex w-full max-w-[74rem] flex-col gap-4 lg:gap-5" aria-busy={currentHub.isLoading}>
 	{#if hasBlockingHubError}
 		<Card.Root class="border-destructive/30 bg-destructive/5">
 			<Card.Content class="flex flex-wrap items-center gap-3 py-4">
@@ -186,7 +186,7 @@
 			</Card.Root>
 		{/if}
 
-		<div class="grid gap-4 xl:grid-cols-[minmax(0,1.82fr)_minmax(18rem,0.74fr)] xl:items-start">
+		<div class="grid gap-3.5 xl:grid-cols-[minmax(0,1.9fr)_minmax(16.5rem,0.66fr)] xl:items-start">
 			<HubOverviewCards
 				memberCount={currentOrganization.memberCount}
 				{pendingInvites}
@@ -201,7 +201,7 @@
 			/>
 
 			{#if canSeeBroadcasts || canSeeEvents}
-				<div class="min-w-0 xl:pt-0.5">
+				<div class="min-w-0">
 					<HubActivityFeed
 						items={visibleActivityItems}
 						broadcastHref="#hub-broadcasts"
@@ -238,7 +238,7 @@
 				</Card.Content>
 			</Card.Root>
 		{:else}
-			<div class="flex flex-col gap-4">
+			<div class="flex flex-col gap-3.5">
 				{#each visiblePlugins as plugin (plugin.key)}
 					{#if plugin.key === 'broadcasts'}
 						<BroadcastsSection sectionId="hub-broadcasts" />

@@ -191,7 +191,7 @@
 />
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-1.5 border-b border-border/70 py-4">
+	<Card.Header class="gap-1.25 border-b border-border/70 py-3.25">
 		<Card.Title class="text-lg font-semibold tracking-tight">Members</Card.Title>
 	</Card.Header>
 
@@ -200,17 +200,17 @@
 			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-2.5 p-4 sm:p-4.5">
-			<div class="space-y-1.75 rounded-2xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
-				<div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+		<Card.Content class="space-y-2.25 p-3.5 sm:p-4">
+			<div class="space-y-1.5 rounded-2xl border border-border/70 bg-muted/10 p-2.25 sm:p-2.75">
+				<div class="flex flex-col gap-1.75 xl:flex-row xl:items-center xl:justify-between">
 					<div class="flex flex-wrap items-center gap-1.5">
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
 							{organizationMembers.length} members
 						</div>
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
 							{adminCount} admins
 						</div>
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
 							{recentJoinCount} recent
 						</div>
 						{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
@@ -218,7 +218,7 @@
 								Refreshing roster
 							</p>
 						{/if}
-						<p class="text-[0.78rem] text-muted-foreground">{reviewSummary}</p>
+						<p class="text-[0.74rem] text-muted-foreground">{reviewSummary}</p>
 					</div>
 
 					<label class="relative block w-full xl:max-w-xs">
@@ -226,13 +226,13 @@
 						<Input
 							type="search"
 							placeholder="Search members"
-							class="h-8 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+							class="h-7.5 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 							bind:value={searchQuery}
 						/>
 					</label>
 				</div>
 
-				<div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+				<div class="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between">
 					<DeletionRequestsCard />
 
 					<div class="flex flex-wrap gap-1">
@@ -251,13 +251,13 @@
 				</div>
 			</div>
 
-			<div class="rounded-2xl border border-border/70 bg-muted/10 p-1.5 sm:p-2">
+			<div class="rounded-2xl border border-border/70 bg-muted/10 p-1.25 sm:p-1.5">
 				{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
 					<div class="py-10 text-center">
 						<p class="text-sm text-muted-foreground">Loading members…</p>
 					</div>
 				{:else if visibleMembers.length > 0}
-					<div class="space-y-2">
+					<div class="space-y-1.5">
 						{#each visibleMembers as member (member.profile_id)}
 							<MemberRow
 								{member}

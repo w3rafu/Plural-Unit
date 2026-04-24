@@ -190,23 +190,23 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-card shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-2.75 px-4 py-3 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.16fr)_13rem] lg:items-start lg:gap-3 lg:space-y-0 lg:px-5">
+			<Card.Content class="relative space-y-2.5 px-4 py-2.75 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.2fr)_12rem] lg:items-start lg:gap-2.75 lg:space-y-0 lg:px-5">
 				<div class="space-y-2">
 					<div class="space-y-1">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
-						<h1 class="max-w-3xl text-[1.72rem] font-semibold tracking-tight text-foreground sm:text-[1.9rem] sm:leading-[0.98]">{event.title}</h1>
+						<h1 class="max-w-3xl text-[1.64rem] font-semibold tracking-tight text-foreground sm:text-[1.82rem] sm:leading-[0.98]">{event.title}</h1>
 						<p class="text-sm text-muted-foreground">{event.date} · {event.location}</p>
-						<p class="max-w-2xl text-sm leading-5.5 text-muted-foreground">{activeShiftSummary}</p>
+						<p class="max-w-2xl text-[0.92rem] leading-5.25 text-muted-foreground">{activeShiftSummary}</p>
 					</div>
 
-					<div class="flex flex-wrap gap-2">
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{event.shifts.length} shifts</div>
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
-						<div class="rounded-full border border-border/70 bg-background px-3 py-1.25 text-[0.72rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
+					<div class="flex flex-wrap gap-1.75">
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{event.shifts.length} shifts</div>
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
 					</div>
 
 					{#if activeShift}
-						<div class="flex flex-wrap items-center gap-x-3 gap-y-1.25 text-[0.75rem] text-muted-foreground">
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.74rem] text-muted-foreground">
 							<p class="font-medium text-foreground">Working now: {activeShift.title}</p>
 							<p>{activeShiftWindow}</p>
 							<p>{remainingCheckIns} pending</p>
@@ -217,10 +217,10 @@
 					{/if}
 				</div>
 
-				<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm">
+				<div class="rounded-2xl border border-border/70 bg-background/82 px-2.75 py-2.25 shadow-sm">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
 					<div class="mt-1.5 flex items-end justify-between gap-3">
-						<p class="text-[1.75rem] font-semibold tracking-tight text-foreground">{completionPercent}%</p>
+						<p class="text-[1.62rem] font-semibold tracking-tight text-foreground">{completionPercent}%</p>
 						<p class="text-[0.72rem] text-muted-foreground">{checkedCount}/{signups.length || 0} checked in</p>
 					</div>
 					<div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -236,20 +236,20 @@
 							<p class="font-semibold text-foreground">{checkedCount}</p>
 						</div>
 					</div>
-					<Button href="/signup/{event.id}" size="sm" class="mt-2 hidden h-8 w-full justify-center px-3 text-[0.72rem] shadow-sm lg:flex">Open public signup</Button>
+					<Button href="/signup/{event.id}" size="sm" class="mt-2 hidden h-7.5 w-full justify-center px-3 text-[0.7rem] shadow-sm lg:flex">Open public signup</Button>
 				</div>
 			</Card.Content>
 		</Card.Root>
 
-		<div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_13rem] xl:items-start">
+		<div class="grid gap-2.75 xl:grid-cols-[minmax(0,1fr)_12rem] xl:items-start">
 			<Card.Root size="sm" class="border-border/70 bg-card">
-				<Card.Header class="gap-1.5 border-b border-border/70 py-4">
+				<Card.Header class="gap-1.25 border-b border-border/70 py-3.5">
 					<Card.Title class="text-lg font-semibold tracking-tight">Check-in list</Card.Title>
 					{#if activeShift}
 						<Card.Description>{activeShift.title} · {activeShift.startTime}–{activeShift.endTime}</Card.Description>
 					{/if}
 				</Card.Header>
-				<Card.Content class="space-y-3.5">
+				<Card.Content class="space-y-3.25">
 					<div class="flex flex-wrap items-center justify-between gap-3">
 						<div class="flex flex-wrap gap-2">
 							{#each event.shifts as shift (shift.id)}
@@ -365,12 +365,12 @@
 			<div class="space-y-3 xl:sticky xl:top-24">
 				{#if shiftLead}
 					<Card.Root size="sm" class="border-border/70 bg-card">
-						<Card.Content class="space-y-2 py-3">
+						<Card.Content class="space-y-1.75 py-2.75">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expected next</p>
-							<div class="space-y-2 border-t border-border/60 pt-2">
+							<div class="space-y-1.75 border-t border-border/60 pt-1.75">
 								{#each quickRoster as person (person.key)}
 									<div class="flex items-center gap-2.5">
-										<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">
+										<Avatar.Root class="size-8.5 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">
 											{#if person.avatarUrl}
 												<Avatar.Image src={person.avatarUrl} alt={person.name} />
 											{:else}
@@ -378,8 +378,8 @@
 											{/if}
 										</Avatar.Root>
 										<div class="min-w-0 flex-1">
-											<p class="truncate text-sm font-medium text-foreground">{person.name}</p>
-											<p class="truncate text-[0.74rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
+											<p class="truncate text-[0.92rem] font-medium text-foreground">{person.name}</p>
+											<p class="truncate text-[0.72rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
 										</div>
 									</div>
 								{/each}

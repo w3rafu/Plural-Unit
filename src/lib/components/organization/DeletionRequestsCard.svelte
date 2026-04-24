@@ -30,11 +30,11 @@
 	<!-- no pending deletion requests -->
 {:else}
 	{@const request = currentOrganization.deletionRequests[0]}
-	<section class="rounded-xl border border-border/70 bg-background/70 px-3 py-2.25 shadow-sm">
-		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+	<section class="rounded-xl border border-border/70 bg-background/70 px-2.75 py-2 shadow-sm">
+		<div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
 			<div class="min-w-0 space-y-0.5">
 				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Deletion requests</p>
-				<p class="text-[0.78rem] leading-5 text-muted-foreground">
+				<p class="text-[0.74rem] leading-4.5 text-muted-foreground">
 					{#if currentOrganization.deletionRequests.length === 1}
 						<span class="font-medium text-foreground">{request.name || 'Unnamed member'}</span>
 						 requested deletion {formatShortDateTime(request.deletion_requested_at)}.
@@ -49,7 +49,7 @@
 				type="button"
 				variant="outline"
 				size="sm"
-				class="h-8 rounded-xl px-3"
+				class="h-7 rounded-xl px-2.5 text-[0.72rem]"
 				disabled={currentOrganization.isMutating}
 				onclick={() => reviewRequest(request.profile_id, request.name)}
 			>
