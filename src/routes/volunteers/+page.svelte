@@ -101,15 +101,15 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/30 shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-3 px-4 py-3 sm:px-5 sm:py-3.5 lg:grid lg:grid-cols-[minmax(0,1.28fr)_16.5rem] lg:items-start lg:gap-3.5 lg:space-y-0">
-				<div class="space-y-2.25 lg:max-w-2xl">
-					<div class="space-y-1.25">
+			<Card.Content class="relative space-y-2.75 px-4 py-3 sm:px-5 sm:py-3.25 lg:grid lg:grid-cols-[minmax(0,1.35fr)_14.25rem] lg:items-start lg:gap-3 lg:space-y-0">
+				<div class="space-y-2 lg:max-w-2xl">
+					<div class="space-y-1">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer coordinator</p>
-						<h1 class="text-[1.95rem] font-semibold tracking-tight text-foreground sm:text-[2.3rem] sm:leading-[0.98] lg:text-[2.4rem]">{heroTitle}</h1>
+						<h1 class="text-[1.9rem] font-semibold tracking-tight text-foreground sm:text-[2.2rem] sm:leading-[0.98] lg:text-[2.25rem]">{heroTitle}</h1>
 						<p class="max-w-2xl text-sm leading-5.5 text-muted-foreground">{heroSummary}</p>
 					</div>
 
-					<div class="flex flex-wrap gap-1.75 text-[0.75rem] text-muted-foreground">
+					<div class="flex flex-wrap gap-1.5 text-[0.73rem] text-muted-foreground">
 						<div class="rounded-full border border-border/70 bg-background/82 px-3 py-1.35 shadow-sm">
 							{filledUpcomingSlots}/{totalUpcomingSlots} positions filled
 						</div>
@@ -121,45 +121,54 @@
 						</div>
 					</div>
 
-					<div class="rounded-[1.05rem] border border-primary/12 bg-primary/4.5 px-3.25 py-2.5 shadow-sm">
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-primary/80">Priority note</p>
-						<p class="mt-1 text-[0.82rem] leading-5 text-foreground/90">{priorityNote}</p>
+					<div class="rounded-2xl border border-primary/12 bg-primary/4.5 px-3 py-2.25 shadow-sm">
+						<div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-primary/80">Priority note</p>
+							<p class="text-[0.8rem] leading-5 text-foreground/90">{priorityNote}</p>
+						</div>
 					</div>
 
-					<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-border/60 pt-2.5 text-[0.78rem] text-muted-foreground">
+					<div class="flex flex-wrap items-center gap-x-3 gap-y-1.25 text-[0.76rem] text-muted-foreground">
 						<p class="font-medium text-foreground">{nextEvent?.title ?? 'No event scheduled'} is next on deck</p>
 						<p>{nextPrioritySummary}</p>
 					</div>
 
 				</div>
 
-				<div class="space-y-2.25 border-t border-border/60 pt-3 lg:border-l lg:border-t-0 lg:pl-3.5 lg:pt-0">
-					<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
-							<p class="mt-1 text-[1.85rem] font-semibold tracking-tight text-foreground">{coveragePercent}%</p>
-							<p class="mt-1 text-[0.8rem] leading-5 text-muted-foreground">{filledUpcomingSlots}/{totalUpcomingSlots} positions filled.</p>
+				<div class="rounded-[1.15rem] border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm lg:mt-0">
+					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Board snapshot</p>
+					<div class="mt-2.5 space-y-2.5">
+						<div class="flex items-end justify-between gap-3">
+							<div>
+								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
+								<p class="mt-1 text-[1.6rem] font-semibold tracking-tight text-foreground">{coveragePercent}%</p>
+							</div>
+							<p class="max-w-[8.5rem] text-right text-[0.74rem] leading-5 text-muted-foreground">
+								{filledUpcomingSlots}/{totalUpcomingSlots} positions filled.
+							</p>
 						</div>
 
-						<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Season snapshot</p>
-							<p class="mt-1 text-[1.45rem] font-semibold tracking-tight text-foreground">{volunteerSeasonStats.eventsHeld}</p>
-							<p class="mt-1 text-[0.8rem] leading-5 text-muted-foreground">{volunteerSeasonStats.totalHours} hours from {volunteerSeasonStats.totalVolunteers} volunteers.</p>
+						<div class="space-y-2 border-t border-border/60 pt-2.5 text-[0.76rem]">
+							<div class="flex items-start justify-between gap-3">
+								<div>
+									<p class="font-medium text-foreground">Season snapshot</p>
+									<p class="text-muted-foreground">{volunteerSeasonStats.totalHours} hours from {volunteerSeasonStats.totalVolunteers} volunteers.</p>
+								</div>
+								<p class="text-sm font-semibold text-foreground">{volunteerSeasonStats.eventsHeld}</p>
+							</div>
+							<div class="border-t border-border/60 pt-2">
+								<p class="font-medium text-foreground">Staffing rhythm</p>
+								<p class="mt-1 leading-5 text-muted-foreground">{staffingActivityCaptionCompact} {seasonSummary}</p>
+							</div>
 						</div>
-					</div>
-
-					<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.5 shadow-sm">
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Staffing rhythm</p>
-						<p class="mt-1 text-sm font-medium text-foreground">{staffingActivityCaptionCompact}</p>
-						<p class="mt-1 text-[0.76rem] leading-5 text-muted-foreground">{seasonSummary}</p>
 					</div>
 				</div>
 			</Card.Content>
 		</Card.Root>
 	</section>
 
-	<div class="grid gap-3.5 lg:grid-cols-[minmax(0,1.24fr)_minmax(0,0.76fr)] lg:items-start xl:grid-cols-[minmax(0,1.36fr)_minmax(0,0.8fr)_15.5rem]">
-		<Card.Root size="sm" class="border-border/70 bg-card xl:col-span-2">
+	<div class="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start">
+		<Card.Root size="sm" class="border-border/70 bg-card">
 			<Card.Header class="gap-2 border-b border-border/70">
 				<div class="flex items-end justify-between gap-3">
 					<div>
@@ -218,15 +227,15 @@
 		</Card.Root>
 
 		<Card.Root size="sm" class="border-border/70 bg-card">
-			<Card.Header class="gap-1.5 border-b border-border/70 py-4">
+			<Card.Header class="gap-1 border-b border-border/70 py-3.5">
 				<Card.Title class="text-lg font-semibold tracking-tight">Reliable volunteers</Card.Title>
-				<Card.Description>People who regularly close the last staffing gap.</Card.Description>
+				<Card.Description>People most likely to close the next staffing gap.</Card.Description>
 			</Card.Header>
-			<Card.Content class="space-y-2.75 py-3.5">
+			<Card.Content class="space-y-2.5 py-3">
 				{#if featuredContact}
-					<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-3 shadow-sm">
+					<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm">
 						<div class="flex items-center gap-3">
-							<Avatar.Root class="size-11 shrink-0 border border-border/70 bg-background shadow-sm after:hidden">
+							<Avatar.Root class="size-10 shrink-0 border border-border/70 bg-background shadow-sm after:hidden">
 								{#if featuredContact.avatarUrl}
 									<Avatar.Image src={featuredContact.avatarUrl} alt={featuredContact.name} />
 								{:else}
@@ -239,7 +248,7 @@
 								<p class="truncate text-[0.76rem] text-muted-foreground">{featuredContact.businessAffiliation ?? featuredContact.email}</p>
 							</div>
 						</div>
-						<div class="mt-2 flex items-center justify-between gap-3 text-[0.76rem] text-muted-foreground">
+						<div class="mt-2 flex items-center justify-between gap-3 text-[0.74rem] text-muted-foreground">
 							<span>{featuredContact.totalHours} hours logged</span>
 							<span>{featuredContact.pastEventCount} recent events</span>
 						</div>
@@ -270,7 +279,7 @@
 					{/each}
 				</div>
 
-				<p class="border-t border-border/60 pt-2.5 text-[0.76rem] leading-5 text-muted-foreground">
+				<p class="border-t border-border/60 pt-2 text-[0.74rem] leading-5 text-muted-foreground">
 					{latestCompleted
 						? `${latestCompleted.title} just wrapped, so the next staffing push can stay focused on ${attentionEvent?.title ?? nextEvent?.title ?? 'upcoming coverage'}.`
 						: seasonSummary}

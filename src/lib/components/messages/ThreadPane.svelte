@@ -125,8 +125,8 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-	<div class="border-b border-border/70 bg-muted/10 px-2.5 py-1.5 sm:px-4 sm:py-1.75">
-		<div class="flex items-start gap-2.5 sm:gap-3">
+	<div class="border-b border-border/70 bg-muted/10 px-2 py-1.25 sm:px-3.5 sm:py-1.5">
+		<div class="flex items-start gap-2 sm:gap-2.5">
 			{#if onBack}
 				<Button
 					variant="ghost"
@@ -139,7 +139,7 @@
 				</Button>
 			{/if}
 
-			<Avatar.Root class="size-7 border border-primary/15 bg-background shadow-sm after:hidden sm:size-10">
+			<Avatar.Root class="size-7 border border-primary/15 bg-background shadow-sm after:hidden sm:size-9">
 				{#if thread.participant.avatar_url}
 					<Avatar.Image src={thread.participant.avatar_url} alt={thread.participant.name} />
 				{:else}
@@ -150,10 +150,10 @@
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-2">
 					<div class="min-w-0 space-y-0.5">
-						<p class="truncate text-[0.95rem] font-semibold leading-5 text-foreground sm:text-[1.02rem] lg:text-[1.1rem]">
+						<p class="truncate text-[0.92rem] font-semibold leading-5 text-foreground sm:text-[0.98rem] lg:text-[1.02rem]">
 							{thread.participant.name}
 						</p>
-						<p class="truncate text-[0.76rem] text-muted-foreground sm:text-[0.8rem] lg:text-[0.84rem]">
+						<p class="truncate text-[0.74rem] text-muted-foreground sm:text-[0.78rem] lg:text-[0.8rem]">
 							{thread.participant.subtitle || 'Direct conversation'}
 							<span class="mx-1.5 text-muted-foreground/60">·</span>
 							{headerMeta}
@@ -174,7 +174,7 @@
 									}
 								}}
 								aria-label={muted ? 'Unmute conversation' : 'Mute conversation'}
-								class="h-7 w-7 rounded-xl px-0 sm:h-7.5 sm:w-auto sm:rounded-full sm:px-2.25"
+								class="h-6.5 w-6.5 rounded-xl px-0 sm:h-7 sm:w-auto sm:rounded-full sm:px-2"
 							>
 								{#if muted}
 									<Bell class="h-3.5 w-3.5 sm:mr-1.5" />
@@ -199,7 +199,7 @@
 									}
 								}}
 								aria-label={archived ? 'Restore conversation' : 'Archive conversation'}
-								class="h-7 w-7 rounded-xl px-0 sm:h-7.5 sm:w-auto sm:rounded-full sm:px-2.25"
+								class="h-6.5 w-6.5 rounded-xl px-0 sm:h-7 sm:w-auto sm:rounded-full sm:px-2"
 							>
 								{#if archived}
 									<Undo2 class="h-3.5 w-3.5 sm:mr-1.5" />
@@ -218,7 +218,7 @@
 								disabled={isResetting}
 								onclick={onResetDemo}
 								aria-label="Reset demo conversation"
-								class="h-7 w-7 rounded-xl px-0 sm:h-7.5 sm:w-auto sm:rounded-full sm:px-2.25"
+								class="h-6.5 w-6.5 rounded-xl px-0 sm:h-7 sm:w-auto sm:rounded-full sm:px-2"
 							>
 								<RotateCcw class="h-3.5 w-3.5 sm:mr-1.5" />
 								<span class="hidden sm:inline">Reset</span>
@@ -228,7 +228,7 @@
 				</div>
 
 				{#if statusBadges.length > 0}
-					<div class="mt-1 flex flex-wrap gap-1.25">
+					<div class="mt-0.75 flex flex-wrap gap-1">
 							{#each statusBadges as badge (badge.label)}
 								<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium sm:text-[0.64rem]">
 									{badge.label}
@@ -256,7 +256,7 @@
 	{/if}
 
 	<div
-		class="min-h-0 flex-1 overflow-y-auto bg-muted/10 px-2 py-1.5 sm:px-3 sm:py-2"
+		class="min-h-0 flex-1 overflow-y-auto bg-muted/10 px-2 py-1 sm:px-3 sm:py-1.5"
 		{@attach keepScrolledToBottom(`${thread.id}:${thread.messages.length}`)}
 		{@attach handleScrollTop}
 	>
@@ -270,7 +270,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="flex min-h-full flex-col justify-end">
+			<div class={cn('flex min-h-full flex-col', isSparseThread ? 'justify-start' : 'justify-end')}>
 				{#if isLoadingOlderMessages}
 					<div class="mb-2.5 flex justify-center">
 						<span class="text-xs text-muted-foreground animate-pulse">Loading older messages…</span>
@@ -288,10 +288,12 @@
 				{/if}
 
 				{#if isSparseThread}
-					<div class="mb-3 rounded-[1.25rem] border border-border/70 bg-background/88 px-3.5 py-3 shadow-sm sm:px-4">
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation context</p>
-						<p class="mt-1 text-sm font-medium text-foreground">{thread.participant.subtitle || 'Direct conversation'} · {headerMeta}</p>
-						<p class="mt-1 text-[0.8rem] leading-5 text-muted-foreground">
+					<div class="mb-2 rounded-[1.05rem] border border-border/70 bg-background/88 px-3 py-2.5 shadow-sm sm:px-3.5">
+						<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation context</p>
+							<p class="text-[0.78rem] text-muted-foreground">{thread.participant.subtitle || 'Direct conversation'} · {headerMeta}</p>
+						</div>
+						<p class="mt-1 text-[0.78rem] leading-5 text-muted-foreground">
 							{thread.unreadCount > 0
 								? `${thread.unreadCount} unread ${thread.unreadCount === 1 ? 'message still needs' : 'messages still need'} review before the thread is fully caught up.`
 								: 'The thread is quiet right now, so the latest updates stay visible near the composer.'}
@@ -300,7 +302,7 @@
 				{/if}
 
 				{#each dayGroups as group (group.dateKey)}
-					<div class="my-2 flex items-center gap-2 lg:my-2.5">
+					<div class="my-1.5 flex items-center gap-2 lg:my-2">
 						<div class="h-px flex-1 bg-border/50"></div>
 						<span class="rounded-full border border-border/70 bg-background px-2.5 py-0.85 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.75 sm:py-1 sm:text-[0.68rem]">
 							{group.label}
