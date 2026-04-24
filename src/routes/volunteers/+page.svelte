@@ -41,6 +41,11 @@
 		: nextEvent
 			? `${nextEvent.title} · ${nextEvent.date}`
 			: 'No upcoming events scheduled.';
+	const nextPrioritySummaryCompact = attentionEvent
+		? attentionEvent.date
+		: nextEvent
+			? nextEvent.date
+			: 'No upcoming date';
 	const topContacts = [...volunteerContacts]
 		.sort((left, right) => right.totalHours - left.totalHours)
 		.slice(0, 5);
@@ -48,6 +53,9 @@
 	const priorityNote = attentionEvent
 		? `${featuredContact?.name ?? 'Your regular lead crew'} usually closes the final gap fastest, so this schedule should move straight into the active events below.`
 		: 'Coverage is healthy right now, so the board can stay focused on the live schedule instead of more top-level summary cards.';
+	const priorityNoteCompact = attentionEvent
+		? `${featuredContact?.name ?? 'Your lead crew'} usually closes the last gap fastest.`
+		: 'Coverage is healthy, so the board can stay focused on the live schedule.';
 
 	const staffingActivityCaptionCompact =
 		coveragePercent >= 70
@@ -101,12 +109,12 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-muted/30 shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-2.5 px-4 py-2.75 sm:px-5 sm:py-3 lg:grid lg:grid-cols-[minmax(0,1.42fr)_13.5rem] lg:items-start lg:gap-2.75 lg:space-y-0">
+			<Card.Content class="relative space-y-2.25 px-4 py-2.5 sm:px-5 sm:py-3 lg:grid lg:grid-cols-[minmax(0,1.42fr)_13.5rem] lg:items-start lg:gap-2.75 lg:space-y-0">
 				<div class="space-y-2 lg:max-w-2xl">
 					<div class="space-y-1">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volunteer coordinator</p>
-						<h1 class="text-[1.8rem] font-semibold tracking-tight text-foreground sm:text-[2.08rem] sm:leading-[0.98] lg:text-[2.16rem]">{heroTitle}</h1>
-						<p class="max-w-2xl text-[0.92rem] leading-5.25 text-muted-foreground">{heroSummary}</p>
+						<h1 class="text-[1.68rem] font-semibold tracking-tight text-foreground sm:text-[2.08rem] sm:leading-[0.98] lg:text-[2.16rem]">{heroTitle}</h1>
+						<p class="max-w-2xl text-[0.88rem] leading-5 text-muted-foreground sm:text-[0.92rem] sm:leading-5.25">{heroSummary}</p>
 					</div>
 
 					<div class="flex flex-wrap gap-1.25 text-[0.72rem] text-muted-foreground">
@@ -117,25 +125,42 @@
 							{openSlots} open spot{openSlots === 1 ? '' : 's'}
 						</div>
 						<div class="rounded-full border border-border/70 bg-background/82 px-2.75 py-1.2 shadow-sm">
-							{nextPrioritySummary}
+							<span class="sm:hidden">{nextPrioritySummaryCompact}</span>
+							<span class="hidden sm:inline">{nextPrioritySummary}</span>
 						</div>
 					</div>
 
 					<div class="rounded-xl border border-primary/12 bg-primary/4.5 px-2.75 py-2 shadow-sm">
 						<div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-primary/80">Priority note</p>
-							<p class="text-[0.78rem] leading-4.75 text-foreground/90">{priorityNote}</p>
+							<p class="text-[0.78rem] leading-4.75 text-foreground/90 sm:hidden">{priorityNoteCompact}</p>
+							<p class="hidden text-[0.78rem] leading-4.75 text-foreground/90 sm:block">{priorityNote}</p>
 						</div>
 					</div>
 
-					<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.74rem] text-muted-foreground">
+					<div class="hidden flex-wrap items-center gap-x-3 gap-y-1 text-[0.74rem] text-muted-foreground sm:flex">
 						<p class="font-medium text-foreground">{nextEvent?.title ?? 'No event scheduled'} is next on deck</p>
 						<p>{nextPrioritySummary}</p>
 					</div>
 
 				</div>
 
-				<div class="rounded-[1.05rem] border border-border/70 bg-background/82 px-2.75 py-2.5 shadow-sm lg:mt-0">
+				<div class="grid grid-cols-3 gap-2 rounded-[1.05rem] border border-border/70 bg-background/82 px-2.25 py-2 shadow-sm sm:hidden">
+					<div class="rounded-xl border border-border/60 bg-muted/16 px-2 py-1.75">
+						<p class="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Coverage</p>
+						<p class="mt-1 text-[1.02rem] font-semibold tracking-tight text-foreground">{coveragePercent}%</p>
+					</div>
+					<div class="rounded-xl border border-border/60 bg-muted/16 px-2 py-1.75">
+						<p class="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Season</p>
+						<p class="mt-1 text-[1.02rem] font-semibold tracking-tight text-foreground">{volunteerSeasonStats.totalHours}h</p>
+					</div>
+					<div class="rounded-xl border border-border/60 bg-muted/16 px-2 py-1.75">
+						<p class="text-[0.58rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Show rate</p>
+						<p class="mt-1 text-[1.02rem] font-semibold tracking-tight text-foreground">{(100 - volunteerSeasonStats.noShowRate * 100).toFixed(1)}%</p>
+					</div>
+				</div>
+
+				<div class="hidden rounded-[1.05rem] border border-border/70 bg-background/82 px-2.75 py-2.5 shadow-sm sm:block lg:mt-0">
 					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Board snapshot</p>
 					<div class="mt-2 space-y-2.25">
 						<div class="flex items-end justify-between gap-3">

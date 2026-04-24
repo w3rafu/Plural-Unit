@@ -165,7 +165,7 @@
 	}
 </script>
 
-<Card.Root size="sm" class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
+<Card.Root size="sm" class="flex min-h-0 flex-col overflow-hidden border-border/70 bg-card">
 	<Card.Header class="gap-1 border-b border-border/70 px-4 py-2.75 sm:px-5 sm:py-3">
 		<div class="space-y-1.5">
 			<div class="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
@@ -218,7 +218,7 @@
 			<div class="min-h-0 flex-1 overflow-auto p-2.25 md:p-2.5">
 				<div class="space-y-2">
 					{#if spotlightMembers.length > 0}
-						<div class="grid gap-2.25 xl:grid-cols-2">
+						<div class="grid gap-2.25 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
 							{#each spotlightMembers as member (member.profile_id)}
 								{@const bioPreview = getBioPreview(member)}
 								<div class="rounded-2xl border border-border/60 bg-muted/10 px-2.75 py-2.5 shadow-sm">
@@ -282,7 +282,7 @@
 						</div>
 					{/if}
 
-					<div class="grid gap-2.25 md:grid-cols-2 xl:grid-cols-4">
+					<div class="grid gap-2.25 md:grid-cols-2 xl:grid-cols-3">
 						{#each gridMembers as member (member.profile_id)}
 							{@const signal = getGridSignal(member)}
 							{@const bioPreview = getBioPreview(member)}

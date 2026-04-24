@@ -68,16 +68,16 @@
 </script>
 
 <Card.Root size="sm" class="h-full border-border/70 bg-card">
-	<Card.Content class="space-y-2.5 py-3" aria-busy={resolvedIsLoading}>
+	<Card.Content class="space-y-2 py-2.75" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
 			<div class="space-y-1">
-				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
-				<Card.Description class="text-[0.78rem]">
+				<Card.Title class="text-[1.42rem] font-semibold tracking-tight">Recent activity</Card.Title>
+				<Card.Description class="text-[0.75rem] leading-4.5">
 					What changed most recently in {resolvedOrganizationName}.
 				</Card.Description>
 			</div>
 			{#if totalItems.length > 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.72rem] text-muted-foreground">
 					{totalItems.length} item{totalItems.length === 1 ? '' : 's'}
 				</p>
 			{/if}
@@ -106,12 +106,12 @@
 				</p>
 			</div>
 		{:else}
-			<div class="overflow-hidden rounded-[1.1rem] border border-border/70 bg-background/70 shadow-sm">
+			<div class="overflow-hidden rounded-[1rem] border border-border/65 bg-background/62 shadow-sm">
 				{#each activityItems as item, index (item.id)}
 					{@const primaryAction = getPrimaryAction(item)}
 					<a
 						href={primaryAction.href}
-						class={`group block px-3 py-2.5 transition-colors ${index > 0 ? 'border-t border-border/55' : ''} ${getActivityRowTone(item)}`}
+						class={`group block px-3 py-2.25 transition-colors ${index > 0 ? 'border-t border-border/50' : ''} ${getActivityRowTone(item)}`}
 					>
 						<div class="flex items-start gap-3">
 							<div
@@ -138,12 +138,12 @@
 												<span class="normal-case tracking-normal text-primary">Needs review</span>
 											{/if}
 										</div>
-										<p class="mt-0.75 truncate text-[0.92rem] font-semibold text-foreground">{item.title}</p>
+										<p class="mt-0.65 truncate text-[0.88rem] font-semibold text-foreground">{item.title}</p>
 									</div>
-									<span class="shrink-0 pt-0.5 text-[0.7rem] font-medium text-primary/90 transition-colors group-hover:text-primary">{primaryAction.label}</span>
+									<span class="shrink-0 pt-0.5 text-[0.68rem] font-medium text-primary/85 transition-colors group-hover:text-primary">{primaryAction.label}</span>
 								</div>
-								<p class="mt-0.75 text-[0.74rem] leading-4.5 text-muted-foreground">{item.summary}</p>
-								<div class="mt-1.25 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] text-muted-foreground">
+								<p class="mt-0.65 text-[0.72rem] leading-4.5 text-muted-foreground">{item.summary}</p>
+								<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.66rem] text-muted-foreground">
 									<span>{item.meta}</span>
 									{#if item.kind === 'broadcast'}
 										<span>Broadcast update</span>
