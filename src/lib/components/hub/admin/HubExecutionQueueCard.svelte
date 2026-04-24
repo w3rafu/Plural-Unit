@@ -359,7 +359,7 @@
 				</nav>
 
 				<div class="flex flex-wrap items-center gap-2">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+					<p class="text-[0.88rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
 						Job
 					</p>
 					{#each jobOptions as option (option.value)}
@@ -375,7 +375,7 @@
 				</div>
 
 				<div class="flex flex-wrap items-center gap-2">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+					<p class="text-[0.88rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
 						Content
 					</p>
 					{#each subjectOptions as option (option.value)}
@@ -465,17 +465,17 @@
 									<Item.Description>{item.detailCopy}</Item.Description>
 									<div class="space-y-1">
 										{#if item.staleReviewCopy}
-											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+											<p class="text-[0.82rem] text-destructive">{item.staleReviewCopy}</p>
 										{/if}
 										{#if workflowSummary}
 											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
-												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 												{#if workflowSummary.note}
-													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+													<p class="mt-1 text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 												{/if}
 											</div>
 										{/if}
-										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+										<p class="text-[0.82rem] text-muted-foreground">{item.timingCopy}</p>
 									</div>
 								</Item.Content>
 								<Item.Actions>
@@ -522,17 +522,17 @@
 									<Item.Description>{item.detailCopy}</Item.Description>
 									<div class="space-y-1">
 										{#if item.staleReviewCopy}
-											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+											<p class="text-[0.82rem] text-destructive">{item.staleReviewCopy}</p>
 										{/if}
 										{#if workflowSummary}
 											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
-												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 												{#if workflowSummary.note}
-													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+													<p class="mt-1 text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 												{/if}
 											</div>
 										{/if}
-										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+										<p class="text-[0.82rem] text-muted-foreground">{item.timingCopy}</p>
 									</div>
 								</Item.Content>
 								<Item.Actions>
@@ -587,16 +587,16 @@
 									<Item.Description>{item.detailCopy}</Item.Description>
 									<div class="space-y-1">
 										{#if item.recoveryGuidance}
-											<p class="text-xs text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
+											<p class="text-[0.82rem] text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
 										{/if}
 										{#if item.staleReviewCopy}
-											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+											<p class="text-[0.82rem] text-destructive">{item.staleReviewCopy}</p>
 										{/if}
 										{#if workflowSummary}
 											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
-												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 												{#if workflowSummary.note}
-													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+													<p class="mt-1 text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 												{/if}
 											</div>
 										{/if}
@@ -621,7 +621,7 @@
 												</div>
 											</div>
 										{/if}
-										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+										<p class="text-[0.82rem] text-muted-foreground">{item.timingCopy}</p>
 									</div>
 								</Item.Content>
 								<Item.Actions>
@@ -722,13 +722,13 @@
 									<Item.Description>{signal.copy}</Item.Description>
 									<div class="space-y-1">
 										{#if signal.staleReviewCopy}
-											<p class="text-xs text-destructive">{signal.staleReviewCopy}</p>
+											<p class="text-[0.82rem] text-destructive">{signal.staleReviewCopy}</p>
 										{/if}
 										{#if workflowSummary}
 											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
-												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 												{#if workflowSummary.note}
-													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+													<p class="mt-1 text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 												{/if}
 											</div>
 										{/if}
@@ -753,7 +753,7 @@
 												</div>
 											</div>
 										{/if}
-										<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
+										<p class="text-[0.82rem] text-muted-foreground">{signal.timingCopy}</p>
 									</div>
 								</Item.Content>
 								<Item.Actions>
@@ -833,13 +833,13 @@
 									<Item.Description>{item.detailCopy}</Item.Description>
 									<div class="space-y-1">
 										{#if item.staleReviewCopy}
-											<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+											<p class="text-[0.82rem] text-destructive">{item.staleReviewCopy}</p>
 										{/if}
 										{#if workflowSummary}
 											<div class="rounded-lg border border-border/70 bg-background/70 px-3 py-2">
-												<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+												<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 												{#if workflowSummary.note}
-													<p class="mt-1 text-xs text-foreground">{workflowSummary.note}</p>
+													<p class="mt-1 text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 												{/if}
 											</div>
 										{/if}
@@ -864,7 +864,7 @@
 												</div>
 											</div>
 										{/if}
-										<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+										<p class="text-[0.82rem] text-muted-foreground">{item.timingCopy}</p>
 									</div>
 								</Item.Content>
 								<Item.Actions>
@@ -911,7 +911,7 @@
 					</Item.Group>
 
 					{#if !hasQueueFocus && processedCount > queueSections.processed.length}
-						<p class="text-xs text-muted-foreground">
+						<p class="text-[0.82rem] text-muted-foreground">
 							+{processedCount - queueSections.processed.length} more processed item{processedCount - queueSections.processed.length === 1 ? '' : 's'} retained in the execution ledger.
 						</p>
 					{/if}

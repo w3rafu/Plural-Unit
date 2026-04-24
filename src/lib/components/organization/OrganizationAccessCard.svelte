@@ -194,7 +194,7 @@
 				<Card.Content class="space-y-3 p-4 sm:p-5">
 					<div class="rounded-[1.15rem] border border-border/70 bg-muted/12 px-4 py-3.5">
 						<div>
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Active code</p>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Active code</p>
 							<p class="mt-1.5 font-mono text-[1.45rem] font-semibold tracking-[0.18em] text-foreground wrap-break-word sm:text-[1.6rem]">
 								{currentOrganization.organization?.join_code ?? '—'}
 							</p>
@@ -225,28 +225,28 @@
 						<div class="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
 							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pending</p>
+									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pending</p>
 									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{activeInviteCount}</p>
 							</div>
 						</div>
 
 							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Stale</p>
+									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Stale</p>
 									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{staleInviteCount}</p>
 							</div>
 						</div>
 
 							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expiring soon</p>
+									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expiring soon</p>
 									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{expiringSoonInviteCount}</p>
 							</div>
 						</div>
 
 							<div class="rounded-[1.05rem] border border-border/70 bg-muted/12 px-3.5 py-3">
 							<div>
-									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expired</p>
+									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expired</p>
 									<p class="mt-1 text-[1.1rem] font-semibold text-foreground">{expiredInviteCount}</p>
 							</div>
 						</div>
@@ -277,7 +277,7 @@
 									type="button"
 									size="sm"
 									variant={invitationFilter === option.value ? 'secondary' : 'outline'}
-									class="h-8 rounded-xl px-3 text-[0.72rem]"
+									class="h-8 rounded-xl px-3 text-[0.82rem]"
 									onclick={() => (invitationFilter = option.value)}
 								>
 									{option.label}

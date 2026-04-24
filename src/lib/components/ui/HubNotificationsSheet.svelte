@@ -355,7 +355,7 @@
 		<BellIcon class="shell-header__control-icon" aria-hidden="true" />
 		<span class="shell-header__control-label">{triggerLabel}</span>
 		{#if unreadCount > 0}
-			<span class="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-background">
+			<span class="rounded-full bg-foreground px-1.5 py-0.5 text-[0.82rem] font-semibold tracking-[0.08em] text-background">
 				{unreadCount}
 			</span>
 		{/if}
@@ -368,7 +368,7 @@
 				<BellIcon class="shell-header__control-icon" aria-hidden="true" />
 				<span class="shell-header__control-label">{triggerLabel}</span>
 				{#if unreadCount > 0}
-					<span class="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-background">
+					<span class="rounded-full bg-foreground px-1.5 py-0.5 text-[0.82rem] font-semibold tracking-[0.08em] text-background">
 						{unreadCount}
 					</span>
 				{/if}
@@ -398,7 +398,7 @@
 				<section class="mb-4 rounded-[1.45rem] border border-border/70 bg-card/88 p-3.5 shadow-sm">
 					<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 						<div class="space-y-1">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+							<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 								Inbox
 							</p>
 							<p class="text-base font-semibold tracking-tight text-foreground">{operatorHeadline}</p>
@@ -409,11 +409,11 @@
 							</p>
 						</div>
 						<div class="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 sm:min-w-36">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+							<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 								Current view
 							</p>
 							<p class="mt-1 text-2xl font-semibold tracking-tight text-foreground">{visibleUnreadCount}</p>
-							<p class="text-xs text-muted-foreground">
+							<p class="text-[0.82rem] text-muted-foreground">
 								Unread {visibleUnreadCount === 1 ? 'alert' : 'alerts'}
 							</p>
 						</div>
@@ -422,25 +422,25 @@
 					<div class={`mt-4 grid gap-2.5 ${hasOperatorInbox ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
 						{#if hasOperatorInbox}
 							<div class="rounded-2xl border px-3 py-3 {getInboxSectionClass('recovery')}">
-								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em]">Recovery</p>
+								<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em]">Recovery</p>
 								<p class="mt-1 text-xl font-semibold tracking-tight">{operatorRecoveryCount}</p>
-								<p class="text-xs text-current/80">Items back in queue</p>
+								<p class="text-[0.82rem] text-current/80">Items back in queue</p>
 							</div>
 							<div class="rounded-2xl border px-3 py-3 {getInboxSectionClass('closeout')}">
-								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em]">Closeout</p>
+								<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em]">Closeout</p>
 								<p class="mt-1 text-xl font-semibold tracking-tight">{operatorCloseoutCount}</p>
-								<p class="text-xs text-current/80">Attendance reviews</p>
+								<p class="text-[0.82rem] text-current/80">Attendance reviews</p>
 							</div>
 							<div class="rounded-2xl border px-3 py-3 {getInboxSectionClass('follow-up')}">
-								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em]">Follow-up</p>
+								<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em]">Follow-up</p>
 								<p class="mt-1 text-xl font-semibold tracking-tight">{operatorFollowUpCount}</p>
-								<p class="text-xs text-current/80">Recent turnout checks</p>
+								<p class="text-[0.82rem] text-current/80">Recent turnout checks</p>
 							</div>
 						{/if}
 						<div class="rounded-2xl border px-3 py-3 {getInboxSectionClass('member-alerts')}">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em]">Member alerts</p>
+							<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em]">Member alerts</p>
 							<p class="mt-1 text-xl font-semibold tracking-tight">{notificationCounts.all}</p>
-							<p class="text-xs text-current/80">{unreadCount} unread overall</p>
+							<p class="text-[0.82rem] text-current/80">{unreadCount} unread overall</p>
 						</div>
 					</div>
 				</section>
@@ -449,19 +449,19 @@
 					<section class="mb-4 space-y-3 rounded-2xl border border-border/70 bg-card/76 p-3.5">
 						<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 							<div class="space-y-1">
-								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 									Operator inbox
 								</p>
 								<p class="text-sm text-muted-foreground">A short triage list for the next admin action, not a full management surface.</p>
 							</div>
 							<div class="flex flex-wrap gap-2">
-								<span class="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('recovery')}">
+								<span class="rounded-full border px-2.5 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('recovery')}">
 									{operatorRecoveryCount} recovery
 								</span>
-								<span class="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('closeout')}">
+								<span class="rounded-full border px-2.5 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('closeout')}">
 									{operatorCloseoutCount} closeout
 								</span>
-								<span class="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('follow-up')}">
+								<span class="rounded-full border px-2.5 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('follow-up')}">
 									{operatorFollowUpCount} follow-up
 								</span>
 								{#if operatorRecoveryCount > 0}
@@ -495,7 +495,7 @@
 							</div>
 						{:else}
 							{#if isOperatorInboxLoading}
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									Loading the member roster for attendance closeout...
 								</p>
 							{/if}
@@ -503,15 +503,15 @@
 								<div class="space-y-2">
 									<div class="flex items-center justify-between gap-3">
 										<div class="flex items-center gap-2">
-											<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+											<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 											Recovery
 											</p>
-											<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('recovery')}">
+											<span class="rounded-full border px-2 py-0.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('recovery')}">
 												{operatorRecoveryCount}
 											</span>
 										</div>
 										{#if operatorRecoveryCount > operatorRecoveryItems.length}
-											<p class="text-xs text-muted-foreground">
+											<p class="text-[0.82rem] text-muted-foreground">
 												+{operatorRecoveryCount - operatorRecoveryItems.length} more in queue
 											</p>
 										{/if}
@@ -523,48 +523,48 @@
 													{@const workflowSummary = getRecoveryWorkflowSummary(item)}
 													<div class="flex flex-wrap items-center gap-2">
 														<Item.Title>{item.subjectTitle}</Item.Title>
-														<span class="rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('recovery')}">
+														<span class="rounded-full border px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('recovery')}">
 															Recovery
 														</span>
-														<span class="rounded-full border border-border bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
+														<span class="rounded-full border border-border bg-muted px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-foreground">
 															{item.jobLabel}
 														</span>
 														{#if item.isStaleReview}
-															<span class="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-destructive">
+															<span class="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-destructive">
 																Needs re-review
 															</span>
 														{/if}
 													</div>
 													<Item.Description>{item.detailCopy}</Item.Description>
 													{#if item.recoveryGuidance}
-														<p class="text-xs text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
+														<p class="text-[0.82rem] text-muted-foreground">{item.recoveryGuidance.nextStepCopy}</p>
 													{/if}
 													{#if item.staleReviewCopy}
-														<p class="text-xs text-destructive">{item.staleReviewCopy}</p>
+														<p class="text-[0.82rem] text-destructive">{item.staleReviewCopy}</p>
 													{/if}
 													{#if workflowSummary}
 														<div class="flex items-start gap-3 rounded-xl border border-border/70 bg-background/80 px-3 py-2.5">
 															<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/35 after:hidden">
-																<Avatar.Fallback class="text-[0.68rem] font-semibold tracking-tight text-foreground">
+																<Avatar.Fallback class="text-[0.88rem] font-semibold tracking-tight text-foreground">
 																	{getInitials(workflowSummary.actorLabel)}
 																</Avatar.Fallback>
 															</Avatar.Root>
 															<div class="min-w-0 space-y-1">
 																<div class="flex flex-wrap items-center gap-2">
-																	<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] {getWorkflowSummaryClass(workflowSummary.status)}">
+																	<span class="rounded-full border px-2 py-0.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getWorkflowSummaryClass(workflowSummary.status)}">
 																		{workflowSummary.statusLabel}
 																	</span>
-																	<p class="text-xs font-medium text-foreground">{workflowSummary.actorLabel}</p>
-																	<p class="text-xs text-muted-foreground">{workflowSummary.timestampCopy}</p>
+																	<p class="text-[0.82rem] font-medium text-foreground">{workflowSummary.actorLabel}</p>
+																	<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.timestampCopy}</p>
 																</div>
-																<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+																<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 															{#if workflowSummary.note}
-																<p class="text-xs text-foreground">{workflowSummary.note}</p>
+																<p class="text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 															{/if}
 															</div>
 														</div>
 													{/if}
-													<p class="text-xs text-muted-foreground">{item.timingCopy}</p>
+													<p class="text-[0.82rem] text-muted-foreground">{item.timingCopy}</p>
 												</Item.Content>
 												<Item.Actions>
 													<Button href={getRecoveryHref(item)} variant="default" size="sm" class="shadow-sm" onclick={closeSheet}>
@@ -582,15 +582,15 @@
 								<div class="space-y-2">
 									<div class="flex items-center justify-between gap-3">
 										<div class="flex items-center gap-2">
-											<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+											<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 											Closeout
 											</p>
-											<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('closeout')}">
+											<span class="rounded-full border px-2 py-0.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('closeout')}">
 												{operatorCloseoutCount}
 											</span>
 										</div>
 										{#if operatorCloseoutCount > operatorCloseoutItems.length}
-											<p class="text-xs text-muted-foreground">
+											<p class="text-[0.82rem] text-muted-foreground">
 												+{operatorCloseoutCount - operatorCloseoutItems.length} more event{operatorCloseoutCount - operatorCloseoutItems.length === 1 ? '' : 's'} need closeout
 											</p>
 										{/if}
@@ -602,7 +602,7 @@
 													{@const workflowSummary = getCloseoutWorkflowSummary(entry.event.id)}
 													<div class="flex flex-wrap items-center gap-2">
 														<Item.Title>{entry.event.title}</Item.Title>
-														<span class="rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('closeout')}">
+														<span class="rounded-full border px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('closeout')}">
 															Closeout
 														</span>
 													</div>
@@ -610,21 +610,21 @@
 													{#if workflowSummary}
 														<div class="flex items-start gap-3 rounded-xl border border-border/70 bg-background/80 px-3 py-2.5">
 															<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/35 after:hidden">
-																<Avatar.Fallback class="text-[0.68rem] font-semibold tracking-tight text-foreground">
+																<Avatar.Fallback class="text-[0.88rem] font-semibold tracking-tight text-foreground">
 																	{getInitials(workflowSummary.actorLabel)}
 																</Avatar.Fallback>
 															</Avatar.Root>
 															<div class="min-w-0 space-y-1">
 																<div class="flex flex-wrap items-center gap-2">
-																	<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] {getWorkflowSummaryClass(workflowSummary.status)}">
+																	<span class="rounded-full border px-2 py-0.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getWorkflowSummaryClass(workflowSummary.status)}">
 																		{workflowSummary.statusLabel}
 																	</span>
-																	<p class="text-xs font-medium text-foreground">{workflowSummary.actorLabel}</p>
-																	<p class="text-xs text-muted-foreground">{workflowSummary.timestampCopy}</p>
+																	<p class="text-[0.82rem] font-medium text-foreground">{workflowSummary.actorLabel}</p>
+																	<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.timestampCopy}</p>
 																</div>
-																<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+																<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 															{#if workflowSummary.note}
-																<p class="text-xs text-foreground">{workflowSummary.note}</p>
+																<p class="text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 															{/if}
 															</div>
 														</div>
@@ -646,15 +646,15 @@
 								<div class="space-y-2">
 									<div class="flex items-center justify-between gap-3">
 										<div class="flex items-center gap-2">
-											<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+											<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 											Follow-up
 											</p>
-											<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('follow-up')}">
+											<span class="rounded-full border px-2 py-0.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('follow-up')}">
 												{operatorFollowUpCount}
 											</span>
 										</div>
 										{#if operatorFollowUpCount > operatorFollowUpSignals.length}
-											<p class="text-xs text-muted-foreground">
+											<p class="text-[0.82rem] text-muted-foreground">
 												+{operatorFollowUpCount - operatorFollowUpSignals.length} more recent follow-up item{operatorFollowUpCount - operatorFollowUpSignals.length === 1 ? '' : 's'}
 											</p>
 										{/if}
@@ -666,45 +666,45 @@
 													{@const workflowSummary = getFollowUpWorkflowSummary(signal)}
 													<div class="flex flex-wrap items-center gap-2">
 														<Item.Title>{signal.eventTitle}</Item.Title>
-														<span class="rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('follow-up')}">
+														<span class="rounded-full border px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getInboxSectionClass('follow-up')}">
 															Follow-up
 														</span>
-														<span class="rounded-full border border-border bg-muted px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
+														<span class="rounded-full border border-border bg-muted px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-foreground">
 															{signal.statusLabel}
 														</span>
 														{#if signal.isStaleReview}
-															<span class="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-destructive">
+															<span class="rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-destructive">
 																Needs re-review
 															</span>
 														{/if}
 													</div>
 													<Item.Description>{signal.copy}</Item.Description>
 													{#if signal.staleReviewCopy}
-														<p class="text-xs text-destructive">{signal.staleReviewCopy}</p>
+														<p class="text-[0.82rem] text-destructive">{signal.staleReviewCopy}</p>
 													{/if}
 													{#if workflowSummary}
 														<div class="flex items-start gap-3 rounded-xl border border-border/70 bg-background/80 px-3 py-2.5">
 															<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/35 after:hidden">
-																<Avatar.Fallback class="text-[0.68rem] font-semibold tracking-tight text-foreground">
+																<Avatar.Fallback class="text-[0.88rem] font-semibold tracking-tight text-foreground">
 																	{getInitials(workflowSummary.actorLabel)}
 																</Avatar.Fallback>
 															</Avatar.Root>
 															<div class="min-w-0 space-y-1">
 																<div class="flex flex-wrap items-center gap-2">
-																	<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] {getWorkflowSummaryClass(workflowSummary.status)}">
+																	<span class="rounded-full border px-2 py-0.5 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getWorkflowSummaryClass(workflowSummary.status)}">
 																		{workflowSummary.statusLabel}
 																	</span>
-																	<p class="text-xs font-medium text-foreground">{workflowSummary.actorLabel}</p>
-																	<p class="text-xs text-muted-foreground">{workflowSummary.timestampCopy}</p>
+																	<p class="text-[0.82rem] font-medium text-foreground">{workflowSummary.actorLabel}</p>
+																	<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.timestampCopy}</p>
 																</div>
-																<p class="text-xs text-muted-foreground">{workflowSummary.summaryCopy}</p>
+																<p class="text-[0.82rem] text-muted-foreground">{workflowSummary.summaryCopy}</p>
 															{#if workflowSummary.note}
-																<p class="text-xs text-foreground">{workflowSummary.note}</p>
+																<p class="text-[0.82rem] text-foreground">{workflowSummary.note}</p>
 															{/if}
 															</div>
 														</div>
 													{/if}
-													<p class="text-xs text-muted-foreground">{signal.timingCopy}</p>
+													<p class="text-[0.82rem] text-muted-foreground">{signal.timingCopy}</p>
 												</Item.Content>
 												<Item.Actions>
 													<Button href={getManageEventHref(signal.eventId)} variant="default" size="sm" class="shadow-sm" onclick={closeSheet}>
@@ -736,7 +736,7 @@
 				{:else}
 					{#if hasOperatorInbox}
 						<div class="mb-4 space-y-1">
-							<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+							<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 								Published alerts
 							</p>
 							<p class="text-sm text-muted-foreground">
@@ -755,7 +755,7 @@
 								<div class="flex flex-wrap items-center justify-between gap-3">
 									<div>
 										<p class="text-sm font-medium text-foreground">Published alert feed</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{visibleNotifications.length} {visibleNotifications.length === 1 ? 'alert' : 'alerts'} visible
 											{#if hiddenNotificationCount > 0}
 												· {hiddenNotificationCount} hidden by settings
@@ -827,18 +827,18 @@
 											<div class="flex items-center justify-between gap-3">
 												<Item.Title>{notification.title}</Item.Title>
 												<div class="flex flex-wrap items-center justify-end gap-2">
-													<span class="rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {getNotificationLabelClass(notification.label)}">
+													<span class="rounded-full border px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] {getNotificationLabelClass(notification.label)}">
 														{notification.label}
 													</span>
 													{#if !notification.isRead}
-														<span class="rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+														<span class="rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-primary">
 															New
 														</span>
 													{/if}
 												</div>
 											</div>
 											<Item.Description>{notification.summary}</Item.Description>
-											<p class="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+											<p class="text-[0.82rem] font-medium uppercase tracking-[0.08em] text-muted-foreground">
 												{notification.meta}
 											</p>
 											<div class="flex flex-wrap gap-2 pt-2">
@@ -886,14 +886,14 @@
 
 		<Sheet.Footer class="gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="space-y-1">
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					{notificationCounts.all} {notificationCounts.all === 1 ? 'alert' : 'alerts'} total
 					{#if hiddenNotificationCount > 0}
 						· {hiddenNotificationCount} hidden by settings
 					{/if}
 				</p>
 				{#if visibleUnreadCount > 0}
-					<p class="text-xs text-muted-foreground">
+					<p class="text-[0.82rem] text-muted-foreground">
 						{visibleUnreadCount} unread {visibleUnreadCount === 1 ? 'alert' : 'alerts'} in this view
 					</p>
 				{/if}

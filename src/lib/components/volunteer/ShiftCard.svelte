@@ -15,7 +15,7 @@
 			<p class="text-sm font-medium text-foreground">{shift.title}</p>
 			<FillPill filled={shift.filled} needed={shift.needed} {status} />
 		</div>
-		<p class="mt-0.5 text-xs text-muted-foreground">{shift.startTime} – {shift.endTime}</p>
+		<p class="mt-0.5 text-[0.82rem] text-muted-foreground">{shift.startTime} – {shift.endTime}</p>
 		<div class="mt-2 flex items-center gap-2">
 			<div class="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
 				<div
@@ -26,7 +26,7 @@
 					style="width: {fillPercent}%"
 				></div>
 			</div>
-			<span class="text-xs text-muted-foreground">{shift.filled}/{shift.needed}</span>
+			<span class="text-[0.82rem] text-muted-foreground">{shift.filled}/{shift.needed}</span>
 		</div>
 	</div>
 </div>

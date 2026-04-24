@@ -160,7 +160,7 @@
 								<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 									<div class="min-w-0 space-y-1">
 										<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{item.startsAtLabel}
 											{#if item.locationLabel}
 												· {item.locationLabel}
@@ -182,11 +182,11 @@
 								</div>
 
 								<p class="mt-3 text-sm text-muted-foreground">{item.statusCopy}</p>
-								<p class="mt-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="mt-1 text-[0.84rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 									{item.timingCopy}
 								</p>
 								{#if item.reminderCopy}
-									<p class="mt-1 text-xs text-muted-foreground">{item.reminderCopy}</p>
+									<p class="mt-1 text-[0.82rem] text-muted-foreground">{item.reminderCopy}</p>
 								{/if}
 
 								<div class="mt-3 flex flex-wrap gap-1.5 border-t border-border/70 pt-3">
@@ -207,7 +207,7 @@
 					</div>
 
 					{#if commitments.replyNeededCount > replyPreview.length}
-						<p class="text-xs text-muted-foreground">
+						<p class="text-[0.82rem] text-muted-foreground">
 							+{commitments.replyNeededCount - replyPreview.length} more event{commitments.replyNeededCount - replyPreview.length === 1 ? '' : 's'} still need a reply below.
 						</p>
 					{/if}
@@ -229,7 +229,7 @@
 								<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 									<div class="min-w-0 space-y-1">
 										<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{item.startsAtLabel}
 											{#if item.locationLabel}
 												· {item.locationLabel}
@@ -250,9 +250,9 @@
 
 								<p class="mt-3 text-sm text-muted-foreground">{item.statusCopy}</p>
 								{#if item.reminderCopy}
-									<p class="mt-1 text-xs text-muted-foreground">{item.reminderCopy}</p>
+									<p class="mt-1 text-[0.82rem] text-muted-foreground">{item.reminderCopy}</p>
 								{/if}
-								<p class="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="mt-3 text-[0.84rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 									{item.timingCopy}
 								</p>
 							</div>
@@ -260,7 +260,7 @@
 					</div>
 
 					{#if commitments.todayCount > todayPreview.length}
-						<p class="text-xs text-muted-foreground">
+						<p class="text-[0.82rem] text-muted-foreground">
 							+{commitments.todayCount - todayPreview.length} more day-of item{commitments.todayCount - todayPreview.length === 1 ? '' : 's'} appear in the events list below.
 						</p>
 					{/if}
@@ -282,7 +282,7 @@
 								<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 									<div class="min-w-0 space-y-1">
 										<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{item.startsAtLabel}
 											{#if item.locationLabel}
 												· {item.locationLabel}
@@ -297,7 +297,7 @@
 								</div>
 
 								<p class="mt-3 text-sm text-muted-foreground">{item.statusCopy}</p>
-								<p class="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="mt-3 text-[0.84rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 									{item.timingCopy}
 								</p>
 							</div>
@@ -305,7 +305,7 @@
 					</div>
 
 					{#if commitments.recentCount > recentPreview.length}
-						<p class="text-xs text-muted-foreground">
+						<p class="text-[0.82rem] text-muted-foreground">
 							+{commitments.recentCount - recentPreview.length} more recent event{commitments.recentCount - recentPreview.length === 1 ? '' : 's'} appear below.
 						</p>
 					{/if}
@@ -327,7 +327,7 @@
 								<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 									<div class="min-w-0 space-y-1">
 										<p class="truncate text-sm font-semibold text-foreground">{item.title}</p>
-										<p class="text-xs text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{item.startsAtLabel}
 											{#if item.locationLabel}
 												· {item.locationLabel}
@@ -350,9 +350,9 @@
 
 								<p class="mt-3 text-sm text-muted-foreground">{item.statusCopy}</p>
 								{#if item.reminderCopy}
-									<p class="mt-1 text-xs text-muted-foreground">{item.reminderCopy}</p>
+									<p class="mt-1 text-[0.82rem] text-muted-foreground">{item.reminderCopy}</p>
 								{/if}
-								<p class="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="mt-3 text-[0.84rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 									{item.timingCopy}
 								</p>
 							</div>
@@ -360,7 +360,7 @@
 					</div>
 
 					{#if commitments.upcomingCount > upcomingPreview.length}
-						<p class="text-xs text-muted-foreground">
+						<p class="text-[0.82rem] text-muted-foreground">
 							+{commitments.upcomingCount - upcomingPreview.length} more commitment{commitments.upcomingCount - upcomingPreview.length === 1 ? '' : 's'} appear in the events list below.
 						</p>
 					{/if}

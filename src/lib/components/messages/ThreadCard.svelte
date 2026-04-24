@@ -86,14 +86,14 @@
 					{/if}
 				</div>
 
-				<p class="truncate text-[0.74rem] text-muted-foreground">
+				<p class="truncate text-[0.84rem] text-muted-foreground">
 					{thread.participant.subtitle || 'Direct conversation'}
 				</p>
 			</div>
 
 			<span
 				class={cn(
-					'shrink-0 text-xs',
+					'shrink-0 text-[0.82rem]',
 					thread.unreadCount > 0 ? 'font-medium text-foreground' : 'text-muted-foreground'
 				)}
 			>
@@ -108,7 +108,7 @@
 		{#if statusBadges.length > 0}
 			<div class="mt-1.5 flex flex-wrap gap-1.5">
 				{#each statusBadges as badge (badge.label)}
-					<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium">
+					<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.82rem] font-medium">
 						{badge.label}
 					</Badge>
 				{/each}

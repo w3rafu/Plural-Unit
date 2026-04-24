@@ -355,10 +355,10 @@
 								<Item.Description>
 									{resource.description || 'No description added yet.'}
 								</Item.Description>
-								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+								<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 									{getResourceDestinationLabel(resource.href)}
 								</p>
-								<p class={`text-xs ${engagement.needsAttention ? 'text-foreground' : 'text-muted-foreground'}`}>
+								<p class={`text-[0.82rem] ${engagement.needsAttention ? 'text-foreground' : 'text-muted-foreground'}`}>
 									{engagement.copy}
 								</p>
 							</Item.Content>
@@ -446,10 +446,10 @@
 								<Item.Description>
 									{resource.description || 'No description added yet.'}
 								</Item.Description>
-								<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+								<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 									{getResourceDestinationLabel(resource.href)}
 								</p>
-								<p class={`text-xs ${engagement.needsAttention ? 'text-foreground' : 'text-muted-foreground'}`}>
+								<p class={`text-[0.82rem] ${engagement.needsAttention ? 'text-foreground' : 'text-muted-foreground'}`}>
 									{engagement.copy}
 								</p>
 							</Item.Content>

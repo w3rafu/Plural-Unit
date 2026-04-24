@@ -164,7 +164,7 @@
 
 <div class="sticky top-0 z-20 -mx-3 border-b border-border/60 bg-background/90 backdrop-blur-sm sm:-mx-4">
 	<div class="flex items-center gap-3 px-4 py-2">
-		<Button href="/volunteers" variant="ghost" size="sm" class="-ml-1 h-8 gap-1.5 px-2 text-xs">
+		<Button href="/volunteers" variant="ghost" size="sm" class="-ml-1 h-8 gap-1.5 px-2 text-[0.82rem]">
 			<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M10 12L6 8l4-4" />
 			</svg>
@@ -193,20 +193,20 @@
 			<Card.Content class="relative space-y-2.5 px-4 py-2.75 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.2fr)_12rem] lg:items-start lg:gap-2.75 lg:space-y-0 lg:px-5">
 				<div class="space-y-2">
 					<div class="space-y-1">
-						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
+						<p class="text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
 						<h1 class="max-w-3xl text-[1.64rem] font-semibold tracking-tight text-foreground sm:text-[1.82rem] sm:leading-[0.98]">{event.title}</h1>
 						<p class="text-sm text-muted-foreground">{event.date} · {event.location}</p>
-						<p class="max-w-2xl text-[0.92rem] leading-5.25 text-muted-foreground">{activeShiftSummary}</p>
+						<p class="max-w-2xl text-[0.82rem] leading-5.25 text-muted-foreground">{activeShiftSummary}</p>
 					</div>
 
 					<div class="flex flex-wrap gap-1.75">
-						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{event.shifts.length} shifts</div>
-						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
-						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.8rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{event.shifts.length} shifts</div>
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.8rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{totalRegistered} registered</div>
+						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.15 text-[0.8rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{checkedCount} checked in</div>
 					</div>
 
 					{#if activeShift}
-						<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.74rem] text-muted-foreground">
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.84rem] text-muted-foreground">
 							<p class="font-medium text-foreground">Working now: {activeShift.title}</p>
 							<p>{activeShiftWindow}</p>
 							<p>{remainingCheckIns} pending</p>
@@ -218,10 +218,10 @@
 				</div>
 
 				<div class="rounded-2xl border border-border/70 bg-background/82 px-2.75 py-2.25 shadow-sm">
-					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
+					<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
 					<div class="mt-1.5 flex items-end justify-between gap-3">
 						<p class="text-[1.62rem] font-semibold tracking-tight text-foreground">{completionPercent}%</p>
-						<p class="text-[0.72rem] text-muted-foreground">{checkedCount}/{signups.length || 0} checked in</p>
+						<p class="text-[0.82rem] text-muted-foreground">{checkedCount}/{signups.length || 0} checked in</p>
 					</div>
 					<div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
 						<div class="h-full rounded-full bg-foreground/75 transition-all" style="width: {completionPercent}%"></div>
@@ -236,7 +236,7 @@
 							<p class="font-semibold text-foreground">{checkedCount}</p>
 						</div>
 					</div>
-					<Button href="/signup/{event.id}" size="sm" class="mt-2 hidden h-7.5 w-full justify-center px-3 text-[0.7rem] shadow-sm lg:flex">Open public signup</Button>
+					<Button href="/signup/{event.id}" size="sm" class="mt-2 hidden h-7.5 w-full justify-center px-3 text-[0.8rem] shadow-sm lg:flex">Open public signup</Button>
 				</div>
 			</Card.Content>
 		</Card.Root>
@@ -258,15 +258,15 @@
 								<button
 									type="button"
 									onclick={() => (selectedShiftId = shift.id)}
-									class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[0.74rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
+									class={`appearance-none flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[0.84rem] font-medium transition-colors ${isActive ? 'border-primary bg-primary/8 text-foreground shadow-sm dark:border-white/10 dark:bg-black/76 dark:text-foreground' : 'border-border/70 bg-background text-muted-foreground hover:bg-muted/18 dark:border-white/10 dark:bg-black/58 dark:text-foreground/78 dark:hover:bg-black/70'}`}
 								>
 									<span>{shift.title}</span>
-									<span class="text-[0.68rem] text-muted-foreground/80 dark:text-foreground/60">{expected} expected</span>
+									<span class="text-[0.88rem] text-muted-foreground/80 dark:text-foreground/60">{expected} expected</span>
 								</button>
 							{/each}
 						</div>
 
-						<p class="text-[0.74rem] text-muted-foreground">{rosterStatusLabel}</p>
+						<p class="text-[0.84rem] text-muted-foreground">{rosterStatusLabel}</p>
 					</div>
 
 					{#if activeShift}
@@ -279,7 +279,7 @@
 								<div class="space-y-3">
 									<div class="flex items-center justify-between gap-3">
 										<p class="text-sm font-semibold text-foreground">Pending arrival</p>
-										<p class="text-xs text-muted-foreground">{pendingPeople.length} still to check in</p>
+										<p class="text-[0.82rem] text-muted-foreground">{pendingPeople.length} still to check in</p>
 									</div>
 
 									{#if pendingPeople.length > 0}
@@ -296,16 +296,16 @@
 															{#if person.avatarUrl}
 																<Avatar.Image src={person.avatarUrl} alt={person.name} />
 															{:else}
-																<Avatar.Fallback class="text-xs font-semibold text-foreground">{person.initials}</Avatar.Fallback>
+																<Avatar.Fallback class="text-[0.82rem] font-semibold text-foreground">{person.initials}</Avatar.Fallback>
 															{/if}
 														</Avatar.Root>
 														<div class="min-w-0 flex-1">
 															<p class="text-sm font-semibold text-foreground">{person.name}</p>
-															<p class="mt-0.5 text-[0.78rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
+															<p class="mt-0.5 text-[0.88rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
 														</div>
 														<div class="text-right">
-															<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expected</p>
-															<p class="mt-1 text-[0.72rem] text-muted-foreground">{person.meta}</p>
+															<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expected</p>
+															<p class="mt-1 text-[0.82rem] text-muted-foreground">{person.meta}</p>
 														</div>
 													</button>
 												{/each}
@@ -323,7 +323,7 @@
 									<div class="space-y-3 border-t border-border/60 pt-4">
 										<div class="flex items-center justify-between gap-3">
 											<p class="text-sm font-semibold text-foreground">Already checked in</p>
-											<p class="text-xs text-muted-foreground">{arrivedPeople.length} on site</p>
+											<p class="text-[0.82rem] text-muted-foreground">{arrivedPeople.length} on site</p>
 										</div>
 										<div class="overflow-hidden rounded-[1.35rem] border border-border/70 bg-muted/16 dark:border-white/10 dark:bg-black/66">
 											<div class="divide-y divide-border/50">
@@ -342,14 +342,14 @@
 															{#if person.avatarUrl}
 																<Avatar.Image src={person.avatarUrl} alt={person.name} />
 															{:else}
-																<Avatar.Fallback class="text-xs font-semibold text-foreground">{person.initials}</Avatar.Fallback>
+																<Avatar.Fallback class="text-[0.82rem] font-semibold text-foreground">{person.initials}</Avatar.Fallback>
 															{/if}
 														</Avatar.Root>
 														<div class="min-w-0 flex-1">
 															<p class="text-sm font-semibold text-muted-foreground line-through">{person.name}</p>
-															<p class="mt-0.5 text-[0.78rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
+															<p class="mt-0.5 text-[0.88rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
 														</div>
-														<p class="shrink-0 text-[0.72rem] font-medium text-muted-foreground">Checked in</p>
+														<p class="shrink-0 text-[0.82rem] font-medium text-muted-foreground">Checked in</p>
 													</button>
 												{/each}
 											</div>
@@ -366,7 +366,7 @@
 				{#if shiftLead}
 					<Card.Root size="sm" class="border-border/70 bg-card">
 						<Card.Content class="space-y-1.75 py-2.75">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expected next</p>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Expected next</p>
 							<div class="space-y-1.75 border-t border-border/60 pt-1.75">
 								{#each quickRoster as person (person.key)}
 									<div class="flex items-center gap-2.5">
@@ -374,12 +374,12 @@
 											{#if person.avatarUrl}
 												<Avatar.Image src={person.avatarUrl} alt={person.name} />
 											{:else}
-												<Avatar.Fallback class="text-xs font-semibold text-foreground">{person.initials}</Avatar.Fallback>
+												<Avatar.Fallback class="text-[0.82rem] font-semibold text-foreground">{person.initials}</Avatar.Fallback>
 											{/if}
 										</Avatar.Root>
 										<div class="min-w-0 flex-1">
-											<p class="truncate text-[0.92rem] font-medium text-foreground">{person.name}</p>
-											<p class="truncate text-[0.72rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
+											<p class="truncate text-[0.82rem] font-medium text-foreground">{person.name}</p>
+											<p class="truncate text-[0.82rem] text-muted-foreground">{person.affiliation ?? person.meta}</p>
 										</div>
 									</div>
 								{/each}

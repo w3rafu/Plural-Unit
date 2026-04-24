@@ -168,20 +168,20 @@
 {#if isAttendanceWindowVisible && attendanceRoster}
 	<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm" aria-busy={isUpdatingAttendance}>
 		<div class="space-y-1">
-			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+			<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				Day-of attendance
 			</p>
-			<p class="text-xs text-muted-foreground">
+			<p class="text-[0.82rem] text-muted-foreground">
 				{getEventAttendanceRosterSummaryCopy(attendanceRoster)}
 			</p>
 			{#if attendanceOutcomeSummary.recorded > 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					{formatEventAttendanceOutcomeSummary(attendanceOutcomeSummary)} · {attendanceOutcomeSummary.recorded}
 					recorded.
 				</p>
 			{/if}
 			{#if attendanceRoster.externalAttendanceCount > 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					{attendanceRoster.externalAttendanceCount} saved attendance outcome{attendanceRoster.externalAttendanceCount === 1 ? '' : 's'} belong{attendanceRoster.externalAttendanceCount === 1 ? 's' : ''} to people no longer on the current roster.
 				</p>
 			{/if}
@@ -189,7 +189,7 @@
 				<p
 					role="status"
 					aria-live="polite"
-					class="rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground"
+					class="rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-[0.82rem] text-muted-foreground"
 				>
 					{attendanceMutationStatus}
 				</p>
@@ -197,7 +197,7 @@
 		</div>
 
 		<div class="space-y-2">
-			<p class="text-xs font-medium text-foreground">Needs attendance update</p>
+			<p class="text-[0.82rem] font-medium text-foreground">Needs attendance update</p>
 			{#if canBulkUpdateAttendance}
 				<div class="flex flex-wrap items-center gap-2">
 					<Button
@@ -225,7 +225,7 @@
 				</div>
 			{/if}
 			{#if attendanceRoster.pendingEntries.length === 0}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					No expected attendees still need a day-of decision.
 				</p>
 			{:else}
@@ -244,7 +244,7 @@
 										</Badge>
 									{/if}
 								</div>
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									{entry.responseUpdatedAt
 										? `Latest RSVP ${formatShortDateTime(entry.responseUpdatedAt)}.`
 										: 'Expected attendee from saved RSVP state.'}
@@ -285,7 +285,7 @@
 					{/each}
 				</div>
 				{#if attendanceRoster.pendingEntries.length > 4}
-					<p class="text-xs text-muted-foreground">
+					<p class="text-[0.82rem] text-muted-foreground">
 						+{attendanceRoster.pendingEntries.length - 4} more expected attendee{attendanceRoster.pendingEntries.length - 4 === 1 ? '' : 's'} still need a day-of decision.
 					</p>
 				{/if}
@@ -294,7 +294,7 @@
 
 		{#if attendanceRoster.recordedEntries.length > 0}
 			<div class="space-y-2">
-				<p class="text-xs font-medium text-foreground">Recorded</p>
+				<p class="text-[0.82rem] font-medium text-foreground">Recorded</p>
 				<div class="space-y-2">
 					{#each attendanceRoster.recordedEntries.slice(0, 4) as entry (entry.member.profile_id)}
 						{@const targetId = getTargetId(entry.member.profile_id)}
@@ -315,7 +315,7 @@
 										</Badge>
 									{/if}
 								</div>
-								<p class="text-xs text-muted-foreground">
+								<p class="text-[0.82rem] text-muted-foreground">
 									{entry.attendanceUpdatedAt
 										? `Recorded ${formatShortDateTime(entry.attendanceUpdatedAt)}.`
 										: 'Attendance recorded.'}
@@ -369,7 +369,7 @@
 					{/each}
 				</div>
 				{#if attendanceRoster.recordedEntries.length > 4}
-					<p class="text-xs text-muted-foreground">
+					<p class="text-[0.82rem] text-muted-foreground">
 						+{attendanceRoster.recordedEntries.length - 4} more recorded attendance outcome{attendanceRoster.recordedEntries.length - 4 === 1 ? '' : 's'}.
 					</p>
 				{/if}
@@ -377,7 +377,7 @@
 		{/if}
 
 		{#if attendanceRoster.noResponseCount > 0}
-			<p class="text-xs text-muted-foreground">
+			<p class="text-[0.82rem] text-muted-foreground">
 				{attendanceRoster.noResponseCount} member{attendanceRoster.noResponseCount === 1 ? '' : 's'} still have no RSVP. Use the response roster above if you need outreach before recording attendance.
 			</p>
 		{/if}

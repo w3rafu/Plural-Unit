@@ -150,10 +150,10 @@
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-2">
 					<div class="min-w-0 space-y-0.5">
-						<p class="truncate text-[0.92rem] font-semibold leading-5 text-foreground sm:text-[0.98rem] lg:text-[1.02rem]">
+						<p class="truncate text-[0.82rem] font-semibold leading-5 text-foreground sm:text-[0.88rem] lg:text-[1.02rem]">
 							{thread.participant.name}
 						</p>
-						<p class="truncate text-[0.74rem] text-muted-foreground sm:text-[0.78rem] lg:text-[0.8rem]">
+						<p class="truncate text-[0.84rem] text-muted-foreground sm:text-[0.88rem] lg:text-[0.8rem]">
 							{thread.participant.subtitle || 'Direct conversation'}
 							<span class="mx-1.5 text-muted-foreground/60">·</span>
 							{headerMeta}
@@ -230,7 +230,7 @@
 				{#if statusBadges.length > 0}
 					<div class="mt-0.75 flex flex-wrap gap-1">
 							{#each statusBadges as badge (badge.label)}
-								<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium sm:text-[0.64rem]">
+								<Badge variant={badge.variant} class="rounded-full px-2 py-0.5 text-[0.82rem] font-medium sm:text-[0.84rem]">
 									{badge.label}
 								</Badge>
 							{/each}
@@ -243,12 +243,12 @@
 	{#if archived || muted}
 		<div class="border-b border-border/70 bg-background px-3 py-2 sm:px-4">
 			{#if archived}
-				<p class="text-xs text-muted-foreground">
+				<p class="text-[0.82rem] text-muted-foreground">
 					Archived conversations stay out of inbox triage until you restore them or send a new reply.
 				</p>
 			{/if}
 			{#if muted}
-				<p class={cn('text-xs text-muted-foreground', archived ? 'mt-1' : '')}>
+				<p class={cn('text-[0.82rem] text-muted-foreground', archived ? 'mt-1' : '')}>
 					Push notifications are muted for this conversation, but in-app unread state and replies still update.
 				</p>
 			{/if}
@@ -273,13 +273,13 @@
 			<div class={cn('flex min-h-full flex-col', isSparseThread ? 'justify-start' : 'justify-end')}>
 				{#if isLoadingOlderMessages}
 					<div class="mb-2.5 flex justify-center">
-						<span class="text-xs text-muted-foreground animate-pulse">Loading older messages…</span>
+						<span class="text-[0.82rem] text-muted-foreground animate-pulse">Loading older messages…</span>
 					</div>
 				{:else if thread.hasMoreMessages}
 					<div class="mb-2.5 flex justify-center">
 						<button
 							type="button"
-							class="text-xs text-muted-foreground transition-colors hover:text-foreground"
+							class="text-[0.82rem] text-muted-foreground transition-colors hover:text-foreground"
 							onclick={() => onLoadOlderMessages?.()}
 						>
 							Load older messages
@@ -290,10 +290,10 @@
 				{#if isSparseThread}
 					<div class="mb-2 rounded-[1.05rem] border border-border/70 bg-background/88 px-3 py-2.5 shadow-sm sm:px-3.5">
 						<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation context</p>
-							<p class="text-[0.78rem] text-muted-foreground">{thread.participant.subtitle || 'Direct conversation'} · {headerMeta}</p>
+							<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation context</p>
+							<p class="text-[0.88rem] text-muted-foreground">{thread.participant.subtitle || 'Direct conversation'} · {headerMeta}</p>
 						</div>
-						<p class="mt-1 text-[0.78rem] leading-5 text-muted-foreground">
+						<p class="mt-1 text-[0.88rem] leading-5 text-muted-foreground">
 							{thread.unreadCount > 0
 								? `${thread.unreadCount} unread ${thread.unreadCount === 1 ? 'message still needs' : 'messages still need'} review before the thread is fully caught up.`
 								: 'The thread is quiet right now, so the latest updates stay visible near the composer.'}
@@ -304,7 +304,7 @@
 				{#each dayGroups as group (group.dateKey)}
 					<div class="my-1.5 flex items-center gap-2 lg:my-2">
 						<div class="h-px flex-1 bg-border/50"></div>
-						<span class="rounded-full border border-border/70 bg-background px-2.5 py-0.85 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.75 sm:py-1 sm:text-[0.68rem]">
+						<span class="rounded-full border border-border/70 bg-background px-2.5 py-0.85 text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:px-2.75 sm:py-1 sm:text-[0.88rem]">
 							{group.label}
 						</span>
 						<div class="h-px flex-1 bg-border/50"></div>
@@ -324,7 +324,7 @@
 											type="button"
 											variant="ghost"
 											size="xs"
-											class="h-auto px-2 py-1 text-[0.65rem] text-muted-foreground"
+											class="h-auto px-2 py-1 text-[0.75rem] text-muted-foreground"
 											disabled={deletingMessageId === message.id}
 											onclick={() => onDeleteMessage(message.id)}
 										>
@@ -345,7 +345,7 @@
 									)}
 								>
 									{#if message.isDeleted}
-										<p class="text-[0.92rem] italic leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.98rem]">
+										<p class="text-[0.82rem] italic leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.88rem]">
 											{message.body}
 										</p>
 									{:else if message.kind === 'image' && message.imageUrl}
@@ -357,19 +357,19 @@
 												loading="lazy"
 											/>
 											{#if message.body.trim()}
-												<p class="text-[0.92rem] leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.98rem]">
+												<p class="text-[0.82rem] leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.88rem]">
 													{message.body}
 												</p>
 											{/if}
 										</div>
 									{:else}
-										<p class="text-[0.92rem] leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.98rem]">
+										<p class="text-[0.82rem] leading-6 whitespace-pre-wrap wrap-break-word lg:text-[0.88rem]">
 											{message.body}
 										</p>
 									{/if}
 									<p
 										class={cn(
-											'mt-1 text-right text-[0.66rem]',
+											'mt-1 text-right text-[0.86rem]',
 											message.isDeleted
 												? 'text-muted-foreground'
 												: message.senderKind === 'owner'
@@ -383,7 +383,7 @@
 							</div>
 						</div>
 						{#if message.id === lastSeenMessageId}
-							<p class="mb-2 text-right text-[0.65rem] text-muted-foreground">Seen</p>
+							<p class="mb-2 text-right text-[0.75rem] text-muted-foreground">Seen</p>
 						{/if}
 					{/each}
 				{/each}
@@ -393,7 +393,7 @@
 
 	{#if contactTyping}
 		<div class="px-2.5 py-0.75 sm:px-4">
-			<p class="text-xs text-muted-foreground animate-pulse">{thread.participant.name} is typing…</p>
+			<p class="text-[0.82rem] text-muted-foreground animate-pulse">{thread.participant.name} is typing…</p>
 		</div>
 	{/if}
 

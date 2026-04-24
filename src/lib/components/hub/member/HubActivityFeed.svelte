@@ -71,13 +71,13 @@
 	<Card.Content class="space-y-1.5 py-2.25" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
 			<div class="space-y-0.5">
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent activity</p>
-				<Card.Description class="text-[0.72rem] leading-4.25">
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent activity</p>
+				<Card.Description class="text-[0.82rem] leading-4.25">
 					What changed most recently in {resolvedOrganizationName}.
 				</Card.Description>
 			</div>
 			{#if totalItems.length > 0}
-				<p class="text-[0.68rem] text-muted-foreground">
+				<p class="text-[0.88rem] text-muted-foreground">
 					{totalItems.length} item{totalItems.length === 1 ? '' : 's'}
 				</p>
 			{/if}
@@ -140,7 +140,7 @@
 										</div>
 										<p class="mt-0.5 truncate text-[0.82rem] font-semibold text-foreground">{item.title}</p>
 									</div>
-									<span class="shrink-0 pt-0.5 text-[0.64rem] font-medium text-primary/85 transition-colors group-hover:text-primary">{primaryAction.label}</span>
+									<span class="shrink-0 pt-0.5 text-[0.84rem] font-medium text-primary/85 transition-colors group-hover:text-primary">{primaryAction.label}</span>
 								</div>
 								<p class="mt-0.5 text-[0.69rem] leading-4.25 text-muted-foreground">{item.summary}</p>
 								<div class="mt-0.75 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.63rem] text-muted-foreground">
@@ -162,7 +162,7 @@
 					<Button
 						variant="ghost"
 						size="sm"
-						class="h-7 rounded-full px-2.5 text-[0.7rem] text-muted-foreground hover:text-foreground"
+						class="h-7 rounded-full px-2.5 text-[0.8rem] text-muted-foreground hover:text-foreground"
 						onclick={() => (showAll = !showAll)}
 					>
 						{showAll ? 'Show less' : `View all ${totalItems.length} items`}

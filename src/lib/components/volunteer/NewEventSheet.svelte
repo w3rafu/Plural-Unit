@@ -11,7 +11,7 @@
 <Sheet.Root bind:open>
 	<Sheet.Trigger>
 		{#snippet child({ props })}
-			<Button {...props} variant="outline" size="sm" class="h-8 rounded-full px-3 text-[0.78rem] font-medium">New Event</Button>
+			<Button {...props} variant="outline" size="sm" class="h-8 rounded-full px-3 text-[0.88rem] font-medium">New Event</Button>
 		{/snippet}
 	</Sheet.Trigger>
 	<Sheet.Content side="right" class="w-full max-w-md overflow-y-auto">

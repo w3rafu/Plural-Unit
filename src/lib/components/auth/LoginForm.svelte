@@ -247,7 +247,7 @@
 			data-feedback-type={authBoundary.loginFeedbackType}
 			class={`rounded-xl border px-4 py-3 ${feedbackToneClass}`}
 		>
-			<p class="text-xs font-medium uppercase tracking-[0.14em] opacity-80">{feedbackLabel}</p>
+			<p class="text-[0.82rem] font-medium uppercase tracking-[0.14em] opacity-80">{feedbackLabel}</p>
 			<p class="mt-1 text-sm leading-6">{authBoundary.loginFeedback}</p>
 		</div>
 	{/if}

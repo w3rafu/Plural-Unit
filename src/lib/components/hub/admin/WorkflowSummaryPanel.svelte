@@ -24,22 +24,22 @@
 {#if entries.length > 0}
 	<div class="mt-1 space-y-3 rounded-xl border border-border/70 bg-background/70 p-3 shadow-sm">
 		<div class="space-y-1">
-			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+			<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				{title}
 			</p>
-			<p class="text-xs text-muted-foreground">{description}</p>
+			<p class="text-[0.82rem] text-muted-foreground">{description}</p>
 		</div>
 
 		<div class="space-y-2">
 			{#each entries as entry (entry.id)}
 				<div class="space-y-1 rounded-lg border border-border/70 bg-background px-3 py-2">
-					<p class="text-xs font-medium text-foreground">{entry.label}</p>
+					<p class="text-[0.82rem] font-medium text-foreground">{entry.label}</p>
 					{#if entry.contextCopy}
-						<p class="text-xs text-muted-foreground">{entry.contextCopy}</p>
+						<p class="text-[0.82rem] text-muted-foreground">{entry.contextCopy}</p>
 					{/if}
-					<p class="text-xs text-muted-foreground">{entry.summary.summaryCopy}</p>
+					<p class="text-[0.82rem] text-muted-foreground">{entry.summary.summaryCopy}</p>
 					{#if entry.summary.note}
-						<p class="text-xs text-foreground">{entry.summary.note}</p>
+						<p class="text-[0.82rem] text-foreground">{entry.summary.note}</p>
 					{/if}
 				</div>
 			{/each}

@@ -197,7 +197,7 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-muted-foreground">
+			<div class="flex flex-wrap items-center justify-between gap-2 text-[0.8rem] text-muted-foreground">
 				<p>{summaryCopy}</p>
 				{#if isRefreshing}
 					<p class="font-medium uppercase tracking-[0.16em] text-muted-foreground">Refreshing</p>
@@ -221,10 +221,10 @@
 						<section class="space-y-1.5">
 							<div class="flex flex-wrap items-center justify-between gap-2 px-0.75">
 								<div>
-									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Featured people</p>
-									<p class="text-[0.74rem] text-muted-foreground">Start with the lead contacts and newest faces in the organization.</p>
+									<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Featured people</p>
+									<p class="text-[0.84rem] text-muted-foreground">Start with the lead contacts and newest faces in the organization.</p>
 								</div>
-								<p class="text-[0.68rem] text-muted-foreground">{spotlightMembers.length} profiles</p>
+								<p class="text-[0.82rem] text-muted-foreground">{spotlightMembers.length} profiles</p>
 							</div>
 
 							<div class="grid gap-2.25 xl:grid-cols-[minmax(0,1.18fr)_minmax(0,0.82fr)]">
@@ -248,28 +248,28 @@
 													href={getDetailHref(member)}
 													variant="ghost"
 													size="sm"
-													class="h-auto justify-start px-0 py-0 text-[0.88rem] font-semibold hover:bg-transparent"
+													class="h-auto justify-start px-0 py-0 text-[0.84rem] font-semibold hover:bg-transparent"
 												>
 													{member.name || 'Unnamed member'}
 												</Button>
-												<Badge variant="muted" class="rounded-full px-2 py-0.5 text-[0.62rem] font-medium uppercase tracking-[0.14em]">
+												<Badge variant="muted" class="rounded-full px-2 py-0.5 text-[0.76rem] font-medium uppercase tracking-[0.14em]">
 													{getMemberDirectoryRoleLabel(member.role)}
 												</Badge>
 											</div>
-											<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getSpotlightLabel(member)}</p>
-											<p class="text-[0.74rem] leading-4.5 text-muted-foreground">{getMemberDirectoryMeta(member, currentUserId)}</p>
+											<p class="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getSpotlightLabel(member)}</p>
+											<p class="text-[0.84rem] leading-4.5 text-muted-foreground">{getMemberDirectoryMeta(member, currentUserId)}</p>
 											{#if bioPreview}
-												<p class="pt-0.5 text-[0.74rem] leading-4.5 text-foreground/80 wrap-break-word">{bioPreview}</p>
+												<p class="pt-0.5 text-[0.84rem] leading-4.5 text-foreground/80 wrap-break-word">{bioPreview}</p>
 											{/if}
 										</div>
 									</div>
 
-									<div class="mt-1.75 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-1.5 text-[0.72rem] text-muted-foreground">
+									<div class="mt-1.75 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-1.5 text-[0.82rem] text-muted-foreground">
 										<p class="wrap-break-word">{formatContact(member)}</p>
 										<p>Joined {formatJoinedAt(member.joined_at)}</p>
 									</div>
 
-									<div class="mt-1 flex items-center justify-end gap-2 text-[0.72rem] text-muted-foreground">
+									<div class="mt-1 flex items-center justify-end gap-2 text-[0.82rem] text-muted-foreground">
 											<Button href={getDetailHref(member)} variant="ghost" size="xs" class="h-auto px-0 text-muted-foreground hover:text-foreground">
 												{detailLabel}
 											</Button>
@@ -295,10 +295,10 @@
 					<section class="space-y-1.5">
 						<div class="flex flex-wrap items-center justify-between gap-2 px-0.75">
 							<div>
-								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Roster</p>
-								<p class="text-[0.74rem] text-muted-foreground">Everyone else in the directory, grouped in a calmer reading rhythm.</p>
+								<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Roster</p>
+								<p class="text-[0.84rem] text-muted-foreground">Everyone else in the directory, grouped in a calmer reading rhythm.</p>
 							</div>
-							<p class="text-[0.68rem] text-muted-foreground">{gridMembers.length} profiles</p>
+							<p class="text-[0.82rem] text-muted-foreground">{gridMembers.length} profiles</p>
 						</div>
 
 						<div class="grid gap-2.25 md:grid-cols-2 xl:grid-cols-2">
@@ -328,27 +328,27 @@
 											>
 												{member.name || 'Unnamed member'}
 											</Button>
-											<Badge variant="muted" class="rounded-full px-2 py-0.5 text-[0.64rem] font-medium uppercase tracking-[0.14em]">
+											<Badge variant="muted" class="rounded-full px-2 py-0.5 text-[0.78rem] font-medium uppercase tracking-[0.14em]">
 												{getMemberDirectoryRoleLabel(member.role)}
 											</Badge>
-											<Badge variant={signal.variant} class="rounded-full px-2 py-0.5 text-[0.64rem] font-medium uppercase tracking-[0.14em]">
+											<Badge variant={signal.variant} class="rounded-full px-2 py-0.5 text-[0.78rem] font-medium uppercase tracking-[0.14em]">
 												{signal.label}
 											</Badge>
 										</div>
-										<p class="text-[0.72rem] text-muted-foreground">
+										<p class="text-[0.82rem] text-muted-foreground">
 											{getMemberDirectoryMeta(member, currentUserId)}
 										</p>
 										{#if bioPreview}
-											<p class="pt-0.5 text-[0.74rem] leading-4.5 text-foreground/80 wrap-break-word">{bioPreview}</p>
+											<p class="pt-0.5 text-[0.84rem] leading-4.5 text-foreground/80 wrap-break-word">{bioPreview}</p>
 										{/if}
 									</div>
 
-										<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-1.5 text-[0.72rem] text-muted-foreground">
+										<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-1.5 text-[0.82rem] text-muted-foreground">
 											<p class="wrap-break-word">{formatContact(member)}</p>
 											<p>Joined {formatJoinedAt(member.joined_at)}</p>
 										</div>
 
-									<div class="mt-1 flex flex-wrap items-center gap-2 text-[0.72rem]">
+									<div class="mt-1 flex flex-wrap items-center gap-2 text-[0.82rem]">
 										<Button href={getDetailHref(member)} variant="ghost" size="xs" class="h-auto px-0 text-muted-foreground hover:text-foreground">
 											{detailLabel}
 										</Button>

@@ -95,12 +95,12 @@
 			</div>
 
 			<div class="flex flex-wrap gap-1.25 sm:gap-1.5">
-				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
-				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
-				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.88rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.88rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.88rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
 			</div>
 
-			<p class="max-w-2xl text-[0.78rem] leading-4.75 text-muted-foreground">{profileSummary}</p>
+			<p class="max-w-2xl text-[0.88rem] leading-4.75 text-muted-foreground">{profileSummary}</p>
 		</div>
 	</Card.Content>
 </Card.Root>

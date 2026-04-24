@@ -59,7 +59,7 @@
 			<h2 class="text-lg font-semibold tracking-tight">{PLUGIN_REGISTRY.resources.title}</h2>
 			<p class="text-sm text-muted-foreground">{PLUGIN_REGISTRY.resources.description}</p>
 		</div>
-		<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+		<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 			{items.length} saved
 		</p>
 	</div>
@@ -81,16 +81,16 @@
 						<div class="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl"></div>
 						<div class="relative space-y-3">
 							<div class="flex flex-wrap items-center justify-between gap-2">
-								<Badge variant="outline" class="rounded-xl border-background/70 bg-background/80 px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-foreground shadow-sm">
+								<Badge variant="outline" class="rounded-xl border-background/70 bg-background/80 px-2.5 py-1 text-[0.88rem] uppercase tracking-[0.16em] text-foreground shadow-sm">
 									Featured {getResourceTypeLabel(leadResource.resource_type)}
 								</Badge>
-								<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 									{getResourceUsageLabel(leadResource)}
 								</p>
 							</div>
 
 							<div class="max-w-xl space-y-1.5">
-								<p class="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+								<p class="text-[0.82rem] uppercase tracking-[0.14em] text-muted-foreground">
 									{getResourceDestinationLabel(leadResource.href)}
 								</p>
 								<h3 class="text-xl font-semibold tracking-tight text-foreground sm:text-[1.45rem]">
@@ -104,7 +104,7 @@
 					</div>
 
 					<Card.Content class="flex flex-wrap items-center justify-between gap-3 py-4">
-						<div class="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.12em] text-muted-foreground">
+						<div class="flex flex-wrap items-center gap-2 text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 							<span class="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1">
 								Quick access
 							</span>
@@ -135,16 +135,16 @@
 						<Card.Root size="sm" class="border-border/70 bg-card">
 							<Card.Content class="flex h-full flex-col gap-3">
 								<div class="flex flex-wrap items-center justify-between gap-2">
-									<Badge variant="outline" class="rounded-xl px-2.5 py-1 text-[0.68rem] uppercase tracking-[0.16em]">
+									<Badge variant="outline" class="rounded-xl px-2.5 py-1 text-[0.88rem] uppercase tracking-[0.16em]">
 										{getResourceTypeLabel(resource.resource_type)}
 									</Badge>
-									<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+									<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 										{getResourceUsageLabel(resource)}
 									</p>
 								</div>
 
 								<div class="space-y-1.5">
-									<p class="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+									<p class="text-[0.82rem] uppercase tracking-[0.12em] text-muted-foreground">
 										{getResourceDestinationLabel(resource.href)}
 									</p>
 									<h3 class="text-sm font-medium leading-5 text-foreground">{resource.title}</h3>
@@ -154,7 +154,7 @@
 								</div>
 
 								<div class="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-3">
-									<p class="text-xs text-muted-foreground">Open in a new tab</p>
+									<p class="text-[0.82rem] text-muted-foreground">Open in a new tab</p>
 									<Button
 										href={resource.href}
 										variant="outline"

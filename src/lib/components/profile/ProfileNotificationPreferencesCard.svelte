@@ -236,7 +236,7 @@
 					<section class="space-y-2 rounded-2xl border border-border/70 bg-background/60 p-2.75 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Preferred communication</h3>
-							<p class="text-xs text-muted-foreground">Set the channel that should usually reach you first when someone needs a response.</p>
+							<p class="text-[0.82rem] text-muted-foreground">Set the channel that should usually reach you first when someone needs a response.</p>
 						</div>
 
 						<div class="grid gap-1.25 sm:grid-cols-2 xl:grid-cols-5">
@@ -259,14 +259,14 @@
 
 						<div class="rounded-xl border border-border/60 bg-muted/18 px-3 py-2">
 							<p class="text-sm font-medium text-foreground">{communicationPreferenceCaption}</p>
-							<p class="mt-1 text-xs leading-5 text-muted-foreground">{communicationPreferenceSummary}</p>
+							<p class="mt-1 text-[0.82rem] leading-5 text-muted-foreground">{communicationPreferenceSummary}</p>
 						</div>
 					</section>
 
 					<section class="space-y-2.25 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Hub alerts in the app</h3>
-							<p class="text-xs text-muted-foreground">Show broadcasts and event updates in the app.</p>
+							<p class="text-[0.82rem] text-muted-foreground">Show broadcasts and event updates in the app.</p>
 						</div>
 
 						<Field.Group class="gap-3">
@@ -319,7 +319,7 @@
 					<section class="space-y-2.25 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Direct message push</h3>
-							<p class="text-xs text-muted-foreground">Allow push for new direct messages from this organization.</p>
+							<p class="text-[0.82rem] text-muted-foreground">Allow push for new direct messages from this organization.</p>
 						</div>
 
 						<Field.Group class="gap-3">
@@ -369,7 +369,7 @@
 							Retry load
 						</Button>
 					{/if}
-					<p class="text-xs text-muted-foreground">
+					<p class="text-[0.82rem] text-muted-foreground">
 						{isLoadingInitialState
 							? 'Loading your current notification settings...'
 							: !currentHub.hasLoadedForCurrentOrg
@@ -383,7 +383,7 @@
 				<div class="space-y-2.75 border-t border-border/70 pt-3.5">
 					<div class="space-y-1">
 						<h3 class="text-sm font-semibold text-foreground">This device</h3>
-						<p class="text-xs text-muted-foreground">
+						<p class="text-[0.82rem] text-muted-foreground">
 							Enable browser push on this device. Organization settings above still decide which alerts can be sent.
 						</p>
 					</div>

@@ -191,7 +191,7 @@
 />
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-1.25 border-b border-border/70 py-3.25">
+	<Card.Header class="gap-1 border-b border-border/70 py-2.75 sm:py-3">
 		<Card.Title class="text-lg font-semibold tracking-tight">Members</Card.Title>
 	</Card.Header>
 
@@ -200,52 +200,50 @@
 			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-2 p-3.25 sm:p-3.5">
-			<div class="space-y-1.5 rounded-2xl border border-border/70 bg-muted/10 p-2.25 sm:p-2.5">
-				<div class="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between xl:gap-3">
-					<div class="space-y-1">
-						<div class="flex flex-wrap items-center gap-1">
-							<div class="rounded-full border border-border/70 bg-background px-2.5 py-0.9 text-[0.66rem] font-medium text-foreground shadow-sm">
+		<Card.Content class="space-y-1.75 p-3 sm:p-3.25">
+			<div class="space-y-1.25 rounded-2xl border border-border/70 bg-muted/10 p-2 sm:p-2.25">
+				<div class="flex flex-col gap-1.25 xl:flex-row xl:items-center xl:justify-between xl:gap-3">
+					<div class="flex flex-wrap items-center gap-1">
+							<div class="rounded-full border border-border/70 bg-background px-2.5 py-0.9 text-[0.82rem] font-medium text-foreground shadow-sm">
 							{organizationMembers.length} members
 						</div>
-							<div class="rounded-full border border-border/70 bg-background px-2.5 py-0.9 text-[0.66rem] font-medium text-foreground shadow-sm">
+							<div class="rounded-full border border-border/70 bg-background px-2.5 py-0.9 text-[0.82rem] font-medium text-foreground shadow-sm">
 							{adminCount} admins
 						</div>
-							<div class="rounded-full border border-border/70 bg-background px-2.5 py-0.9 text-[0.66rem] font-medium text-foreground shadow-sm">
+							<div class="rounded-full border border-border/70 bg-background px-2.5 py-0.9 text-[0.82rem] font-medium text-foreground shadow-sm">
 							{recentJoinCount} recent
 						</div>
 							{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
-								<p class="text-[0.68rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+								<p class="text-[0.82rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 								Refreshing roster
 								</p>
 							{/if}
-						</div>
-						<p class="text-[0.7rem] text-muted-foreground">{reviewSummary}</p>
+							<p class="text-[0.86rem] text-muted-foreground">{reviewSummary}</p>
 					</div>
 
-					<label class="relative block w-full xl:max-w-sm">
+					<label class="relative block w-full xl:max-w-76">
 						<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Search members"
-							class="h-7 rounded-full border-border/70 bg-background pl-9 shadow-sm"
+							class="h-7.5 rounded-full border-border/70 bg-background pl-9 shadow-sm"
 							bind:value={searchQuery}
 						/>
 					</label>
 				</div>
 
-				<div class="grid gap-1.25 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center xl:gap-2.5">
+				<div class="grid gap-1 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center xl:gap-2">
 					<div class="min-w-0 xl:flex-1">
 						<DeletionRequestsCard />
 					</div>
 
-					<div class="segmented-control inline-flex flex-wrap gap-1 rounded-full border border-border/70 bg-background/82 p-0.75 shadow-sm">
+					<div class="segmented-control inline-flex flex-wrap gap-1 rounded-full border border-border/70 bg-background/82 p-0.5 shadow-sm xl:justify-self-end">
 						{#each memberFilterOptions as option (option.value)}
 							<Button
 								type="button"
 								size="sm"
 								variant="ghost"
-								class={`h-6.5 rounded-full px-2.75 text-[0.68rem] ${memberFilter === option.value ? 'bg-foreground text-background shadow-none' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
+								class={`h-6.25 rounded-full px-2.75 text-[0.69rem] ${memberFilter === option.value ? 'bg-foreground text-background shadow-none' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
 								onclick={() => (memberFilter = option.value)}
 							>
 								{option.label}
@@ -255,7 +253,7 @@
 				</div>
 			</div>
 
-			<div class="rounded-2xl border border-border/70 bg-muted/10 p-1.25 sm:p-1.5">
+			<div class="rounded-2xl border border-border/70 bg-muted/10 p-1 sm:p-1.25">
 				{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
 					<div class="py-10 text-center">
 						<p class="text-sm text-muted-foreground">Loading members…</p>

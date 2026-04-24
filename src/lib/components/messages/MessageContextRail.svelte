@@ -112,7 +112,7 @@
 <Card.Root class="hidden h-full min-h-0 overflow-hidden border-border/70 bg-card xl:flex xl:flex-col">
 	<Card.Content class="flex h-full min-h-0 flex-col gap-4 py-4.5">
 		<div class="space-y-0.5">
-			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+			<p class="text-[0.88rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				Conversation context
 			</p>
 			<p class="text-[0.84rem] leading-5 text-muted-foreground">
@@ -130,7 +130,7 @@
 			</Avatar.Root>
 
 			<div class="min-w-0 flex-1">
-				<p class="truncate text-[0.98rem] font-semibold text-foreground">{thread.participant.name}</p>
+				<p class="truncate text-[0.88rem] font-semibold text-foreground">{thread.participant.name}</p>
 				<p class="truncate text-[0.82rem] text-muted-foreground">
 					{thread.participant.subtitle || 'Direct conversation'}
 				</p>
@@ -138,7 +138,7 @@
 		</div>
 
 		<div class="rounded-[1.1rem] bg-muted/20 px-3.5 py-3">
-			<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+			<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 				Latest note
 			</p>
 			<p class="mt-1.5 text-[0.84rem] leading-5 text-foreground">{latestPreview}</p>
@@ -146,25 +146,25 @@
 
 		<div class="grid gap-2.5 border-t border-border/60 pt-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
 			<div>
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Updated</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Updated</p>
 				<p class="mt-1 text-[0.84rem] font-medium text-foreground">{lastUpdatedLabel}</p>
 			</div>
 			<div>
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Unread</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Unread</p>
 				<p class="mt-1 text-[0.84rem] font-medium text-foreground">
 					{thread.unreadCount > 0 ? `${thread.unreadCount} waiting` : 'Caught up'}
 				</p>
 			</div>
 			<div>
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Thread</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Thread</p>
 				<p class="mt-1 text-[0.84rem] font-medium text-foreground">{threadModeLabel}</p>
 			</div>
 			<div>
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Messages</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Messages</p>
 				<p class="mt-1 text-[0.84rem] font-medium text-foreground">{totalMessageCount} total</p>
 			</div>
 			<div class="sm:col-span-2 xl:col-span-1 2xl:col-span-2">
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Contact replies</p>
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Contact replies</p>
 				<p class="mt-1 text-[0.84rem] font-medium text-foreground">{contactReplyCount} sent from this contact</p>
 			</div>
 		</div>
@@ -179,7 +179,7 @@
 
 		{#if peerThreads.length > 0}
 			<div class="border-t border-border/60 pt-3">
-				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+				<p class="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
 					Other active people
 				</p>
 				<div class="mt-2.5 space-y-1.5">
@@ -193,16 +193,16 @@
 								{#if peer.avatarUrl}
 									<Avatar.Image src={peer.avatarUrl} alt={peer.name} />
 								{:else}
-									<Avatar.Fallback class="text-xs font-semibold text-foreground">
+									<Avatar.Fallback class="text-[0.82rem] font-semibold text-foreground">
 										{peer.initials}
 									</Avatar.Fallback>
 								{/if}
 							</Avatar.Root>
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-[0.84rem] font-medium text-foreground">{peer.name}</p>
-								<p class="truncate text-[0.72rem] text-muted-foreground">{peer.subtitle}</p>
+								<p class="truncate text-[0.82rem] text-muted-foreground">{peer.subtitle}</p>
 							</div>
-							<p class="shrink-0 text-[0.68rem] font-medium text-muted-foreground">{peer.note}</p>
+							<p class="shrink-0 text-[0.88rem] font-medium text-muted-foreground">{peer.note}</p>
 						</button>
 					{/each}
 				</div>
