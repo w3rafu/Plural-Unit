@@ -21,7 +21,7 @@
 		manageEventsHref = undefined as string | undefined
 	} = $props();
 
-	const MAX_VISIBLE_ACTIVITY_ITEMS = 3;
+	const MAX_VISIBLE_ACTIVITY_ITEMS = 2;
 	let showAll = $state(false);
 
 	const allItems = $derived(items ?? currentHub.allActivityFeed);
@@ -68,11 +68,11 @@
 </script>
 
 <Card.Root size="sm" class="h-full border-border/70 bg-card">
-	<Card.Content class="space-y-3 py-3.5" aria-busy={resolvedIsLoading}>
+	<Card.Content class="space-y-2.5 py-3" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
 			<div class="space-y-1">
 				<Card.Title class="text-lg font-semibold tracking-tight">Recent activity</Card.Title>
-				<Card.Description>
+				<Card.Description class="text-[0.78rem]">
 					What changed most recently in {resolvedOrganizationName}.
 				</Card.Description>
 			</div>
@@ -106,25 +106,25 @@
 				</p>
 			</div>
 		{:else}
-			<div class="overflow-hidden rounded-[1.25rem] border border-border/70 bg-background/70 shadow-sm">
+			<div class="overflow-hidden rounded-[1.1rem] border border-border/70 bg-background/70 shadow-sm">
 				{#each activityItems as item, index (item.id)}
 					{@const primaryAction = getPrimaryAction(item)}
 					<a
 						href={primaryAction.href}
-						class={`group block px-3.5 py-3 transition-colors ${index > 0 ? 'border-t border-border/55' : ''} ${getActivityRowTone(item)}`}
+						class={`group block px-3 py-2.5 transition-colors ${index > 0 ? 'border-t border-border/55' : ''} ${getActivityRowTone(item)}`}
 					>
 						<div class="flex items-start gap-3">
 							<div
-								class={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-[0.8rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
+								class={`mt-0.5 flex size-6.5 shrink-0 items-center justify-center rounded-[0.75rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
 							>
 								{#if item.kind === 'broadcast'}
-									<Megaphone class="size-3.5" />
+									<Megaphone class="size-3.25" />
 								{:else if item.eventLifecycleSignal === 'canceled'}
-									<TriangleAlert class="size-3.5" />
+									<TriangleAlert class="size-3.25" />
 								{:else if item.eventTimingState === 'today' || item.eventTimingState === 'in_progress'}
-									<Sparkles class="size-3.5" />
+									<Sparkles class="size-3.25" />
 								{:else}
-									<CalendarDays class="size-3.5" />
+									<CalendarDays class="size-3.25" />
 								{/if}
 							</div>
 
@@ -138,12 +138,12 @@
 												<span class="normal-case tracking-normal text-primary">Needs review</span>
 											{/if}
 										</div>
-										<p class="mt-1 truncate text-sm font-semibold text-foreground">{item.title}</p>
+										<p class="mt-0.75 truncate text-[0.92rem] font-semibold text-foreground">{item.title}</p>
 									</div>
 									<span class="shrink-0 pt-0.5 text-[0.7rem] font-medium text-primary/90 transition-colors group-hover:text-primary">{primaryAction.label}</span>
 								</div>
-								<p class="mt-1 text-[0.78rem] leading-5 text-muted-foreground">{item.summary}</p>
-								<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.7rem] text-muted-foreground">
+								<p class="mt-0.75 text-[0.74rem] leading-4.5 text-muted-foreground">{item.summary}</p>
+								<div class="mt-1.25 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.68rem] text-muted-foreground">
 									<span>{item.meta}</span>
 									{#if item.kind === 'broadcast'}
 										<span>Broadcast update</span>

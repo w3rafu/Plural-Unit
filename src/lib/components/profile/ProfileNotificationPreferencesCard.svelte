@@ -214,26 +214,26 @@
 </script>
 
 <Card.Root id="notification-preferences" size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-1.25 border-b border-border/70 py-3.5">
+	<Card.Header class="gap-1 border-b border-border/70 py-3.25">
 		<Card.Title class="text-lg font-semibold tracking-tight">Notifications</Card.Title>
 		<Card.Description>Choose what reaches you in the app and on this device.</Card.Description>
 	</Card.Header>
 
-	<Card.Content class="space-y-3 py-3.5">
+	<Card.Content class="space-y-2.75 py-3.25">
 		{#if !canManagePreferences}
 			<p class="text-sm text-muted-foreground">
 				Join an organization to manage your notification settings.
 			</p>
 		{:else}
 			<form
-				class="space-y-3"
+				class="space-y-2.75"
 				onsubmit={(event) => {
 					event.preventDefault();
 					savePreferences();
 				}}
 			>
-				<div class="space-y-3">
-					<section class="space-y-2.25 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm">
+				<div class="space-y-2.75">
+					<section class="space-y-2 rounded-2xl border border-border/70 bg-background/60 p-2.75 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Preferred communication</h3>
 							<p class="text-xs text-muted-foreground">Set the channel that should usually reach you first when someone needs a response.</p>
@@ -263,13 +263,13 @@
 						</div>
 					</section>
 
-					<section class="space-y-2.5 rounded-2xl border border-border/70 bg-background/60 p-3.5 shadow-sm">
+					<section class="space-y-2.25 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Hub alerts in the app</h3>
 							<p class="text-xs text-muted-foreground">Show broadcasts and event updates in the app.</p>
 						</div>
 
-						<Field.Group class="gap-3.5">
+						<Field.Group class="gap-3">
 							<Field.Field orientation="horizontal">
 								<Checkbox
 									id="notification-preferences-broadcasts"
@@ -316,13 +316,13 @@
 						</Field.Group>
 					</section>
 
-					<section class="space-y-2.5 rounded-2xl border border-border/70 bg-background/60 p-3.5 shadow-sm">
+					<section class="space-y-2.25 rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm">
 						<div class="space-y-1">
 							<h3 class="text-sm font-semibold text-foreground">Direct message push</h3>
 							<p class="text-xs text-muted-foreground">Allow push for new direct messages from this organization.</p>
 						</div>
 
-						<Field.Group class="gap-3.5">
+						<Field.Group class="gap-3">
 							<Field.Field orientation="horizontal">
 								<Checkbox
 									id="notification-preferences-messages"
@@ -380,7 +380,7 @@
 			</form>
 
 			{#if devicePushAvailable}
-				<div class="space-y-3 border-t border-border/70 pt-4">
+				<div class="space-y-2.75 border-t border-border/70 pt-3.5">
 					<div class="space-y-1">
 						<h3 class="text-sm font-semibold text-foreground">This device</h3>
 						<p class="text-xs text-muted-foreground">

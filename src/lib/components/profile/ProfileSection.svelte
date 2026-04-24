@@ -92,10 +92,10 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="p-4 sm:p-4.25 lg:grid lg:grid-cols-[minmax(0,1.34fr)_13rem] lg:items-start lg:gap-3.5">
-		<div class="space-y-2.5">
-			<div class="flex items-start gap-3 sm:gap-3.5">
-			<Avatar.Root class="size-11 border border-border/70 bg-muted/40 after:hidden sm:size-12">
+	<Card.Content class="p-3.75 sm:p-4 lg:grid lg:grid-cols-[minmax(0,1.42fr)_12rem] lg:items-start lg:gap-3">
+		<div class="space-y-2.25">
+			<div class="flex items-start gap-3 sm:gap-3.25">
+			<Avatar.Root class="size-10 border border-border/70 bg-muted/40 after:hidden sm:size-11">
 				{#if currentUser.details.avatar_url}
 					<Avatar.Image
 						src={currentUser.details.avatar_url}
@@ -108,36 +108,36 @@
 				{/if}
 			</Avatar.Root>
 
-				<div class="min-w-0 space-y-1">
-					<Card.Title class="text-[1.24rem] font-semibold tracking-tight text-foreground sm:text-[1.44rem]">
+				<div class="min-w-0 space-y-0.75">
+					<Card.Title class="text-[1.16rem] font-semibold tracking-tight text-foreground sm:text-[1.34rem]">
 						{currentUser.details.name || 'Profile snapshot'}
 					</Card.Title>
-					<p class="text-sm text-muted-foreground">
+					<p class="text-[0.88rem] text-muted-foreground">
 						{roleLabel} · {currentOrganization.organization?.name ?? 'No organization'}
 					</p>
-					<p class="text-sm text-muted-foreground">{contactLabel}</p>
+					<p class="text-[0.88rem] text-muted-foreground">{contactLabel}</p>
 				</div>
 			</div>
 
-			<div class="flex flex-wrap gap-1.5 sm:gap-2">
-				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
-				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
-				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
+			<div class="flex flex-wrap gap-1.25 sm:gap-1.5">
+				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{joinLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{memberCountLabel}</div>
+				<div class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[0.68rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
 			</div>
 
-			<p class="max-w-2xl text-[0.8rem] leading-5.25 text-muted-foreground">{profileSummary}</p>
+			<p class="max-w-2xl text-[0.78rem] leading-4.75 text-muted-foreground">{profileSummary}</p>
 		</div>
 
-		<div class="rounded-[1.1rem] border border-border/70 bg-muted/16 px-3 py-2.75 shadow-sm">
+		<div class="rounded-[1rem] border border-border/70 bg-muted/16 px-2.75 py-2.5 shadow-sm">
 			<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Profile support</p>
-			<div class="mt-2 space-y-2 border-t border-border/60 pt-2">
+			<div class="mt-1.75 space-y-1.75 border-t border-border/60 pt-1.75">
 				{#each profileSupportLines as line (line.label)}
-					<div class="flex items-start justify-between gap-3 text-[0.76rem]">
+					<div class="flex items-start justify-between gap-3 text-[0.72rem]">
 						<div>
 							<p class="font-medium text-foreground">{line.label}</p>
 							<p class="text-muted-foreground">{line.summary}</p>
 						</div>
-						<p class="text-sm font-semibold text-foreground">{line.value}</p>
+						<p class="text-[0.88rem] font-semibold text-foreground">{line.value}</p>
 					</div>
 				{/each}
 			</div>

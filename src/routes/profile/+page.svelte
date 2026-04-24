@@ -17,17 +17,17 @@
 	}
 </script>
 
-<main class="mx-auto flex w-full max-w-[74rem] flex-col gap-3 lg:gap-3.5">
+<main class="mx-auto flex w-full max-w-296 flex-col gap-2.75 lg:gap-3">
 	<ProfileSection />
 
-	<div class="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_16.5rem] xl:items-start">
-		<div class="space-y-3">
-			<ProfileDetailsCard />
-
+	<div class="grid gap-2.75 xl:grid-cols-[minmax(0,1.34fr)_15.5rem] xl:items-start">
+		<div class="space-y-2.75">
 			<ProfileNotificationPreferencesCard />
+
+			<ProfileDetailsCard />
 		</div>
 
-		<div class="space-y-3 xl:sticky xl:top-24">
+		<div class="space-y-2.75 xl:sticky xl:top-24">
 			<ProfileSecurityCard />
 		</div>
 	</div>
