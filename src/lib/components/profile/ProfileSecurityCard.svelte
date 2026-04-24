@@ -125,13 +125,13 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Header class="gap-1.5 border-b border-border/70 py-4">
+	<Card.Header class="gap-1.25 border-b border-border/70 py-3.5">
 		<Card.Title class="text-lg font-semibold tracking-tight">Security</Card.Title>
 	</Card.Header>
 
-	<Card.Content class="space-y-3.5 py-4">
+	<Card.Content class="space-y-3 py-3.5">
 		<form
-			class="space-y-2.75"
+			class="space-y-2.5"
 			onsubmit={(event) => {
 				event.preventDefault();
 				saveEmailChange();
@@ -160,7 +160,7 @@
 		</form>
 
 		<form
-			class="space-y-3 border-t border-border/70 pt-3.5"
+			class="space-y-2.75 border-t border-border/70 pt-3"
 			onsubmit={(event) => {
 				event.preventDefault();
 				savePasswordChange();
@@ -168,10 +168,10 @@
 		>
 			<div class="space-y-1">
 				<h3 class="text-base font-semibold tracking-tight text-foreground">Password</h3>
-				<p class="text-sm text-muted-foreground">Set a new password when you want to refresh access.</p>
+				<p class="text-[0.82rem] text-muted-foreground">Set a new password when you want to refresh access.</p>
 			</div>
 
-			<Field.Group class="gap-3">
+			<Field.Group class="gap-2.5">
 				<Field.Field>
 					<Field.Content>
 						<Field.Label for="new-password">New password</Field.Label>

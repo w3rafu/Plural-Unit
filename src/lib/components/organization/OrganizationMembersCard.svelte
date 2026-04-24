@@ -201,8 +201,8 @@
 		</Card.Content>
 	{:else}
 		<Card.Content class="space-y-2.5 p-4 sm:p-4.5">
-			<div class="space-y-2 rounded-2xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
-				<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+			<div class="space-y-1.75 rounded-2xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
+				<div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
 					<div class="flex flex-wrap items-center gap-1.5">
 						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
 							{organizationMembers.length} members
@@ -218,9 +218,10 @@
 								Refreshing roster
 							</p>
 						{/if}
+						<p class="text-[0.78rem] text-muted-foreground">{reviewSummary}</p>
 					</div>
 
-					<label class="relative block w-full lg:max-w-xs">
+					<label class="relative block w-full xl:max-w-xs">
 						<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							type="search"
@@ -231,10 +232,8 @@
 					</label>
 				</div>
 
-				<DeletionRequestsCard />
-
-				<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-					<p class="text-[0.8rem] text-muted-foreground">{reviewSummary}</p>
+				<div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+					<DeletionRequestsCard />
 
 					<div class="flex flex-wrap gap-1">
 						{#each memberFilterOptions as option (option.value)}
@@ -242,7 +241,7 @@
 								type="button"
 								size="sm"
 								variant={memberFilter === option.value ? 'secondary' : 'ghost'}
-								class={`h-7 rounded-full px-3 text-[0.7rem] ${memberFilter === option.value ? 'shadow-sm' : 'text-muted-foreground'}`}
+								class={`h-7 rounded-full px-3 text-[0.7rem] ${memberFilter === option.value ? 'shadow-sm ring-1 ring-border/70' : 'text-muted-foreground'}`}
 								onclick={() => (memberFilter = option.value)}
 							>
 								{option.label}

@@ -29,74 +29,32 @@
 {:else if currentOrganization.deletionRequests.length === 0}
 	<!-- no pending deletion requests -->
 {:else}
-	{#if currentOrganization.deletionRequests.length === 1}
-		{@const request = currentOrganization.deletionRequests[0]}
-		<section class="rounded-xl border border-border/70 bg-background/70 px-3 py-2.5 shadow-sm">
-			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div class="min-w-0 space-y-1">
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Deletion requests</p>
-					<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-						<p class="text-sm font-medium text-foreground">{request.name || 'Unnamed member'}</p>
-						<p class="text-[0.76rem] text-muted-foreground">{request.email || request.phone_number || 'No contact added'}</p>
-						<p class="text-[0.76rem] text-muted-foreground">Requested {formatShortDateTime(request.deletion_requested_at)}</p>
-					</div>
-					{#if request.bio}
-						<p class="text-[0.78rem] leading-5 text-muted-foreground wrap-break-word">{request.bio}</p>
+	{@const request = currentOrganization.deletionRequests[0]}
+	<section class="rounded-xl border border-border/70 bg-background/70 px-3 py-2.25 shadow-sm">
+		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+			<div class="min-w-0 space-y-0.5">
+				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Deletion requests</p>
+				<p class="text-[0.78rem] leading-5 text-muted-foreground">
+					{#if currentOrganization.deletionRequests.length === 1}
+						<span class="font-medium text-foreground">{request.name || 'Unnamed member'}</span>
+						 requested deletion {formatShortDateTime(request.deletion_requested_at)}.
+					{:else}
+						<span class="font-medium text-foreground">{currentOrganization.deletionRequests.length} pending</span>
+						 with {request.name || 'Unnamed member'} next in the review queue.
 					{/if}
-				</div>
-
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					class="h-8 rounded-xl px-3"
-					disabled={currentOrganization.isMutating}
-					onclick={() => reviewRequest(request.profile_id, request.name)}
-				>
-					Mark reviewed
-				</Button>
-			</div>
-		</section>
-	{:else}
-		<section class="space-y-1.5 rounded-xl border border-border/70 bg-background/70 px-3 py-2.5">
-			<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Deletion requests</p>
-					<p class="text-[0.8rem] text-muted-foreground">
-						{currentOrganization.deletionRequests.length} pending offboarding requests
-					</p>
-				</div>
+				</p>
 			</div>
 
-			<div class="space-y-1.5">
-				{#each currentOrganization.deletionRequests as request (request.profile_id)}
-					<div class="rounded-xl border border-border/60 bg-background px-3 py-2.25 shadow-sm">
-						<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-							<div class="min-w-0 space-y-1">
-								<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-									<p class="text-sm font-medium text-foreground">{request.name || 'Unnamed member'}</p>
-									<p class="text-[0.76rem] text-muted-foreground">{request.email || request.phone_number || 'No contact added'}</p>
-								</div>
-								<p class="text-[0.76rem] text-muted-foreground">Requested {formatShortDateTime(request.deletion_requested_at)}</p>
-								{#if request.bio}
-									<p class="text-[0.78rem] leading-5 text-muted-foreground wrap-break-word">{request.bio}</p>
-								{/if}
-							</div>
-
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								class="h-8 rounded-xl px-3"
-								disabled={currentOrganization.isMutating}
-								onclick={() => reviewRequest(request.profile_id, request.name)}
-							>
-								Mark reviewed
-							</Button>
-						</div>
-					</div>
-				{/each}
-			</div>
-		</section>
-	{/if}
+			<Button
+				type="button"
+				variant="outline"
+				size="sm"
+				class="h-8 rounded-xl px-3"
+				disabled={currentOrganization.isMutating}
+				onclick={() => reviewRequest(request.profile_id, request.name)}
+			>
+				{currentOrganization.deletionRequests.length === 1 ? 'Mark reviewed' : 'Review next'}
+			</Button>
+		</div>
+	</section>
 {/if}

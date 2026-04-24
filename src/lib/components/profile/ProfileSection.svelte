@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ActivityDotGrid from '$lib/components/ui/ActivityDotGrid.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Card from '$lib/components/ui/card';
 	import { computeAvatarInitials } from '$lib/components/profile/avatarUploadModel';
@@ -61,41 +60,29 @@
 	});
 	const unreadMessages = $derived(currentMessages.totalUnreadCount);
 	const activeBroadcasts = $derived(currentHub.activeBroadcasts.length);
-
-	function clamp(value: number, min: number, max: number) {
-		return Math.min(max, Math.max(min, value));
-	}
-
-	function buildActivityCells(seedValues: number[], offset: number) {
-		return Array.from({ length: 28 }, (_, index) => {
-			const base = seedValues[index % seedValues.length] ?? 0;
-			const bucket = clamp(Math.round(base / 25), 0, 4);
-			const wave = index % 7 >= 3 ? 1 : 0;
-			const pulse = (index + offset) % 6 === 0 ? 1 : 0;
-			const dip = (index + offset) % 5 === 0 ? 1 : 0;
-			return clamp(bucket + wave + pulse - dip, 0, 4);
-		});
-	}
-
-	const personalActivityValues = $derived(
-		buildActivityCells(
-			[
-				unreadMessages * 18,
-				activeBroadcasts * 24,
-				(currentOrganization.memberCount ?? 0) * 4,
-				currentOrganization.membership?.role === 'admin' ? 72 : 48,
-				currentUser.details.bio.trim() ? 58 : 28
-			],
-			unreadMessages + activeBroadcasts + (currentOrganization.memberCount ?? 0)
-		)
-	);
-	const personalActivityCaption = $derived.by(() => {
-		if (unreadMessages > 0 || activeBroadcasts > 0) {
-			return 'Inbox, broadcast, and org coordination activity across the last few weeks.';
+	const profileSupportLines = $derived.by(() => [
+		{
+			label: 'Inbox',
+			value: unreadMessages,
+			summary:
+				unreadMessages > 0
+					? `${unreadMessages} unread ${unreadMessages === 1 ? 'message still needs' : 'messages still need'} attention.`
+					: 'Messages are caught up right now.'
+		},
+		{
+			label: 'Broadcasts',
+			value: activeBroadcasts,
+			summary:
+				activeBroadcasts > 0
+					? `${activeBroadcasts} live ${activeBroadcasts === 1 ? 'broadcast is' : 'broadcasts are'} still in motion.`
+					: 'No live broadcasts need review.'
+		},
+		{
+			label: 'Roster',
+			value: currentOrganization.memberCount ?? 0,
+			summary: `${memberCountLabel} in ${currentOrganization.organization?.name ?? 'the organization'}.`
 		}
-
-		return 'Recent personal activity is steady even though nothing urgent needs attention right now.';
-	});
+	]);
 
 	$effect(() => {
 		if (currentOrganization.organization && currentOrganization.memberCount === null) {
@@ -105,10 +92,10 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="p-4 sm:p-4.5 lg:grid lg:grid-cols-[minmax(0,1.26fr)_14.25rem] lg:items-start lg:gap-4">
-		<div class="space-y-3">
+	<Card.Content class="p-4 sm:p-4.25 lg:grid lg:grid-cols-[minmax(0,1.34fr)_13rem] lg:items-start lg:gap-3.5">
+		<div class="space-y-2.5">
 			<div class="flex items-start gap-3 sm:gap-3.5">
-			<Avatar.Root class="size-12 border border-border/70 bg-muted/40 after:hidden sm:size-14">
+			<Avatar.Root class="size-11 border border-border/70 bg-muted/40 after:hidden sm:size-12">
 				{#if currentUser.details.avatar_url}
 					<Avatar.Image
 						src={currentUser.details.avatar_url}
@@ -122,7 +109,7 @@
 			</Avatar.Root>
 
 				<div class="min-w-0 space-y-1">
-					<Card.Title class="text-[1.32rem] font-semibold tracking-tight text-foreground sm:text-[1.56rem]">
+					<Card.Title class="text-[1.24rem] font-semibold tracking-tight text-foreground sm:text-[1.44rem]">
 						{currentUser.details.name || 'Profile snapshot'}
 					</Card.Title>
 					<p class="text-sm text-muted-foreground">
@@ -138,9 +125,22 @@
 				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
 			</div>
 
-			<p class="max-w-2xl text-[0.82rem] leading-5.5 text-muted-foreground">{profileSummary}</p>
+			<p class="max-w-2xl text-[0.8rem] leading-5.25 text-muted-foreground">{profileSummary}</p>
 		</div>
 
-		<ActivityDotGrid title="Personal rhythm" caption={personalActivityCaption} values={personalActivityValues} compact={true} footer="Past 4 weeks" />
+		<div class="rounded-[1.1rem] border border-border/70 bg-muted/16 px-3 py-2.75 shadow-sm">
+			<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Profile support</p>
+			<div class="mt-2 space-y-2 border-t border-border/60 pt-2">
+				{#each profileSupportLines as line (line.label)}
+					<div class="flex items-start justify-between gap-3 text-[0.76rem]">
+						<div>
+							<p class="font-medium text-foreground">{line.label}</p>
+							<p class="text-muted-foreground">{line.summary}</p>
+						</div>
+						<p class="text-sm font-semibold text-foreground">{line.value}</p>
+					</div>
+				{/each}
+			</div>
+		</div>
 	</Card.Content>
 </Card.Root>
