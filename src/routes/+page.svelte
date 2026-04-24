@@ -204,6 +204,7 @@
 				<div class="min-w-0">
 					<HubActivityFeed
 						items={visibleActivityItems}
+						maxVisibleItems={1}
 						broadcastHref="#hub-broadcasts"
 						eventHref="#hub-events"
 						{manageBroadcastsHref}

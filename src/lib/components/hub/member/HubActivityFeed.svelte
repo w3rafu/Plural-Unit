@@ -18,10 +18,10 @@
 		eventHref = '#hub-events',
 		manageContentHref = undefined as string | undefined,
 		manageBroadcastsHref = undefined as string | undefined,
-		manageEventsHref = undefined as string | undefined
+		manageEventsHref = undefined as string | undefined,
+		maxVisibleItems = 2
 	} = $props();
 
-	const MAX_VISIBLE_ACTIVITY_ITEMS = 2;
 	let showAll = $state(false);
 
 	const allItems = $derived(items ?? currentHub.allActivityFeed);
@@ -31,9 +31,9 @@
 	);
 	const resolvedIsLoading = $derived(isLoading ?? currentHub.isLoading);
 	const hiddenItemCount = $derived(items ? 0 : Math.max(0, allItems.length - totalItems.length));
-	const hasMore = $derived(totalItems.length > MAX_VISIBLE_ACTIVITY_ITEMS);
+	const hasMore = $derived(totalItems.length > maxVisibleItems);
 	const activityItems = $derived(
-		showAll ? totalItems : totalItems.slice(0, MAX_VISIBLE_ACTIVITY_ITEMS)
+		showAll ? totalItems : totalItems.slice(0, maxVisibleItems)
 	);
 
 	function getPrimaryAction(item: HubNotificationItem) {

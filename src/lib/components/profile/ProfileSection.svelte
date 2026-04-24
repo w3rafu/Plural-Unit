@@ -2,7 +2,6 @@
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Card from '$lib/components/ui/card';
 	import { computeAvatarInitials } from '$lib/components/profile/avatarUploadModel';
-	import { currentHub } from '$lib/stores/currentHub.svelte';
 	import { currentMessages } from '$lib/stores/currentMessages.svelte';
 	import { currentUser } from '$lib/stores/currentUser.svelte';
 	import { currentOrganization } from '$lib/stores/currentOrganization.svelte';
@@ -59,30 +58,6 @@
 		return 'Keep your photo and contact details current so members know who to reach first.';
 	});
 	const unreadMessages = $derived(currentMessages.totalUnreadCount);
-	const activeBroadcasts = $derived(currentHub.activeBroadcasts.length);
-	const profileSupportLines = $derived.by(() => [
-		{
-			label: 'Inbox',
-			value: unreadMessages,
-			summary:
-				unreadMessages > 0
-					? `${unreadMessages} unread ${unreadMessages === 1 ? 'message still needs' : 'messages still need'} attention.`
-					: 'Messages are caught up right now.'
-		},
-		{
-			label: 'Broadcasts',
-			value: activeBroadcasts,
-			summary:
-				activeBroadcasts > 0
-					? `${activeBroadcasts} live ${activeBroadcasts === 1 ? 'broadcast is' : 'broadcasts are'} still in motion.`
-					: 'No live broadcasts need review.'
-		},
-		{
-			label: 'Roster',
-			value: currentOrganization.memberCount ?? 0,
-			summary: `${memberCountLabel} in ${currentOrganization.organization?.name ?? 'the organization'}.`
-		}
-	]);
 
 	$effect(() => {
 		if (currentOrganization.organization && currentOrganization.memberCount === null) {
@@ -92,8 +67,8 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="p-3.75 sm:p-4 lg:grid lg:grid-cols-[minmax(0,1.42fr)_12rem] lg:items-start lg:gap-3">
-		<div class="space-y-2.25">
+	<Card.Content class="space-y-2 p-3.25 sm:p-3.5">
+		<div class="space-y-2">
 			<div class="flex items-start gap-3 sm:gap-3.25">
 			<Avatar.Root class="size-10 border border-border/70 bg-muted/40 after:hidden sm:size-11">
 				{#if currentUser.details.avatar_url}
@@ -126,21 +101,6 @@
 			</div>
 
 			<p class="max-w-2xl text-[0.78rem] leading-4.75 text-muted-foreground">{profileSummary}</p>
-		</div>
-
-		<div class="rounded-[1rem] border border-border/70 bg-muted/16 px-2.75 py-2.5 shadow-sm">
-			<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Profile support</p>
-			<div class="mt-1.75 space-y-1.75 border-t border-border/60 pt-1.75">
-				{#each profileSupportLines as line (line.label)}
-					<div class="flex items-start justify-between gap-3 text-[0.72rem]">
-						<div>
-							<p class="font-medium text-foreground">{line.label}</p>
-							<p class="text-muted-foreground">{line.summary}</p>
-						</div>
-						<p class="text-[0.88rem] font-semibold text-foreground">{line.value}</p>
-					</div>
-				{/each}
-			</div>
 		</div>
 	</Card.Content>
 </Card.Root>

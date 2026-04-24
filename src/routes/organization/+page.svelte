@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
 	import OrganizationOverviewCard from '$lib/components/organization/OrganizationOverviewCard.svelte';
 	import OrganizationAccessCard from '$lib/components/organization/OrganizationAccessCard.svelte';
 	import OrganizationMembersCard from '$lib/components/organization/OrganizationMembersCard.svelte';
@@ -8,6 +7,7 @@
 	type OrgSection = 'access' | 'members';
 
 	let activeSection = $state<OrgSection>('access');
+	let initializedSectionForOrgId = $state('');
 
 	let loadedMemberCountOrgId = '';
 	let loadedInvitationsOrgId = '';
@@ -16,6 +16,8 @@
 
 	$effect(() => {
 		if (!currentOrganization.organization) {
+			activeSection = 'access';
+			initializedSectionForOrgId = '';
 			loadedMemberCountOrgId = '';
 			loadedInvitationsOrgId = '';
 			loadedMembersOrgId = '';
@@ -23,9 +25,25 @@
 		}
 
 		if (!currentOrganization.isAdmin) {
+			activeSection = 'access';
 			loadedInvitationsOrgId = '';
 			loadedDeletionRequestsOrgId = '';
 		}
+	});
+
+	$effect(() => {
+		const organizationId = currentOrganization.organization?.id ?? '';
+
+		if (!organizationId || !currentOrganization.isAdmin) {
+			return;
+		}
+
+		if (initializedSectionForOrgId === organizationId) {
+			return;
+		}
+
+		activeSection = 'members';
+		initializedSectionForOrgId = organizationId;
 	});
 
 	$effect(() => {
@@ -96,24 +114,24 @@
 <OrganizationOverviewCard />
 
 {#if currentOrganization.isAdmin}
-	<div class="flex flex-col gap-1.25 rounded-2xl border border-border/60 bg-muted/10 px-3 py-1.75 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2">
+	<div class="flex flex-col gap-1 rounded-2xl border border-border/60 bg-muted/10 px-3 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-1.75">
 		<div class="space-y-px">
 			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
-			<p class="text-[0.72rem] text-muted-foreground">Choose what to manage now.</p>
+			<p class="text-[0.7rem] text-muted-foreground">Move between membership and access controls.</p>
 		</div>
 
 		<nav aria-label="Organization sections" class="w-full sm:max-w-72">
 			<div class="flex w-full items-stretch gap-1 rounded-full border border-border/70 bg-background/82 p-0.75 shadow-sm">
 				{#each sections as section (section.id)}
-					<Button
-						size="sm"
-						variant="ghost"
-						class={`h-7 min-w-0 flex-1 justify-center rounded-full px-3 max-sm:text-[0.78rem] ${activeSection === section.id ? 'bg-foreground text-background hover:bg-foreground/95 hover:text-background' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
+					<button
+						type="button"
+						class={`h-7 min-w-0 flex-1 rounded-full px-3 text-center text-[0.78rem] font-medium transition-colors ${activeSection === section.id ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
 						aria-current={activeSection === section.id ? 'page' : undefined}
+						aria-pressed={activeSection === section.id}
 						onclick={() => (activeSection = section.id)}
 					>
 						{section.label}
-					</Button>
+					</button>
 				{/each}
 			</div>
 		</nav>

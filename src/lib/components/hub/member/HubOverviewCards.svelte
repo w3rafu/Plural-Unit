@@ -145,7 +145,7 @@
 		<div class="pointer-events-none absolute -right-20 top-0 h-52 w-52 rounded-full bg-primary/14 blur-3xl"></div>
 		<div class="pointer-events-none absolute left-8 top-10 h-28 w-28 rounded-full bg-primary/6 blur-3xl"></div>
 		<div class="pointer-events-none absolute inset-x-10 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-		<Card.Content class="relative space-y-2.25 py-3 sm:py-3.5">
+		<Card.Content class="relative space-y-2 py-2.75 sm:py-3">
 			<div class="space-y-1">
 				<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Hub focus</p>
 				<h2 class="max-w-2xl text-[1.54rem] font-semibold tracking-tight text-foreground sm:text-[1.78rem] sm:leading-[1.02]">
@@ -156,7 +156,7 @@
 				</p>
 			</div>
 
-			<div class="grid gap-1.75 md:grid-cols-3">
+			<div class="grid gap-1.5 md:grid-cols-3">
 				{#each decisionRows as row (row.label)}
 					<div class="rounded-2xl border border-border/70 bg-background/88 px-2.75 py-2 shadow-sm">
 						<div class="flex items-start justify-between gap-3">
@@ -168,23 +168,22 @@
 				{/each}
 			</div>
 
-			<div class="grid gap-2 border-t border-border/60 pt-2 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] xl:items-start">
-				<div class="space-y-2">
-					<div class="space-y-1">
-						<div class="flex items-center gap-2 text-foreground">
-							<Users class="size-4 text-primary" />
-							<p class="text-sm font-medium">{memberCountLabel}</p>
-						</div>
-						<p class="text-xs text-muted-foreground">
-							{pendingInvites > 0
-								? `${formatCount(pendingInvites, 'invite')} still need a follow-up.`
-								: 'No pending invites are waiting right now.'}
-						</p>
-					</div>
-
+			<div class="grid gap-1.75 border-t border-border/60 pt-1.75 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] xl:items-start">
+				<div class="space-y-1.75">
 					{#if spotlightPeople.length > 0}
-						<div class="space-y-1.5 border-t border-border/60 pt-2">
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">People in motion</p>
+						<div class="space-y-1.25">
+							<div class="flex items-center justify-between gap-3">
+								<div class="flex items-center gap-2 text-foreground">
+									<Users class="size-4 text-primary" />
+									<p class="text-[0.72rem] font-medium text-foreground">People in motion</p>
+								</div>
+								<p class="text-[0.68rem] text-muted-foreground">
+									{memberCountLabel}
+									{#if pendingInvites > 0}
+										<span> · {formatCount(pendingInvites, 'invite')} pending</span>
+									{/if}
+								</p>
+							</div>
 							<div class="space-y-1.25">
 								{#each spotlightPeople as person (person.id)}
 									<div class="flex items-center gap-2.5">
@@ -209,7 +208,7 @@
 					{/if}
 				</div>
 
-				<div class="space-y-1.5 rounded-[1.05rem] border border-border/65 bg-background/72 px-2.75 py-2.5">
+				<div class="space-y-1.25 rounded-[1.05rem] border border-border/65 bg-background/72 px-2.5 py-2.25">
 					<div class="flex items-center justify-between gap-3">
 						<div>
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Signal strip</p>
