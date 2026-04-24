@@ -216,12 +216,21 @@
 			</div>
 		{:else if visibleMembers.length > 0}
 			<div class="min-h-0 flex-1 overflow-auto p-2.25 md:p-2.5">
-				<div class="space-y-2">
+				<div class="space-y-2.5">
 					{#if spotlightMembers.length > 0}
-						<div class="grid gap-2.25 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+						<section class="space-y-1.5">
+							<div class="flex flex-wrap items-center justify-between gap-2 px-0.75">
+								<div>
+									<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Featured people</p>
+									<p class="text-[0.74rem] text-muted-foreground">Start with the lead contacts and newest faces in the organization.</p>
+								</div>
+								<p class="text-[0.68rem] text-muted-foreground">{spotlightMembers.length} profiles</p>
+							</div>
+
+							<div class="grid gap-2.25 xl:grid-cols-[minmax(0,1.18fr)_minmax(0,0.82fr)]">
 							{#each spotlightMembers as member (member.profile_id)}
 								{@const bioPreview = getBioPreview(member)}
-								<div class="rounded-2xl border border-border/60 bg-muted/10 px-2.75 py-2.5 shadow-sm">
+								<div class={`rounded-2xl border border-border/60 px-2.75 py-2.5 shadow-sm ${member.profile_id === currentUserId ? 'bg-linear-to-br from-muted/20 to-background' : 'bg-muted/10'}`}>
 									<div class="flex items-start gap-3">
 										<Avatar.Root class="size-7.5 border border-border/70 bg-muted/30 shadow-sm after:hidden">
 											{#if member.avatar_url}
@@ -280,9 +289,19 @@
 								</div>
 							{/each}
 						</div>
+						</section>
 					{/if}
 
-					<div class="grid gap-2.25 md:grid-cols-2 xl:grid-cols-3">
+					<section class="space-y-1.5">
+						<div class="flex flex-wrap items-center justify-between gap-2 px-0.75">
+							<div>
+								<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Roster</p>
+								<p class="text-[0.74rem] text-muted-foreground">Everyone else in the directory, grouped in a calmer reading rhythm.</p>
+							</div>
+							<p class="text-[0.68rem] text-muted-foreground">{gridMembers.length} profiles</p>
+						</div>
+
+						<div class="grid gap-2.25 md:grid-cols-2 xl:grid-cols-2">
 						{#each gridMembers as member (member.profile_id)}
 							{@const signal = getGridSignal(member)}
 							{@const bioPreview = getBioPreview(member)}
@@ -351,7 +370,8 @@
 							</div>
 						</div>
 					{/each}
-				</div>
+						</div>
+					</section>
 				</div>
 			</div>
 		{:else}

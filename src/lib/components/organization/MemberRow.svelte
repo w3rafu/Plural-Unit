@@ -82,13 +82,13 @@
 			</div>
 		</div>
 
-		<div class="flex w-full flex-wrap items-center gap-1.5 xl:w-auto xl:justify-end">
+		<div class="flex w-full flex-wrap items-center gap-1.25 xl:w-auto xl:justify-end">
 			{#if canMessage && onMessage}
 				<Button
 					type="button"
 					variant="ghost"
 					size="sm"
-					class="h-7.5 justify-center rounded-full px-2.75 text-[0.72rem] text-muted-foreground hover:text-foreground"
+					class="h-7 justify-center rounded-full px-2.5 text-[0.7rem] text-muted-foreground hover:bg-muted/60 hover:text-foreground"
 					aria-label={`Message ${memberLabel}`}
 					onclick={onMessage}
 				>
@@ -97,7 +97,7 @@
 				</Button>
 			{/if}
 
-			<div class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 xl:flex-none xl:justify-end">
+			<div class="flex min-w-0 flex-1 flex-wrap items-center gap-1.25 xl:flex-none xl:justify-end">
 				<Select.Root
 					type="single"
 					value={draftRole}
@@ -105,7 +105,7 @@
 					name={`member-role-${member.profile_id}`}
 				>
 					<Select.Trigger
-						class="h-7.5 w-full min-w-40 rounded-full sm:w-42"
+						class="h-7 w-full min-w-36 rounded-full sm:w-40"
 						aria-label={`Role for ${memberLabel}`}
 					>
 						{draftRole}
@@ -116,25 +116,27 @@
 					</Select.Content>
 				</Select.Root>
 
-				<Button
-					type="button"
-						variant={roleChanged ? 'secondary' : 'ghost'}
-					size="sm"
-						class={`h-7.5 rounded-full px-3 text-[0.72rem] ${roleChanged ? 'ring-1 ring-border/70' : 'text-muted-foreground'}`}
-					disabled={isMutating || draftRole === member.role || wouldDemoteLastAdmin(member, draftRole, adminCount)}
-					title={wouldDemoteLastAdmin(member, draftRole, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
-					aria-label={`Update role for ${memberLabel}`}
-					onclick={onRoleConfirm}
-				>
-					Save role
-				</Button>
+				{#if roleChanged}
+					<Button
+						type="button"
+						variant="secondary"
+						size="sm"
+						class="h-7 rounded-full px-3 text-[0.7rem] ring-1 ring-border/70"
+						disabled={isMutating || wouldDemoteLastAdmin(member, draftRole, adminCount)}
+						title={wouldDemoteLastAdmin(member, draftRole, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
+						aria-label={`Update role for ${memberLabel}`}
+						onclick={onRoleConfirm}
+					>
+						Save role
+					</Button>
+				{/if}
 			</div>
 
 			<Button
 				type="button"
 				variant="ghost"
 				size="sm"
-				class="h-7.5 justify-center rounded-full px-2.75 text-[0.72rem] text-destructive/80 hover:bg-destructive/8 hover:text-destructive"
+				class="h-7 justify-center rounded-full px-2.5 text-[0.7rem] text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
 				disabled={isMutating || isLastAdmin(member, adminCount)}
 				title={isLastAdmin(member, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 				aria-label={`Remove ${memberLabel} from the organization`}
