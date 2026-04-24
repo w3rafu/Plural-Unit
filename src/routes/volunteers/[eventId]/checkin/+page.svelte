@@ -190,7 +190,7 @@
 		<Card.Root size="sm" class="relative overflow-hidden border-border/70 bg-card shadow-sm">
 			<div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
 			<div class="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-primary/30 to-transparent"></div>
-			<Card.Content class="relative space-y-3 px-4 py-3.25 sm:px-5 lg:px-5">
+			<Card.Content class="relative space-y-3 px-4 py-3.25 sm:px-5 lg:grid lg:grid-cols-[minmax(0,1.22fr)_14.5rem] lg:items-start lg:gap-3.5 lg:space-y-0 lg:px-5">
 				<div class="space-y-2.25">
 					<div class="space-y-1.25">
 						<p class="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Day-of check-in</p>
@@ -216,10 +216,35 @@
 						</div>
 					{/if}
 				</div>
+
+				<div class="rounded-2xl border border-border/70 bg-background/82 px-3 py-2.75 shadow-sm">
+					<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
+					{#if activeShift}
+						<p class="mt-1 text-sm font-semibold tracking-tight text-foreground">{activeShift.title}</p>
+						<p class="text-[0.76rem] text-muted-foreground">{activeShift.startTime} – {activeShift.endTime}</p>
+					{/if}
+					<div class="mt-2 flex items-end justify-between gap-3">
+						<p class="text-[1.9rem] font-semibold tracking-tight text-foreground">{completionPercent}%</p>
+						<p class="text-[0.72rem] text-muted-foreground">{checkedCount}/{signups.length || 0} checked in</p>
+					</div>
+					<div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+						<div class="h-full rounded-full bg-foreground/75 transition-all" style="width: {completionPercent}%"></div>
+					</div>
+					<div class="mt-2 flex items-start justify-between gap-3 text-[0.76rem] text-muted-foreground">
+						<p>Still to check in</p>
+						<p class="font-semibold text-foreground">{remainingCheckIns}</p>
+					</div>
+					<div class="mt-1 flex items-start justify-between gap-3 text-[0.76rem] text-muted-foreground">
+						<p>Already on site</p>
+						<p class="font-semibold text-foreground">{checkedCount}</p>
+					</div>
+					<p class="mt-2 text-[0.76rem] leading-5 text-muted-foreground">{arrivalHeadline}</p>
+					<Button href="/signup/{event.id}" size="sm" class="mt-2 hidden h-8.5 w-full justify-center px-3 text-xs shadow-sm lg:flex">Open public signup</Button>
+				</div>
 			</Card.Content>
 		</Card.Root>
 
-		<div class="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_16rem] xl:items-start">
+		<div class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem] xl:items-start">
 			<Card.Root size="sm" class="border-border/70 bg-card">
 				<Card.Header class="gap-1.5 border-b border-border/70 py-4">
 					<Card.Title class="text-lg font-semibold tracking-tight">Check-in list</Card.Title>
@@ -341,38 +366,9 @@
 			</Card.Root>
 
 			<div class="space-y-3 xl:sticky xl:top-24">
-				<Card.Root size="sm" class="border-border/70 bg-card">
-					<Card.Content class="space-y-3 py-3.5">
-						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Live progress</p>
-						{#if activeShift}
-							<p class="text-base font-semibold tracking-tight text-foreground">{activeShift.title}</p>
-							<p class="text-sm text-muted-foreground">{activeShift.startTime} – {activeShift.endTime}</p>
-						{/if}
-						<div class="flex items-end justify-between gap-3">
-							<p class="text-3xl font-semibold tracking-tight text-foreground">{completionPercent}%</p>
-							<p class="text-xs text-muted-foreground">{checkedCount}/{signups.length || 0} checked in</p>
-						</div>
-						<div class="h-2 overflow-hidden rounded-full bg-muted">
-							<div class="h-full rounded-full bg-foreground/75 transition-all" style="width: {completionPercent}%"></div>
-						</div>
-						<div class="space-y-2 border-t border-border/60 pt-3">
-							<div class="flex items-start justify-between gap-3">
-								<p class="text-sm text-muted-foreground">Still to check in</p>
-								<p class="text-sm font-semibold text-foreground">{remainingCheckIns}</p>
-							</div>
-							<div class="flex items-start justify-between gap-3">
-								<p class="text-sm text-muted-foreground">Already on site</p>
-								<p class="text-sm font-semibold text-foreground">{checkedCount}</p>
-							</div>
-						</div>
-						<p class="text-sm leading-5 text-muted-foreground">Keep marking arrivals as they happen so follow-up stays visible for the team.</p>
-						<Button href="/signup/{event.id}" size="sm" class="h-9 w-full justify-center px-3 text-xs shadow-sm">Open public signup</Button>
-					</Card.Content>
-				</Card.Root>
-
 				{#if shiftLead}
 					<Card.Root size="sm" class="border-border/70 bg-card">
-						<Card.Content class="space-y-3 py-3.5">
+						<Card.Content class="space-y-2.75 py-3.25">
 							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Up next</p>
 							<div class="flex items-center gap-3">
 								<Avatar.Root class="size-12 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">
@@ -384,12 +380,12 @@
 								</Avatar.Root>
 								<div class="min-w-0">
 									<p class="text-sm font-semibold text-foreground">{shiftLead.name}</p>
-									<p class="text-sm text-muted-foreground">{shiftLead.affiliation ?? shiftLead.meta}</p>
+									<p class="text-[0.82rem] text-muted-foreground">{shiftLead.affiliation ?? shiftLead.meta}</p>
 								</div>
 							</div>
 
 							{#if quickRoster.length > 1}
-								<div class="space-y-2 border-t border-border/60 pt-3.5">
+								<div class="space-y-1.75 border-t border-border/60 pt-3">
 									{#each quickRoster.slice(1) as person (person.key)}
 										<div class="flex items-center gap-3">
 											<Avatar.Root class="size-9 shrink-0 border border-border/70 bg-muted/24 shadow-sm after:hidden">

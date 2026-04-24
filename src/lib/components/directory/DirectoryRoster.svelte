@@ -161,20 +161,20 @@
 			return '';
 		}
 
-		return bio.length > 108 ? `${bio.slice(0, 105).trimEnd()}...` : bio;
+		return bio.length > 88 ? `${bio.slice(0, 85).trimEnd()}...` : bio;
 	}
 </script>
 
 <Card.Root size="sm" class="flex h-full min-h-0 flex-col overflow-hidden border-border/70 bg-card">
-	<Card.Header class="gap-2 border-b border-border/70 px-4 py-3.5 sm:px-5 sm:py-4">
-		<div class="space-y-2">
-			<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+	<Card.Header class="gap-1.5 border-b border-border/70 px-4 py-3 sm:px-5 sm:py-3.5">
+		<div class="space-y-1.5">
+			<div class="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
 				<label class="relative block w-full lg:max-w-md">
 					<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						type="search"
 						placeholder="Search members"
-						class="h-8.5 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+						class="h-8 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 						bind:value={searchQuery}
 					/>
 				</label>
@@ -185,7 +185,7 @@
 							type="button"
 							variant="ghost"
 							size="sm"
-							class="h-8.5 justify-center px-4"
+							class="h-8 justify-center px-4"
 							aria-current={roleFilter === option.id ? 'page' : undefined}
 							onclick={() => {
 								roleFilter = option.id;
@@ -197,7 +197,7 @@
 				</div>
 			</div>
 
-			<div class="flex flex-wrap items-center justify-between gap-2.5 text-[0.74rem] text-muted-foreground">
+			<div class="flex flex-wrap items-center justify-between gap-2 text-[0.72rem] text-muted-foreground">
 				<p>{summaryCopy}</p>
 				{#if isRefreshing}
 					<p class="font-medium uppercase tracking-[0.16em] text-muted-foreground">Refreshing</p>
@@ -216,14 +216,14 @@
 			</div>
 		{:else if visibleMembers.length > 0}
 			<div class="min-h-0 flex-1 overflow-auto p-2.5 md:p-3">
-				<div class="space-y-3">
+				<div class="space-y-2.5">
 					{#if spotlightMembers.length > 0}
 						<div class="grid gap-2.5 xl:grid-cols-3">
 							{#each spotlightMembers as member (member.profile_id)}
 								{@const bioPreview = getBioPreview(member)}
-								<div class="rounded-[1.1rem] border border-border/60 bg-muted/10 px-3.5 py-3.5 shadow-sm">
+								<div class="rounded-2xl border border-border/60 bg-muted/10 px-3 py-3 shadow-sm">
 									<div class="flex items-start gap-3">
-										<Avatar.Root class="size-10 border border-border/70 bg-muted/30 shadow-sm after:hidden">
+										<Avatar.Root class="size-9 border border-border/70 bg-muted/30 shadow-sm after:hidden">
 											{#if member.avatar_url}
 												<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 											{:else}
@@ -239,7 +239,7 @@
 													href={getDetailHref(member)}
 													variant="ghost"
 													size="sm"
-													class="h-auto justify-start px-0 py-0 text-sm font-semibold hover:bg-transparent"
+													class="h-auto justify-start px-0 py-0 text-[0.96rem] font-semibold hover:bg-transparent"
 												>
 													{member.name || 'Unnamed member'}
 												</Button>
@@ -248,22 +248,19 @@
 												</Badge>
 											</div>
 											<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{getSpotlightLabel(member)}</p>
-											<p class="text-[0.84rem] leading-5 text-muted-foreground">{getMemberDirectoryMeta(member, currentUserId)}</p>
+											<p class="text-[0.82rem] leading-5 text-muted-foreground">{getMemberDirectoryMeta(member, currentUserId)}</p>
 											{#if bioPreview}
-												<p class="pt-1 text-[0.84rem] leading-5 text-foreground/80 wrap-break-word">{bioPreview}</p>
+												<p class="pt-0.5 text-[0.82rem] leading-5 text-foreground/80 wrap-break-word">{bioPreview}</p>
 											{/if}
 										</div>
 									</div>
 
-									<div class="mt-2.5 space-y-1.5 border-t border-border/50 pt-2.5">
-										<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Best contact</p>
-										<p class="text-[0.84rem] text-muted-foreground wrap-break-word">{formatContact(member)}</p>
-										<p class="text-[0.74rem] text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</p>
+									<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-2 text-[0.76rem] text-muted-foreground">
+										<p class="wrap-break-word">{formatContact(member)}</p>
+										<p>Joined {formatJoinedAt(member.joined_at)}</p>
 									</div>
 
-									<div class="mt-2 flex items-center justify-between gap-3 text-[0.76rem] text-muted-foreground">
-										<span>{getSpotlightLabel(member)}</span>
-										<div class="flex items-center gap-2.5">
+									<div class="mt-1.5 flex items-center justify-end gap-2.5 text-[0.76rem] text-muted-foreground">
 											<Button href={getDetailHref(member)} variant="ghost" size="xs" class="h-auto px-0 text-muted-foreground hover:text-foreground">
 												{detailLabel}
 											</Button>
@@ -279,7 +276,6 @@
 													{openingThreadForProfileId === member.profile_id ? 'Opening...' : 'Message'}
 												</Button>
 											{/if}
-										</div>
 									</div>
 								</div>
 							{/each}
@@ -290,9 +286,9 @@
 						{#each gridMembers as member (member.profile_id)}
 							{@const signal = getGridSignal(member)}
 							{@const bioPreview = getBioPreview(member)}
-							<div class="rounded-[1.1rem] border border-border/60 bg-muted/10 px-3.5 py-3.5 shadow-sm">
+							<div class="rounded-2xl border border-border/60 bg-muted/10 px-3 py-3 shadow-sm">
 							<div class="flex items-start gap-3">
-								<Avatar.Root class="size-10 border border-border/70 bg-muted/40 after:hidden">
+								<Avatar.Root class="size-9 border border-border/70 bg-muted/40 after:hidden">
 									{#if member.avatar_url}
 										<Avatar.Image src={member.avatar_url} alt={`${member.name || 'Member'} profile`} />
 									{:else}
@@ -309,7 +305,7 @@
 												href={getDetailHref(member)}
 												variant="ghost"
 												size="sm"
-												class="h-auto justify-start px-0 py-0 text-[0.98rem] font-semibold leading-5 hover:bg-transparent"
+												class="h-auto justify-start px-0 py-0 text-[0.94rem] font-semibold leading-5 hover:bg-transparent"
 											>
 												{member.name || 'Unnamed member'}
 											</Button>
@@ -320,21 +316,20 @@
 												{signal.label}
 											</Badge>
 										</div>
-										<p class="text-[0.84rem] text-muted-foreground">
+										<p class="text-[0.8rem] text-muted-foreground">
 											{getMemberDirectoryMeta(member, currentUserId)}
 										</p>
 										{#if bioPreview}
-											<p class="pt-1 text-[0.84rem] leading-5 text-foreground/80 wrap-break-word">{bioPreview}</p>
+											<p class="pt-0.5 text-[0.82rem] leading-5 text-foreground/80 wrap-break-word">{bioPreview}</p>
 										{/if}
 									</div>
 
-										<div class="mt-2 space-y-1.5 border-t border-border/50 pt-2.5">
-											<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Best contact</p>
-											<p class="text-[0.84rem] text-muted-foreground wrap-break-word">{formatContact(member)}</p>
-											<p class="text-[0.74rem] text-muted-foreground">Joined {formatJoinedAt(member.joined_at)}</p>
+										<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/50 pt-2 text-[0.76rem] text-muted-foreground">
+											<p class="wrap-break-word">{formatContact(member)}</p>
+											<p>Joined {formatJoinedAt(member.joined_at)}</p>
 										</div>
 
-									<div class="mt-2 flex flex-wrap items-center gap-2.5 text-[0.76rem]">
+									<div class="mt-1.5 flex flex-wrap items-center gap-2.5 text-[0.76rem]">
 										<Button href={getDetailHref(member)} variant="ghost" size="xs" class="h-auto px-0 text-muted-foreground hover:text-foreground">
 											{detailLabel}
 										</Button>
