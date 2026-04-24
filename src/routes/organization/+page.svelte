@@ -97,10 +97,10 @@
 <OrganizationOverviewCard />
 
 {#if currentOrganization.isAdmin}
-	<div class="flex flex-col gap-2 rounded-[1.25rem] border border-border/60 bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5">
+	<div class="flex flex-col gap-1.5 rounded-[1.15rem] border border-border/60 bg-muted/10 px-4 py-2.75 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3">
 		<div class="space-y-0.5">
 			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
-			<p class="text-[0.82rem] font-medium text-foreground">Review access or roster changes.</p>
+			<p class="text-[0.8rem] font-medium text-foreground">Review access or roster changes.</p>
 		</div>
 
 		<nav aria-label="Organization sections" class="w-full sm:max-w-sm">
@@ -109,7 +109,7 @@
 					<Button
 						size="sm"
 						variant="ghost"
-						class="segmented-control__button h-8.5 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.8rem]"
+						class={`segmented-control__button h-8 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.8rem] ${activeSection === section.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
 						aria-current={activeSection === section.id ? 'page' : undefined}
 						onclick={() => (activeSection = section.id)}
 					>

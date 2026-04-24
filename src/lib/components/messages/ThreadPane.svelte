@@ -66,6 +66,7 @@
 	const muted = $derived(isThreadMuted(thread));
 	const lastUpdatedLabel = $derived(formatThreadTimestamp(getThreadLastMessageSentAt(thread)) || 'now');
 	const headerMeta = $derived(`Updated ${lastUpdatedLabel}`);
+	const isSparseThread = $derived(thread.messages.length <= 4);
 	const statusBadges = $derived.by(() => {
 		const badges: Array<{ label: string; variant: 'warning' | 'muted' }> = [];
 
@@ -283,6 +284,18 @@
 						>
 							Load older messages
 						</button>
+					</div>
+				{/if}
+
+				{#if isSparseThread}
+					<div class="mb-3 rounded-[1.25rem] border border-border/70 bg-background/88 px-3.5 py-3 shadow-sm sm:px-4">
+						<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation context</p>
+						<p class="mt-1 text-sm font-medium text-foreground">{thread.participant.subtitle || 'Direct conversation'} · {headerMeta}</p>
+						<p class="mt-1 text-[0.8rem] leading-5 text-muted-foreground">
+							{thread.unreadCount > 0
+								? `${thread.unreadCount} unread ${thread.unreadCount === 1 ? 'message still needs' : 'messages still need'} review before the thread is fully caught up.`
+								: 'The thread is quiet right now, so the latest updates stay visible near the composer.'}
+						</p>
 					</div>
 				{/if}
 
