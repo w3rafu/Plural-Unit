@@ -105,7 +105,7 @@
 </script>
 
 <Card.Root size="sm" class="border-border/70 bg-card">
-	<Card.Content class="p-4 sm:p-4.5 lg:grid lg:grid-cols-[minmax(0,1.18fr)_15.5rem] lg:items-start lg:gap-4.5">
+	<Card.Content class="p-4 sm:p-4.5 lg:grid lg:grid-cols-[minmax(0,1.26fr)_14.25rem] lg:items-start lg:gap-4">
 		<div class="space-y-3">
 			<div class="flex items-start gap-3 sm:gap-3.5">
 			<Avatar.Root class="size-12 border border-border/70 bg-muted/40 after:hidden sm:size-14">
@@ -138,7 +138,7 @@
 				<div class="rounded-full border border-border/70 bg-background px-2.75 py-1.25 text-[0.7rem] font-medium text-foreground dark:border-white/10 dark:bg-black/56">{unreadMessages} unread</div>
 			</div>
 
-			<p class="max-w-xl text-[0.82rem] leading-5.5 text-muted-foreground">{profileSummary}</p>
+			<p class="max-w-2xl text-[0.82rem] leading-5.5 text-muted-foreground">{profileSummary}</p>
 		</div>
 
 		<ActivityDotGrid title="Personal rhythm" caption={personalActivityCaption} values={personalActivityValues} compact={true} footer="Past 4 weeks" />

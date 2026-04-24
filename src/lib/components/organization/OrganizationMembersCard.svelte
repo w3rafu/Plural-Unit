@@ -200,19 +200,17 @@
 			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-3 p-4 sm:p-4.5">
-			<DeletionRequestsCard />
-
-			<div class="space-y-2.5">
-				<div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-					<div class="flex flex-wrap items-center gap-2">
-						<div class="rounded-full border border-border/70 bg-muted/12 px-3 py-1.25 text-[0.72rem] font-medium text-foreground">
+		<Card.Content class="space-y-2.5 p-4 sm:p-4.5">
+			<div class="space-y-2 rounded-2xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
+				<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+					<div class="flex flex-wrap items-center gap-1.5">
+						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
 							{organizationMembers.length} members
 						</div>
-						<div class="rounded-full border border-border/70 bg-muted/12 px-3 py-1.25 text-[0.72rem] font-medium text-foreground">
+						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
 							{adminCount} admins
 						</div>
-						<div class="rounded-full border border-border/70 bg-muted/12 px-3 py-1.25 text-[0.72rem] font-medium text-foreground">
+						<div class="rounded-full border border-border/70 bg-background px-3 py-1.15 text-[0.7rem] font-medium text-foreground shadow-sm">
 							{recentJoinCount} recent
 						</div>
 						{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
@@ -222,27 +220,29 @@
 						{/if}
 					</div>
 
-					<label class="relative block w-full lg:max-w-sm">
+					<label class="relative block w-full lg:max-w-xs">
 						<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Search members"
-							class="h-8.5 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+							class="h-8 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
 							bind:value={searchQuery}
 						/>
 					</label>
 				</div>
 
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-					<p class="text-[0.82rem] text-muted-foreground">{reviewSummary}</p>
+				<DeletionRequestsCard />
 
-					<div class="flex flex-wrap gap-1.5">
+				<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+					<p class="text-[0.8rem] text-muted-foreground">{reviewSummary}</p>
+
+					<div class="flex flex-wrap gap-1">
 						{#each memberFilterOptions as option (option.value)}
 							<Button
 								type="button"
 								size="sm"
-								variant={memberFilter === option.value ? 'secondary' : 'outline'}
-								class="h-7.5 rounded-full px-3 text-[0.7rem]"
+								variant={memberFilter === option.value ? 'secondary' : 'ghost'}
+								class={`h-7 rounded-full px-3 text-[0.7rem] ${memberFilter === option.value ? 'shadow-sm' : 'text-muted-foreground'}`}
 								onclick={() => (memberFilter = option.value)}
 							>
 								{option.label}
@@ -252,7 +252,7 @@
 				</div>
 			</div>
 
-			<div class="rounded-2xl border border-border/70 bg-muted/10 p-2 sm:p-2.5">
+			<div class="rounded-2xl border border-border/70 bg-muted/10 p-1.5 sm:p-2">
 				{#if currentOrganization.isLoadingMembers && organizationMembers.length === 0}
 					<div class="py-10 text-center">
 						<p class="text-sm text-muted-foreground">Loading members…</p>
