@@ -41,10 +41,11 @@
 	const bioPreview = $derived((member.bio ?? '').trim());
 	const joinedViaLabel = $derived(formatJoinedVia(member));
 	const isRecentJoin = $derived(isRecentOrganizationMember(member));
+	const roleChanged = $derived(draftRole !== member.role);
 </script>
 
-<div class="rounded-2xl border border-border/70 bg-background/88 p-3 shadow-sm">
-	<div class="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
+<div class="rounded-2xl border border-border/70 bg-background/88 px-3 py-2.75 shadow-sm">
+	<div class="flex flex-col gap-2.25 xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start xl:gap-3">
 		<div class="flex min-w-0 items-start gap-3">
 			<Avatar.Root class="size-10 shrink-0 border border-border/70 bg-muted/50 shadow-sm after:hidden">
 				{#if member.avatar_url}
@@ -81,22 +82,22 @@
 			</div>
 		</div>
 
-		<div class={`grid w-full gap-2 ${canMessage ? 'sm:grid-cols-[auto_minmax(0,14rem)_auto]' : 'sm:grid-cols-[minmax(0,14rem)_auto]'} xl:w-auto xl:min-w-88 xl:max-w-124 xl:items-center`}>
+		<div class="flex w-full flex-wrap items-center gap-1.5 xl:w-auto xl:justify-end">
 			{#if canMessage && onMessage}
 				<Button
 					type="button"
-					variant="outline"
+					variant="ghost"
 					size="sm"
-					class="h-8.5 justify-center rounded-xl px-3"
+					class="h-7.5 justify-center rounded-full px-2.75 text-[0.72rem] text-muted-foreground hover:text-foreground"
 					aria-label={`Message ${memberLabel}`}
 					onclick={onMessage}
 				>
-					<MessageSquare class="mr-1.5 h-3.5 w-3.5" />
+					<MessageSquare class="mr-1.25 h-3.25 w-3.25" />
 					Message
 				</Button>
 			{/if}
 
-			<div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+			<div class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 xl:flex-none xl:justify-end">
 				<Select.Root
 					type="single"
 					value={draftRole}
@@ -104,7 +105,7 @@
 					name={`member-role-${member.profile_id}`}
 				>
 					<Select.Trigger
-						class="h-8.5 w-full rounded-xl"
+						class="h-7.5 w-full min-w-40 rounded-full sm:w-42"
 						aria-label={`Role for ${memberLabel}`}
 					>
 						{draftRole}
@@ -117,9 +118,9 @@
 
 				<Button
 					type="button"
-					variant="default"
+						variant={roleChanged ? 'secondary' : 'ghost'}
 					size="sm"
-					class="h-8.5 rounded-xl px-3"
+						class={`h-7.5 rounded-full px-3 text-[0.72rem] ${roleChanged ? 'ring-1 ring-border/70' : 'text-muted-foreground'}`}
 					disabled={isMutating || draftRole === member.role || wouldDemoteLastAdmin(member, draftRole, adminCount)}
 					title={wouldDemoteLastAdmin(member, draftRole, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 					aria-label={`Update role for ${memberLabel}`}
@@ -131,15 +132,15 @@
 
 			<Button
 				type="button"
-				variant="outline"
+				variant="ghost"
 				size="sm"
-				class="h-8.5 justify-center rounded-xl border-destructive/25 px-3 text-destructive hover:bg-destructive/8 hover:text-destructive"
+				class="h-7.5 justify-center rounded-full px-2.75 text-[0.72rem] text-destructive/80 hover:bg-destructive/8 hover:text-destructive"
 				disabled={isMutating || isLastAdmin(member, adminCount)}
 				title={isLastAdmin(member, adminCount) ? 'Keep at least one admin in the organization.' : undefined}
 				aria-label={`Remove ${memberLabel} from the organization`}
 				onclick={onRemove}
 			>
-				Remove member
+				Remove
 			</Button>
 		</div>
 	</div>

@@ -200,48 +200,52 @@
 			<p class="text-sm text-muted-foreground">Only admins can view and manage members.</p>
 		</Card.Content>
 	{:else}
-		<Card.Content class="space-y-2.25 p-3.5 sm:p-4">
-			<div class="space-y-1.5 rounded-2xl border border-border/70 bg-muted/10 p-2.25 sm:p-2.75">
-				<div class="flex flex-col gap-1.75 xl:flex-row xl:items-center xl:justify-between">
-					<div class="flex flex-wrap items-center gap-1.5">
-						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
+		<Card.Content class="space-y-2 p-3.5 sm:p-4">
+			<div class="space-y-1.75 rounded-2xl border border-border/70 bg-muted/10 p-2.5 sm:p-3">
+				<div class="flex flex-col gap-1.75 xl:flex-row xl:items-center xl:justify-between xl:gap-3">
+					<div class="space-y-1">
+						<div class="flex flex-wrap items-center gap-1.25">
+							<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
 							{organizationMembers.length} members
 						</div>
-						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
+							<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
 							{adminCount} admins
 						</div>
-						<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
+							<div class="rounded-full border border-border/70 bg-background px-2.75 py-1 text-[0.68rem] font-medium text-foreground shadow-sm">
 							{recentJoinCount} recent
 						</div>
-						{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
-							<p class="text-[0.68rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+							{#if currentOrganization.isLoadingMembers && organizationMembers.length > 0}
+								<p class="text-[0.68rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
 								Refreshing roster
-							</p>
-						{/if}
-						<p class="text-[0.74rem] text-muted-foreground">{reviewSummary}</p>
+								</p>
+							{/if}
+						</div>
+						<p class="text-[0.72rem] text-muted-foreground">{reviewSummary}</p>
 					</div>
 
-					<label class="relative block w-full xl:max-w-xs">
+					<label class="relative block w-full xl:max-w-sm">
 						<Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							type="search"
 							placeholder="Search members"
-							class="h-7.5 rounded-xl border-border/70 bg-background pl-9 shadow-sm"
+							class="h-7.5 rounded-full border-border/70 bg-background pl-9 shadow-sm"
 							bind:value={searchQuery}
 						/>
 					</label>
 				</div>
 
-				<div class="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between">
-					<DeletionRequestsCard />
+				<div class="grid gap-1.5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center xl:gap-3">
+					<div class="min-w-0 xl:flex-1">
+						<DeletionRequestsCard />
+					</div>
 
-					<div class="flex flex-wrap gap-1">
+					<div class="segmented-control inline-flex flex-wrap gap-1 rounded-full border border-border/70 bg-background/82 p-0.75 shadow-sm">
 						{#each memberFilterOptions as option (option.value)}
 							<Button
 								type="button"
 								size="sm"
-								variant={memberFilter === option.value ? 'secondary' : 'ghost'}
-								class={`h-7 rounded-full px-3 text-[0.7rem] ${memberFilter === option.value ? 'shadow-sm ring-1 ring-border/70' : 'text-muted-foreground'}`}
+								variant="ghost"
+								class={`h-7 rounded-full px-3 text-[0.7rem] ${memberFilter === option.value ? 'bg-foreground text-background shadow-none' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
 								onclick={() => (memberFilter = option.value)}
 							>
 								{option.label}

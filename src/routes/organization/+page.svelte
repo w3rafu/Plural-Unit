@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
 	import OrganizationOverviewCard from '$lib/components/organization/OrganizationOverviewCard.svelte';
 	import OrganizationAccessCard from '$lib/components/organization/OrganizationAccessCard.svelte';
 	import OrganizationMembersCard from '$lib/components/organization/OrganizationMembersCard.svelte';
@@ -97,26 +96,26 @@
 <OrganizationOverviewCard />
 
 {#if currentOrganization.isAdmin}
-	<div class="flex flex-col gap-1 rounded-2xl border border-border/60 bg-muted/10 px-3.5 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4.5 sm:py-2.25">
-		<div class="space-y-0.5">
+	<div class="flex flex-col gap-1.25 rounded-2xl border border-border/60 bg-muted/10 px-3 py-1.75 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2">
+		<div class="space-y-px">
 			<p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Section</p>
-			<p class="text-[0.74rem] font-medium text-foreground">Review access or roster changes.</p>
+			<p class="text-[0.72rem] text-muted-foreground">Choose what to manage now.</p>
 		</div>
 
-		<nav aria-label="Organization sections" class="w-full sm:max-w-[19rem]">
-			<ButtonGroup.Root class="segmented-control flex w-full items-stretch">
+		<nav aria-label="Organization sections" class="w-full sm:max-w-72">
+			<div class="flex w-full items-stretch gap-1 rounded-full border border-border/70 bg-background/82 p-0.75 shadow-sm">
 				{#each sections as section (section.id)}
 					<Button
 						size="sm"
 						variant="ghost"
-						class={`segmented-control__button h-7 min-w-0 flex-1 justify-center px-3 max-sm:text-[0.78rem] ${activeSection === section.id ? 'bg-background text-foreground shadow-sm ring-1 ring-border/70' : 'text-muted-foreground hover:text-foreground'}`}
+						class={`h-7 min-w-0 flex-1 justify-center rounded-full px-3 max-sm:text-[0.78rem] ${activeSection === section.id ? 'bg-foreground text-background hover:bg-foreground/95 hover:text-background' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'}`}
 						aria-current={activeSection === section.id ? 'page' : undefined}
 						onclick={() => (activeSection = section.id)}
 					>
 						{section.label}
 					</Button>
 				{/each}
-			</ButtonGroup.Root>
+			</div>
 		</nav>
 	</div>
 {/if}
