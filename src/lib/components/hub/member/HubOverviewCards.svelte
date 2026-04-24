@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TrendingUp, Users } from '@lucide/svelte';
+	import { Users } from '@lucide/svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Card from '$lib/components/ui/card';
 	import { getParticipantInitials, type MessageThread } from '$lib/models/messageModel';
@@ -127,17 +127,6 @@
 		return 'Recent hub activity is steady even though nothing urgent needs review.';
 	});
 
-	function getMetricTone(value: number) {
-		if (value >= 75) {
-			return 'bg-primary';
-		}
-
-		if (value >= 45) {
-			return 'bg-primary/70';
-		}
-
-		return 'bg-primary/40';
-	}
 </script>
 
 	<section>
@@ -168,74 +157,55 @@
 				{/each}
 			</div>
 
-			<div class="grid gap-1.75 border-t border-border/60 pt-1.75 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] xl:items-start">
-				<div class="space-y-1.75">
-					{#if spotlightPeople.length > 0}
-						<div class="space-y-1.25">
-							<div class="flex items-center justify-between gap-3">
-								<div class="flex items-center gap-2 text-foreground">
-									<Users class="size-4 text-primary" />
-									<p class="text-[0.72rem] font-medium text-foreground">People in motion</p>
-								</div>
-								<p class="text-[0.68rem] text-muted-foreground">
-									{memberCountLabel}
-									{#if pendingInvites > 0}
-										<span> · {formatCount(pendingInvites, 'invite')} pending</span>
-									{/if}
-								</p>
-							</div>
-							<div class="space-y-1.25">
-								{#each spotlightPeople as person (person.id)}
-									<div class="flex items-center gap-2.5">
-										<Avatar.Root class="size-7.5 border border-background bg-background shadow-sm after:hidden">
-											{#if person.avatarUrl}
-												<Avatar.Image src={person.avatarUrl} alt={person.name} />
-											{:else}
-												<Avatar.Fallback class="text-xs font-semibold text-foreground">
-													{getParticipantInitials(person.name)}
-												</Avatar.Fallback>
-											{/if}
-										</Avatar.Root>
-										<div class="min-w-0 flex-1">
-											<p class="truncate text-[0.76rem] font-medium text-foreground">{person.name}</p>
-											<p class="truncate text-[0.68rem] text-muted-foreground">{person.subtitle}</p>
-										</div>
-										<p class="text-[0.62rem] font-medium text-muted-foreground">{person.note}</p>
-									</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
+			<div class="space-y-1.5 border-t border-border/60 pt-1.75">
+				<div class="flex flex-wrap items-center justify-between gap-2">
+					<div class="flex items-center gap-2 text-foreground">
+						<Users class="size-4 text-primary" />
+						<p class="text-[0.72rem] font-medium text-foreground">People in motion</p>
+					</div>
+					<p class="text-[0.68rem] text-muted-foreground">
+						{memberCountLabel}
+						{#if pendingInvites > 0}
+							<span> · {formatCount(pendingInvites, 'invite')} pending</span>
+						{/if}
+					</p>
 				</div>
 
-				<div class="space-y-1.25 rounded-[1.05rem] border border-border/65 bg-background/72 px-2.5 py-2.25">
-					<div class="flex items-center justify-between gap-3">
-						<div>
-							<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Signal strip</p>
-							<p class="mt-0.75 text-[0.88rem] font-semibold tracking-tight text-foreground">How things are moving</p>
-						</div>
-						<TrendingUp class="size-4 text-primary" />
-					</div>
-
-					<div class="space-y-1.25">
-						{#each signalRows as row (row.label)}
-							<div class="space-y-0.75">
-								<div class="flex items-start justify-between gap-3">
-									<div>
-										<p class="text-[0.82rem] font-medium text-foreground">{row.label}</p>
-										<p class="text-[0.69rem] leading-4.25 text-muted-foreground">{row.note}</p>
-									</div>
-									<span class="pt-0.25 text-[0.82rem] font-semibold text-foreground">{row.value}%</span>
-								</div>
-								<div class="h-1.75 rounded-full bg-primary/10">
-									<div class={`h-1.75 rounded-full ${getMetricTone(row.value)}`} style:width={`${row.value}%`}></div>
+				{#if spotlightPeople.length > 0}
+					<div class="flex flex-wrap gap-1.5">
+						{#each spotlightPeople as person (person.id)}
+							<div class="flex min-w-0 items-center gap-2 rounded-full border border-border/65 bg-background/72 px-2 py-1 shadow-sm">
+								<Avatar.Root class="size-6 border border-background bg-background after:hidden">
+									{#if person.avatarUrl}
+										<Avatar.Image src={person.avatarUrl} alt={person.name} />
+									{:else}
+										<Avatar.Fallback class="text-[0.62rem] font-semibold text-foreground">
+											{getParticipantInitials(person.name)}
+										</Avatar.Fallback>
+									{/if}
+								</Avatar.Root>
+								<div class="min-w-0">
+									<p class="truncate text-[0.7rem] font-medium text-foreground">{person.name}</p>
+									<p class="truncate text-[0.62rem] text-muted-foreground">{person.note}</p>
 								</div>
 							</div>
 						{/each}
 					</div>
+				{/if}
 
-					<p class="text-[0.72rem] leading-4.5 text-muted-foreground">{activityCaption}</p>
+				<div class="grid gap-1.25 sm:grid-cols-3">
+					{#each signalRows as row (row.label)}
+						<div class="rounded-[1rem] border border-border/65 bg-background/72 px-2.25 py-1.75 shadow-sm">
+							<div class="flex items-start justify-between gap-2">
+								<p class="text-[0.68rem] font-medium text-foreground">{row.label}</p>
+								<span class="text-[0.8rem] font-semibold text-foreground">{row.value}%</span>
+							</div>
+							<p class="mt-0.5 text-[0.66rem] leading-4 text-muted-foreground">{row.note}</p>
+						</div>
+					{/each}
 				</div>
+
+				<p class="text-[0.7rem] leading-4.25 text-muted-foreground">{activityCaption}</p>
 			</div>
 		</Card.Content>
 	</Card.Root>

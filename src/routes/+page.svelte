@@ -65,6 +65,17 @@
 	const upcomingVisibleEvents = $derived(
 		visibleEvents.filter((event) => getMemberEventTimingState(event) !== 'recently_completed')
 	);
+	const heroSectionKey = $derived.by(() => {
+		if (canSeeBroadcasts && currentHub.activeBroadcasts.length > 0) {
+			return 'broadcasts';
+		}
+
+		if (canSeeEvents && upcomingVisibleEvents.length > 0) {
+			return 'events';
+		}
+
+		return null;
+	});
 	const unreadMessages = $derived(currentMessages.totalUnreadCount);
 	const unreadActivityItems = $derived(visibleActivityItems.filter((item) => !item.isRead).length);
 	const spotlightThreads = $derived(currentMessages.sortedThreads.slice(0, 3));
@@ -200,6 +211,12 @@
 				threads={spotlightThreads}
 			/>
 
+			{#if heroSectionKey === 'broadcasts'}
+				<BroadcastsSection sectionId="hub-broadcasts" />
+			{:else if heroSectionKey === 'events'}
+				<EventsSection sectionId="hub-events" />
+			{/if}
+
 			{#if canSeeBroadcasts || canSeeEvents}
 				<div class="min-w-0">
 					<HubActivityFeed
@@ -241,14 +258,16 @@
 		{:else}
 			<div class="flex flex-col gap-3.5">
 				{#each visiblePlugins as plugin (plugin.key)}
-					{#if plugin.key === 'broadcasts'}
-						<BroadcastsSection sectionId="hub-broadcasts" />
-					{:else if plugin.key === 'events'}
-						<EventsSection sectionId="hub-events" />
-					{:else if plugin.key === 'resources'}
-						<ResourcesSection sectionId="hub-resources" />
-					{:else if plugin.key === 'volunteers'}
-						<VolunteersSection sectionId="hub-volunteers" />
+					{#if plugin.key !== heroSectionKey}
+						{#if plugin.key === 'broadcasts'}
+							<BroadcastsSection sectionId="hub-broadcasts" />
+						{:else if plugin.key === 'events'}
+							<EventsSection sectionId="hub-events" />
+						{:else if plugin.key === 'resources'}
+							<ResourcesSection sectionId="hub-resources" />
+						{:else if plugin.key === 'volunteers'}
+							<VolunteersSection sectionId="hub-volunteers" />
+						{/if}
 					{/if}
 				{/each}
 			</div>

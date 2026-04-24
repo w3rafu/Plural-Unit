@@ -68,16 +68,16 @@
 </script>
 
 <Card.Root size="sm" class="h-full border-border/70 bg-card">
-	<Card.Content class="space-y-2 py-2.75" aria-busy={resolvedIsLoading}>
+	<Card.Content class="space-y-1.5 py-2.25" aria-busy={resolvedIsLoading}>
 		<div class="flex items-end justify-between gap-3">
-			<div class="space-y-1">
-				<Card.Title class="text-[1.42rem] font-semibold tracking-tight">Recent activity</Card.Title>
-				<Card.Description class="text-[0.75rem] leading-4.5">
+			<div class="space-y-0.5">
+				<p class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent activity</p>
+				<Card.Description class="text-[0.72rem] leading-4.25">
 					What changed most recently in {resolvedOrganizationName}.
 				</Card.Description>
 			</div>
 			{#if totalItems.length > 0}
-				<p class="text-[0.72rem] text-muted-foreground">
+				<p class="text-[0.68rem] text-muted-foreground">
 					{totalItems.length} item{totalItems.length === 1 ? '' : 's'}
 				</p>
 			{/if}
@@ -106,44 +106,44 @@
 				</p>
 			</div>
 		{:else}
-			<div class="overflow-hidden rounded-[1rem] border border-border/65 bg-background/62 shadow-sm">
+			<div class="overflow-hidden rounded-[0.95rem] border border-border/65 bg-background/62 shadow-sm">
 				{#each activityItems as item, index (item.id)}
 					{@const primaryAction = getPrimaryAction(item)}
 					<a
 						href={primaryAction.href}
-						class={`group block px-3 py-2.25 transition-colors ${index > 0 ? 'border-t border-border/50' : ''} ${getActivityRowTone(item)}`}
+						class={`group block px-2.75 py-2 transition-colors ${index > 0 ? 'border-t border-border/50' : ''} ${getActivityRowTone(item)}`}
 					>
-						<div class="flex items-start gap-3">
+						<div class="flex items-start gap-2.5">
 							<div
-								class={`mt-0.5 flex size-6.5 shrink-0 items-center justify-center rounded-[0.75rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
+								class={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-[0.72rem] border ${item.eventLifecycleSignal === 'canceled' ? 'border-destructive/20 bg-destructive/10 text-destructive' : 'border-primary/15 bg-primary/10 text-primary'}`}
 							>
 								{#if item.kind === 'broadcast'}
-									<Megaphone class="size-3.25" />
+									<Megaphone class="size-3" />
 								{:else if item.eventLifecycleSignal === 'canceled'}
-									<TriangleAlert class="size-3.25" />
+									<TriangleAlert class="size-3" />
 								{:else if item.eventTimingState === 'today' || item.eventTimingState === 'in_progress'}
-									<Sparkles class="size-3.25" />
+									<Sparkles class="size-3" />
 								{:else}
-									<CalendarDays class="size-3.25" />
+									<CalendarDays class="size-3" />
 								{/if}
 							</div>
 
 							<div class="min-w-0 flex-1">
 								<div class="flex items-start justify-between gap-3">
 									<div class="min-w-0">
-										<div class="flex flex-wrap items-center gap-2 text-[0.63rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+										<div class="flex flex-wrap items-center gap-1.5 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-muted-foreground">
 											<span>{item.label}</span>
 											{#if !item.isRead}
 												<span class="inline-flex size-1.5 rounded-full bg-primary"></span>
 												<span class="normal-case tracking-normal text-primary">Needs review</span>
 											{/if}
 										</div>
-										<p class="mt-0.65 truncate text-[0.88rem] font-semibold text-foreground">{item.title}</p>
+										<p class="mt-0.5 truncate text-[0.82rem] font-semibold text-foreground">{item.title}</p>
 									</div>
-									<span class="shrink-0 pt-0.5 text-[0.68rem] font-medium text-primary/85 transition-colors group-hover:text-primary">{primaryAction.label}</span>
+									<span class="shrink-0 pt-0.5 text-[0.64rem] font-medium text-primary/85 transition-colors group-hover:text-primary">{primaryAction.label}</span>
 								</div>
-								<p class="mt-0.65 text-[0.72rem] leading-4.5 text-muted-foreground">{item.summary}</p>
-								<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.66rem] text-muted-foreground">
+								<p class="mt-0.5 text-[0.69rem] leading-4.25 text-muted-foreground">{item.summary}</p>
+								<div class="mt-0.75 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.63rem] text-muted-foreground">
 									<span>{item.meta}</span>
 									{#if item.kind === 'broadcast'}
 										<span>Broadcast update</span>
@@ -158,10 +158,11 @@
 			</div>
 
 			{#if hasMore}
-				<div class="text-center">
+				<div class="pt-0.25 text-center">
 					<Button
 						variant="ghost"
 						size="sm"
+						class="h-7 rounded-full px-2.5 text-[0.7rem] text-muted-foreground hover:text-foreground"
 						onclick={() => (showAll = !showAll)}
 					>
 						{showAll ? 'Show less' : `View all ${totalItems.length} items`}
